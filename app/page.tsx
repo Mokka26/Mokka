@@ -1,15 +1,13 @@
 import Link from "next/link";
-import Image from "next/image";
 import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
-import HorizontalScroll from "@/components/HorizontalScroll";
 import FeaturedShowcase from "@/components/FeaturedShowcase";
-import AnimatedSection from "@/components/AnimatedSection";
-import NewsletterForm from "@/components/NewsletterForm";
-import ShowroomSection from "@/components/ShowroomSection";
 import CategoriesShowcase from "@/components/CategoriesShowcase";
-import Marquee from "@/components/Marquee";
+import ShowroomSection from "@/components/ShowroomSection";
 import IntroSection from "@/components/IntroSection";
+import EditorialQuote from "@/components/EditorialQuote";
+import SectionHeader from "@/components/SectionHeader";
+import NewsletterForm from "@/components/NewsletterForm";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -30,14 +28,6 @@ async function getNewestProducts() {
   }
 }
 
-const categories = [
-  { name: "Banken", slug: "banken", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900" },
-  { name: "Tafels", slug: "tafels", image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=900" },
-  { name: "Stoelen", slug: "stoelen", image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=900" },
-  { name: "Slaapkamers", slug: "slaapkamers", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900" },
-  { name: "Kasten", slug: "kasten", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=900" },
-];
-
 export default async function HomePage() {
   const [featuredProducts, newestProducts] = await Promise.all([
     getFeaturedProducts(),
@@ -46,76 +36,36 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* ─── 01 — HERO ─── */}
       <Hero />
 
-      {/* ─── Intro — Kinetic typography ─── */}
+      {/* ─── 02 — INTRODUCTIE ─── */}
       <IntroSection />
 
-      {/* ─── Uitgelicht — Editorial showcase ─── */}
+      {/* ─── 03 — UITGELICHTE COLLECTIE ─── */}
       <FeaturedShowcase products={featuredProducts} />
 
-      {/* ─── Marquee — Kinetic typography ─── */}
-      <section className="py-12 bg-paper border-y border-line overflow-hidden">
-        <Marquee items={["Meubels", "Design", "Vakmanschap", "Interieur", "Ambacht"]} />
-      </section>
+      {/* ─── 04 — EDITORIAL QUOTE ─── */}
+      <EditorialQuote />
 
-      {/* ─── Categorieën — Horizontale showcase ─── */}
+      {/* ─── 05 — CATEGORIEËN ─── */}
       <CategoriesShowcase />
 
-      {/* ─── Ambacht statement — Full bleed ─── */}
-      <section className="relative h-[70vh] lg:h-[80vh] overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1800"
-          alt="Ambacht"
-          fill
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-ink/50" />
-        <div className="relative z-10 h-full flex items-center justify-center px-6">
-          <AnimatedSection className="text-center max-w-3xl">
-            <p className="eyebrow text-white/60 mb-6">Ambacht</p>
-            <h2 className="display-lg text-white mb-8">
-              Elk stuk is gemaakt
-              <br />
-              met <span className="italic">intentie</span>
-            </h2>
-            <p className="body-lg text-white/70 mb-10 max-w-xl mx-auto">
-              We werken uitsluitend met ambachtslieden die hun vak verstaan. Geen massaproductie — alleen meubels die gemaakt zijn om een leven lang mee te gaan.
-            </p>
-            <Link href="/about" className="inline-block text-white text-[11px] uppercase tracking-[0.3em] border-b border-white/40 hover:border-white pb-2 transition-colors">
-              Lees meer
-            </Link>
-          </AnimatedSection>
-        </div>
-      </section>
+      {/* ─── 06 — NIEUWSTE PRODUCTEN ─── */}
+      <section className="py-28 lg:py-40">
+        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="mb-16 lg:mb-20">
+            <SectionHeader
+              number="06"
+              label="Net Binnen"
+              title="Nieuw in de"
+              titleItalic="collectie"
+              linkHref="/products"
+              linkLabel="Alle producten"
+            />
+          </div>
 
-      {/* ─── Showroom — Echte winkel ─── */}
-      <ShowroomSection />
-
-      {/* ─── Nieuwste — Clean grid ─── */}
-      <section className="py-32 lg:py-48">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
-          <AnimatedSection className="mb-16">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
-              <div className="lg:col-span-8">
-                <p className="eyebrow mb-4">04 — Recent</p>
-                <h2 className="display-lg text-ink">
-                  Net <span className="italic">binnen</span>
-                </h2>
-              </div>
-              <div className="lg:col-span-4 lg:text-right">
-                <Link href="/products" className="btn-link">
-                  Alle producten
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-          </AnimatedSection>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-14 sm:gap-x-6 sm:gap-y-20">
             {newestProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -123,19 +73,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── Service belofte ─── */}
-      <section className="border-t border-line">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
+      {/* ─── 07 — ATELIER / SHOWROOM ─── */}
+      <ShowroomSection />
+
+      {/* ─── 08 — SERVICE ─── */}
+      <section className="bg-white border-t border-line">
+        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
           <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-line">
             {[
               { num: "01", title: "Gratis verzending", sub: "Vanaf €100 in NL" },
-              { num: "02", title: "2 jaar garantie", sub: "Op elk product" },
-              { num: "03", title: "30 dagen retour", sub: "Gratis retourneren" },
-              { num: "04", title: "Persoonlijk advies", sub: "Atelier in Amsterdam" },
+              { num: "02", title: "Tweejaarsgarantie", sub: "Op elk product" },
+              { num: "03", title: "Retourneren", sub: "30 dagen bedenktijd" },
+              { num: "04", title: "Persoonlijk", sub: "Advies op maat" },
             ].map((item) => (
-              <div key={item.num} className="py-10 lg:py-12 lg:px-10 first:lg:pl-0 last:lg:pr-0">
+              <div key={item.num} className="py-12 lg:py-14 lg:px-10 first:lg:pl-0 last:lg:pr-0">
                 <p className="eyebrow mb-3">{item.num}</p>
-                <p className="font-serif text-xl text-ink mb-1">{item.title}</p>
+                <p className="font-serif text-xl sm:text-2xl text-ink mb-1 leading-tight">{item.title}</p>
                 <p className="text-sm text-stone">{item.sub}</p>
               </div>
             ))}
@@ -143,19 +96,26 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── Nieuwsbrief ─── */}
-      <section className="bg-white py-32 lg:py-40">
-        <AnimatedSection className="max-w-xl mx-auto px-6 text-center">
-          <p className="eyebrow mb-6">Newsletter</p>
-          <h2 className="display-md text-ink mb-6">
-            Ontvang nieuwe <span className="italic">collecties</span> in je inbox
-          </h2>
-          <p className="body-lg mb-10 text-stone">
-            Inspiratie, nieuwe stukken en exclusieve aanbiedingen. Maximaal twee keer per maand.
-          </p>
-          <NewsletterForm />
-          <p className="text-xs text-stone mt-6">Je kunt je op elk moment uitschrijven.</p>
-        </AnimatedSection>
+      {/* ─── 09 — NIEUWSBRIEF ─── */}
+      <section className="py-28 lg:py-40 bg-paper border-t border-line">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="max-w-2xl mx-auto text-center">
+            <p className="eyebrow mb-6">Journal</p>
+            <h2 className="display-md text-ink mb-6 leading-[1.1]">
+              Inspiratie, nieuwe <span className="italic">collecties</span>,
+              <br className="hidden sm:block" />
+              rechtstreeks in je inbox.
+            </h2>
+            <p className="body-lg mb-10 text-stone max-w-md mx-auto">
+              Twee keer per maand delen we nieuwe stukken, stijladvies en exclusieve aanbiedingen.
+            </p>
+            <NewsletterForm />
+            <p className="text-xs text-stone mt-8">
+              Je kunt je op elk moment uitschrijven. Lees ons{" "}
+              <Link href="/privacybeleid" className="underline hover:text-ink">privacybeleid</Link>.
+            </p>
+          </div>
+        </div>
       </section>
     </>
   );

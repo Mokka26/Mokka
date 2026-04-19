@@ -7,6 +7,7 @@ import PageTransition from "@/components/PageTransition";
 import TouchHoverProvider from "@/components/TouchHoverProvider";
 import SmoothScroll from "@/components/SmoothScroll";
 import ToastProvider from "@/components/ToastProvider";
+import ScrollProgress from "@/components/ScrollProgress";
 
 export const metadata: Metadata = {
   title: "Mokka Home Interior — Modern Wonen, Tijdloos Design",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SmoothScroll />
           <TouchHoverProvider />
           <ToastProvider />
+          <ScrollProgress />
           <Navbar />
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
