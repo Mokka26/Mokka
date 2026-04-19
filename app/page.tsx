@@ -12,12 +12,22 @@ import Marquee from "@/components/Marquee";
 import IntroSection from "@/components/IntroSection";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 async function getFeaturedProducts() {
-  return prisma.product.findMany({ where: { featured: true }, take: 10 });
+  try {
+    return await prisma.product.findMany({ where: { featured: true }, take: 10 });
+  } catch {
+    return [];
+  }
 }
 
 async function getNewestProducts() {
-  return prisma.product.findMany({ orderBy: { createdAt: "desc" }, take: 8 });
+  try {
+    return await prisma.product.findMany({ orderBy: { createdAt: "desc" }, take: 8 });
+  } catch {
+    return [];
+  }
 }
 
 const categories = [
