@@ -2,25 +2,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-import fs from "fs";
-import path from "path";
+const CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "diaksxzey";
 
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-function imgs(slug: string): string {
-  const dir = path.join(process.cwd(), "public", "products", "banken", slug);
-  try {
-    const files = fs.readdirSync(dir)
-      .filter(f => f.endsWith(".webp"))
-      .sort()
-      .slice(0, 6)
-      .map(f => `/products/banken/${slug}/${f}`);
-    return JSON.stringify(files);
-  } catch {
-    return JSON.stringify([]);
+function imgs(folderSlug: string, count: number = 6): string {
+  // Genereer Cloudinary URLs — foto's zijn genaamd 01.jpg, 02.jpg, ...
+  const arr = [];
+  for (let i = 1; i <= count; i++) {
+    arr.push(`https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/mokka/banken/${folderSlug}/${String(i).padStart(2, "0")}.jpg`);
   }
+  return JSON.stringify(arr);
 }
 
 const products = [
