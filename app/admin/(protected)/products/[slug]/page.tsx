@@ -3,8 +3,19 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import EditProductForm from "./EditProductForm";
+import ImageManager from "@/components/admin/ImageManager";
+import DeleteProductButton from "./DeleteProductButton";
 
 export const dynamic = "force-dynamic";
+
+function parseImages(raw: string): string[] {
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function AdminProductEditPage({
   params,
@@ -21,6 +32,8 @@ export default async function AdminProductEditPage({
     orderBy: { category: "asc" },
   });
 
+  const images = parseImages(product.images);
+
   return (
     <div>
       <Link
@@ -31,11 +44,14 @@ export default async function AdminProductEditPage({
         Terug naar producten
       </Link>
 
-      <header className="mb-10">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2 capitalize">
-          {product.category}
-        </p>
-        <h1 className="font-serif text-4xl text-ink leading-none">{product.name}</h1>
+      <header className="mb-10 flex items-end justify-between gap-6 flex-wrap">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2 capitalize">
+            {product.category}
+          </p>
+          <h1 className="font-serif text-4xl text-ink leading-none">{product.name}</h1>
+        </div>
+        <DeleteProductButton id={product.id} name={product.name} />
       </header>
 
       <EditProductForm
@@ -50,6 +66,27 @@ export default async function AdminProductEditPage({
         }}
         categories={categories.map((c) => c.category)}
       />
+
+      <section className="mt-12 pt-10 border-t border-line">
+        <header className="mb-6">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-1.5">
+            Afbeeldingen
+          </p>
+          <h2 className="font-serif text-2xl text-ink leading-none">
+            {images.length} foto{images.length === 1 ? "" : "'s"}
+          </h2>
+          <p className="text-[12px] text-stone mt-2">
+            Wijzigingen worden direct opgeslagen. De eerste foto is de hoofdfoto op de productpagina en in lijsten.
+          </p>
+        </header>
+
+        <ImageManager
+          productId={product.id}
+          category={product.category}
+          slug={product.slug}
+          initialImages={images}
+        />
+      </section>
     </div>
   );
 }

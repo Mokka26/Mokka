@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import ProductsTable from "./ProductsTable";
+import SearchInput from "./SearchInput";
 
 export const dynamic = "force-dynamic";
 
@@ -47,29 +49,47 @@ export default async function AdminProductsPage({
             {products.length} resultaat{products.length === 1 ? "" : "en"}
           </p>
         </div>
+        <Link
+          href="/admin/products/new"
+          className="inline-flex items-center gap-2 bg-ink text-white px-5 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Nieuw product
+        </Link>
       </header>
 
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <CategoryChip
-          href="/admin/products"
-          label="Alle"
-          count={categories.reduce((s, c) => s + c._count._all, 0)}
-          active={!params.category}
-        />
-        {categories.map((c) => (
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <SearchInput />
+        <div className="flex flex-wrap items-center gap-2">
           <CategoryChip
-            key={c.category}
-            href={`/admin/products?category=${c.category}`}
-            label={c.category}
-            count={c._count._all}
-            active={params.category === c.category}
+            href={buildHref(undefined, params.q)}
+            label="Alle"
+            count={categories.reduce((s, c) => s + c._count._all, 0)}
+            active={!params.category}
           />
-        ))}
+          {categories.map((c) => (
+            <CategoryChip
+              key={c.category}
+              href={buildHref(c.category, params.q)}
+              label={c.category}
+              count={c._count._all}
+              active={params.category === c.category}
+            />
+          ))}
+        </div>
       </div>
 
       <ProductsTable products={products} />
     </div>
   );
+}
+
+function buildHref(category?: string, q?: string): string {
+  const sp = new URLSearchParams();
+  if (category) sp.set("category", category);
+  if (q) sp.set("q", q);
+  const qs = sp.toString();
+  return qs ? `/admin/products?${qs}` : "/admin/products";
 }
 
 function CategoryChip({

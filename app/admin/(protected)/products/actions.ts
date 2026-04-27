@@ -1,9 +1,24 @@
 "use server";
 
 import { z } from "zod";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { cloudinary } from "@/lib/cloudinary";
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Inline updates (price, featured)
+// ─────────────────────────────────────────────────────────────────────
 
 const inlineUpdateSchema = z.object({
   id: z.string().min(1),
@@ -38,6 +53,10 @@ export async function updateProductInline(
   revalidatePath("/products");
   return { ok: true };
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Full edit (name, description, price, category, featured)
+// ─────────────────────────────────────────────────────────────────────
 
 const fullUpdateSchema = z.object({
   id: z.string().min(1),
@@ -92,5 +111,166 @@ export async function updateProductFull(
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath(`/products/${updated.slug}`);
+  return { ok: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Image management
+// ─────────────────────────────────────────────────────────────────────
+
+const imagesUpdateSchema = z.object({
+  id: z.string().min(1),
+  images: z.array(z.string().url()).max(20),
+});
+
+export async function updateProductImages(
+  input: z.infer<typeof imagesUpdateSchema>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Niet ingelogd" };
+
+  const parsed = imagesUpdateSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Ongeldige invoer" };
+
+  let updated;
+  try {
+    updated = await prisma.product.update({
+      where: { id: parsed.data.id },
+      data: { images: JSON.stringify(parsed.data.images) },
+    });
+  } catch {
+    return { ok: false, error: "Opslaan mislukt" };
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  revalidatePath(`/products/${updated.slug}`);
+  return { ok: true };
+}
+
+export async function getCloudinarySignature(
+  folder: string,
+): Promise<
+  | { ok: true; signature: string; timestamp: number; apiKey: string; cloudName: string; folder: string; publicId: string }
+  | { ok: false; error: string }
+> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Niet ingelogd" };
+
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!apiKey || !apiSecret || !cloudName) {
+    return { ok: false, error: "Cloudinary niet geconfigureerd" };
+  }
+
+  const safeFolder = folder.replace(/[^a-zA-Z0-9/_-]/g, "");
+  const timestamp = Math.round(Date.now() / 1000);
+  const publicId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const signature = cloudinary.utils.api_sign_request(
+    { folder: safeFolder, public_id: publicId, timestamp },
+    apiSecret,
+  );
+
+  return {
+    ok: true,
+    signature,
+    timestamp,
+    apiKey,
+    cloudName,
+    folder: safeFolder,
+    publicId,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Create product
+// ─────────────────────────────────────────────────────────────────────
+
+const createSchema = z.object({
+  name: z.string().min(2).max(200),
+  slug: z.string().min(2).max(120).regex(/^[a-z0-9-]+$/, "Alleen kleine letters, cijfers en streepjes"),
+  description: z.string().min(1).max(5000),
+  price: z.number().nonnegative().max(999999),
+  category: z.string().min(1).max(50),
+  featured: z.boolean(),
+  images: z.array(z.string().url()).default([]),
+});
+
+export type CreateProductState = {
+  error?: string;
+  fieldErrors?: Partial<Record<keyof z.infer<typeof createSchema>, string>>;
+};
+
+export async function createProduct(
+  _prev: CreateProductState,
+  formData: FormData,
+): Promise<CreateProductState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Niet ingelogd" };
+
+  const rawImages = formData.get("images");
+  let images: string[] = [];
+  try {
+    images = rawImages ? JSON.parse(String(rawImages)) : [];
+  } catch {
+    images = [];
+  }
+
+  const parsed = createSchema.safeParse({
+    name: formData.get("name"),
+    slug: slugify(String(formData.get("slug") || formData.get("name") || "")),
+    description: formData.get("description"),
+    price: Number(formData.get("price")),
+    category: formData.get("category"),
+    featured: formData.get("featured") === "on",
+    images,
+  });
+
+  if (!parsed.success) {
+    const fieldErrors: CreateProductState["fieldErrors"] = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0] as keyof z.infer<typeof createSchema>;
+      fieldErrors[key] = issue.message;
+    }
+    return { fieldErrors };
+  }
+
+  const existing = await prisma.product.findUnique({ where: { slug: parsed.data.slug } });
+  if (existing) {
+    return { fieldErrors: { slug: "Slug bestaat al, kies een andere" } };
+  }
+
+  const { images: imageList, ...rest } = parsed.data;
+  const created = await prisma.product.create({
+    data: { ...rest, images: JSON.stringify(imageList) },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  redirect(`/admin/products/${created.slug}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Delete product
+// ─────────────────────────────────────────────────────────────────────
+
+export async function deleteProduct(
+  id: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Niet ingelogd" };
+
+  try {
+    await prisma.product.delete({ where: { id } });
+  } catch {
+    return { ok: false, error: "Verwijderen mislukt" };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
   return { ok: true };
 }
