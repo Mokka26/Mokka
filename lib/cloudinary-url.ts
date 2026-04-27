@@ -38,21 +38,30 @@ export function cldUrl(
  * Voeg transformaties toe aan een bestaande Cloudinary URL.
  * Niet-Cloudinary URLs worden ongewijzigd teruggegeven.
  *
- * Met `ar` wordt c_fill+g_auto toegepast: Cloudinary herkent het onderwerp
- * (product) en crop't strak om het object heen — geen lege ruimte, product
- * altijd in beeld.
+ * Standaard mode `pad`: Cloudinary past de foto in op de aspect ratio en
+ * vult de eventuele over-ruimte met de door Cloudinary gedetecteerde
+ * achtergrondkleur (b_auto). Resultaat: HELE product zichtbaar, en de
+ * padding loopt naadloos over in de fotoachtergrond (white/grey/bone).
+ *
+ * Mode `fill`: c_fill + g_auto → crop't smart om subject heen. Sneller
+ * vol-beeld maar kan delen van het product wegsnijden.
  */
 export function cldOptimize(
   url: string,
-  options: { ar?: string; w?: number } = {},
+  options: { ar?: string; w?: number; mode?: "pad" | "fill" } = {},
 ): string {
   if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
     return url;
   }
 
+  const mode = options.mode ?? "pad";
   const parts: string[] = ["f_auto", "q_auto"];
   if (options.ar) {
-    parts.push("c_fill", "g_auto", `ar_${options.ar}`);
+    if (mode === "fill") {
+      parts.push("c_fill", "g_auto", `ar_${options.ar}`);
+    } else {
+      parts.push("c_pad", "b_auto", `ar_${options.ar}`);
+    }
   }
   if (options.w) parts.push(`w_${options.w}`);
 
