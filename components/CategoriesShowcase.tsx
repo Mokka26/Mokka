@@ -7,10 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const categories = [
   { number: "01", name: "Banken", slug: "banken", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=90", description: "Het hart van elke woonkamer. Comfort met karakter." },
-  { number: "02", name: "Tafels", slug: "tafels", image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1400&q=90", description: "Om de tafel wordt geleefd. Eiken, marmer, ambacht." },
-  { number: "03", name: "Stoelen", slug: "stoelen", image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=1400&q=90", description: "Comfort als sculptuur. Stoelen die een statement maken." },
-  { number: "04", name: "Slaapkamers", slug: "slaapkamers", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1400&q=90", description: "Waar rust begint. Zachte materialen, warme tinten." },
-  { number: "05", name: "Kasten", slug: "kasten", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=1400&q=90", description: "Meer dan opbergruimte. Kasten als architectuur." },
+  { number: "02", name: "Bedden", slug: "bedden", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1400&q=90", description: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust." },
+  { number: "03", name: "Tafels", slug: "tafels", image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1400&q=90", description: "Om de tafel wordt geleefd. Eiken, marmer, ambacht." },
+  { number: "04", name: "Stoelen", slug: "stoelen", image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=1400&q=90", description: "Comfort als sculptuur. Stoelen die een statement maken." },
+  { number: "05", name: "Slaapkamers", slug: "slaapkamers", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1400&q=90", description: "Waar rust begint. Zachte materialen, warme tinten." },
+  { number: "06", name: "Kasten", slug: "kasten", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=1400&q=90", description: "Meer dan opbergruimte. Kasten als architectuur." },
 ];
 
 export default function CategoriesShowcase() {

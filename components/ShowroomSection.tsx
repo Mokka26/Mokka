@@ -49,7 +49,21 @@ export default function ShowroomSection() {
             <div className="space-y-4 mb-10 border-t border-line pt-8">
               <div className="flex items-start gap-4">
                 <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Adres</span>
-                <p className="text-ink">Herengracht 100<br />1015 BS Amsterdam</p>
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Dynamostraat+5%2C+2525+KB+Den+Haag"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink hover:text-bronze transition-colors group inline-flex items-start gap-2"
+                >
+                  <span>
+                    Dynamostraat 5
+                    <br />
+                    2525 KB Den Haag
+                  </span>
+                  <svg className="w-3.5 h-3.5 mt-1 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                </a>
               </div>
               <div className="flex items-start gap-4">
                 <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Open</span>
@@ -61,16 +75,26 @@ export default function ShowroomSection() {
               </div>
               <div className="flex items-start gap-4">
                 <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Bel</span>
-                <p className="text-ink">+31 (0)20 123 4567</p>
+                <a href="tel:+31701234567" className="text-ink hover:text-bronze transition-colors">+31 (0)70 123 4567</a>
               </div>
             </div>
 
-            <Link href="/contact" className="btn-link">
-              Plan een bezoek
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-              </svg>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Dynamostraat+5%2C+2525+KB+Den+Haag"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-link"
+              >
+                Routebeschrijving
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
+                </svg>
+              </a>
+              <Link href="/contact" className="text-[11px] uppercase tracking-[0.25em] text-stone hover:text-ink transition-colors pb-1">
+                Plan een bezoek
+              </Link>
+            </div>
           </motion.div>
         </div>
       </div>

@@ -19,6 +19,7 @@ interface Product {
 
 const categoryLabels: Record<string, string> = {
   banken: "Banken",
+  bedden: "Bedden",
   slaapkamers: "Slaapkamers",
   kasten: "Kasten",
   tafels: "Tafels",
@@ -27,6 +28,7 @@ const categoryLabels: Record<string, string> = {
 
 const categoryIntros: Record<string, string> = {
   banken: "Het hart van elke woonkamer. Comfort en design, gemaakt voor het dagelijks leven.",
+  bedden: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust en stille ochtenden.",
   slaapkamers: "Rust begint hier. Zachte materialen en warme tinten voor de persoonlijkste ruimte.",
   kasten: "Meer dan opbergruimte — kasten als architectuur die je interieur structureren.",
   tafels: "Om de tafel wordt geleefd. Van eiken eettafels tot marmeren salontafels.",
@@ -75,27 +77,30 @@ export default function ProductsContent() {
     ? categoryIntros[category] || ""
     : "Zorgvuldig geselecteerde meubels en interieur, voor het moderne thuis.";
 
+  const eyebrowLabel = category ? "Categorie" : searchQuery ? "Zoeken" : "Collectie";
+
   return (
-    <div className="pt-28 lg:pt-32 pb-20">
+    <div className="pt-32 lg:pt-40 pb-28 lg:pb-40">
       {/* Editorial header */}
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-14 lg:mb-20">
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-16 lg:mb-24">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end"
+          transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-end"
         >
           <div className="lg:col-span-8">
-            <p className="eyebrow mb-4">
-              {category ? "Categorie" : searchQuery ? "Zoeken" : "Collectie"}
-            </p>
-            <h1 className="display-lg text-ink leading-[1.05]">
+            <div className="flex items-center gap-4 mb-6">
+              <span className="font-serif italic text-stone text-sm">— 01</span>
+              <span className="eyebrow">{eyebrowLabel}</span>
+            </div>
+            <h1 className="display-xl text-ink">
               {pageTitle}
             </h1>
           </div>
           {pageSubtitle && (
             <div className="lg:col-span-4">
-              <p className="text-stone text-base leading-relaxed max-w-md">{pageSubtitle}</p>
+              <p className="body-lg text-slate max-w-md">{pageSubtitle}</p>
             </div>
           )}
         </motion.div>
@@ -115,7 +120,7 @@ export default function ProductsContent() {
 
         {/* Product grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-14 sm:gap-x-6 sm:gap-y-20">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="space-y-4">
                 <div className="aspect-[4/5] bg-bone animate-shimmer" />
@@ -125,9 +130,10 @@ export default function ProductsContent() {
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-32">
-            <p className="display-md text-ink mb-4">Geen resultaten</p>
-            <p className="text-stone max-w-md mx-auto mb-8">
+          <div className="text-center py-32 lg:py-40">
+            <p className="eyebrow mb-6">Niets gevonden</p>
+            <p className="display-md text-ink mb-6">Geen resultaten</p>
+            <p className="body-lg text-slate max-w-md mx-auto mb-10">
               We konden geen producten vinden die aan je zoekcriteria voldoen. Probeer je filters aan te passen.
             </p>
             <button
@@ -144,7 +150,7 @@ export default function ProductsContent() {
         ) : (
           <motion.div
             key={`${category}-${sortBy}-${searchQuery}-${priceRange.join("-")}`}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-14 sm:gap-x-6 sm:gap-y-20"
             initial="hidden"
             animate="visible"
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
@@ -165,10 +171,10 @@ export default function ProductsContent() {
 
         {/* Einde indicator */}
         {!loading && products.length > 0 && (
-          <div className="flex items-center justify-center gap-4 mt-20 text-stone text-[11px] uppercase tracking-[0.3em]">
-            <div className="w-12 h-[1px] bg-line" />
-            Einde van de collectie
-            <div className="w-12 h-[1px] bg-line" />
+          <div className="flex items-center justify-center gap-6 mt-24 lg:mt-32">
+            <div className="w-16 h-[1px] bg-line" />
+            <span className="eyebrow">Einde van de collectie</span>
+            <div className="w-16 h-[1px] bg-line" />
           </div>
         )}
       </div>

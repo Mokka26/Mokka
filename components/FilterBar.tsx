@@ -17,10 +17,11 @@ interface Props {
 const categories = [
   { label: "Alles", value: "" },
   { label: "Banken", value: "banken" },
-  { label: "Slaapkamers", value: "slaapkamers" },
-  { label: "Kasten", value: "kasten" },
+  { label: "Bedden", value: "bedden" },
   { label: "Tafels", value: "tafels" },
   { label: "Stoelen", value: "stoelen" },
+  { label: "Slaapkamers", value: "slaapkamers" },
+  { label: "Kasten", value: "kasten" },
 ];
 
 const sortOptions = [

@@ -1,4 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import { config } from "dotenv";
+
+config({ path: ".env.local" });
 
 const prisma = new PrismaClient();
 
@@ -13,6 +16,14 @@ function imgs(folderSlug: string, count: number = 6): string {
   const arr = [];
   for (let i = 1; i <= count; i++) {
     arr.push(`https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/mokka/banken/${folderSlug}/${String(i).padStart(2, "0")}.jpg`);
+  }
+  return JSON.stringify(arr);
+}
+
+function bedImgs(folderSlug: string, count: number = 5): string {
+  const arr = [];
+  for (let i = 1; i <= count; i++) {
+    arr.push(`https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/mokka/bedden/${folderSlug}/${String(i).padStart(2, "0")}.jpg`);
   }
   return JSON.stringify(arr);
 }
@@ -61,6 +72,52 @@ const products = [
   { name: "Teddy Hoekbank", description: "De Teddy hoekbank met zijn zachte, teddy-achtige stof is onweerstaanbaar comfortabel. Een knusse toevoeging aan elke woonkamer.", price: 2999, category: "banken", featured: false, images: imgs("teddy-corner-set") },
   { name: "Tilda Bankstel Beige", description: "Het Tilda bankstel in beige biedt Scandinavisch geïnspireerd comfort. Clean design, zachte materialen en een uitnodigende zitting.", price: 2199, category: "banken", featured: false, images: imgs("tilda-sofa-set-bej") },
   { name: "Tilda Bankstel Grijs", description: "De Tilda in grijs is de ideale bank voor het moderne interieur. Strak, comfortabel en tijdloos in zijn eenvoud.", price: 2199, category: "banken", featured: false, images: imgs("tilda-sofa-set-grey") },
+
+  // ── BEDDEN ──
+  { name: "Amore Boxspring", description: "De Amore boxspring brengt klassieke vormen samen met diepgaand zitcomfort. Gestoffeerde hoofdsteun, gepolsterd voetstuk, premium afwerking.", price: 2899, category: "bedden", featured: true, images: bedImgs("amore-120-dpi-jpeg-gorseller") },
+  { name: "Bamboo Sleep Boxspring", description: "Een boxspring met bamboe-geïnspireerde topkussens. Natuurlijke ventilatie en zachte texturen voor warme zomernachten.", price: 2199, category: "bedden", featured: false, images: bedImgs("bamboo-sleep") },
+  { name: "Basel Boxspring", description: "Compacte boxspring met roll-pack matras. Eenvoudige montage thuis, premium ervaring vanaf de eerste nacht.", price: 1799, category: "bedden", featured: false, images: bedImgs("basel-roll-pack-matras") },
+  { name: "Begonya Bedframe", description: "Een verfijnd bedframe met sierlijk gekromde hoofdsteun. Royaal silhouet, zacht gestoffeerd, tijdloos in elke slaapkamer.", price: 1599, category: "bedden", featured: false, images: bedImgs("begonya-120-dpi-jpeg") },
+  { name: "Belezza Boxspring", description: "Belezza combineert Italiaanse elegantie met diep ondersteunend slaapcomfort. Een boxspring voor wie verfijning en rust verenigt.", price: 2999, category: "bedden", featured: true, images: bedImgs("belezza-120-dpi-jpeg-gorseller") },
+  { name: "Bianca Bedframe", description: "Het Bianca bedframe is pure rust in vorm. Volledige stofwikkeling, schuine hoofdsteun en opvallende stiknaden — een statement-stuk.", price: 1999, category: "bedden", featured: true, images: bedImgs("biancabedd") },
+  { name: "Birdy Bedframe", description: "Birdy combineert grijs en crème in subtiele kleurblokken. Modern karakter met een knipoog naar Scandinavische eenvoud.", price: 1499, category: "bedden", featured: false, images: bedImgs("birdybedd-gri-ve-krem") },
+  { name: "Blacksand Boxspring", description: "Een boxspring in donkere zandtinten — discreet, krachtig en ingetogen luxueus. Voor wie warmte en rust zoekt.", price: 2399, category: "bedden", featured: false, images: bedImgs("blacksand") },
+  { name: "Bohem Bedframe", description: "Bohemstyling in hedendaagse vorm. Het Bohem bedframe omarmt textuur en warmte — ambachtelijke afwerking met een moderne lijn.", price: 1799, category: "bedden", featured: false, images: bedImgs("bohembedd") },
+  { name: "Bohemella Boxspring", description: "Bohemella is romantiek opnieuw gedacht. Een boxspring met zachte capitons en breed silhouet — droomscène in je slaapkamer.", price: 3199, category: "bedden", featured: true, images: bedImgs("bohemella") },
+  { name: "Borjen Boxspring", description: "Borjen is de essentie van rust. Schoon design, voldoende ondersteuning, niets te veel — alles wat een goede nacht vraagt.", price: 1999, category: "bedden", featured: false, images: bedImgs("borjen") },
+  { name: "Brida Bedframe", description: "Brida is krachtig en sereen tegelijk. Een gestoffeerd bedframe met nadruk op verfijnde stofkeuze en stille lijnen.", price: 1599, category: "bedden", featured: false, images: bedImgs("bridabedd") },
+  { name: "Capadocia Boxspring", description: "Capadocia is een hommage aan vakmanschap. Royale boxspring, weelderige hoofdsteun en bedoeld voor lange jaren rust.", price: 3499, category: "bedden", featured: true, images: bedImgs("capadocia") },
+  { name: "Clima Naturel Boxspring", description: "Een boxspring met natuurlijke materialen die de slaapkamer laten ademen. Comfort dat rekening houdt met de seizoenen.", price: 2299, category: "bedden", featured: false, images: bedImgs("clima-naturel") },
+  { name: "Comfizone Boxspring", description: "Comfizone biedt no-nonsense comfort. Stevige basis, zachte top, met de beloften die je van een premium boxspring verwacht.", price: 1899, category: "bedden", featured: false, images: bedImgs("comfizone") },
+  { name: "Cotton Master Boxspring", description: "Een boxspring volledig bekleed in zacht katoen. Ademend, neutraal van kleur en uitnodigend in elk interieur.", price: 2099, category: "bedden", featured: false, images: bedImgs("cotton-master") },
+  { name: "Dolce Bedframe", description: "Dolce is verfijnde Italiaanse eenvoud. Strakke lijnen, gepolsterde randen — een bedframe dat zich onopvallend verhoudt tot je interieur.", price: 1699, category: "bedden", featured: false, images: bedImgs("dolcebedd") },
+  { name: "Fresh Cell Boxspring", description: "Een lichte boxspring met frisse uitstraling. Ideaal voor moderne, lichte slaapkamers met aandacht voor detail.", price: 1999, category: "bedden", featured: false, images: bedImgs("fresh-cell") },
+  { name: "Golden Boxspring", description: "Golden — een boxspring met subtiele warme tinten en luxueuze stofkeuze. Voor de slaapkamer die zich onderscheidt.", price: 2599, category: "bedden", featured: false, images: bedImgs("golden", 3) },
+  { name: "Fluffy Boxspring Grijs", description: "Fluffy in grijs is wolzacht comfort. Diep gestoffeerd, met een hoofdsteun die je opslokt na een lange dag.", price: 2799, category: "bedden", featured: true, images: bedImgs("jpg-fluffy-gri") },
+  { name: "Fluffy Boxspring Crème", description: "Fluffy in crème straalt licht en rust uit. Dezelfde wolzachte ervaring in een ingetogen, lichte toon.", price: 2799, category: "bedden", featured: false, images: bedImgs("jpg-fluffy-krem") },
+  { name: "Kapok Naturel Boxspring", description: "Kapok Naturel — kapokvulling, natuurlijke materialen en eerlijke afwerking. Een boxspring met respect voor herkomst.", price: 2499, category: "bedden", featured: false, images: bedImgs("kapok-naturel") },
+  { name: "Leo Bedframe Grijs", description: "Leo in grijs is moderniteit in stof. Een statement bedframe met breed silhouet en krachtige aanwezigheid.", price: 1899, category: "bedden", featured: true, images: bedImgs("leobedd-grey-140-160-180") },
+  { name: "Lucce Bedframe Bruin", description: "Lucce in warm bruin brengt karakter en herfstwarmte. Een gestoffeerd bedframe met klassieke proporties.", price: 1999, category: "bedden", featured: false, images: bedImgs("luccebedd-brown-140-160-180") },
+  { name: "Lucce Junior Bedframe", description: "Lucce Junior in beige — kleinere afmetingen voor de jongste. Premium materialen, zachte randen, dezelfde kwaliteit.", price: 1199, category: "bedden", featured: false, images: bedImgs("luccebedd-junior-90-120-bej") },
+  { name: "Luxia Boxspring", description: "Luxia — pure luxe zonder uiterlijke ostentatie. Diepe boxspring, met vakmanschap dat je voelt na elke nacht.", price: 3199, category: "bedden", featured: false, images: bedImgs("luxia") },
+  { name: "Magnasand Boxspring", description: "Magnasand brengt aardse tinten en stevige ondersteuning samen. Een boxspring voor wie kwaliteit zoekt zonder fanfare.", price: 2199, category: "bedden", featured: false, images: bedImgs("magnasand") },
+  { name: "Marshmallow Bedframe", description: "Marshmallow — zacht, weelderig, omarmend. Capitons hoofdsteun en breed gestoffeerde basis voor pure ontspanning.", price: 2299, category: "bedden", featured: true, images: bedImgs("marshmallow-baza-baslik") },
+  { name: "Milano Boxspring", description: "Milano combineert Italiaanse stofkeuze met klassieke boxspring-comfort. Een tijdloze keuze in elk premium interieur.", price: 2899, category: "bedden", featured: false, images: bedImgs("milano-120-dpi-jpeg-gorseller") },
+  { name: "Mode Bedframe", description: "Mode in beige en grijs. Modern bedframe met scherpe lijnen — voor wie een statement wil zonder overdaad.", price: 1699, category: "bedden", featured: false, images: bedImgs("modebedd-bej-vegri") },
+  { name: "Ocean Bedframe", description: "Ocean roept de rust van het water op. Een bedframe in koele tinten, ontworpen voor diepe ontspanning.", price: 1799, category: "bedden", featured: false, images: bedImgs("oceanbedd") },
+  { name: "Oxycore Boxspring", description: "Oxycore biedt ademende technologie en premium afwerking. Voor de slaper die rust en innovatie waardeert.", price: 2699, category: "bedden", featured: false, images: bedImgs("oxycore-120-dpi-jpeg-gorseller") },
+  { name: "Paris Boxspring", description: "Paris — Franse elegantie in boxspring-vorm. Een meubelstuk dat de slaapkamer transformeert tot privé-suite.", price: 3299, category: "bedden", featured: true, images: bedImgs("paris") },
+  { name: "Pinky Boxspring", description: "Pinky in zachte rosé tinten — een boxspring met persoonlijkheid. Comfort dat zich uitspreekt zonder hard te roepen.", price: 2299, category: "bedden", featured: false, images: bedImgs("pinky") },
+  { name: "Shine Bedframe", description: "Shine is moderne grandeur. Een gestoffeerd bedframe met lichte glans in de stof — voor het stijlvolle interieur.", price: 1799, category: "bedden", featured: false, images: bedImgs("shinebedd") },
+  { name: "Sia 1-persoons Bedframe Grijs", description: "Sia in grijs voor één persoon. Compact, elegant — ideaal voor logeerkamer of jong volwassene.", price: 1099, category: "bedden", featured: false, images: bedImgs("siabedd-90-120-gri") },
+  { name: "Sia Bedframe Beige", description: "Sia in beige biedt ruime afmetingen en serene uitstraling. Tijdloos design met zachte stoffering.", price: 1499, category: "bedden", featured: false, images: bedImgs("siabedd-bej-140-160-180") },
+  { name: "Sleepure Boxspring", description: "Sleepure — pure slaap, niets minder. Klassieke boxspring met focus op comfort en duurzaamheid.", price: 2199, category: "bedden", featured: false, images: bedImgs("sleepure-2021") },
+  { name: "Sydney Boxspring", description: "Sydney brengt Australische ruimheid naar je slaapkamer. Royale boxspring, comfortabele matras, kalme tinten.", price: 2799, category: "bedden", featured: false, images: bedImgs("sydney") },
+  { name: "Thermall Boxspring", description: "Thermall biedt warmtegeleiding op maat. Een boxspring die zich aanpast aan jouw temperatuur — winter en zomer.", price: 2399, category: "bedden", featured: false, images: bedImgs("thermall") },
+  { name: "Thermo Control Boxspring", description: "Met Thermo Control regelt de boxspring zelf de juiste warmte. Geavanceerd comfort voor wie diep wil slapen.", price: 2599, category: "bedden", featured: false, images: bedImgs("thermo-control") },
+  { name: "Vanilla Loop Boxspring", description: "Vanilla Loop — zachte vanille-tinten, zachte rondingen. Een boxspring die de slaapkamer in een rustige cocon verandert.", price: 2099, category: "bedden", featured: false, images: bedImgs("vanilla-loop") },
+  { name: "Woolly Bedframe", description: "Woolly is wolwarmte en ambacht. Een bedframe gestoffeerd in textuur-rijke stoffen, voor wie warmte en stijl combineert.", price: 1899, category: "bedden", featured: false, images: bedImgs("woollybedd") },
+  { name: "Wooltouch Boxspring", description: "Wooltouch — een boxspring met de finesse van wol en de souplesse van premium textiel. Comfort dat lang meegaat.", price: 2599, category: "bedden", featured: false, images: bedImgs("wooltouch-jpg", 4) },
 
   // ── PLACEHOLDER CATEGORIEËN (worden later vervangen door echte producten) ──
   { name: "Slaapkamer Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 1299, category: "slaapkamers", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]) },
