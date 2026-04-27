@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { cldOptimize } from "@/lib/cloudinary";
+import { cldOptimize } from "@/lib/cloudinary-url";
 
 interface Product {
   id: string;

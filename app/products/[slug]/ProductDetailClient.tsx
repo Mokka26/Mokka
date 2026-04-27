@@ -11,7 +11,7 @@ import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { getReviewsFor, type Review } from "@/lib/productReviews";
-import { cldOptimize } from "@/lib/cloudinary";
+import { cldOptimize } from "@/lib/cloudinary-url";
 
 interface Product {
   id: string;
