@@ -15,6 +15,7 @@ type Row = {
   featured: boolean;
   images: string;
   updatedAt: Date;
+  stock: number;
 };
 
 function firstImage(images: string): string | null {
@@ -44,6 +45,7 @@ export default function ProductsTable({ products }: { products: Row[] }) {
             <Th>Naam</Th>
             <Th className="hidden md:table-cell">Categorie</Th>
             <Th className="text-right">Prijs</Th>
+            <Th className="text-right w-[100px]">Voorraad</Th>
             <Th className="text-center w-[80px]">Featured</Th>
             <Th className="w-[60px]" />
           </tr>
@@ -102,6 +104,9 @@ function ProductRow({ product }: { product: Row }) {
       <td className="px-4 py-3 text-right">
         <PriceCell id={product.id} initial={product.price} />
       </td>
+      <td className="px-4 py-3 text-right">
+        <StockCell id={product.id} initial={product.stock} />
+      </td>
       <td className="px-4 py-3 text-center">
         <button
           type="button"
@@ -127,6 +132,78 @@ function ProductRow({ product }: { product: Row }) {
         </Link>
       </td>
     </tr>
+  );
+}
+
+function StockCell({ id, initial }: { id: string; initial: number }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(initial));
+  const [current, setCurrent] = useState(initial);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const commit = () => {
+    const n = parseInt(value, 10);
+    if (isNaN(n) || n < 0) {
+      setError("Ongeldig");
+      setValue(String(current));
+      setEditing(false);
+      return;
+    }
+    if (n === current) {
+      setEditing(false);
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const res = await updateProductInline({ id, stock: n });
+      if (res.ok) {
+        setCurrent(n);
+        setValue(String(n));
+      } else {
+        setError(res.error);
+        setValue(String(current));
+      }
+      setEditing(false);
+    });
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") {
+            setValue(String(current));
+            setEditing(false);
+          }
+        }}
+        className="w-20 px-2 py-1 text-sm border border-bronze focus:outline-none text-right tabular-nums"
+        type="number"
+        min="0"
+      />
+    );
+  }
+
+  const color =
+    current === 0 ? "text-red-700" : current <= 3 ? "text-amber-700" : "text-ink";
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      disabled={pending}
+      title={error ?? "Klik om te bewerken"}
+      className={`inline-flex items-center gap-1.5 group ${pending ? "opacity-50" : ""}`}
+    >
+      <span className={`text-sm tabular-nums ${color}`}>{current}</span>
+      <Edit3 className="w-3 h-3 text-stone opacity-0 group-hover:opacity-100 transition-opacity" />
+      {error && <X className="w-3 h-3 text-red-700" />}
+    </button>
   );
 }
 

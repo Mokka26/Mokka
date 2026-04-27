@@ -12,6 +12,7 @@ interface Product {
   images: string;
   featured?: boolean;
   createdAt?: Date | string;
+  stock?: number;
 }
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 
 // Bepaal welk badge te tonen (als er al eentje is)
 function getBadge(product: Product): string | null {
+  if (product.stock === 0) return "Uitverkocht";
   if (!product.createdAt) {
     return product.featured ? "Uitgelicht" : null;
   }
@@ -35,6 +37,7 @@ export default function ProductCard({ product }: Props) {
   const firstImage = images[0];
   const secondImage = images.length > 1 ? images[1] : null;
   const badge = getBadge(product);
+  const isOutOfStock = product.stock === 0;
 
   return (
     <Link href={`/products/${product.slug}`} className="group block">
@@ -59,13 +62,24 @@ export default function ProductCard({ product }: Props) {
             />
           )}
 
-          {/* Badge linksboven — alleen voor Nieuw of Uitgelicht */}
+          {/* Badge linksboven — Uitverkocht / Nieuw / Uitgelicht */}
           {badge && (
             <div className="absolute top-3 left-3 z-10">
-              <span className="inline-block text-[10px] uppercase tracking-[0.25em] px-2.5 py-1 border border-bronze/30 bg-white/85 backdrop-blur-sm text-ink font-medium">
+              <span
+                className={`inline-block text-[10px] uppercase tracking-[0.25em] px-2.5 py-1 backdrop-blur-sm font-medium ${
+                  isOutOfStock
+                    ? "border border-stone/40 bg-white/90 text-stone"
+                    : "border border-bronze/30 bg-white/85 text-ink"
+                }`}
+              >
                 {badge}
               </span>
             </div>
+          )}
+
+          {/* Uitverkocht overlay — gedimde bone */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-bone/55 z-[5] pointer-events-none" />
           )}
         </div>
 

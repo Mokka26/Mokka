@@ -24,6 +24,7 @@ const inlineUpdateSchema = z.object({
   id: z.string().min(1),
   price: z.number().nonnegative().max(999999).optional(),
   featured: z.boolean().optional(),
+  stock: z.number().int().nonnegative().max(99999).optional(),
 });
 
 export type InlineUpdateInput = z.infer<typeof inlineUpdateSchema>;
@@ -62,6 +63,8 @@ const specsRecordSchema = z
   .record(z.string().min(1).max(50), z.string().min(1).max(200))
   .refine((r) => Object.keys(r).length <= 20, { message: "Max 20 specs" });
 
+const hexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable();
+
 const fullUpdateSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(2).max(200),
@@ -70,6 +73,11 @@ const fullUpdateSchema = z.object({
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   specs: specsRecordSchema.nullable(),
+  stock: z.number().int().nonnegative().max(99999),
+  deliveryTime: z.string().max(80).nullable(),
+  colorGroup: z.string().max(80).nullable(),
+  colorName: z.string().max(40).nullable(),
+  colorHex: hexSchema,
 });
 
 export type FullUpdateState = {
@@ -104,6 +112,12 @@ export async function updateProductFull(
     }
   }
 
+  const trimOrNull = (v: FormDataEntryValue | null): string | null => {
+    if (typeof v !== "string") return null;
+    const t = v.trim();
+    return t.length > 0 ? t : null;
+  };
+
   const parsed = fullUpdateSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
@@ -112,6 +126,11 @@ export async function updateProductFull(
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     specs: specsParsed,
+    stock: Number(formData.get("stock") ?? 0),
+    deliveryTime: trimOrNull(formData.get("deliveryTime")),
+    colorGroup: trimOrNull(formData.get("colorGroup")),
+    colorName: trimOrNull(formData.get("colorName")),
+    colorHex: trimOrNull(formData.get("colorHex")),
   });
 
   if (!parsed.success) {
@@ -224,6 +243,11 @@ const createSchema = z.object({
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   images: z.array(z.string().url()).default([]),
+  stock: z.number().int().nonnegative().max(99999).default(10),
+  deliveryTime: z.string().max(80).nullable().default(null),
+  colorGroup: z.string().max(80).nullable().default(null),
+  colorName: z.string().max(40).nullable().default(null),
+  colorHex: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable().default(null),
 });
 
 export type CreateProductState = {
@@ -246,6 +270,12 @@ export async function createProduct(
     images = [];
   }
 
+  const trimOrNull = (v: FormDataEntryValue | null): string | null => {
+    if (typeof v !== "string") return null;
+    const t = v.trim();
+    return t.length > 0 ? t : null;
+  };
+
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
     slug: slugify(String(formData.get("slug") || formData.get("name") || "")),
@@ -254,6 +284,11 @@ export async function createProduct(
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     images,
+    stock: Number(formData.get("stock") ?? 10),
+    deliveryTime: trimOrNull(formData.get("deliveryTime")),
+    colorGroup: trimOrNull(formData.get("colorGroup")),
+    colorName: trimOrNull(formData.get("colorName")),
+    colorHex: trimOrNull(formData.get("colorHex")),
   });
 
   if (!parsed.success) {

@@ -15,6 +15,8 @@ interface Product {
   category: string;
   images: string;
   featured: boolean;
+  stock?: number;
+  createdAt?: string | Date;
 }
 
 const categoryLabels: Record<string, string> = {

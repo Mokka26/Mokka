@@ -22,6 +22,18 @@ interface Product {
   images: string;
   specs?: string | null;
   featured: boolean;
+  stock?: number;
+  deliveryTime?: string | null;
+  colorGroup?: string | null;
+  colorName?: string | null;
+  colorHex?: string | null;
+}
+
+interface ColorVariant {
+  id: string;
+  slug: string;
+  colorName: string | null;
+  colorHex: string | null;
 }
 
 function parseSpecs(raw: string | null | undefined): Record<string, string> {
@@ -42,6 +54,7 @@ function parseSpecs(raw: string | null | undefined): Record<string, string> {
 interface Props {
   product: Product;
   relatedProducts: Product[];
+  colorVariants: ColorVariant[];
 }
 
 const usps = [
@@ -50,7 +63,7 @@ const usps = [
   { icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15", label: "30 dagen retour", sub: "Gratis retourneren" },
 ];
 
-export default function ProductDetailClient({ product, relatedProducts }: Props) {
+export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const images: string[] = JSON.parse(product.images);
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -163,13 +176,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
                 >
                   <div className="flex">
                     {images.map((img, i) => (
-                      <div key={i} className="relative flex-[0_0_100%] aspect-square">
+                      <div key={i} className="relative flex-[0_0_100%] aspect-square bg-bone">
                         <Image
                           src={img}
                           alt={`${product.name} — ${i + 1}`}
                           fill
                           priority={i === 0}
-                          className="object-cover"
+                          className="object-contain p-6"
                           sizes="(max-width: 640px) 92vw, 88vw"
                         />
                       </div>
@@ -242,7 +255,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
                         alt={product.name}
                         fill
                         priority
-                        className="object-cover transition-transform duration-200 ease-out will-change-transform"
+                        className="object-contain p-10 transition-transform duration-200 ease-out will-change-transform"
                         style={
                           zoomActive
                             ? { transform: "scale(1.8)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
@@ -274,21 +287,41 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
 
               <p className="body-lg text-slate mb-10">{product.description}</p>
 
+              <ColorVariantPicker
+                currentSlug={product.slug}
+                currentColorName={product.colorName ?? null}
+                variants={colorVariants}
+              />
+
               <ProductSpecs specs={parseSpecs(product.specs)} />
+
+              <StockDeliveryInfo
+                stock={product.stock ?? 0}
+                deliveryTime={product.deliveryTime ?? null}
+              />
 
               {/* Aantal + Knop */}
               <div className="flex flex-col sm:flex-row gap-4 mb-10">
                 <div className="flex items-center border border-line">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm">−</button>
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={(product.stock ?? 0) === 0}
+                    className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm disabled:opacity-40"
+                  >−</button>
                   <span className="px-4 py-4 text-ink text-sm min-w-[3rem] text-center">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm">+</button>
+                  <button
+                    onClick={() => setQuantity(Math.min(product.stock ?? 99, quantity + 1))}
+                    disabled={quantity >= (product.stock ?? 0)}
+                    className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm disabled:opacity-40"
+                  >+</button>
                 </div>
                 <motion.button
                   onClick={handleAddToCart}
-                  className={`btn-primary flex-1 text-center ${added ? "!bg-success" : ""}`}
+                  disabled={(product.stock ?? 0) === 0}
+                  className={`btn-primary flex-1 text-center ${added ? "!bg-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed`}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {added ? "Toegevoegd!" : "In Winkelwagen"}
+                  {(product.stock ?? 0) === 0 ? "Uitverkocht" : added ? "Toegevoegd!" : "In Winkelwagen"}
                 </motion.button>
               </div>
 
@@ -502,6 +535,86 @@ function StarRow({ rating }: { rating: 4 | 5 }) {
           }`}
         />
       ))}
+    </div>
+  );
+}
+
+function ColorVariantPicker({
+  currentSlug,
+  currentColorName,
+  variants,
+}: {
+  currentSlug: string;
+  currentColorName: string | null;
+  variants: ColorVariant[];
+}) {
+  if (!variants || variants.length <= 1) return null;
+  return (
+    <div className="mb-10">
+      <div className="flex items-baseline justify-between mb-3">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-stone">Kleur</p>
+        {currentColorName && (
+          <p className="font-serif italic text-ink text-sm">{currentColorName}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {variants.map((v) => {
+          const isCurrent = v.slug === currentSlug;
+          const swatch = v.colorHex ?? "#CFCFCF";
+          return (
+            <Link
+              key={v.id}
+              href={`/products/${v.slug}`}
+              aria-label={v.colorName ?? "Variant"}
+              title={v.colorName ?? ""}
+              className={`relative w-10 h-10 border-2 transition-all ${
+                isCurrent
+                  ? "border-ink scale-100"
+                  : "border-line hover:border-bronze hover:scale-105"
+              }`}
+              style={{ backgroundColor: swatch }}
+            >
+              {isCurrent && (
+                <span className="absolute inset-0 ring-2 ring-ink/0 ring-offset-2 ring-offset-paper" />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StockDeliveryInfo({
+  stock,
+  deliveryTime,
+}: {
+  stock: number;
+  deliveryTime: string | null;
+}) {
+  const hasStock = stock > 0;
+  const lowStock = stock > 0 && stock <= 3;
+  return (
+    <div className="mb-10 flex flex-col gap-2.5 pb-6 border-b border-line">
+      <div className="flex items-center gap-2.5">
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            !hasStock ? "bg-red-700" : lowStock ? "bg-amber-600" : "bg-emerald-600"
+          }`}
+        />
+        <span className="text-sm text-ink">
+          {!hasStock
+            ? "Tijdelijk uitverkocht"
+            : lowStock
+              ? `Nog ${stock} op voorraad`
+              : "Op voorraad"}
+        </span>
+      </div>
+      {deliveryTime && hasStock && (
+        <p className="text-[12px] text-stone pl-4">
+          Levertijd: <span className="text-ink">{deliveryTime}</span>
+        </p>
+      )}
     </div>
   );
 }

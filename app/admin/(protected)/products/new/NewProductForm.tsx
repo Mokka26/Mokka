@@ -95,6 +95,27 @@ export default function NewProductForm({ categories }: { categories: string[] })
             </select>
           </Field>
 
+          <Field label="Voorraad" error={state.fieldErrors?.stock}>
+            <input
+              name="stock"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={10}
+              required
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-bronze"
+            />
+          </Field>
+
+          <Field label="Levertijd" error={state.fieldErrors?.deliveryTime}>
+            <input
+              name="deliveryTime"
+              placeholder="Bijv. 1-3 werkdagen"
+              maxLength={80}
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+            />
+          </Field>
+
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <input
               name="featured"

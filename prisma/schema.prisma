@@ -8,20 +8,26 @@ datasource db {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  description String   @db.Text
-  price       Float
-  category    String
-  images      String   @db.Text
-  specs       String?  @db.Text
-  featured    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  orderItems  OrderItem[]
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  description  String   @db.Text
+  price        Float
+  category     String
+  images       String   @db.Text
+  specs        String?  @db.Text
+  featured     Boolean  @default(false)
+  stock        Int      @default(10)
+  deliveryTime String?
+  colorGroup   String?
+  colorName    String?
+  colorHex     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orderItems   OrderItem[]
 
   @@index([category])
+  @@index([colorGroup])
 }
 
 model Order {

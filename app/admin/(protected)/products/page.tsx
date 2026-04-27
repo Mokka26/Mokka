@@ -30,6 +30,7 @@ export default async function AdminProductsPage({
       featured: true,
       images: true,
       updatedAt: true,
+      stock: true,
     },
   });
 

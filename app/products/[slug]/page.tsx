@@ -27,12 +27,25 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const relatedProducts = await prisma.product.findMany({
-    where: { category: product.category, id: { not: product.id } },
-    take: 4,
-  });
+  const [relatedProducts, colorVariants] = await Promise.all([
+    prisma.product.findMany({
+      where: { category: product.category, id: { not: product.id } },
+      take: 4,
+    }),
+    product.colorGroup
+      ? prisma.product.findMany({
+          where: { colorGroup: product.colorGroup },
+          select: { id: true, slug: true, colorName: true, colorHex: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+  ]);
 
   return (
-    <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+    <ProductDetailClient
+      product={product}
+      relatedProducts={relatedProducts}
+      colorVariants={colorVariants}
+    />
   );
 }

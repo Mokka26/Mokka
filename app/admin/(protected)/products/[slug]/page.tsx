@@ -79,6 +79,11 @@ export default async function AdminProductEditPage({
           category: product.category,
           featured: product.featured,
           specs: parseSpecs(product.specs),
+          stock: product.stock,
+          deliveryTime: product.deliveryTime,
+          colorGroup: product.colorGroup,
+          colorName: product.colorName,
+          colorHex: product.colorHex,
         }}
         categories={categories.map((c) => c.category)}
       />
