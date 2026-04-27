@@ -15,6 +15,7 @@ model Product {
   price       Float
   category    String
   images      String   @db.Text
+  specs       String?  @db.Text
   featured    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -58,6 +58,10 @@ export async function updateProductInline(
 // Full edit (name, description, price, category, featured)
 // ─────────────────────────────────────────────────────────────────────
 
+const specsRecordSchema = z
+  .record(z.string().min(1).max(50), z.string().min(1).max(200))
+  .refine((r) => Object.keys(r).length <= 20, { message: "Max 20 specs" });
+
 const fullUpdateSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(2).max(200),
@@ -65,6 +69,7 @@ const fullUpdateSchema = z.object({
   price: z.number().nonnegative().max(999999),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
+  specs: specsRecordSchema.nullable(),
 });
 
 export type FullUpdateState = {
@@ -80,6 +85,25 @@ export async function updateProductFull(
   const session = await auth();
   if (!session?.user) return { error: "Niet ingelogd" };
 
+  const rawSpecs = formData.get("specs");
+  let specsParsed: Record<string, string> | null = null;
+  if (typeof rawSpecs === "string" && rawSpecs.trim()) {
+    try {
+      const obj = JSON.parse(rawSpecs);
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        const filtered: Record<string, string> = {};
+        for (const [k, v] of Object.entries(obj)) {
+          if (typeof k === "string" && typeof v === "string" && k.trim() && v.trim()) {
+            filtered[k.trim()] = v.trim();
+          }
+        }
+        specsParsed = Object.keys(filtered).length > 0 ? filtered : null;
+      }
+    } catch {
+      specsParsed = null;
+    }
+  }
+
   const parsed = fullUpdateSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
@@ -87,6 +111,7 @@ export async function updateProductFull(
     price: Number(formData.get("price")),
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
+    specs: specsParsed,
   });
 
   if (!parsed.success) {
@@ -98,11 +123,14 @@ export async function updateProductFull(
     return { fieldErrors };
   }
 
-  const { id, ...data } = parsed.data;
+  const { id, specs, ...rest } = parsed.data;
 
   let updated;
   try {
-    updated = await prisma.product.update({ where: { id }, data });
+    updated = await prisma.product.update({
+      where: { id },
+      data: { ...rest, specs: specs ? JSON.stringify(specs) : null },
+    });
   } catch {
     return { error: "Update mislukt" };
   }

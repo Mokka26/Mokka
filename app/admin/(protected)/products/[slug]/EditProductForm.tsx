@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import SpecsEditor from "@/components/admin/SpecsEditor";
 import { updateProductFull, type FullUpdateState } from "../actions";
 
 const initial: FullUpdateState = {};
@@ -16,6 +17,7 @@ type Props = {
     price: number;
     category: string;
     featured: boolean;
+    specs: Record<string, string>;
   };
   categories: string[];
 };
@@ -51,6 +53,16 @@ export default function EditProductForm({ product, categories }: Props) {
             className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm leading-relaxed focus:outline-none focus:border-bronze font-serif"
           />
         </Field>
+
+        <div>
+          <label className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+            Specificaties
+          </label>
+          <p className="text-[11px] text-stone mb-3">
+            Verschijnt als tabel op de productpagina onder de beschrijving.
+          </p>
+          <SpecsEditor name="specs" initial={product.specs} />
+        </div>
       </div>
 
       <aside className="space-y-6">

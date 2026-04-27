@@ -17,6 +17,21 @@ function parseImages(raw: string): string[] {
   }
 }
 
+function parseSpecs(raw: string | null): Record<string, string> {
+  if (!raw) return {};
+  try {
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (typeof k === "string" && typeof v === "string") out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 export default async function AdminProductEditPage({
   params,
 }: {
@@ -63,6 +78,7 @@ export default async function AdminProductEditPage({
           price: product.price,
           category: product.category,
           featured: product.featured,
+          specs: parseSpecs(product.specs),
         }}
         categories={categories.map((c) => c.category)}
       />
