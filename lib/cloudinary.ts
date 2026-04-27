@@ -45,3 +45,29 @@ export function cldUrl(
   const transform = parts.join(",");
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${publicId}`;
 }
+
+/**
+ * Voeg transformaties toe aan een bestaande Cloudinary URL.
+ * Niet-Cloudinary URLs worden ongewijzigd teruggegeven.
+ *
+ * Met `ar` wordt c_fill+g_auto toegepast: Cloudinary herkent het onderwerp
+ * (product) en crop't strak om het object heen — geen lege ruimte, product
+ * altijd in beeld.
+ */
+export function cldOptimize(
+  url: string,
+  options: { ar?: string; w?: number } = {},
+): string {
+  if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+    return url;
+  }
+
+  const parts: string[] = ["f_auto", "q_auto"];
+  if (options.ar) {
+    parts.push("c_fill", "g_auto", `ar_${options.ar}`);
+  }
+  if (options.w) parts.push(`w_${options.w}`);
+
+  const transform = parts.join(",");
+  return url.replace("/upload/", `/upload/${transform}/`);
+}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { cldOptimize } from "@/lib/cloudinary";
 
 interface Product {
   id: string;
@@ -34,8 +35,8 @@ function getBadge(product: Product): string | null {
 
 export default function ProductCard({ product }: Props) {
   const images: string[] = JSON.parse(product.images);
-  const firstImage = images[0];
-  const secondImage = images.length > 1 ? images[1] : null;
+  const firstImage = cldOptimize(images[0], { ar: "4:5", w: 800 });
+  const secondImage = images.length > 1 ? cldOptimize(images[1], { ar: "4:5", w: 800 }) : null;
   const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;
 

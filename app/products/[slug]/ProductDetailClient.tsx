@@ -11,6 +11,7 @@ import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { getReviewsFor, type Review } from "@/lib/productReviews";
+import { cldOptimize } from "@/lib/cloudinary";
 
 interface Product {
   id: string;
@@ -178,11 +179,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     {images.map((img, i) => (
                       <div key={i} className="relative flex-[0_0_100%] aspect-square bg-bone">
                         <Image
-                          src={img}
+                          src={cldOptimize(img, { ar: "1:1", w: 1100 })}
                           alt={`${product.name} — ${i + 1}`}
                           fill
                           priority={i === 0}
-                          className="object-contain p-6"
+                          className="object-cover"
                           sizes="(max-width: 640px) 92vw, 88vw"
                         />
                       </div>
@@ -225,7 +226,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         selectedImage === i ? "opacity-100" : "opacity-50 hover:opacity-90"
                       }`}
                     >
-                      <Image src={img} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
+                      <Image src={cldOptimize(img, { ar: "1:1", w: 200 })} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
                       {selectedImage === i && (
                         <span className="absolute inset-y-0 left-0 w-[2px] bg-ink" />
                       )}
@@ -251,11 +252,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       className="absolute inset-0"
                     >
                       <Image
-                        src={images[selectedImage]}
+                        src={cldOptimize(images[selectedImage], { ar: "1:1", w: 1400 })}
                         alt={product.name}
                         fill
                         priority
-                        className="object-contain p-10 transition-transform duration-200 ease-out will-change-transform"
+                        className="object-cover transition-transform duration-200 ease-out will-change-transform"
                         style={
                           zoomActive
                             ? { transform: "scale(1.8)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
