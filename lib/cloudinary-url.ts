@@ -58,17 +58,20 @@ export function cldOptimize(
   }
 
   const mode = options.mode ?? "blurred";
-  const parts: string[] = ["f_auto", "q_auto"];
+  const parts: string[] = [];
   if (options.ar) {
     if (mode === "fill") {
       parts.push("c_fill", "g_auto", `ar_${options.ar}`);
     } else if (mode === "pad") {
       parts.push("c_pad", "b_auto", `ar_${options.ar}`);
     } else {
-      parts.push("c_pad", "b_blurred:400:15", `ar_${options.ar}`);
+      // b_blurred wordt apart gechained omdat de dubbele-colon syntax
+      // soms breekt als 't met andere transforms in 1 segment staat.
+      parts.push("c_pad", "b_blurred", `ar_${options.ar}`);
     }
   }
   if (options.w) parts.push(`w_${options.w}`);
+  parts.push("f_auto", "q_auto");
 
   const transform = parts.join(",");
   return url.replace("/upload/", `/upload/${transform}/`);
