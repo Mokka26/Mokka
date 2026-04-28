@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useCart, CartItemType } from "@/context/CartContext";
+import { firstImageUrl } from "@/lib/imageHelpers";
 
 interface Props {
   item: CartItemType;
@@ -10,14 +11,14 @@ interface Props {
 
 export default function CartItem({ item }: Props) {
   const { removeFromCart, updateQuantity } = useCart();
-  const images: string[] = JSON.parse(item.product.images);
+  const thumb = firstImageUrl(item.product.images);
   const itemTotal = item.product.price * item.quantity;
 
   return (
     <motion.div layout className="grid grid-cols-12 gap-4 items-center py-6 border-b border-line">
       <div className="col-span-12 md:col-span-6 flex gap-5">
         <div className="relative w-20 h-20 bg-white flex-shrink-0 overflow-hidden">
-          <Image src={images[0]} alt={item.product.name} fill className="object-cover" sizes="80px" />
+          {thumb && <Image src={thumb} alt={item.product.name} fill className="object-cover" sizes="80px" />}
         </div>
         <div>
           <h4 className="text-ink text-sm font-medium">{item.product.name}</h4>

@@ -152,7 +152,7 @@ export default function ProductsContent() {
         ) : (
           <motion.div
             key={`${category}-${sortBy}-${searchQuery}-${priceRange.join("-")}`}
-            className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-16"
+            className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-16 items-start"
             initial="hidden"
             animate="visible"
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}

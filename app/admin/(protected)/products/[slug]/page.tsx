@@ -5,17 +5,9 @@ import { prisma } from "@/lib/prisma";
 import EditProductForm from "./EditProductForm";
 import ImageManager from "@/components/admin/ImageManager";
 import DeleteProductButton from "./DeleteProductButton";
+import { parseImages } from "@/lib/imageHelpers";
 
 export const dynamic = "force-dynamic";
-
-function parseImages(raw: string): string[] {
-  try {
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 function parseSpecs(raw: string | null): Record<string, string> {
   if (!raw) return {};

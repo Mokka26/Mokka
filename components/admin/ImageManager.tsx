@@ -7,13 +7,14 @@ import {
   getCloudinarySignature,
   updateProductImages,
 } from "@/app/admin/(protected)/products/actions";
+import type { ProductImage } from "@/lib/imageHelpers";
 
 type Props = {
   productId?: string;
   category: string;
   slug: string;
-  initialImages: string[];
-  onChange?: (images: string[]) => void;
+  initialImages: ProductImage[];
+  onChange?: (images: ProductImage[]) => void;
   persist?: boolean;
 };
 
@@ -28,13 +29,13 @@ export default function ImageManager({
   onChange,
   persist = true,
 }: Props) {
-  const [images, setImages] = useState<string[]>(initialImages);
+  const [images, setImages] = useState<ProductImage[]>(initialImages);
   const [uploading, setUploading] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const commit = (next: string[]) => {
+  const commit = (next: ProductImage[]) => {
     setImages(next);
     onChange?.(next);
     if (!persist || !productId) return;
@@ -106,8 +107,15 @@ export default function ImageManager({
         const errText = await res.text();
         throw new Error(`Cloudinary: ${res.status} ${errText.slice(0, 100)}`);
       }
-      const json = (await res.json()) as { secure_url: string };
-      commit([...images, json.secure_url]);
+      const json = (await res.json()) as {
+        secure_url: string;
+        width: number;
+        height: number;
+      };
+      commit([
+        ...images,
+        { url: json.secure_url, w: json.width, h: json.height },
+      ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload mislukt");
     } finally {
@@ -134,10 +142,10 @@ export default function ImageManager({
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {images.map((url, i) => (
+        {images.map((img, i) => (
           <ImageTile
-            key={url}
-            url={url}
+            key={img.url}
+            url={img.url}
             index={i}
             isPrimary={i === 0}
             isFirst={i === 0}

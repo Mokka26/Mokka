@@ -12,6 +12,7 @@ import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { getReviewsFor, type Review } from "@/lib/productReviews";
 import { cldOptimize } from "@/lib/cloudinary-url";
+import { parseImages, imageAspect } from "@/lib/imageHelpers";
 
 interface Product {
   id: string;
@@ -65,7 +66,8 @@ const usps = [
 ];
 
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
-  const images: string[] = JSON.parse(product.images);
+  const productImages = parseImages(product.images);
+  const images: string[] = productImages.map((i) => i.url);
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -177,9 +179,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 >
                   <div className="flex">
                     {images.map((img, i) => (
-                      <div key={i} className="relative flex-[0_0_100%] aspect-square bg-bone">
+                      <div
+                        key={i}
+                        className="relative flex-[0_0_100%] bg-bone"
+                        style={{ aspectRatio: imageAspect(productImages[i], 1) }}
+                      >
                         <Image
-                          src={cldOptimize(img, { ar: "1:1", w: 1100 })}
+                          src={cldOptimize(img, { w: 1100 })}
                           alt={`${product.name} — ${i + 1}`}
                           fill
                           priority={i === 0}
@@ -226,7 +232,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         selectedImage === i ? "opacity-100" : "opacity-50 hover:opacity-90"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "1:1", w: 200 })} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
+                      <Image src={cldOptimize(img, { ar: "1:1", w: 200, mode: "fill" })} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
                       {selectedImage === i && (
                         <span className="absolute inset-y-0 left-0 w-[2px] bg-ink" />
                       )}
@@ -236,7 +242,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
                 {/* Hoofd afbeelding met hover zoom */}
                 <div
-                  className="relative aspect-square flex-1 bg-bone overflow-hidden cursor-zoom-in"
+                  className="relative flex-1 bg-bone overflow-hidden cursor-zoom-in"
+                  style={{ aspectRatio: imageAspect(productImages[selectedImage], 1) }}
                   onMouseEnter={() => setZoomActive(true)}
                   onMouseLeave={() => setZoomActive(false)}
                   onMouseMove={handleZoomMove}
@@ -252,7 +259,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       className="absolute inset-0"
                     >
                       <Image
-                        src={cldOptimize(images[selectedImage], { ar: "1:1", w: 1400 })}
+                        src={cldOptimize(images[selectedImage], { w: 1400 })}
                         alt={product.name}
                         fill
                         priority

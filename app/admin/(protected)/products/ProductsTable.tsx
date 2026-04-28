@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useTransition } from "react";
 import { Star, X, Edit3 } from "lucide-react";
 import { updateProductInline } from "./actions";
+import { firstImageUrl } from "@/lib/imageHelpers";
 
 type Row = {
   id: string;
@@ -18,14 +19,6 @@ type Row = {
   stock: number;
 };
 
-function firstImage(images: string): string | null {
-  try {
-    const arr = JSON.parse(images);
-    return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
-  } catch {
-    return null;
-  }
-}
 
 export default function ProductsTable({ products }: { products: Row[] }) {
   if (products.length === 0) {
@@ -69,7 +62,7 @@ function Th({ children, className = "" }: { children?: React.ReactNode; classNam
 }
 
 function ProductRow({ product }: { product: Row }) {
-  const img = firstImage(product.images);
+  const img = firstImageUrl(product.images);
   const [featured, setFeatured] = useState(product.featured);
   const [pending, startTransition] = useTransition();
 

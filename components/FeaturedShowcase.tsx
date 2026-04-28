@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import { motion } from "framer-motion";
+import { firstImageUrl } from "@/lib/imageHelpers";
 
 interface Product {
   id: string;
@@ -46,7 +47,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
   if (products.length === 0) return null;
 
   const active = products[activeIndex] || products[0];
-  const activeImages: string[] = JSON.parse(active.images);
+  const activeImage = firstImageUrl(active.images);
 
   return (
     <section className="py-32 lg:py-48 bg-paper overflow-hidden">
@@ -89,7 +90,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
                   className="absolute inset-0"
                 >
                   <Image
-                    src={activeImages[0]}
+                    src={activeImage ?? ""}
                     alt={active.name}
                     fill
                     className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.03]"
@@ -123,7 +124,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
             {/* Desktop: verticale lijst */}
             <div className="hidden lg:block space-y-1">
               {products.map((product, i) => {
-                const imgs: string[] = JSON.parse(product.images);
+                const firstUrl = firstImageUrl(product.images);
                 const isActive = i === activeIndex;
                 return (
                   <button
@@ -135,7 +136,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
                   >
                     <div className={`relative w-20 h-24 flex-shrink-0 overflow-hidden bg-bone transition-all ${isActive ? "opacity-100" : "opacity-50 group-hover:opacity-100"}`}>
                       <Image
-                        src={imgs[0]}
+                        src={firstUrl ?? ""}
                         alt={product.name}
                         fill
                         className="object-cover"
@@ -164,7 +165,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
               <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
                 <div className="flex gap-3">
                   {products.map((product, i) => {
-                    const imgs: string[] = JSON.parse(product.images);
+                    const firstUrl = firstImageUrl(product.images);
                     return (
                       <button
                         key={product.id}
@@ -172,7 +173,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
                         className="flex-shrink-0 basis-[40%] text-left"
                       >
                         <div className={`relative aspect-[3/4] overflow-hidden bg-bone mb-3 transition-opacity ${i === activeIndex ? "opacity-100" : "opacity-50"}`}>
-                          <Image src={imgs[0]} alt={product.name} fill className="object-cover" sizes="40vw" />
+                          <Image src={firstUrl ?? ""} alt={product.name} fill className="object-cover" sizes="40vw" />
                         </div>
                         <p className={`text-xs font-serif leading-tight line-clamp-2 ${i === activeIndex ? "text-ink" : "text-stone"}`}>
                           {product.name}

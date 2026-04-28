@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { firstImageUrl } from "@/lib/imageHelpers";
 
 interface Props {
   open: boolean;
@@ -101,7 +102,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                 <div className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
                   <ul className="space-y-6">
                     {items.map((item) => {
-                      const images: string[] = JSON.parse(item.product.images);
+                      const thumb = firstImageUrl(item.product.images);
                       return (
                         <li key={item.productId} className="flex gap-4">
                           {/* Afbeelding */}
@@ -110,13 +111,15 @@ export default function CartDrawer({ open, onClose }: Props) {
                             onClick={onClose}
                             className="relative w-20 h-24 flex-shrink-0 overflow-hidden bg-bone"
                           >
-                            <Image
-                              src={images[0]}
-                              alt={item.product.name}
-                              fill
-                              className="object-cover"
-                              sizes="80px"
-                            />
+                            {thumb && (
+                              <Image
+                                src={thumb}
+                                alt={item.product.name}
+                                fill
+                                className="object-cover"
+                                sizes="80px"
+                              />
+                            )}
                           </Link>
 
                           {/* Info */}

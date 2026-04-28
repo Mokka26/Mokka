@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import ImageManager from "@/components/admin/ImageManager";
+import type { ProductImage } from "@/lib/imageHelpers";
 import { createProduct, type CreateProductState } from "../actions";
 
 const initial: CreateProductState = {};
@@ -21,7 +22,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [category, setCategory] = useState(categories[0] ?? "banken");
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<ProductImage[]>([]);
 
   const effectiveSlug = slug || slugify(name);
 

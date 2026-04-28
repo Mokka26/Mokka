@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { firstImageUrl } from "@/lib/imageHelpers";
 
 interface Product {
   id: string;
@@ -17,8 +18,8 @@ interface Product {
 export default function FeaturedStory({ product }: { product: Product | null }) {
   if (!product) return null;
 
-  const images: string[] = JSON.parse(product.images);
-  const mainImage = images[0];
+  const mainImage = firstImageUrl(product.images);
+  if (!mainImage) return null;
 
   return (
     <section className="py-24 lg:py-40 bg-ink text-white overflow-hidden">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cldOptimize } from "@/lib/cloudinary-url";
+import { parseImages, imageAspect } from "@/lib/imageHelpers";
 
 interface Product {
   id: string;
@@ -34,27 +35,40 @@ function getBadge(product: Product): string | null {
 }
 
 export default function ProductCard({ product }: Props) {
-  const images: string[] = JSON.parse(product.images);
-  const firstImage = cldOptimize(images[0], { ar: "1:1", w: 800 });
-  const secondImage = images.length > 1 ? cldOptimize(images[1], { ar: "1:1", w: 800 }) : null;
+  const images = parseImages(product.images);
+  const first = images[0];
+  const second = images[1];
+
+  const firstUrl = first ? cldOptimize(first.url, { w: 800 }) : "";
+  const secondUrl = second ? cldOptimize(second.url, { w: 800 }) : null;
+
+  // Natuurlijke aspect ratio van de eerste foto. Fallback 1 (vierkant)
+  // als dimensies onbekend zijn (oude data zonder w/h).
+  const aspect = imageAspect(first, 1);
+
   const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;
 
   return (
     <Link href={`/products/${product.slug}`} className="group block">
       <article data-hover-card className="product-card">
-        <div className="relative aspect-square overflow-hidden bg-bone mb-5">
-          <Image
-            src={firstImage}
-            alt={product.name}
-            fill
-            loading="lazy"
-            className={`object-cover transition-opacity duration-700 ease-out card-img-primary ${secondImage ? "has-alt" : ""}`}
-            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
-          />
-          {secondImage && (
+        <div
+          className="relative overflow-hidden bg-bone mb-5"
+          style={{ aspectRatio: aspect }}
+        >
+          {firstUrl && (
             <Image
-              src={secondImage}
+              src={firstUrl}
+              alt={product.name}
+              fill
+              loading="lazy"
+              className={`object-cover transition-opacity duration-700 ease-out card-img-primary ${secondUrl ? "has-alt" : ""}`}
+              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
+            />
+          )}
+          {secondUrl && (
+            <Image
+              src={secondUrl}
               alt=""
               fill
               loading="lazy"

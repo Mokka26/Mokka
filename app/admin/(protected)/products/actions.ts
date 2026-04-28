@@ -165,9 +165,15 @@ export async function updateProductFull(
 // Image management
 // ─────────────────────────────────────────────────────────────────────
 
+const productImageSchema = z.object({
+  url: z.string().url(),
+  w: z.number().positive().optional(),
+  h: z.number().positive().optional(),
+});
+
 const imagesUpdateSchema = z.object({
   id: z.string().min(1),
-  images: z.array(z.string().url()).max(20),
+  images: z.array(productImageSchema).max(20),
 });
 
 export async function updateProductImages(
@@ -242,7 +248,7 @@ const createSchema = z.object({
   price: z.number().nonnegative().max(999999),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
-  images: z.array(z.string().url()).default([]),
+  images: z.array(productImageSchema).default([]),
   stock: z.number().int().nonnegative().max(99999).default(10),
   deliveryTime: z.string().max(80).nullable().default(null),
   colorGroup: z.string().max(80).nullable().default(null),
