@@ -38,29 +38,34 @@ export function cldUrl(
  * Voeg transformaties toe aan een bestaande Cloudinary URL.
  * Niet-Cloudinary URLs worden ongewijzigd teruggegeven.
  *
- * Standaard mode `pad`: Cloudinary past de foto in op de aspect ratio en
- * vult de eventuele over-ruimte met de door Cloudinary gedetecteerde
- * achtergrondkleur (b_auto). Resultaat: HELE product zichtbaar, en de
- * padding loopt naadloos over in de fotoachtergrond (white/grey/bone).
+ * Standaard mode `blurred`: c_pad + b_blurred — past foto in zonder crop,
+ * vult over-ruimte met wazige uitvergroting van foto-randen. Geen harde
+ * overgang, foto loopt visueel door tot rand van tegel. Geen merkbare
+ * lege ruimte ongeacht originele foto-achtergrond.
  *
- * Mode `fill`: c_fill + g_auto → crop't smart om subject heen. Sneller
- * vol-beeld maar kan delen van het product wegsnijden.
+ * Mode `pad`: c_pad + b_auto — vult padding met gedetecteerde edge-kleur.
+ * Werkt mooi als foto en container dezelfde kleur hebben.
+ *
+ * Mode `fill`: c_fill + g_auto — crop't smart om subject heen. Tightste
+ * vulling, kan kleine delen van het product wegsnijden.
  */
 export function cldOptimize(
   url: string,
-  options: { ar?: string; w?: number; mode?: "pad" | "fill" } = {},
+  options: { ar?: string; w?: number; mode?: "blurred" | "pad" | "fill" } = {},
 ): string {
   if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
     return url;
   }
 
-  const mode = options.mode ?? "pad";
+  const mode = options.mode ?? "blurred";
   const parts: string[] = ["f_auto", "q_auto"];
   if (options.ar) {
     if (mode === "fill") {
       parts.push("c_fill", "g_auto", `ar_${options.ar}`);
-    } else {
+    } else if (mode === "pad") {
       parts.push("c_pad", "b_auto", `ar_${options.ar}`);
+    } else {
+      parts.push("c_pad", "b_blurred:400:15", `ar_${options.ar}`);
     }
   }
   if (options.w) parts.push(`w_${options.w}`);
