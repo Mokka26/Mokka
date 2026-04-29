@@ -11,8 +11,8 @@ export default function ProductsPage() {
         </div>
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="h-14 bg-bone animate-shimmer mb-10 lg:mb-14" />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="space-y-4">
                 <div className="aspect-square bg-white animate-shimmer" />
                 <div className="h-3 w-3/4 bg-bone animate-shimmer" />
