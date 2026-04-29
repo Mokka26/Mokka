@@ -15,10 +15,20 @@ interface Product {
   featured?: boolean;
   createdAt?: Date | string;
   stock?: number;
+  colorGroup?: string | null;
+  colorName?: string | null;
+  colorHex?: string | null;
 }
+
+type ColorVariant = {
+  slug: string;
+  colorName: string | null;
+  colorHex: string | null;
+};
 
 interface Props {
   product: Product;
+  variants?: ColorVariant[];
 }
 
 // Bepaal welk badge te tonen (als er al eentje is)
@@ -34,7 +44,7 @@ function getBadge(product: Product): string | null {
   return null;
 }
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product, variants }: Props) {
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
   const secondRaw = urls[1];
@@ -47,9 +57,15 @@ export default function ProductCard({ product }: Props) {
   const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;
 
+  // Toon variant-naam zonder de kleur-suffix als er varianten zijn,
+  // anders volledige naam.
+  const displayName = variants && variants.length > 1 && product.colorName
+    ? product.name.replace(new RegExp(`\\s*${product.colorName}$`, "i"), "")
+    : product.name;
+
   return (
-    <Link href={`/products/${product.slug}`} className="group block">
-      <article data-hover-card className="product-card">
+    <article data-hover-card className="product-card group">
+      <Link href={`/products/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-white mb-5">
           {first && (
             <Image
@@ -99,14 +115,39 @@ export default function ProductCard({ product }: Props) {
               {product.category}
             </p>
             <h3 className="card-name font-serif text-base sm:text-lg text-ink leading-tight transition-colors duration-300">
-              {product.name}
+              {displayName}
             </h3>
           </div>
           <p className="font-serif text-base sm:text-lg text-ink whitespace-nowrap">
             &euro;{product.price.toFixed(0)}
           </p>
         </div>
-      </article>
-    </Link>
+      </Link>
+
+      {variants && variants.length > 1 && (
+        <div className="mt-3 flex items-center gap-1.5">
+          {variants.map((v) => {
+            const isCurrent = v.slug === product.slug;
+            return (
+              <Link
+                key={v.slug}
+                href={`/products/${v.slug}`}
+                title={v.colorName ?? ""}
+                aria-label={v.colorName ?? "Variant"}
+                className={`block w-4 h-4 rounded-full border transition-all ${
+                  isCurrent
+                    ? "border-ink scale-110"
+                    : "border-line hover:border-bronze hover:scale-110"
+                }`}
+                style={{ backgroundColor: v.colorHex ?? "#CFCFCF" }}
+              />
+            );
+          })}
+          <span className="text-[10px] uppercase tracking-[0.2em] text-stone ml-1">
+            {variants.length} kleuren
+          </span>
+        </div>
+      )}
+    </article>
   );
 }

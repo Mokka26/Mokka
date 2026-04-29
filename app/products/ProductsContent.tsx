@@ -17,6 +17,47 @@ interface Product {
   featured: boolean;
   stock?: number;
   createdAt?: string | Date;
+  colorGroup?: string | null;
+  colorName?: string | null;
+  colorHex?: string | null;
+}
+
+interface ProductWithVariants extends Product {
+  variants?: { slug: string; colorName: string | null; colorHex: string | null }[];
+}
+
+function dedupeByColorGroup(products: Product[]): ProductWithVariants[] {
+  const groups = new Map<string, Product[]>();
+  const standalone: Product[] = [];
+
+  for (const p of products) {
+    if (p.colorGroup) {
+      const arr = groups.get(p.colorGroup) ?? [];
+      arr.push(p);
+      groups.set(p.colorGroup, arr);
+    } else {
+      standalone.push(p);
+    }
+  }
+
+  const out: ProductWithVariants[] = [...standalone];
+  for (const items of Array.from(groups.values())) {
+    const primary = items[0];
+    out.push({
+      ...primary,
+      variants: items.map((v: Product) => ({
+        slug: v.slug,
+        colorName: v.colorName ?? null,
+        colorHex: v.colorHex ?? null,
+      })),
+    });
+  }
+
+  // Sorteer op originele volgorde — gebruik index in input array
+  const orderMap = new Map(products.map((p, i) => [p.id, i]));
+  out.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+
+  return out;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -157,7 +198,7 @@ export default function ProductsContent() {
             animate="visible"
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
           >
-            {products.map((product) => (
+            {dedupeByColorGroup(products).map((product) => (
               <motion.div
                 key={product.id}
                 variants={{
@@ -165,7 +206,7 @@ export default function ProductsContent() {
                   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] } },
                 }}
               >
-                <ProductCard product={product} />
+                <ProductCard product={product} variants={product.variants} />
               </motion.div>
             ))}
           </motion.div>
