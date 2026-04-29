@@ -38,17 +38,20 @@ export function cldUrl(
  * Voeg transformaties toe aan een bestaande Cloudinary URL.
  * Niet-Cloudinary URLs worden ongewijzigd teruggegeven.
  *
- * Standaard mode `pad`: c_pad + b_auto — vult padding met de
- * gedetecteerde achtergrondkleur uit de foto-randen. Werkt
- * naadloos als de container-kleur matcht (bv. bg-white voor
- * studio-foto's met witte achtergrond).
+ * Mode `thumb`: c_thumb + g_auto — agressieve smart-crop die
+ * inzoomt op het onderwerp. Product vult de tegel volledig,
+ * geen padding. Beste voor productfoto's in tegels.
  *
- * Mode `fill`: c_fill + g_auto — crop't smart om subject heen.
- * Tightste vulling, kan kleine delen wegsnijden.
+ * Mode `pad` (default): c_pad + b_auto — vult padding met
+ * gedetecteerde edge-kleur. Geen crop, maar kan zichtbare
+ * padding-banden hebben.
+ *
+ * Mode `fill`: c_fill + g_auto — milde smart-crop, behoudt meer
+ * context dan thumb.
  */
 export function cldOptimize(
   url: string,
-  options: { ar?: string; w?: number; mode?: "pad" | "fill" } = {},
+  options: { ar?: string; w?: number; mode?: "pad" | "fill" | "thumb" } = {},
 ): string {
   if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
     return url;
@@ -57,7 +60,9 @@ export function cldOptimize(
   const mode = options.mode ?? "pad";
   const parts: string[] = [];
   if (options.ar) {
-    if (mode === "fill") {
+    if (mode === "thumb") {
+      parts.push("c_thumb", "g_auto", `ar_${options.ar}`);
+    } else if (mode === "fill") {
       parts.push("c_fill", "g_auto", `ar_${options.ar}`);
     } else {
       parts.push("c_pad", "b_auto", `ar_${options.ar}`);

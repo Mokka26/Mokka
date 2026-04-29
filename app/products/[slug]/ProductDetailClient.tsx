@@ -68,8 +68,8 @@ const usps = [
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const images: string[] = parseImages(product.images).map((i) => i.url);
   // TEST: smart-crop voor één product om te vergelijken
-  const testMode: "pad" | "fill" =
-    product.slug === "armoni-sofa-set" ? "fill" : "pad";
+  const testMode: "pad" | "fill" | "thumb" =
+    product.slug === "armoni-sofa-set" ? "thumb" : "pad";
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);

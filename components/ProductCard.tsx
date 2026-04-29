@@ -39,11 +39,10 @@ export default function ProductCard({ product }: Props) {
   const firstRaw = urls[0] ?? "";
   const secondRaw = urls[1];
 
-  // TEST: armoni-sofa-set gebruikt smart-crop (fill) ipv pad om te zien
-  // of het product strakker in de tegel valt zonder zichtbare ruimte.
+  // TEST: armoni-sofa-set gebruikt thumb mode (agressieve smart-crop).
   // Vergelijk met andere producten die nog pad mode gebruiken.
-  const testMode: "pad" | "fill" =
-    product.slug === "armoni-sofa-set" ? "fill" : "pad";
+  const testMode: "pad" | "fill" | "thumb" =
+    product.slug === "armoni-sofa-set" ? "thumb" : "pad";
 
   const first = firstRaw ? cldOptimize(firstRaw, { ar: "1:1", w: 800, mode: testMode }) : "";
   const second = secondRaw ? cldOptimize(secondRaw, { ar: "1:1", w: 800, mode: testMode }) : null;
