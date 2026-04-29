@@ -39,13 +39,10 @@ export default function ProductCard({ product }: Props) {
   const firstRaw = urls[0] ?? "";
   const secondRaw = urls[1];
 
-  // TEST: armoni-sofa-set gebruikt thumb mode (agressieve smart-crop).
-  // Vergelijk met andere producten die nog pad mode gebruiken.
-  const testMode: "pad" | "fill" | "thumb" =
-    product.slug === "armoni-sofa-set" ? "thumb" : "pad";
-
-  const first = firstRaw ? cldOptimize(firstRaw, { ar: "1:1", w: 800, mode: testMode }) : "";
-  const second = secondRaw ? cldOptimize(secondRaw, { ar: "1:1", w: 800, mode: testMode }) : null;
+  // Bron-foto's zijn native 1:1 (gen_fill bake). Geen runtime crop nodig,
+  // alleen resize voor delivery.
+  const first = firstRaw ? cldOptimize(firstRaw, { w: 800 }) : "";
+  const second = secondRaw ? cldOptimize(secondRaw, { w: 800 }) : null;
 
   const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;

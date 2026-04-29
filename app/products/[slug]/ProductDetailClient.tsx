@@ -67,9 +67,6 @@ const usps = [
 
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const images: string[] = parseImages(product.images).map((i) => i.url);
-  // TEST: smart-crop voor één product om te vergelijken
-  const testMode: "pad" | "fill" | "thumb" =
-    product.slug === "armoni-sofa-set" ? "thumb" : "pad";
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -186,7 +183,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         className="relative flex-[0_0_100%] aspect-square bg-white"
                       >
                         <Image
-                          src={cldOptimize(img, { ar: "1:1", w: 1100, mode: testMode })}
+                          src={cldOptimize(img, { w: 1100 })}
                           alt={`${product.name} — ${i + 1}`}
                           fill
                           priority={i === 0}
@@ -259,7 +256,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       className="absolute inset-0"
                     >
                       <Image
-                        src={cldOptimize(images[selectedImage], { ar: "1:1", w: 1400, mode: testMode })}
+                        src={cldOptimize(images[selectedImage], { w: 1400 })}
                         alt={product.name}
                         fill
                         priority
