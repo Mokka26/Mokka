@@ -66,27 +66,46 @@ function extractPublicId(url: string): string | null {
   return segments.join("/");
 }
 
+async function tryUpload(derivedUrl: string, newPid: string) {
+  return cloudinary.uploader.upload(derivedUrl, {
+    public_id: newPid,
+    overwrite: true,
+    resource_type: "image",
+  });
+}
+
 async function processImage(img: ProductImage): Promise<ProductImage> {
   const pid = extractPublicId(img.url);
   if (!pid) return img;
 
-  // Strip eventuele _sq suffix om altijd vanaf het origineel te genereren
-  const origPid = pid.endsWith("_sq") ? pid.slice(0, -3) : pid;
-  const newPid = `${origPid}_sq`;
-  const derivedUrl = `https://res.cloudinary.com/${CLOUD}/image/upload/c_pad,b_gen_fill,ar_1:1,w_${TARGET_W},f_jpg,q_auto/${origPid}`;
+  // Skip al gebakken foto's — alleen originelen (re)try'en
+  if (pid.endsWith("_sq")) return img;
 
-  try {
-    const uploaded = await cloudinary.uploader.upload(derivedUrl, {
-      public_id: newPid,
-      overwrite: true,
-      resource_type: "image",
-    });
-    return { url: uploaded.secure_url, w: uploaded.width, h: uploaded.height };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`\n  fout bij ${origPid}: ${msg}`);
-    return img;
+  const origPid = pid;
+  const newPid = `${origPid}_sq`;
+  const genFillUrl = `https://res.cloudinary.com/${CLOUD}/image/upload/c_pad,b_gen_fill,ar_1:1,w_${TARGET_W},f_jpg,q_auto/${origPid}`;
+  const padUrl = `https://res.cloudinary.com/${CLOUD}/image/upload/c_pad,b_auto,ar_1:1,w_${TARGET_W},f_jpg,q_auto/${origPid}`;
+
+  // Probeer eerst gen_fill (mooiste resultaat). Bij 400 fallback naar b_auto.
+  for (const url of [genFillUrl, padUrl]) {
+    try {
+      const uploaded = await tryUpload(url, newPid);
+      return { url: uploaded.secure_url, w: uploaded.width, h: uploaded.height };
+    } catch (err: unknown) {
+      const e = err as { message?: string; http_code?: number; error?: { message?: string } };
+      if (e.http_code === 404) {
+        console.error(`\n  ${origPid}: bron niet gevonden (404)`);
+        return img;
+      }
+      // 400 of andere → probeer volgende fallback
+      if (url === padUrl) {
+        const msg = e.error?.message ?? e.message ?? "onbekend";
+        console.error(`\n  ${origPid}: alle modes falen (${e.http_code ?? "?"}): ${msg}`);
+        return img;
+      }
+    }
   }
+  return img;
 }
 
 async function main() {
