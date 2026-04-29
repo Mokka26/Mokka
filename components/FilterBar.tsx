@@ -17,7 +17,9 @@ interface Props {
 const categories = [
   { label: "Alles", value: "" },
   { label: "Banken", value: "banken" },
+  { label: "Hoekbanken", value: "hoekbanken" },
   { label: "Bedden", value: "bedden" },
+  { label: "Matrassen", value: "matrassen" },
   { label: "Tafels", value: "tafels" },
   { label: "Stoelen", value: "stoelen" },
   { label: "Slaapkamers", value: "slaapkamers" },

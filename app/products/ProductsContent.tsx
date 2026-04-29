@@ -62,7 +62,9 @@ function dedupeByColorGroup(products: Product[]): ProductWithVariants[] {
 
 const categoryLabels: Record<string, string> = {
   banken: "Banken",
+  hoekbanken: "Hoekbanken",
   bedden: "Bedden",
+  matrassen: "Matrassen",
   slaapkamers: "Slaapkamers",
   kasten: "Kasten",
   tafels: "Tafels",
@@ -71,7 +73,9 @@ const categoryLabels: Record<string, string> = {
 
 const categoryIntros: Record<string, string> = {
   banken: "Het hart van elke woonkamer. Comfort en design, gemaakt voor het dagelijks leven.",
+  hoekbanken: "Royale L-vorm modellen die de hoek van je woonkamer transformeren tot lounge.",
   bedden: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust en stille ochtenden.",
+  matrassen: "Pocketveer en koudschuim — de basis van elke goede nachtrust.",
   slaapkamers: "Rust begint hier. Zachte materialen en warme tinten voor de persoonlijkste ruimte.",
   kasten: "Meer dan opbergruimte — kasten als architectuur die je interieur structureren.",
   tafels: "Om de tafel wordt geleefd. Van eiken eettafels tot marmeren salontafels.",

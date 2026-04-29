@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
         heading: "Type",
         links: [
           { label: "Alle banken", href: "/products?category=banken" },
-          { label: "Hoekbanken", href: "/products?category=banken&type=hoek" },
+          { label: "Hoekbanken", href: "/products?category=hoekbanken" },
           { label: "Bankstellen", href: "/products?category=banken&type=set" },
           { label: "Loungebanken", href: "/products?category=banken&type=lounge" },
         ],
@@ -56,9 +56,9 @@ const navItems: NavItem[] = [
         heading: "Type",
         links: [
           { label: "Alle bedden", href: "/products?category=bedden" },
+          { label: "Matrassen", href: "/products?category=matrassen" },
           { label: "Boxsprings", href: "/products?category=bedden&type=boxspring" },
           { label: "Bedframes", href: "/products?category=bedden&type=frame" },
-          { label: "Tweepersoons", href: "/products?category=bedden&type=tweepersoons" },
         ],
       },
       {
