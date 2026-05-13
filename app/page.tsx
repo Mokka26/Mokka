@@ -1,9 +1,11 @@
-import Hero from "@/components/Hero";
+import CinematicHero from "@/components/CinematicHero";
+import PromoBanners from "@/components/PromoBanners";
 import CollectionPreview from "@/components/CollectionPreview";
 import CategoriesGrid from "@/components/CategoriesGrid";
 import FeaturedStory from "@/components/FeaturedStory";
 import ShowroomSection from "@/components/ShowroomSection";
 import SocialProof from "@/components/SocialProof";
+import TrustBar from "@/components/TrustBar";
 import DarkNewsletterForm from "@/components/DarkNewsletterForm";
 import { prisma } from "@/lib/prisma";
 
@@ -37,23 +39,29 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* 01 — HERO              bg-paper (licht) */}
-      <Hero />
+      {/* 01 — CINEMATIC HERO    Three.js + GSAP scroll-driven */}
+      <CinematicHero />
 
-      {/* 02 — CATEGORIEËN       bg-white (ritme breuk) */}
+      {/* 02 — PROMO BANNERS     bg-paper (3 stacked promo cards) */}
+      <PromoBanners />
+
+      {/* 03 — CATEGORIEËN       bg-white (ritme breuk) */}
       <CategoriesGrid />
 
-      {/* 03 — FEATURED STORY    bg-ink (donker, drama) */}
+      {/* 04 — FEATURED STORY    bg-ink (donker, drama) */}
       <FeaturedStory product={spotlightProduct} />
 
-      {/* 04 — NIEUWE COLLECTIE  bg-paper */}
+      {/* 05 — NIEUWE COLLECTIE  bg-paper */}
       <CollectionPreview products={featuredProducts} />
 
-      {/* 05 — SOCIAL PROOF      bg-white */}
+      {/* 06 — SOCIAL PROOF      bg-white */}
       <SocialProof />
 
-      {/* 06 — ATELIER           bg-paper */}
+      {/* 07 — ATELIER           bg-paper */}
       <ShowroomSection />
+
+      {/* 08 — TRUST BAR         bg-bone (USPs voor newsletter) */}
+      <TrustBar />
 
       {/* 07 — NIEUWSBRIEF       bg-ink (afsluiting, drama) */}
       <section className="py-24 lg:py-32 bg-ink text-white">

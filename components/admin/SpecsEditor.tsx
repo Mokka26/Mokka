@@ -5,7 +5,10 @@ import { Plus, Trash2 } from "lucide-react";
 
 type Row = { id: string; key: string; value: string };
 
-const PRESETS = ["Afmetingen", "Materiaal", "Gewicht", "Kleur", "Stoffering", "Herkomst", "Garantie", "Levertijd"];
+const PRESETS = [
+  "Afmetingen", "Materiaal", "Kleur", "Serie", "Categorie",
+  "Stoffering", "Patroon", "Gewicht", "Herkomst", "Garantie", "Levertijd",
+];
 
 function rowsToObject(rows: Row[]): Record<string, string> {
   const out: Record<string, string> = {};

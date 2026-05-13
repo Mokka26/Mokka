@@ -9,7 +9,14 @@ export async function GET(request: NextRequest) {
   const minPrice = parseFloat(searchParams.get("minPrice") || "0");
   const maxPrice = parseFloat(searchParams.get("maxPrice") || "99999");
 
+  const includeHidden = searchParams.get("includeHidden") === "1";
+
   const where: Record<string, unknown> = {};
+
+  // Default: alleen niet-verborgen producten tonen
+  if (!includeHidden) {
+    where.hidden = false;
+  }
 
   if (category) {
     where.category = category;

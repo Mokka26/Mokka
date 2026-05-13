@@ -20,25 +20,38 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: "Banken",
+    label: "Woonkamer",
     href: "/products?category=banken",
     subLinks: [
       {
-        heading: "Type",
+        heading: "Banken & Stoelen",
         links: [
           { label: "Alle banken", href: "/products?category=banken" },
           { label: "Hoekbanken", href: "/products?category=hoekbanken" },
-          { label: "Bankstellen", href: "/products?category=banken&type=set" },
-          { label: "Loungebanken", href: "/products?category=banken&type=lounge" },
+          { label: "Loungestoelen", href: "/products?category=stoelen" },
         ],
       },
       {
-        heading: "Kleur",
+        heading: "Tafels",
         links: [
-          { label: "Beige & crème", href: "/products?category=banken&kleur=beige" },
-          { label: "Bruin", href: "/products?category=banken&kleur=bruin" },
-          { label: "Grijs", href: "/products?category=banken&kleur=grijs" },
-          { label: "Goud & brons", href: "/products?category=banken&kleur=goud" },
+          { label: "Salontafels", href: "/products?category=salontafels" },
+          { label: "Bijzettafels", href: "/products?category=bijzettafels" },
+          { label: "Tafel-accessoires", href: "/products?category=tafel-accessoires" },
+        ],
+      },
+      {
+        heading: "Kasten & Opbergen",
+        links: [
+          { label: "Kasten", href: "/products?category=kasten" },
+          { label: "Dressoirs", href: "/products?category=kasten" },
+          { label: "TV-meubels", href: "/products?category=tv-meubels" },
+        ],
+      },
+      {
+        heading: "Accessoires",
+        links: [
+          { label: "Verlichting", href: "/products?category=verlichting" },
+          { label: "Spiegels", href: "/products?category=spiegels" },
         ],
       },
     ],
@@ -49,24 +62,41 @@ const navItems: NavItem[] = [
     },
   },
   {
-    label: "Bedden",
-    href: "/products?category=bedden",
+    label: "Eetkamer",
+    href: "/products?category=eettafels",
     subLinks: [
       {
-        heading: "Type",
+        heading: "Eettafels",
         links: [
-          { label: "Alle bedden", href: "/products?category=bedden" },
-          { label: "Matrassen", href: "/products?category=matrassen" },
-          { label: "Boxsprings", href: "/products?category=bedden&type=boxspring" },
-          { label: "Bedframes", href: "/products?category=bedden&type=frame" },
+          { label: "Alle eettafels", href: "/products?category=eettafels" },
+          { label: "Tafelbladen", href: "/products?category=tafel-accessoires" },
         ],
       },
       {
-        heading: "Maat",
+        heading: "Stoelen",
         links: [
-          { label: "140 × 200", href: "/products?category=bedden&maat=140" },
-          { label: "160 × 200", href: "/products?category=bedden&maat=160" },
-          { label: "180 × 200", href: "/products?category=bedden&maat=180" },
+          { label: "Eetkamerstoelen", href: "/products?category=stoelen" },
+        ],
+      },
+      {
+        heading: "Opbergen",
+        links: [
+          { label: "Dressoirs", href: "/products?category=kasten" },
+          { label: "Vitrinekasten", href: "/products?category=kasten" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Slaapkamer",
+    href: "/products?category=bedden",
+    subLinks: [
+      {
+        heading: "Bedden",
+        links: [
+          { label: "Alle bedden", href: "/products?category=bedden" },
+          { label: "Matrassen", href: "/products?category=matrassen" },
+          { label: "Complete slaapkamers", href: "/products?category=slaapkamers" },
         ],
       },
     ],
@@ -77,83 +107,28 @@ const navItems: NavItem[] = [
     },
   },
   {
-    label: "Tafels",
-    href: "/products?category=tafels",
+    label: "Sfeer",
+    href: "/products?category=verlichting",
     subLinks: [
       {
-        heading: "Type",
+        heading: "Verlichting",
         links: [
-          { label: "Alle tafels", href: "/products?category=tafels" },
-          { label: "Eettafels", href: "/products?category=tafels&type=eet" },
-          { label: "Salontafels", href: "/products?category=tafels&type=salon" },
-          { label: "Bijzettafels", href: "/products?category=tafels&type=bij" },
+          { label: "Hanglampen", href: "/products?category=verlichting" },
+          { label: "Tafellampen", href: "/products?category=verlichting" },
+          { label: "Vloerlampen", href: "/products?category=verlichting" },
         ],
       },
       {
-        heading: "Materiaal",
+        heading: "Wandaccessoires",
         links: [
-          { label: "Eiken", href: "/products?category=tafels&mat=eiken" },
-          { label: "Walnoot", href: "/products?category=tafels&mat=walnoot" },
-          { label: "Marmer", href: "/products?category=tafels&mat=marmer" },
-          { label: "Metaal", href: "/products?category=tafels&mat=metaal" },
+          { label: "Spiegels", href: "/products?category=spiegels" },
+          { label: "Wandobjecten", href: "/products?category=spiegels" },
         ],
       },
     ],
   },
-  {
-    label: "Stoelen",
-    href: "/products?category=stoelen",
-    subLinks: [
-      {
-        heading: "Type",
-        links: [
-          { label: "Alle stoelen", href: "/products?category=stoelen" },
-          { label: "Loungestoelen", href: "/products?category=stoelen&type=lounge" },
-          { label: "Eetkamerstoelen", href: "/products?category=stoelen&type=eetkamer" },
-          { label: "Barkrukken", href: "/products?category=stoelen&type=bar" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Slaapkamers",
-    href: "/products?category=slaapkamers",
-    subLinks: [
-      {
-        heading: "Meubels",
-        links: [
-          { label: "Bedden & boxsprings", href: "/products?category=slaapkamers&type=bed" },
-          { label: "Nachtkastjes", href: "/products?category=slaapkamers&type=nacht" },
-          { label: "Kaptafels", href: "/products?category=slaapkamers&type=kap" },
-        ],
-      },
-      {
-        heading: "Textiel",
-        links: [
-          { label: "Linnengoed", href: "/products?category=slaapkamers&type=linnen" },
-          { label: "Dekbedden", href: "/products?category=slaapkamers&type=dekbed" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Kasten",
-    href: "/products?category=kasten",
-    subLinks: [
-      {
-        heading: "Type",
-        links: [
-          { label: "Alle kasten", href: "/products?category=kasten" },
-          { label: "Boekenkasten", href: "/products?category=kasten&type=boek" },
-          { label: "Vitrinekasten", href: "/products?category=kasten&type=vitrine" },
-          { label: "TV-meubels", href: "/products?category=kasten&type=tv" },
-          { label: "Dressoirs", href: "/products?category=kasten&type=dressoir" },
-        ],
-      },
-    ],
-  },
+  { label: "Aanbiedingen", href: "/products?sort=price-asc" },
   { label: "Atelier", href: "/about" },
-  { label: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {

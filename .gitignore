@@ -47,6 +47,21 @@ yarn-error.log*
 temp_extract/
 *.zip
 public/products/
+public/wetransfer*/
+public/catalogus*.pdf
+
+# Lokale notes en credentials
+links.txt
+prompt.txt
+plan.txt
+
+# Scraped data dumps (mogen lokaal blijven)
+scripts/*.json
+scripts/master-editions.json
+scripts/index-tiles.json
+scripts/index-children.json
+scripts/pdf-pages.json
+scripts/app4sales-products.json
 
 # Tests
 /coverage

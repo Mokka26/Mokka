@@ -3,100 +3,117 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
 
+// Twee hero-tiles (top row) — primaire collecties met meeste impact
 const primaries = [
   {
     name: "Banken",
     slug: "banken",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1600&q=95",
-    count: 42,
+    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1800&q=95&auto=format&fit=crop",
     tagline: "Het hart van elke woonkamer",
     badge: "Signatuur",
   },
   {
-    name: "Bedden",
-    slug: "bedden",
-    image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1600&q=95",
-    count: 25,
-    tagline: "Slapen als ritueel",
-    badge: "Nieuw",
+    name: "Eettafels",
+    slug: "eettafels",
+    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1800&q=95&auto=format&fit=crop",
+    tagline: "Waar avonden lang worden",
+    badge: "Voorjaar",
   },
 ];
 
+// Vier secondaries — diverse categorieën
 const secondary = [
-  { name: "Tafels", slug: "tafels", image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=900&q=95", count: 18 },
-  { name: "Stoelen", slug: "stoelen", image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=900&q=95", count: 24 },
-  { name: "Slaapkamers", slug: "slaapkamers", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900&q=95", count: 15 },
-  { name: "Kasten", slug: "kasten", image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=900&q=95", count: 12 },
+  { name: "Hoekbanken", slug: "hoekbanken", image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=1000&q=95&auto=format&fit=crop" },
+  { name: "Stoelen", slug: "stoelen", image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=1000&q=95&auto=format&fit=crop" },
+  { name: "Verlichting", slug: "verlichting", image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=1000&q=95&auto=format&fit=crop" },
+  { name: "Spiegels", slug: "spiegels", image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1000&q=95&auto=format&fit=crop" },
 ];
 
 export default function CategoriesGrid() {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch("/api/products/counts")
+      .then((r) => r.json())
+      .then((d) => setCounts(d.counts ?? {}))
+      .catch(() => null);
+  }, []);
+
+  const fmtCount = (slug: string) => {
+    const n = counts[slug];
+    return n ? `${n} stuks` : "—";
+  };
+
   return (
-    <section className="py-24 lg:py-32 bg-white">
+    <section className="py-24 lg:py-40 bg-white">
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.8 }}
-          className="flex items-end justify-between mb-10 lg:mb-14"
+          transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-14 lg:mb-20"
         >
-          <div>
-            <p className="eyebrow mb-3">Onze wereld</p>
-            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-ink leading-[1]">
-              Shop per <span className="italic">categorie</span>
+          <div className="lg:col-span-8">
+            <p className="text-[10px] uppercase tracking-[0.32em] text-stone mb-5">— Onze wereld</p>
+            <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-ink leading-[1.02]">
+              Shop per <span className="italic text-bronze">categorie</span>
             </h2>
           </div>
-          <Link href="/products" className="hidden sm:inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink border-b border-ink pb-1 hover:gap-3 transition-all">
-            Alle producten
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-            </svg>
-          </Link>
+          <div className="lg:col-span-4 flex lg:justify-end">
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-ink border-b border-ink/30 pb-1.5 hover:border-bronze hover:text-bronze transition-colors"
+            >
+              Alle producten
+              <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
+            </Link>
+          </div>
         </motion.div>
 
-        {/* TOP — 2 hero tiles (Banken + Bedden), equal weight */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 mb-3 lg:mb-4">
+        {/* TOP — 2 hero tiles */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 mb-4 lg:mb-5">
           {primaries.map((cat, i) => (
             <motion.div
               key={cat.slug}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.8, delay: i * 0.08 }}
+              transition={{ duration: 0.8, delay: i * 0.08, ease: [0.25, 0.4, 0.25, 1] }}
             >
               <Link href={`/products?category=${cat.slug}`} className="group block h-full">
-                <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone">
+                <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone rounded-2xl ring-1 ring-line/70 transition-all duration-500 group-hover:ring-line group-hover:shadow-[0_30px_60px_-20px_rgba(28,28,28,0.25)]">
                   <Image
                     src={cat.image}
                     alt={cat.name}
                     fill
-                    className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
+                    className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.05]"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/15 to-transparent" />
 
                   {/* Badge top-left */}
-                  <div className="absolute top-6 left-6 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5">
+                  <div className="absolute top-6 left-6 flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3 py-1.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-bronze" />
-                    <span className="text-ink text-[10px] uppercase tracking-[0.3em]">{cat.badge}</span>
+                    <span className="text-ink text-[10px] uppercase tracking-[0.3em] font-medium">{cat.badge}</span>
                   </div>
 
                   {/* Content bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-10 flex items-end justify-between gap-6">
-                    <div>
-                      <p className="text-white/60 text-[10px] uppercase tracking-[0.3em] mb-2">
-                        {cat.count} stuks · {cat.tagline}
+                  <div className="absolute bottom-0 left-0 right-0 p-7 lg:p-12 flex items-end justify-between gap-6">
+                    <div className="min-w-0">
+                      <p className="text-white/75 text-[10px] uppercase tracking-[0.3em] mb-3 tabular-nums">
+                        {fmtCount(cat.slug)} · {cat.tagline}
                       </p>
                       <h3 className="font-serif text-white text-4xl sm:text-5xl lg:text-6xl leading-[0.95]">
                         {cat.name}
                       </h3>
                     </div>
-                    <span className="w-12 h-12 lg:w-14 lg:h-14 bg-white text-ink flex items-center justify-center flex-shrink-0 group-hover:bg-bronze group-hover:text-white transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                      </svg>
+                    <span className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white text-ink flex items-center justify-center flex-shrink-0 group-hover:bg-bronze group-hover:text-white group-hover:rotate-12 transition-all duration-500">
+                      <ArrowUpRight className="w-5 h-5" strokeWidth={1.5} />
                     </span>
                   </div>
                 </div>
@@ -106,38 +123,39 @@ export default function CategoriesGrid() {
         </div>
 
         {/* BOTTOM — 4 secondary tiles in een rij */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
           {secondary.map((cat, i) => (
             <motion.div
               key={cat.slug}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.8, delay: 0.16 + i * 0.06 }}
+              transition={{ duration: 0.7, delay: 0.18 + i * 0.06, ease: [0.25, 0.4, 0.25, 1] }}
             >
               <Link href={`/products?category=${cat.slug}`} className="group block h-full">
-                <div className="relative aspect-square overflow-hidden bg-bone">
+                <div className="relative aspect-square overflow-hidden bg-bone rounded-xl ring-1 ring-line/70 transition-all duration-500 group-hover:ring-line group-hover:shadow-[0_20px_40px_-20px_rgba(28,28,28,0.2)]">
                   <Image
                     src={cat.image}
                     alt={cat.name}
                     fill
-                    className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
+                    className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.05]"
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
                   />
-                  <div className="absolute inset-0 bg-ink/15 group-hover:bg-ink/30 transition-colors duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/10 to-transparent" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-3">
-                    <div>
-                      <p className="text-white/60 text-[9px] sm:text-[10px] uppercase tracking-[0.3em] mb-0.5">
-                        {cat.count} stuks
+                  <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-white/70 text-[9px] sm:text-[10px] uppercase tracking-[0.3em] mb-1 tabular-nums">
+                        {fmtCount(cat.slug)}
                       </p>
-                      <h3 className="font-serif text-white text-xl sm:text-2xl lg:text-3xl leading-none">
+                      <h3 className="font-serif text-white text-xl sm:text-2xl lg:text-3xl leading-tight">
                         {cat.name}
                       </h3>
                     </div>
-                    <svg className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                    </svg>
+                    <ArrowUpRight
+                      className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all flex-shrink-0"
+                      strokeWidth={1.5}
+                    />
                   </div>
                 </div>
               </Link>

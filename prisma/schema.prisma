@@ -22,12 +22,14 @@ model Product {
   colorGroup   String?
   colorName    String?
   colorHex     String?
+  hidden       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   orderItems   OrderItem[]
 
   @@index([category])
   @@index([colorGroup])
+  @@index([hidden])
 }
 
 model Order {

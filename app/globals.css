@@ -284,6 +284,11 @@ img {
   animation: shimmer 2s ease-in-out infinite;
 }
 
+@keyframes scroll-line {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
 /* ───────────────────────────────────
    PRODUCT CARD INTERACTIONS
    ─────────────────────────────────── */

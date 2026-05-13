@@ -172,7 +172,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               {/* Mobile — swipe carousel */}
               <div className="lg:hidden">
                 <div
-                  className="relative overflow-hidden bg-bone cursor-zoom-in"
+                  className="relative overflow-hidden bg-bone cursor-zoom-in rounded-xl ring-1 ring-line/70"
                   ref={emblaRef}
                   onClick={() => openLightbox(activeSlide)}
                 >
@@ -194,7 +194,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     ))}
                   </div>
                   {images.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-ink font-medium">
+                    <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-ink font-medium rounded-full">
                       {activeSlide + 1} / {images.length}
                     </div>
                   )}
@@ -226,21 +226,20 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       key={i}
                       onClick={() => setSelectedImage(i)}
                       aria-label={`Toon foto ${i + 1}`}
-                      className={`relative w-[84px] h-[104px] flex-shrink-0 overflow-hidden bg-bone transition-all duration-200 ${
-                        selectedImage === i ? "opacity-100" : "opacity-50 hover:opacity-90"
+                      className={`relative w-[84px] h-[104px] flex-shrink-0 overflow-hidden bg-bone rounded-lg ring-1 transition-all duration-200 ${
+                        selectedImage === i
+                          ? "opacity-100 ring-ink"
+                          : "opacity-60 hover:opacity-100 ring-line/60"
                       }`}
                     >
                       <Image src={cldOptimize(img, { ar: "1:1", w: 200, mode: "fill" })} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
-                      {selectedImage === i && (
-                        <span className="absolute inset-y-0 left-0 w-[2px] bg-ink" />
-                      )}
                     </button>
                   ))}
                 </div>
 
                 {/* Hoofd afbeelding met hover zoom */}
                 <div
-                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in"
+                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in rounded-xl ring-1 ring-line/70"
                   onMouseEnter={() => setZoomActive(true)}
                   onMouseLeave={() => setZoomActive(false)}
                   onMouseMove={handleZoomMove}
@@ -279,18 +278,19 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </div>
             </div>
 
-            {/* Info — sticky op desktop */}
+            {/* Info — sticky op desktop, focus op conversie */}
             <div className="lg:col-span-5 flex flex-col lg:sticky lg:top-32 lg:py-8">
-              <div className="flex items-center gap-4 mb-6">
-                <span className="font-serif italic text-stone text-sm">— 01</span>
-                <span className="eyebrow capitalize">{product.category}</span>
-              </div>
-              <h1 className="display-lg text-ink mb-6">{product.name}</h1>
-              <p className="font-serif text-3xl lg:text-4xl text-bronze font-light mb-10">&euro;{product.price.toFixed(2)}</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-3 capitalize">
+                {product.category}
+              </p>
+              <h1 className="font-serif text-3xl lg:text-5xl text-ink leading-[1.05] mb-5">
+                {product.name}
+              </h1>
+              <p className="font-serif text-2xl lg:text-3xl text-bronze font-light mb-8 tabular-nums">
+                &euro;{product.price.toFixed(0)},-
+              </p>
 
-              <div className="w-12 h-[1px] bg-mist mb-10" />
-
-              <p className="body-lg text-slate mb-10">{product.description}</p>
+              <div className="w-10 h-[1px] bg-line mb-8" />
 
               <ColorVariantPicker
                 currentSlug={product.slug}
@@ -298,22 +298,20 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 variants={colorVariants}
               />
 
-              <ProductSpecs specs={parseSpecs(product.specs)} />
-
               <StockDeliveryInfo
                 stock={product.stock ?? 0}
                 deliveryTime={product.deliveryTime ?? null}
               />
 
               {/* Aantal + Knop */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                <div className="flex items-center border border-line">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <div className="flex items-center border border-line rounded-md overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={(product.stock ?? 0) === 0}
                     className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm disabled:opacity-40"
                   >−</button>
-                  <span className="px-4 py-4 text-ink text-sm min-w-[3rem] text-center">{quantity}</span>
+                  <span className="px-4 py-4 text-ink text-sm min-w-[3rem] text-center tabular-nums">{quantity}</span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock ?? 99, quantity + 1))}
                     disabled={quantity >= (product.stock ?? 0)}
@@ -330,8 +328,15 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 </motion.button>
               </div>
 
+              {/* Korte intro paragraaf (eerste deel beschrijving) */}
+              <p className="text-sm lg:text-base text-slate leading-relaxed mb-8">
+                {product.description.length > 220
+                  ? product.description.slice(0, 220).trim() + "…"
+                  : product.description}
+              </p>
+
               {/* USP's */}
-              <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 pt-10 border-t border-line">
+              <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 pt-8 border-t border-line">
                 {usps.map((usp) => (
                   <div key={usp.label} className="flex items-center gap-3">
                     <svg className="w-4 h-4 text-bronze flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
@@ -344,6 +349,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             </div>
           </div>
         </div>
+
+        {/* Beschrijving — editoriale sectie */}
+        <DescriptionSection product={product} />
+
+        {/* Specificaties — eigen sectie */}
+        <SpecificationsSection specs={parseSpecs(product.specs)} />
 
         {/* Reviews */}
         <ProductReviews category={product.category} />
@@ -624,25 +635,81 @@ function StockDeliveryInfo({
   );
 }
 
-function ProductSpecs({ specs }: { specs: Record<string, string> }) {
+function DescriptionSection({ product }: { product: Product }) {
+  if (!product.description) return null;
+  // Splits paragrafen op dubbele newlines, fallback naar 1 paragraaf
+  const paragraphs = product.description
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return (
+    <section className="mt-24 lg:mt-40 bg-bone/40 py-20 lg:py-32">
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+          <div className="lg:col-span-4">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-5">
+              Over dit stuk
+            </p>
+            <h2 className="font-serif text-3xl lg:text-4xl text-ink leading-[1.1] mb-6">
+              Het verhaal van{" "}
+              <span className="italic text-bronze">{product.name.split(" ")[0]}</span>
+            </h2>
+            <div className="w-10 h-[1px] bg-bronze" />
+          </div>
+          <div className="lg:col-span-8 space-y-6">
+            {paragraphs.length > 0 ? (
+              paragraphs.map((p, i) => (
+                <p
+                  key={i}
+                  className={
+                    i === 0
+                      ? "font-serif text-xl lg:text-2xl text-ink leading-relaxed first-letter:font-medium"
+                      : "text-base lg:text-lg text-slate leading-relaxed"
+                  }
+                >
+                  {p}
+                </p>
+              ))
+            ) : (
+              <p className="font-serif text-xl lg:text-2xl text-ink leading-relaxed">
+                {product.description}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SpecificationsSection({ specs }: { specs: Record<string, string> }) {
   const entries = Object.entries(specs);
   if (entries.length === 0) return null;
   return (
-    <div className="mb-12">
-      <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-4">Specificaties</p>
-      <dl className="border-t border-line">
-        {entries.map(([k, v]) => (
-          <div
-            key={k}
-            className="flex items-baseline justify-between gap-6 py-3.5 border-b border-line"
-          >
-            <dt className="text-[11px] uppercase tracking-[0.2em] text-stone shrink-0">
-              {k}
-            </dt>
-            <dd className="font-serif text-ink text-right">{v}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <section className="mt-24 lg:mt-32">
+      <div className="max-w-[1200px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="text-center mb-10 lg:mb-14">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-3">
+            Details
+          </p>
+          <h2 className="font-serif text-3xl lg:text-4xl text-ink leading-tight">
+            Specificaties
+          </h2>
+        </div>
+        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-0 border-t border-line">
+          {entries.map(([k, v]) => (
+            <div
+              key={k}
+              className="flex items-baseline justify-between gap-6 py-4 border-b border-line"
+            >
+              <dt className="text-[11px] uppercase tracking-[0.2em] text-stone shrink-0">
+                {k}
+              </dt>
+              <dd className="font-serif text-ink text-right">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }

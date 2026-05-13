@@ -41,6 +41,16 @@ const COLORS: Record<string, string> = {
   "ecru": "#E8DCC8",
   "taupe": "#8B7E72",
   "chroom": "#B8B8B8",
+  // App4sales finishes
+  "flintstone": "#8C7A6B",
+  "eiken": "#A57B47",
+  "oak": "#A57B47",
+  "black": "#1C1C1C",
+  "cream": "#EFE6D2",
+  "white": "#F5F5F0",
+  "brown": "#7A5A3F",
+  "grey": "#6E6E6E",
+  "gray": "#6E6E6E",
 };
 
 function slugify(s: string): string {
