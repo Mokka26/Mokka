@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRef } from "react";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { imageUrls } from "@/lib/imageHelpers";
+import { useInFrameParallax } from "@/hooks/useInFrameParallax";
 
 interface Product {
   id: string;
@@ -89,22 +89,7 @@ export default function ProductCard({ product, variants }: Props) {
 
   const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;
-  const figureRef = useRef<HTMLElement>(null);
-
-  // SIGNATURE: in-frame parallax — cursor → CSS vars → image translate (max ±10px)
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!figureRef.current) return;
-    const rect = figureRef.current.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    const py = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-    figureRef.current.style.setProperty("--parallax-x", `${px * 10}px`);
-    figureRef.current.style.setProperty("--parallax-y", `${py * 10}px`);
-  };
-  const handleMouseLeave = () => {
-    if (!figureRef.current) return;
-    figureRef.current.style.setProperty("--parallax-x", "0px");
-    figureRef.current.style.setProperty("--parallax-y", "0px");
-  };
+  const { ref: figureRef, onMouseMove, onMouseLeave } = useInFrameParallax<HTMLElement>({ maxOffset: 10 });
 
   const displayName = variants && variants.length > 1 && product.colorName
     ? product.name.replace(new RegExp(`\\s*${product.colorName}$`, "i"), "")
@@ -133,8 +118,8 @@ export default function ProductCard({ product, variants }: Props) {
         {/* Image — aspect 4/5 magazine-feel, in-frame parallax, geen ring/rounded */}
         <figure
           ref={figureRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          onMouseMove={onMouseMove}
+          onMouseLeave={onMouseLeave}
           className="relative aspect-[4/5] overflow-hidden bg-bone mb-6"
         >
           {first && (

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import ProductCard from "./ProductCard";
+import { useReveal } from "@/hooks/useReveal";
 
 interface Product {
   id: string;
@@ -13,16 +13,24 @@ interface Product {
   images: string;
 }
 
+function GridItem({ product, delay }: { product: Product; delay: number }) {
+  const { ref, style } = useReveal<HTMLDivElement>({ delay, distance: 30 });
+  return (
+    <div ref={ref} style={style}>
+      <ProductCard product={product} />
+    </div>
+  );
+}
+
 export default function CollectionPreview({ products }: { products: Product[] }) {
+  const { ref: headerRef, style: headerStyle } = useReveal<HTMLDivElement>({ distance: 20 });
+
   return (
     <section className="py-28 lg:py-40 bg-paper">
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+        <div
+          ref={headerRef}
+          style={headerStyle}
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-14 lg:mb-20"
         >
           <div className="lg:col-span-8">
@@ -39,30 +47,14 @@ export default function CollectionPreview({ products }: { products: Product[] })
               </svg>
             </Link>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Clean 4-kolom grid — laat de producten spreken */}
-        <motion.div
-          className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
-        >
-          {products.slice(0, 8).map((product) => (
-            <motion.div
-              key={product.id}
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] } },
-              }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16">
+          {products.slice(0, 8).map((product, i) => (
+            <GridItem key={product.id} product={product} delay={i * 60} />
           ))}
-        </motion.div>
+        </div>
 
-        {/* Mobile CTA */}
         <div className="sm:hidden mt-10 text-center">
           <Link href="/products" className="btn-ghost">Bekijk alles</Link>
         </div>

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { firstImageUrl } from "@/lib/imageHelpers";
+import { useReveal } from "@/hooks/useReveal";
+import { useClipReveal } from "@/hooks/useClipReveal";
 
 interface Product {
   id: string;
@@ -17,6 +18,9 @@ interface Product {
 }
 
 export default function FeaturedStory({ product }: { product: Product | null }) {
+  const textReveal = useReveal<HTMLDivElement>({ distance: 30 });
+  const imageReveal = useClipReveal<HTMLDivElement>({ from: "bottom", duration: 1100, delay: 120 });
+
   if (!product) return null;
 
   const mainImage = firstImageUrl(product.images);
@@ -27,12 +31,10 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
           {/* LINKS — Tekst/verhaal */}
-          <motion.div
+          <div
+            ref={textReveal.ref}
+            style={textReveal.style}
             className="lg:col-span-5 order-2 lg:order-1"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.9, ease: [0.25, 0.4, 0.25, 1] }}
           >
             <p className="text-[10px] uppercase tracking-[0.14em] font-medium text-accent-light mb-6">
               — In de spotlight
@@ -76,15 +78,13 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
               Bekijk dit stuk
               <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform" strokeWidth={1.5} />
             </Link>
-          </motion.div>
+          </div>
 
-          {/* RECHTS — Groot beeld */}
-          <motion.div
+          {/* RECHTS — Groot beeld, clip-reveal van onder */}
+          <div
+            ref={imageReveal.ref}
+            style={imageReveal.style}
             className="lg:col-span-7 order-1 lg:order-2"
-            initial={{ opacity: 0, scale: 1.02 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1.2, ease: [0.25, 0.4, 0.25, 1] }}
           >
             <Link href={`/products/${product.slug}`} className="group block relative">
               <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone rounded-2xl ring-1 ring-white/10 transition-all duration-500 group-hover:ring-white/30 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
@@ -101,10 +101,10 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
               {/* Floating label */}
               <div className="absolute top-6 right-6 flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3.5 py-1.5 rounded-full">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                <span className="text-ink text-[10px] uppercase tracking-[0.3em] font-medium">Editie 01</span>
+                <span className="eyebrow text-ink">Editie 01</span>
               </div>
             </Link>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
