@@ -28,13 +28,14 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
 
   return (
     <section className="py-28 lg:py-44 bg-ink text-white overflow-hidden">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-          {/* LINKS — Tekst/verhaal */}
+      {/* Edge-bleed grid — image flush naar right viewport edge op desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,1100px)] lg:gap-20 items-center max-w-[100vw]">
+        {/* LINKS — Tekst/verhaal, contained binnen 1600px max */}
+        <div className="px-6 sm:px-10 lg:pl-[max(56px,calc((100vw-1600px)/2+56px))] lg:pr-0 order-2 lg:order-1">
           <div
             ref={textReveal.ref}
             style={textReveal.style}
-            className="lg:col-span-5 order-2 lg:order-1"
+            className="max-w-[560px]"
           >
             <p className="text-[10px] uppercase tracking-[0.14em] font-medium text-accent-light mb-6">
               — In de spotlight
@@ -79,32 +80,32 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
               <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform" strokeWidth={1.5} />
             </Link>
           </div>
+        </div>
 
-          {/* RECHTS — Groot beeld, clip-reveal van onder */}
-          <div
-            ref={imageReveal.ref}
-            style={imageReveal.style}
-            className="lg:col-span-7 order-1 lg:order-2"
-          >
-            <Link href={`/products/${product.slug}`} className="group block relative">
-              <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone rounded-2xl ring-1 ring-white/10 transition-all duration-500 group-hover:ring-white/30 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
-                <Image
-                  src={mainImage}
-                  alt={product.name}
-                  fill
-                  className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
-                  sizes="(max-width: 1024px) 100vw, 58vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent opacity-60" />
-              </div>
+        {/* RECHTS — Groot beeld bleed naar right viewport edge, clip-reveal van onder */}
+        <div
+          ref={imageReveal.ref}
+          style={imageReveal.style}
+          className="order-1 lg:order-2 px-6 sm:px-10 lg:px-0"
+        >
+          <Link href={`/products/${product.slug}`} className="group block relative">
+            <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone transition-all duration-500 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
+              <Image
+                src={mainImage}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
+                sizes="(max-width: 1024px) 100vw, 65vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent opacity-60" />
+            </div>
 
-              {/* Floating label */}
-              <div className="absolute top-6 right-6 flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3.5 py-1.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                <span className="eyebrow text-ink">Editie 01</span>
-              </div>
-            </Link>
-          </div>
+            {/* Floating label — square, niet rounded */}
+            <div className="absolute top-6 right-6 lg:right-[max(56px,calc((100vw-1600px)/2+56px))] flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3.5 py-1.5">
+              <span className="w-1.5 h-1.5 bg-accent" />
+              <span className="eyebrow text-ink">Editie 01</span>
+            </div>
+          </Link>
         </div>
       </div>
     </section>

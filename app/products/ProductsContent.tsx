@@ -181,9 +181,9 @@ export default function ProductsContent() {
 
   return (
     <div className="pt-24 lg:pt-28 pb-24 lg:pb-32">
-      {/* Slanke header — alleen breadcrumb + h1 (geen editorial intro) */}
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 lg:mb-8">
-        <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] font-medium text-stone mb-4">
+      {/* Magazine sticky-moment header — asymmetric 12-col */}
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-8 lg:mb-16">
+        <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] font-medium text-stone mb-5">
           <Link href="/" className="hover:text-ink transition-colors duration-[280ms]">Home</Link>
           <span className="text-stone/40">/</span>
           <Link href="/products" className={`transition-colors duration-[280ms] ${!category ? "text-ink" : "hover:text-ink"}`}>
@@ -203,13 +203,31 @@ export default function ProductsContent() {
           )}
         </nav>
 
-        <div className="flex items-baseline justify-between gap-4 flex-wrap">
-          <h1 className="display-sm text-ink">
-            {pageTitle}
-          </h1>
-          <p className="eyebrow tabular-nums">
-            {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "producten"}
-          </p>
+        {/* Magazine-style asymmetric header — chapter label links, titel midden, count rechts */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end">
+          <div className="lg:col-span-2 flex lg:items-end">
+            <span className="eyebrow text-accent">— {eyebrowLabel}</span>
+          </div>
+          <div className="lg:col-span-7">
+            <h1 className="display-md text-ink" style={{ fontVariationSettings: '"opsz" 144' }}>
+              {pageTitle}
+            </h1>
+            {pageSubtitle && (
+              <p className="mt-4 text-stone text-base lg:text-lg leading-[1.55] max-w-[55ch]">
+                {pageSubtitle}
+              </p>
+            )}
+          </div>
+          <div className="lg:col-span-3 flex items-end justify-start lg:justify-end">
+            <div className="flex items-baseline gap-2">
+              <span className="font-serif text-3xl text-ink tabular-nums" style={{ fontVariationSettings: '"opsz" 96' }}>
+                {String(filteredProducts.length).padStart(2, "0")}
+              </span>
+              <span className="eyebrow text-stone">
+                {filteredProducts.length === 1 ? "stuk" : "stuks"}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -164,11 +164,19 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
           </nav>
         </div>
 
-        {/* Product — twee kolommen */}
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20 items-start">
-            {/* Afbeeldingen */}
-            <div className="lg:col-span-7">
+        {/* Product — magazine-spread: image bleed naar left edge op desktop */}
+        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-20 items-start">
+          {/* Vertical chapter label — sticky in left margin op desktop */}
+          <div className="hidden lg:block absolute left-6 top-44 z-10 pointer-events-none">
+            <span className="block origin-top-left rotate-90 translate-x-[2px] eyebrow text-stone whitespace-nowrap">
+              <span className="text-accent">— </span>
+              {product.category}
+              <span className="text-stone/50"> · 01</span>
+            </span>
+          </div>
+
+          {/* Afbeeldingen — bleeds links */}
+          <div className="px-6 sm:px-10 lg:pl-0 lg:pr-0 relative">
               {/* Mobile — swipe carousel */}
               <div className="lg:hidden">
                 <div
@@ -279,7 +287,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             </div>
 
             {/* Info — sticky op desktop, focus op conversie */}
-            <div className="lg:col-span-5 flex flex-col lg:sticky lg:top-32 lg:py-8">
+          {/* Info — sticky op desktop, gracious whitespace rechts */}
+          <div className="px-6 sm:px-10 lg:px-0 lg:pr-[max(56px,calc((100vw-1600px)/2+56px))] flex flex-col lg:sticky lg:top-32 lg:py-8">
               <p className="eyebrow capitalize mb-4">
                 {product.category}
               </p>
@@ -348,7 +357,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </div>
             </div>
           </div>
-        </div>
 
         {/* Beschrijving — editoriale sectie */}
         <DescriptionSection product={product} />

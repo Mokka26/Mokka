@@ -127,6 +127,7 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  { label: "Lookbook", href: "/lookbook" },
   { label: "Aanbiedingen", href: "/products?sort=price-asc" },
   { label: "Atelier", href: "/about" },
 ];
