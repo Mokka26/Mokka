@@ -264,11 +264,11 @@ export default function Navbar() {
               if (!item || !item.subLinks) return null;
               return (
                 <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute left-0 right-0 bg-paper border-t border-line shadow-lg hidden lg:block"
+                  initial={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
+                  animate={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
+                  exit={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
+                  transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute left-0 right-0 bg-paper border-t border-line shadow-[0_30px_60px_-20px_rgba(20,17,13,0.12)] hidden lg:block"
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
                   <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 py-10">

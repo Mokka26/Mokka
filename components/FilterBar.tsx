@@ -87,7 +87,7 @@ function FilterRow({
       style={{ paddingLeft: indent ? `${indent * 16}px` : undefined }}
     >
       <span
-        className={`absolute top-1/2 -translate-y-1/2 w-[2px] h-5 bg-bronze transition-opacity ${
+        className={`absolute top-1/2 -translate-y-1/2 w-[2px] h-5 bg-accent transition-opacity ${
           active ? "opacity-100" : "opacity-0"
         }`}
         style={{ left: indent ? `${indent * 16 - 12}px` : "-12px" }}
@@ -449,31 +449,39 @@ function DesktopChipBar(props: ChipBarProps) {
               <div key={chip.key} className="relative flex-shrink-0">
                 <button
                   onClick={() => setOpenChip(openChip === chip.key ? null : chip.key)}
-                  className={`flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] px-4 py-2 border transition-all whitespace-nowrap ${
+                  className={`group/chip relative flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium px-5 py-2.5 border transition-all duration-[280ms] whitespace-nowrap ${
                     openChip === chip.key
-                      ? "border-ink bg-ink text-white"
+                      ? "border-ink bg-ink text-paper"
                       : chip.active
-                      ? "border-bronze text-bronze bg-bronze/5"
+                      ? "border-ink text-ink bg-paper"
                       : "border-line text-ink hover:border-ink"
                   }`}
+                  style={{ borderRadius: 0, transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
                 >
+                  {/* SIGNATURE: hover-onderlijn-within (alleen inactive state) */}
+                  {openChip !== chip.key && !chip.active && (
+                    <span
+                      className="absolute left-4 right-4 bottom-1.5 h-px bg-ink scale-x-0 group-hover/chip:scale-x-100 origin-right group-hover/chip:origin-left transition-transform duration-[480ms]"
+                      style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
+                    />
+                  )}
                   <span>{chip.label}</span>
                   {chip.summary && (
                     <span className={`normal-case tracking-normal text-xs ${
-                      openChip === chip.key ? "text-white/80" : "text-stone"
+                      openChip === chip.key ? "text-paper/80" : "text-stone"
                     }`}>
                       · {chip.summary}
                     </span>
                   )}
                   {chip.count > 1 && (
-                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] rounded-full tabular-nums ${
-                      openChip === chip.key ? "bg-white text-ink" : "bg-bronze text-white"
+                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] tabular-nums font-medium ${
+                      openChip === chip.key ? "bg-paper text-ink" : "bg-accent text-paper"
                     }`}>
                       {chip.count}
                     </span>
                   )}
                   <ChevronDown
-                    className={`w-3 h-3 transition-transform ${openChip === chip.key ? "rotate-180" : ""}`}
+                    className={`w-3 h-3 transition-transform duration-[280ms] ${openChip === chip.key ? "rotate-180" : ""}`}
                     strokeWidth={1.5}
                   />
                 </button>
@@ -507,12 +515,19 @@ function DesktopChipBar(props: ChipBarProps) {
             {facets.stockCount > 0 && onInStockOnlyChange && (
               <button
                 onClick={() => onInStockOnlyChange(!inStockOnly)}
-                className={`flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] px-4 py-2 border transition-all whitespace-nowrap flex-shrink-0 ${
-                  inStockOnly ? "border-bronze text-bronze bg-bronze/5" : "border-line text-ink hover:border-ink"
+                className={`group/voorraad relative flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium px-5 py-2.5 border transition-all duration-[280ms] whitespace-nowrap flex-shrink-0 ${
+                  inStockOnly ? "border-ink bg-ink text-paper" : "border-line text-ink hover:border-ink"
                 }`}
+                style={{ borderRadius: 0, transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
               >
+                {!inStockOnly && (
+                  <span
+                    className="absolute left-4 right-4 bottom-1.5 h-px bg-ink scale-x-0 group-hover/voorraad:scale-x-100 origin-right group-hover/voorraad:origin-left transition-transform duration-[480ms]"
+                    style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
+                  />
+                )}
+                <span className={`w-1.5 h-1.5 ${inStockOnly ? "bg-accent" : "bg-stone/40"}`} />
                 <span>Op voorraad</span>
-                {inStockOnly && <span className="text-[10px] text-bronze">✓</span>}
               </button>
             )}
 
@@ -534,7 +549,7 @@ function DesktopChipBar(props: ChipBarProps) {
             <div ref={sortRef} className="relative">
               <button
                 onClick={() => setSortOpen(!sortOpen)}
-                className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-ink hover:text-bronze transition-colors"
+                className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium text-ink hover:text-accent transition-colors duration-[280ms]"
               >
                 <ArrowUpDown className="w-3.5 h-3.5" strokeWidth={1.5} />
                 <span>{activeSortLabel?.split(":")[0] ?? "Sorteer"}</span>
@@ -975,19 +990,19 @@ export default function FilterBar(props: Props) {
         <div className="flex items-stretch gap-px bg-line">
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-4 bg-paper text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-bone transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-4 bg-paper text-[11px] uppercase tracking-[0.14em] font-medium text-ink hover:bg-bone transition-colors"
           >
             <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} />
             Filter
             {hasActiveFilters && (
-              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-bronze text-white text-[10px] rounded-full tabular-nums">
+              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-accent text-paper text-[10px] font-medium tabular-nums">
                 {activeCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setMobileSortOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-4 bg-paper text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-bone transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-4 bg-paper text-[11px] uppercase tracking-[0.14em] font-medium text-ink hover:bg-bone transition-colors"
           >
             <ArrowUpDown className="w-4 h-4" strokeWidth={1.5} />
             Sorteer
@@ -1011,19 +1026,28 @@ export default function FilterBar(props: Props) {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ duration: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
+              transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
               className="fixed right-0 top-0 bottom-0 w-full sm:w-[440px] bg-paper z-50 flex flex-col"
             >
-              <div className="flex items-center justify-between px-7 py-5 border-b border-line">
+              {/* SIGNATURE: linker rand-divider in accent kleur tijdens open-state */}
+              <motion.span
+                aria-hidden
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                exit={{ scaleY: 0 }}
+                transition={{ duration: 0.64, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute left-0 top-0 bottom-0 w-px bg-accent origin-top z-10"
+              />
+              <div className="flex items-center justify-between px-7 py-6 border-b border-line">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-[11px] uppercase tracking-[0.22em] font-medium text-ink">Filter</h3>
+                  <span className="eyebrow text-accent">— Filter</span>
                   {hasActiveFilters && (
-                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-bronze text-white text-[10px] rounded-full tabular-nums">
+                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-accent text-paper text-[10px] font-medium tabular-nums">
                       {activeCount}
                     </span>
                   )}
                 </div>
-                <button onClick={() => setDrawerOpen(false)} className="p-1 -mr-1 text-stone hover:text-ink transition-colors" aria-label="Sluit">
+                <button onClick={() => setDrawerOpen(false)} className="p-1 -mr-1 text-stone hover:text-ink transition-colors duration-[280ms]" aria-label="Sluit">
                   <X className="w-5 h-5" strokeWidth={1.5} />
                 </button>
               </div>
@@ -1034,14 +1058,14 @@ export default function FilterBar(props: Props) {
                 {hasActiveFilters && (
                   <button
                     onClick={resetAll}
-                    className="text-[11px] uppercase tracking-[0.22em] text-stone hover:text-ink underline underline-offset-4 decoration-stone/40"
+                    className="text-[11px] uppercase tracking-[0.14em] font-medium text-stone hover:text-ink underline underline-offset-4 decoration-stone/40 transition-colors duration-[280ms]"
                   >
                     Wissen
                   </button>
                 )}
                 <button
                   onClick={() => setDrawerOpen(false)}
-                  className="flex-1 bg-ink text-white text-[11px] uppercase tracking-[0.22em] py-3.5 hover:bg-bronze transition-colors"
+                  className="flex-1 bg-ink text-paper text-[11px] uppercase tracking-[0.14em] font-medium py-3.5 hover:bg-accent transition-colors duration-[280ms]"
                 >
                   Toon {productCount} {productCount === 1 ? "item" : "items"}
                 </button>
