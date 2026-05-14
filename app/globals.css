@@ -362,6 +362,45 @@ h1, h2, h3, h4, h5, h6 {
   scrollbar-width: none;
 }
 
+/* Typographic loader — pulse + accent line ride */
+@keyframes typo-loader-fade {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@keyframes typo-loader-line {
+  0% { transform: scaleX(0); transform-origin: left; }
+  50% { transform: scaleX(1); transform-origin: left; }
+  50.001% { transform: scaleX(1); transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+.typo-loader-fade {
+  animation: typo-loader-fade 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.typo-loader-line {
+  animation: typo-loader-line 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .typo-loader-fade,
+  .typo-loader-line {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Custom cursor — verberg native cursor op fine-pointer desktop */
+@media (any-pointer: fine) and (min-width: 1024px) {
+  body.has-custom-cursor,
+  body.has-custom-cursor * {
+    cursor: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.has-custom-cursor,
+  body.has-custom-cursor * {
+    cursor: auto !important;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    IMAGE LOADING
    ═══════════════════════════════════════════════════════════ */
