@@ -183,10 +183,10 @@ export default function ProductsContent() {
     <div className="pt-24 lg:pt-28 pb-24 lg:pb-32">
       {/* Slanke header — alleen breadcrumb + h1 (geen editorial intro) */}
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 lg:mb-8">
-        <nav className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-stone mb-4">
-          <Link href="/" className="hover:text-ink transition-colors">Home</Link>
+        <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] font-medium text-stone mb-4">
+          <Link href="/" className="hover:text-ink transition-colors duration-[280ms]">Home</Link>
           <span className="text-stone/40">/</span>
-          <Link href="/products" className={`transition-colors ${!category ? "text-ink" : "hover:text-ink"}`}>
+          <Link href="/products" className={`transition-colors duration-[280ms] ${!category ? "text-ink" : "hover:text-ink"}`}>
             Producten
           </Link>
           {category && (
@@ -204,10 +204,10 @@ export default function ProductsContent() {
         </nav>
 
         <div className="flex items-baseline justify-between gap-4 flex-wrap">
-          <h1 className="font-serif text-3xl lg:text-4xl text-ink leading-tight">
+          <h1 className="display-sm text-ink">
             {pageTitle}
           </h1>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-stone tabular-nums">
+          <p className="eyebrow tabular-nums">
             {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "producten"}
           </p>
         </div>

@@ -59,16 +59,13 @@ export default function CategoriesGrid() {
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-14 lg:mb-20"
         >
           <div className="lg:col-span-8">
-            <p className="text-[10px] uppercase tracking-[0.32em] text-stone mb-5">— Onze wereld</p>
-            <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-ink leading-[1.02]">
-              Shop per <span className="italic text-bronze">categorie</span>
+            <p className="eyebrow text-accent mb-5">— Onze wereld</p>
+            <h2 className="display-md text-ink">
+              Shop per <span className="italic text-accent">categorie</span>
             </h2>
           </div>
           <div className="lg:col-span-4 flex lg:justify-end">
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-ink border-b border-ink/30 pb-1.5 hover:border-bronze hover:text-bronze transition-colors"
-            >
+            <Link href="/products" className="btn-link">
               Alle producten
               <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
             </Link>
@@ -98,7 +95,7 @@ export default function CategoriesGrid() {
 
                   {/* Badge top-left */}
                   <div className="absolute top-6 left-6 flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-bronze" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                     <span className="text-ink text-[10px] uppercase tracking-[0.3em] font-medium">{cat.badge}</span>
                   </div>
 
@@ -112,7 +109,7 @@ export default function CategoriesGrid() {
                         {cat.name}
                       </h3>
                     </div>
-                    <span className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white text-ink flex items-center justify-center flex-shrink-0 group-hover:bg-bronze group-hover:text-white group-hover:rotate-12 transition-all duration-500">
+                    <span className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white text-ink flex items-center justify-center flex-shrink-0 group-hover:bg-accent group-hover:text-white group-hover:rotate-12 transition-all duration-500">
                       <ArrowUpRight className="w-5 h-5" strokeWidth={1.5} />
                     </span>
                   </div>

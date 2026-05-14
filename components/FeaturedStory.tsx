@@ -34,20 +34,23 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.9, ease: [0.25, 0.4, 0.25, 1] }}
           >
-            <p className="text-[10px] uppercase tracking-[0.32em] text-bronze mb-6">
+            <p className="text-[10px] uppercase tracking-[0.14em] font-medium text-accent-light mb-6">
               — In de spotlight
             </p>
 
-            <p className="text-white/50 text-[10px] uppercase tracking-[0.3em] mb-4 capitalize">
+            <p className="text-white/50 text-[10px] uppercase tracking-[0.14em] font-medium mb-4 capitalize">
               {product.category}
             </p>
-            <h2 className="font-serif text-white text-[clamp(2.5rem,5.5vw,5rem)] leading-[1] mb-8">
+            <h2
+              className="font-serif text-white text-[clamp(2.5rem,5.5vw,5rem)] leading-[0.98] tracking-[-0.035em] mb-8"
+              style={{ fontVariationSettings: '"opsz" 144' }}
+            >
               {product.name}
             </h2>
 
-            <div className="w-12 h-[1px] bg-bronze mb-8" />
+            <div className="w-12 h-[1px] bg-accent mb-8" />
 
-            <p className="text-white/70 text-base lg:text-lg leading-[1.8] mb-10 max-w-md">
+            <p className="text-white/70 text-base lg:text-lg leading-[1.6] mb-10 max-w-[55ch]">
               {product.description}
             </p>
 
@@ -68,7 +71,7 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
 
             <Link
               href={`/products/${product.slug}`}
-              className="group inline-flex items-center gap-3 bg-white text-ink px-8 py-4 text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-bronze hover:text-white transition-all duration-400"
+              className="group inline-flex items-center gap-3 bg-white text-ink px-8 py-4 text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-accent hover:text-white transition-all duration-400"
             >
               Bekijk dit stuk
               <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform" strokeWidth={1.5} />
@@ -97,7 +100,7 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
 
               {/* Floating label */}
               <div className="absolute top-6 right-6 flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3.5 py-1.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-bronze" />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                 <span className="text-ink text-[10px] uppercase tracking-[0.3em] font-medium">Editie 01</span>
               </div>
             </Link>

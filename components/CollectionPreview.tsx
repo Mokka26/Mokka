@@ -26,16 +26,13 @@ export default function CollectionPreview({ products }: { products: Product[] })
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-14 lg:mb-20"
         >
           <div className="lg:col-span-8">
-            <p className="text-[10px] uppercase tracking-[0.32em] text-stone mb-5">— Nieuwe collectie</p>
-            <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-ink leading-[1.02]">
-              Voorjaar <span className="italic text-bronze">2026</span>
+            <p className="eyebrow text-accent mb-5">— Nieuwe collectie</p>
+            <h2 className="display-md text-ink">
+              Voorjaar <span className="italic text-accent" style={{ fontVariationSettings: '"opsz" 144' }}>2026</span>
             </h2>
           </div>
           <div className="lg:col-span-4 flex lg:justify-end">
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-ink border-b border-ink/30 pb-1.5 hover:border-bronze hover:text-bronze transition-colors"
-            >
+            <Link href="/products" className="btn-link">
               Bekijk alles
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />

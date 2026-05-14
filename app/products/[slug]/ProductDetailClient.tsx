@@ -154,11 +154,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         {/* Breadcrumb */}
         <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-12 lg:mb-16">
           <nav className="text-[11px] text-stone uppercase tracking-[0.25em] font-medium">
-            <Link href="/" className="hover:text-bronze transition-colors">Home</Link>
+            <Link href="/" className="hover:text-accent transition-colors duration-[280ms]">Home</Link>
             <span className="mx-3 text-mist">/</span>
-            <Link href="/products" className="hover:text-bronze transition-colors">Producten</Link>
+            <Link href="/products" className="hover:text-accent transition-colors duration-[280ms]">Producten</Link>
             <span className="mx-3 text-mist">/</span>
-            <Link href={`/products?category=${product.category}`} className="hover:text-bronze transition-colors capitalize">{product.category}</Link>
+            <Link href={`/products?category=${product.category}`} className="hover:text-accent transition-colors duration-[280ms] capitalize">{product.category}</Link>
             <span className="mx-3 text-mist">/</span>
             <span className="text-ink">{product.name}</span>
           </nav>
@@ -280,13 +280,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
             {/* Info — sticky op desktop, focus op conversie */}
             <div className="lg:col-span-5 flex flex-col lg:sticky lg:top-32 lg:py-8">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-3 capitalize">
+              <p className="eyebrow capitalize mb-4">
                 {product.category}
               </p>
-              <h1 className="font-serif text-3xl lg:text-5xl text-ink leading-[1.05] mb-5">
+              <h1 className="display-md text-ink mb-5">
                 {product.name}
               </h1>
-              <p className="font-serif text-2xl lg:text-3xl text-bronze font-light mb-8 tabular-nums">
+              <p className="font-serif text-2xl lg:text-3xl text-accent font-light mb-8 tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
                 &euro;{product.price.toFixed(0)},-
               </p>
 
@@ -309,13 +309,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={(product.stock ?? 0) === 0}
-                    className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm disabled:opacity-40"
+                    className="px-5 py-4 text-stone hover:text-accent transition-colors duration-[280ms] text-sm disabled:opacity-40"
                   >−</button>
                   <span className="px-4 py-4 text-ink text-sm min-w-[3rem] text-center tabular-nums">{quantity}</span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock ?? 99, quantity + 1))}
                     disabled={quantity >= (product.stock ?? 0)}
-                    className="px-5 py-4 text-stone hover:text-bronze transition-colors text-sm disabled:opacity-40"
+                    className="px-5 py-4 text-stone hover:text-accent transition-colors duration-[280ms] text-sm disabled:opacity-40"
                   >+</button>
                 </div>
                 <motion.button

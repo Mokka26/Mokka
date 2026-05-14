@@ -68,25 +68,28 @@ export default function PromoBanners() {
                 {/* Gradient overlay voor leesbaarheid */}
                 <div className={`absolute inset-0 ${
                   b.accent === "bronze"
-                    ? "bg-gradient-to-t from-bronze/90 via-bronze/30 to-transparent"
+                    ? "bg-gradient-to-t from-accent/90 via-accent/30 to-transparent"
                     : b.accent === "ink"
                     ? "bg-gradient-to-t from-ink/90 via-ink/40 to-transparent"
                     : "bg-gradient-to-t from-ink/80 via-ink/20 to-transparent"
                 }`} />
                 {/* Content */}
                 <div className="absolute inset-0 flex flex-col justify-end p-8 lg:p-10 text-white">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-white/80 mb-4">
+                  <p className="eyebrow text-white/80 mb-5">
                     {b.eyebrow}
                   </p>
-                  <h3 className="font-serif text-2xl lg:text-3xl xl:text-4xl leading-tight mb-4">
+                  <h3 className="font-serif text-3xl lg:text-4xl xl:text-5xl leading-[0.98] tracking-[-0.035em] mb-4" style={{ fontVariationSettings: '"opsz" 144' }}>
                     {b.title}
                   </h3>
-                  <p className="text-sm lg:text-base text-white/80 mb-7 max-w-xs leading-relaxed">
+                  <p className="text-sm lg:text-base text-white/80 mb-7 max-w-[38ch] leading-[1.6]">
                     {b.description}
                   </p>
-                  <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] group-hover:gap-3 transition-all">
-                    <span className="border-b border-white/40 pb-1">{b.cta}</span>
-                    <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform" strokeWidth={1.5} />
+                  <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium">
+                    <span className="relative pb-1">
+                      {b.cta}
+                      <span className="absolute inset-x-0 bottom-0 h-px bg-white/60 scale-x-100 group-hover:scale-x-0 origin-right transition-transform duration-[480ms]" style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }} />
+                    </span>
+                    <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
                   </div>
                 </div>
               </Link>

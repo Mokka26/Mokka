@@ -210,13 +210,20 @@ export default function Navbar() {
                 >
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-1 px-4 py-2 text-xs uppercase tracking-[0.15em] font-medium transition-colors ${
-                      activeDropdown === item.label ? "text-bronze" : "text-ink hover:text-bronze"
+                    className={`relative flex items-center gap-1 px-4 py-2 text-xs uppercase tracking-[0.08em] font-medium transition-colors duration-[280ms] ${
+                      activeDropdown === item.label ? "text-accent" : "text-ink hover:text-accent"
                     }`}
+                    style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
                   >
+                    {/* SIGNATURE: vertical-line indicator op active nav-item */}
+                    <span
+                      className={`absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-[2px] bg-accent transition-opacity duration-[280ms] ${
+                        activeDropdown === item.label ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
                     {item.label}
                     {item.subLinks && (
-                      <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === item.label ? "rotate-180" : ""}`} strokeWidth={1.5} />
+                      <ChevronDown className={`w-3 h-3 transition-transform duration-[280ms] ${activeDropdown === item.label ? "rotate-180" : ""}`} strokeWidth={1.5} />
                     )}
                   </Link>
                 </div>
@@ -225,24 +232,24 @@ export default function Navbar() {
 
             {/* Right actions */}
             <div className="flex items-center gap-3 lg:gap-4">
-              <button onClick={() => setSearchOpen(true)} className="text-ink hover:text-bronze transition-colors p-2" aria-label="Zoeken">
+              <button onClick={() => setSearchOpen(true)} className="text-ink hover:text-accent transition-colors duration-[280ms] p-2" aria-label="Zoeken">
                 <Search className="w-5 h-5" strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => setCartDrawerOpen(true)}
-                className="relative text-ink hover:text-bronze transition-colors p-2"
+                className="relative text-ink hover:text-accent transition-colors duration-[280ms] p-2"
                 aria-label="Winkelwagen"
               >
                 <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                 {totalItems > 0 && (
-                  <span className="absolute top-0 right-0 bg-bronze text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
+                  <span className="absolute top-0 right-0 bg-accent text-paper text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
                     {totalItems}
                   </span>
                 )}
               </button>
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden text-ink hover:text-bronze transition-colors p-2"
+                className="lg:hidden text-ink hover:text-accent transition-colors duration-[280ms] p-2"
                 aria-label="Menu"
               >
                 <Menu className="w-6 h-6" strokeWidth={1.5} />
@@ -277,7 +284,7 @@ export default function Navbar() {
                                   <Link
                                     href={l.href}
                                     onClick={() => setActiveDropdown(null)}
-                                    className="text-sm text-slate hover:text-bronze transition-colors"
+                                    className="text-sm text-slate hover:text-accent transition-colors duration-[280ms]"
                                   >
                                     {l.label}
                                   </Link>
@@ -306,7 +313,7 @@ export default function Navbar() {
                               />
                             </div>
                             <p className="eyebrow mb-1">Uitgelicht</p>
-                            <p className="font-serif text-xl text-ink group-hover:text-bronze transition-colors">
+                            <p className="font-serif text-xl text-ink group-hover:text-accent transition-colors duration-[280ms]">
                               {item.featured.label}
                             </p>
                           </Link>
