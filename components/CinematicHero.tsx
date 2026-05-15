@@ -163,7 +163,7 @@ export default function CinematicHero() {
               </h1>
               <Link
                 href="/products"
-                className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 text-[11px] uppercase tracking-[0.22em] hover:bg-bronze hover:text-white transition-colors"
+                className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.22em] hover:bg-accent hover:text-white transition-colors"
               >
                 Ontdek de collectie
                 <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
@@ -257,7 +257,7 @@ export default function CinematicHero() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   href="/products"
-                  className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 text-[11px] uppercase tracking-[0.22em] hover:bg-bronze hover:text-white transition-colors"
+                  className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.22em] hover:bg-accent hover:text-white transition-colors"
                 >
                   Bekijk de collectie
                   <ArrowRight className="w-4 h-4" strokeWidth={1.5} />

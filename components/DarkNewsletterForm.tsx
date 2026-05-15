@@ -13,7 +13,7 @@ export default function DarkNewsletterForm() {
       />
       <button
         type="submit"
-        className="bg-white text-ink px-8 py-3 text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-bronze hover:text-white transition-colors"
+        className="bg-white text-ink px-8 py-3 rounded-[10px] text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-accent hover:text-white transition-colors"
       >
         Aanmelden
       </button>

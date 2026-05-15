@@ -120,7 +120,7 @@ export default function ProductCard({ product, variants }: Props) {
           ref={figureRef}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className="relative aspect-[4/5] overflow-hidden bg-bone mb-6"
+          className="relative aspect-[4/5] overflow-hidden bg-bone mb-6 rounded-[10px]"
         >
           {first && (
             <Image

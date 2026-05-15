@@ -456,7 +456,7 @@ function DesktopChipBar(props: ChipBarProps) {
                       ? "border-ink text-ink bg-paper"
                       : "border-line text-ink hover:border-ink"
                   }`}
-                  style={{ borderRadius: 0, transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
+                  style={{ borderRadius: "8px", transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
                 >
                   {/* SIGNATURE: hover-onderlijn-within (alleen inactive state) */}
                   {openChip !== chip.key && !chip.active && (
@@ -518,7 +518,7 @@ function DesktopChipBar(props: ChipBarProps) {
                 className={`group/voorraad relative flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium px-5 py-2.5 border transition-all duration-[280ms] whitespace-nowrap flex-shrink-0 ${
                   inStockOnly ? "border-ink bg-ink text-paper" : "border-line text-ink hover:border-ink"
                 }`}
-                style={{ borderRadius: 0, transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
+                style={{ borderRadius: "8px", transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
               >
                 {!inStockOnly && (
                   <span
@@ -1065,7 +1065,7 @@ export default function FilterBar(props: Props) {
                 )}
                 <button
                   onClick={() => setDrawerOpen(false)}
-                  className="flex-1 bg-ink text-paper text-[11px] uppercase tracking-[0.14em] font-medium py-3.5 hover:bg-accent transition-colors duration-[280ms]"
+                  className="flex-1 bg-ink text-paper text-[11px] uppercase tracking-[0.14em] font-medium py-3.5 rounded-[10px] hover:bg-accent transition-colors duration-[280ms]"
                 >
                   Toon {productCount} {productCount === 1 ? "item" : "items"}
                 </button>

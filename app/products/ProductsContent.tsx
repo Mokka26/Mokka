@@ -311,7 +311,7 @@ export default function ProductsContent() {
                       </p>
                       <button
                         onClick={() => setDisplayedCount((c) => c + PAGE_SIZE)}
-                        className="text-[11px] uppercase tracking-[0.25em] text-ink py-3.5 px-10 border border-ink hover:bg-ink hover:text-white transition-colors"
+                        className="text-[11px] uppercase tracking-[0.25em] text-ink py-3.5 px-10 border border-ink rounded-[10px] hover:bg-ink hover:text-white transition-colors"
                       >
                         Toon meer
                       </button>

@@ -13,7 +13,7 @@ interface Props {
 
 export default function CategoryCard({ name, slug, image, description, tall }: Props) {
   return (
-    <Link href={`/products?category=${slug}`} className="group relative block overflow-hidden">
+    <Link href={`/products?category=${slug}`} className="group relative block overflow-hidden rounded-[10px]">
       <div className={`relative ${tall ? "aspect-[3/4] lg:aspect-[4/5]" : "aspect-[4/3] sm:aspect-square"}`}>
         <Image
           src={image}

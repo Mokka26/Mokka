@@ -86,7 +86,7 @@ export default function Hero() {
             >
               <Link
                 href="/products"
-                className="inline-flex items-center justify-center gap-3 bg-ink text-white px-8 py-4 text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-bronze transition-colors duration-500"
+                className="inline-flex items-center justify-center gap-3 bg-ink text-white px-8 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-accent transition-colors duration-500"
               >
                 Bekijk collectie
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>

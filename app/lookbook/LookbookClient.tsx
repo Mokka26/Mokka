@@ -141,7 +141,7 @@ export default function LookbookClient({ products }: Props) {
                 disabled={activeIndex === 0}
                 aria-label="Vorige frame"
                 className="w-11 h-11 flex items-center justify-center border border-ink text-ink hover:bg-ink hover:text-paper transition-colors duration-[280ms] disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ borderRadius: 0 }}
+                style={{ borderRadius: "8px" }}
               >
                 <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
               </button>
@@ -150,7 +150,7 @@ export default function LookbookClient({ products }: Props) {
                 disabled={activeIndex === total - 1}
                 aria-label="Volgende frame"
                 className="w-11 h-11 flex items-center justify-center border border-ink text-ink hover:bg-ink hover:text-paper transition-colors duration-[280ms] disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ borderRadius: 0 }}
+                style={{ borderRadius: "8px" }}
               >
                 <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
               </button>
@@ -179,7 +179,7 @@ function LookbookFrame({
       >
         <Link
           href={`/products/${product.slug}`}
-          className="group block relative aspect-[4/5] lg:aspect-auto lg:min-h-[72vh] overflow-hidden bg-bone"
+          className="group block relative aspect-[4/5] lg:aspect-auto lg:min-h-[72vh] overflow-hidden bg-bone rounded-[10px]"
         >
           {image && (
             <Image
@@ -225,7 +225,7 @@ function LookbookFrame({
             </div>
             <Link
               href={`/products/${product.slug}`}
-              className="group inline-flex items-center gap-3 bg-ink text-paper px-7 py-3.5 text-[11px] uppercase tracking-[0.14em] font-medium hover:bg-accent transition-colors duration-[280ms]"
+              className="group inline-flex items-center gap-3 bg-ink text-paper px-7 py-3.5 rounded-[10px] text-[11px] uppercase tracking-[0.14em] font-medium hover:bg-accent transition-colors duration-[280ms]"
             >
               Bekijk dit stuk
               <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform duration-[280ms]" strokeWidth={1.5} />

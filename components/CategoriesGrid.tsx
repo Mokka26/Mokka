@@ -35,7 +35,7 @@ function PrimaryTile({ cat, delay, fmtCount }: { cat: typeof primaries[number]; 
   return (
     <div ref={ref} style={style}>
       <Link href={`/products?category=${cat.slug}`} className="group block h-full">
-        <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone transition-all duration-500 group-hover:shadow-[0_30px_60px_-20px_rgba(20,17,13,0.25)]">
+        <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone rounded-[10px] transition-all duration-500 group-hover:shadow-[0_30px_60px_-20px_rgba(20,17,13,0.25)]">
           <Image
             src={cat.image}
             alt={cat.name}
@@ -74,7 +74,7 @@ function SecondaryTile({ cat, delay, fmtCount }: { cat: typeof secondary[number]
   return (
     <div ref={ref} style={style}>
       <Link href={`/products?category=${cat.slug}`} className="group block h-full">
-        <div className="relative aspect-square overflow-hidden bg-bone transition-all duration-500 group-hover:shadow-[0_20px_40px_-20px_rgba(20,17,13,0.2)]">
+        <div className="relative aspect-square overflow-hidden bg-bone rounded-[10px] transition-all duration-500 group-hover:shadow-[0_20px_40px_-20px_rgba(20,17,13,0.2)]">
           <Image
             src={cat.image}
             alt={cat.name}

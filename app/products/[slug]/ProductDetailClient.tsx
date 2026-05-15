@@ -180,7 +180,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               {/* Mobile — swipe carousel */}
               <div className="lg:hidden">
                 <div
-                  className="relative overflow-hidden bg-bone cursor-zoom-in rounded-xl ring-1 ring-line/70"
+                  className="relative overflow-hidden bg-bone cursor-zoom-in rounded-[10px]"
                   ref={emblaRef}
                   onClick={() => openLightbox(activeSlide)}
                 >
@@ -234,10 +234,10 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       key={i}
                       onClick={() => setSelectedImage(i)}
                       aria-label={`Toon foto ${i + 1}`}
-                      className={`relative w-[84px] h-[104px] flex-shrink-0 overflow-hidden bg-bone rounded-lg ring-1 transition-all duration-200 ${
+                      className={`relative w-[84px] h-[104px] flex-shrink-0 overflow-hidden bg-bone rounded-md transition-all duration-200 ${
                         selectedImage === i
-                          ? "opacity-100 ring-ink"
-                          : "opacity-60 hover:opacity-100 ring-line/60"
+                          ? "opacity-100"
+                          : "opacity-50 hover:opacity-100"
                       }`}
                     >
                       <Image src={cldOptimize(img, { ar: "1:1", w: 200, mode: "fill" })} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
@@ -247,7 +247,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
                 {/* Hoofd afbeelding met hover zoom */}
                 <div
-                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in rounded-xl ring-1 ring-line/70"
+                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in rounded-[10px]"
                   onMouseEnter={() => setZoomActive(true)}
                   onMouseLeave={() => setZoomActive(false)}
                   onMouseMove={handleZoomMove}
@@ -314,7 +314,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
               {/* Aantal + Knop */}
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <div className="flex items-center border border-line rounded-md overflow-hidden">
+                <div className="flex items-center border border-line rounded-[10px] overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={(product.stock ?? 0) === 0}
@@ -399,8 +399,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             </div>
             <button
               onClick={handleAddToCart}
-              className={`flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 text-[11px] uppercase tracking-[0.2em] font-medium transition-colors ${
-                added ? "bg-success text-white" : "bg-ink text-white hover:bg-bronze"
+              className={`flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] text-[11px] uppercase tracking-[0.2em] font-medium transition-colors ${
+                added ? "bg-success text-white" : "bg-ink text-white hover:bg-accent"
               }`}
             >
               {added ? (

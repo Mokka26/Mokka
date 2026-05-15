@@ -81,7 +81,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
             className="lg:col-span-7 lg:sticky lg:top-32"
           >
             <Link href={`/products/${active.slug}`} className="group block">
-              <div className="relative aspect-[4/5] overflow-hidden bg-bone mb-6">
+              <div className="relative aspect-[4/5] overflow-hidden bg-bone mb-6 rounded-[10px]">
                 <motion.div
                   key={active.id}
                   initial={{ scale: 1.05, opacity: 0 }}
@@ -172,7 +172,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
                         onClick={() => setActiveIndex(i)}
                         className="flex-shrink-0 basis-[40%] text-left"
                       >
-                        <div className={`relative aspect-[3/4] overflow-hidden bg-bone mb-3 transition-opacity ${i === activeIndex ? "opacity-100" : "opacity-50"}`}>
+                        <div className={`relative aspect-[3/4] overflow-hidden bg-bone mb-3 rounded-md transition-opacity ${i === activeIndex ? "opacity-100" : "opacity-50"}`}>
                           <Image src={firstUrl ?? ""} alt={product.name} fill className="object-cover" sizes="40vw" />
                         </div>
                         <p className={`text-xs font-serif leading-tight line-clamp-2 ${i === activeIndex ? "text-ink" : "text-stone"}`}>

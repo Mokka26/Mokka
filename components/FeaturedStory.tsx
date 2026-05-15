@@ -74,7 +74,7 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
 
             <Link
               href={`/products/${product.slug}`}
-              className="group inline-flex items-center gap-3 bg-white text-ink px-8 py-4 text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-accent hover:text-white transition-all duration-400"
+              className="group inline-flex items-center gap-3 bg-white text-ink px-8 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-accent hover:text-white transition-all duration-400"
             >
               Bekijk dit stuk
               <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform" strokeWidth={1.5} />
@@ -89,7 +89,7 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
           className="order-1 lg:order-2 px-6 sm:px-10 lg:px-0"
         >
           <Link href={`/products/${product.slug}`} className="group block relative">
-            <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone transition-all duration-500 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
+            <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone rounded-[10px] transition-all duration-500 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
               <Image
                 src={mainImage}
                 alt={product.name}

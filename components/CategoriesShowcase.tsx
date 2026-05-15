@@ -42,7 +42,7 @@ export default function CategoriesShowcase() {
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
           {/* Grote actieve foto — links */}
-          <div className="lg:col-span-7 relative aspect-[4/5] lg:aspect-[4/5] overflow-hidden bg-bone order-1">
+          <div className="lg:col-span-7 relative aspect-[4/5] lg:aspect-[4/5] overflow-hidden bg-bone rounded-[10px] order-1">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.slug}

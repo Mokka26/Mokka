@@ -10,7 +10,7 @@ export default function ShowroomSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
           {/* Video — echt winkel beeld */}
           <motion.div
-            className="lg:col-span-7 relative aspect-[4/3] overflow-hidden bg-bone"
+            className="lg:col-span-7 relative aspect-[4/3] overflow-hidden bg-bone rounded-[10px]"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}

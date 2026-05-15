@@ -109,6 +109,7 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
   transition: background-color var(--dur-quick) var(--ease-out-strong);
   border: 1px solid var(--color-ink);
+  border-radius: 10px;
 
   &:hover {
     background-color: var(--color-accent);
@@ -130,6 +131,7 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid var(--color-ink);
+  border-radius: 10px;
   transition: all var(--dur-quick) var(--ease-out-strong);
 
   &:hover {
@@ -152,6 +154,7 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid var(--color-ink);
+  border-radius: 10px;
   transition: all var(--dur-quick) var(--ease-out-strong);
 
   &:hover {

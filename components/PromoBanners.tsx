@@ -49,7 +49,7 @@ function BannerTile({ b, delay }: { b: Banner; delay: number }) {
     <div ref={ref} style={style}>
       <Link
         href={b.href}
-        className="block group relative aspect-[4/5] overflow-hidden transition-all duration-500 hover:shadow-[0_30px_60px_-20px_rgba(20,17,13,0.25)]"
+        className="block group relative aspect-[4/5] overflow-hidden rounded-[10px] transition-all duration-500 hover:shadow-[0_30px_60px_-20px_rgba(20,17,13,0.25)]"
       >
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[1.5s] ease-out group-hover:scale-[1.05]"
