@@ -49,6 +49,7 @@ temp_extract/
 public/products/
 public/wetransfer*/
 public/catalogus*.pdf
+photos-todo/
 
 # Lokale notes en credentials
 links.txt
