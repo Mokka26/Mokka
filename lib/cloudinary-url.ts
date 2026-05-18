@@ -51,7 +51,14 @@ export function cldUrl(
  */
 export function cldOptimize(
   url: string,
-  options: { ar?: string; w?: number; mode?: "pad" | "fill" | "thumb" } = {},
+  options: {
+    ar?: string;
+    w?: number;
+    mode?: "pad" | "fill" | "thumb";
+    upscale?: boolean;
+    dpr?: "auto" | number;
+    quality?: "auto" | "auto:best" | "auto:eco" | number;
+  } = {},
 ): string {
   if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
     return url;
@@ -59,6 +66,7 @@ export function cldOptimize(
 
   const mode = options.mode ?? "pad";
   const parts: string[] = [];
+  if (options.upscale) parts.push("e_upscale");
   if (options.ar) {
     if (mode === "thumb") {
       parts.push("c_thumb", "g_auto", `ar_${options.ar}`);
@@ -69,7 +77,9 @@ export function cldOptimize(
     }
   }
   if (options.w) parts.push(`w_${options.w}`);
-  parts.push("f_auto", "q_auto");
+  if (options.dpr) parts.push(`dpr_${options.dpr}`);
+  const q = options.quality ?? "auto";
+  parts.push("f_auto", `q_${q}`);
 
   const transform = parts.join(",");
   return url.replace("/upload/", `/upload/${transform}/`);

@@ -188,10 +188,16 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     {images.map((img, i) => (
                       <div
                         key={i}
-                        className="relative flex-[0_0_100%] aspect-square bg-white"
+                        className="relative flex-[0_0_100%] aspect-[3/2] bg-white"
                       >
                         <Image
-                          src={cldOptimize(img, { w: 1100 })}
+                          src={cldOptimize(img, {
+                            ar: "3:2",
+                            w: 1800,
+                            mode: "fill",
+                            upscale: true,
+                            quality: "auto:best",
+                          })}
                           alt={`${product.name} — ${i + 1}`}
                           fill
                           priority={i === 0}
@@ -228,26 +234,26 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               {/* Desktop — vertical thumbs + main met hover zoom */}
               <div className="hidden lg:flex gap-5">
                 {/* Vertical thumbnails */}
-                <div className="flex flex-col gap-3 flex-shrink-0 w-[84px]">
+                <div className="flex flex-col gap-3 flex-shrink-0 w-[96px]">
                   {images.map((img, i) => (
                     <button
                       key={i}
                       onClick={() => setSelectedImage(i)}
                       aria-label={`Toon foto ${i + 1}`}
-                      className={`relative w-[84px] h-[104px] flex-shrink-0 overflow-hidden bg-bone rounded-md transition-all duration-200 ${
+                      className={`relative w-[96px] h-[64px] flex-shrink-0 overflow-hidden bg-bone rounded-md transition-all duration-200 ${
                         selectedImage === i
-                          ? "opacity-100"
+                          ? "opacity-100 ring-1 ring-ink/40"
                           : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "1:1", w: 200, mode: "fill" })} alt="" fill loading="lazy" className="object-cover" sizes="84px" />
+                      <Image src={cldOptimize(img, { ar: "3:2", w: 240, mode: "fill", quality: "auto:best" })} alt="" fill loading="lazy" className="object-cover" sizes="96px" />
                     </button>
                   ))}
                 </div>
 
                 {/* Hoofd afbeelding met hover zoom */}
                 <div
-                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in rounded-[10px]"
+                  className="relative aspect-[3/2] flex-1 bg-white overflow-hidden cursor-zoom-in rounded-[10px]"
                   onMouseEnter={() => setZoomActive(true)}
                   onMouseLeave={() => setZoomActive(false)}
                   onMouseMove={handleZoomMove}
@@ -263,7 +269,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       className="absolute inset-0"
                     >
                       <Image
-                        src={cldOptimize(images[selectedImage], { w: 1400 })}
+                        src={cldOptimize(images[selectedImage], {
+                          ar: "3:2",
+                          w: 2400,
+                          mode: "fill",
+                          upscale: true,
+                          quality: "auto:best",
+                        })}
                         alt={product.name}
                         fill
                         priority
@@ -462,9 +474,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     key={i}
                     className="relative flex-[0_0_100%] h-full flex items-center justify-center p-6 lg:p-20"
                   >
-                    <div className="relative w-full h-full max-w-[1400px] max-h-[90vh] mx-auto">
+                    <div className="relative w-full h-full max-w-[1800px] max-h-[90vh] mx-auto">
                       <Image
-                        src={img}
+                        src={cldOptimize(img, { w: 3200, upscale: true, quality: "auto:best" })}
                         alt={`${product.name} — ${i + 1}`}
                         fill
                         className="object-contain"

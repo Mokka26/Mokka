@@ -85,7 +85,16 @@ function getBadge(product: Product): string | null {
 export default function ProductCard({ product, variants }: Props) {
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
-  const first = firstRaw ? cldOptimize(firstRaw, { w: 900 }) : "";
+  // 3:2 landscape kaart, smart-crop op subject, e_upscale voor 4K-bron, w=1600 voor retina
+  const first = firstRaw
+    ? cldOptimize(firstRaw, {
+        ar: "3:2",
+        w: 1600,
+        mode: "fill",
+        upscale: true,
+        quality: "auto:best",
+      })
+    : "";
 
   const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;
@@ -120,7 +129,7 @@ export default function ProductCard({ product, variants }: Props) {
           ref={figureRef}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className="relative aspect-[4/5] overflow-hidden bg-bone mb-6 rounded-[10px]"
+          className="relative aspect-[3/2] overflow-hidden bg-bone mb-6 rounded-[10px]"
         >
           {first && (
             <Image
