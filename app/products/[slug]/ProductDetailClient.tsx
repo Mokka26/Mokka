@@ -476,7 +476,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   >
                     <div className="relative w-full h-full max-w-[1800px] max-h-[90vh] mx-auto">
                       <Image
-                        src={cldOptimize(img, { w: 3200, upscale: true, quality: "auto:best" })}
+                        src={cldOptimize(img, { w: 2400, upscale: true, quality: "auto:best" })}
                         alt={`${product.name} — ${i + 1}`}
                         fill
                         className="object-contain"
