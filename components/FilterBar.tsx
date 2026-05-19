@@ -38,6 +38,7 @@ const groups: Group[] = [
   { label: "Banken", subs: [
     { label: "Alle banken", value: "banken" },
     { label: "Hoekbanken", value: "hoekbanken" },
+    { label: "Bankstellen", value: "bankstellen" },
   ]},
   { label: "Tafels", subs: [
     { label: "Eettafels", value: "eettafels" },
