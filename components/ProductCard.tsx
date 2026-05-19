@@ -110,9 +110,8 @@ export default function ProductCard({ product, variants }: Props) {
 
   const s = parseSpecs(product.specs);
   const eyebrow = s.serie ?? product.category;
-  const titleParts = [s.categorie ?? displayName];
-  if (s.afmetingen) titleParts.push(s.afmetingen);
-  const title = s.categorie ? titleParts.join(" · ") : displayName;
+  // Titel = productnaam. Afmetingen als optionele suffix.
+  const title = s.afmetingen ? `${displayName} · ${s.afmetingen}` : displayName;
   const subParts: string[] = [];
   const addUnique = (val?: string) => {
     if (!val) return;
