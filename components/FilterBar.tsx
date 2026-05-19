@@ -170,7 +170,7 @@ function FilterContent(props: Props) {
   });
 
   useEffect(() => {
-    fetch("/api/products/counts").then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
+    fetch("/api/products/counts", { cache: "no-store" }).then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
   }, []);
 
   const toggleCatGroup = (label: string) => {
@@ -596,7 +596,7 @@ function CategoryPopover({ category, onCategoryChange, onAfterChange }: Props & 
     return set;
   });
   useEffect(() => {
-    fetch("/api/products/counts").then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
+    fetch("/api/products/counts", { cache: "no-store" }).then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
   }, []);
   const toggleGroup = (label: string) => setExpanded((p) => {
     const n = new Set(p); if (n.has(label)) n.delete(label); else n.add(label); return n;
@@ -753,7 +753,7 @@ function CategorySectionInline({ category, onCategoryChange }: Props) {
     return set;
   });
   useEffect(() => {
-    fetch("/api/products/counts").then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
+    fetch("/api/products/counts", { cache: "no-store" }).then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
   }, []);
   const toggleGroup = (label: string) => setExpanded((p) => {
     const n = new Set(p); if (n.has(label)) n.delete(label); else n.add(label); return n;

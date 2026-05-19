@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const grouped = await prisma.product.groupBy({
     by: ["category"],
@@ -13,5 +16,8 @@ export async function GET() {
     counts[g.category] = g._count._all;
     counts._total += g._count._all;
   }
-  return NextResponse.json({ counts });
+  return NextResponse.json(
+    { counts },
+    { headers: { "Cache-Control": "no-store, must-revalidate" } },
+  );
 }

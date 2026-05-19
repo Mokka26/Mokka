@@ -109,7 +109,7 @@ export default function CategoriesGrid() {
   const { ref: headerRef, style: headerStyle } = useReveal<HTMLDivElement>({ distance: 20 });
 
   useEffect(() => {
-    fetch("/api/products/counts")
+    fetch("/api/products/counts", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setCounts(d.counts ?? {}))
       .catch(() => null);

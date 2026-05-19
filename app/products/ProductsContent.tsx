@@ -139,7 +139,7 @@ export default function ProductsContent() {
       params.set("sort", sortBy);
       params.set("minPrice", priceRange[0].toString());
       params.set("maxPrice", priceRange[1].toString());
-      const res = await fetch(`/api/products?${params.toString()}`);
+      const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store" });
       const data = await res.json();
       setProducts(data.products || []);
       setLoading(false);
