@@ -12,7 +12,11 @@ export default async function AdminProductsPage({
   searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const params = await searchParams;
-  const where: { category?: string; OR?: { name?: { contains: string; mode: "insensitive" } }[] } = {};
+  const where: {
+    category?: string;
+    OR?: { name?: { contains: string; mode: "insensitive" } }[];
+    deletedAt: null;
+  } = { deletedAt: null };
   if (params.category) where.category = params.category;
   if (params.q) {
     where.OR = [{ name: { contains: params.q, mode: "insensitive" } }];
@@ -36,6 +40,7 @@ export default async function AdminProductsPage({
 
   const categories = await prisma.product.groupBy({
     by: ["category"],
+    where: { deletedAt: null },
     _count: { _all: true },
     orderBy: { category: "asc" },
   });

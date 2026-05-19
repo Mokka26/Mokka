@@ -23,6 +23,7 @@ model Product {
   colorName    String?
   colorHex     String?
   hidden       Boolean  @default(false)
+  deletedAt    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   orderItems   OrderItem[]
@@ -30,6 +31,21 @@ model Product {
   @@index([category])
   @@index([colorGroup])
   @@index([hidden])
+  @@index([deletedAt])
+}
+
+model DeletedImage {
+  id          String   @id @default(cuid())
+  productId   String?
+  productSlug String
+  publicId    String
+  url         String   @db.Text
+  w           Int?
+  h           Int?
+  deletedAt   DateTime @default(now())
+
+  @@index([deletedAt])
+  @@index([productId])
 }
 
 model Order {

@@ -47,10 +47,11 @@ export default function DeleteProductButton({ id, name }: { id: string; name: st
           }}
         >
           <div className="bg-white border border-line max-w-md w-full p-8">
-            <h3 className="font-serif text-2xl text-ink mb-3">Product verwijderen?</h3>
+            <h3 className="font-serif text-2xl text-ink mb-3">Naar prullenbak?</h3>
             <p className="text-sm text-stone leading-relaxed mb-6">
-              Dit verwijdert <span className="text-ink font-medium">{name}</span> uit de catalogus. Bestaande
-              orderregels blijven behouden, maar het product is niet meer beschikbaar voor nieuwe bestellingen.
+              <span className="text-ink font-medium">{name}</span> wordt verplaatst naar de prullenbak. Daar
+              kun je het 30 dagen lang herstellen of permanent verwijderen. Daarna wordt het automatisch
+              definitief verwijderd (inclusief alle Cloudinary-foto&apos;s).
             </p>
 
             <p className="text-[11px] uppercase tracking-[0.25em] text-stone mb-2">
@@ -81,7 +82,7 @@ export default function DeleteProductButton({ id, name }: { id: string; name: st
                 disabled={pending || confirmText !== name}
                 className="flex-1 px-6 py-3 text-[11px] uppercase tracking-[0.25em] bg-red-700 text-white hover:bg-red-800 transition-colors disabled:opacity-50"
               >
-                {pending ? "Verwijderen…" : "Verwijder"}
+                {pending ? "Verwijderen…" : "Naar prullenbak"}
               </button>
             </div>
           </div>

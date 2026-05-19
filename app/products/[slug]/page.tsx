@@ -11,7 +11,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
+  const product = await prisma.product.findFirst({
+    where: { slug, deletedAt: null },
+  });
 
   if (!product) return { title: "Product Niet Gevonden" };
 
@@ -23,18 +25,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
+  const product = await prisma.product.findFirst({
+    where: { slug, deletedAt: null },
+  });
 
   if (!product) notFound();
 
   const [relatedProducts, colorVariants] = await Promise.all([
     prisma.product.findMany({
-      where: { category: product.category, id: { not: product.id } },
+      where: {
+        category: product.category,
+        id: { not: product.id },
+        deletedAt: null,
+        hidden: false,
+      },
       take: 4,
     }),
     product.colorGroup
       ? prisma.product.findMany({
-          where: { colorGroup: product.colorGroup },
+          where: { colorGroup: product.colorGroup, deletedAt: null },
           select: { id: true, slug: true, colorName: true, colorHex: true },
           orderBy: { name: "asc" },
         })

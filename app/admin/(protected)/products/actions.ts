@@ -323,7 +323,7 @@ export async function createProduct(
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Delete product
+// Soft-delete product (verplaatst naar prullenbak, niet uit DB verwijderd)
 // ─────────────────────────────────────────────────────────────────────
 
 export async function deleteProduct(
@@ -333,13 +333,93 @@ export async function deleteProduct(
   if (!session?.user) return { ok: false, error: "Niet ingelogd" };
 
   try {
-    await prisma.product.delete({ where: { id } });
+    await prisma.product.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   } catch {
     return { ok: false, error: "Verwijderen mislukt" };
   }
 
   revalidatePath("/admin");
   revalidatePath("/admin/products");
+  revalidatePath("/admin/trash");
   revalidatePath("/products");
+  return { ok: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Soft-delete één foto van een product (verplaatst naar DeletedImage)
+// ─────────────────────────────────────────────────────────────────────
+
+import { extractPublicId } from "@/lib/cloudinary-helpers";
+
+const softDeleteImageSchema = z.object({
+  productId: z.string().min(1),
+  url: z.string().url(),
+});
+
+export async function softDeleteProductImage(
+  input: z.infer<typeof softDeleteImageSchema>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Niet ingelogd" };
+
+  const parsed = softDeleteImageSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Ongeldige invoer" };
+
+  const product = await prisma.product.findUnique({
+    where: { id: parsed.data.productId },
+    select: { id: true, slug: true, images: true },
+  });
+  if (!product) return { ok: false, error: "Product niet gevonden" };
+
+  // Parse images, vind de juiste, verwijder hem en push naar DeletedImage
+  let imgs: { url: string; w?: number; h?: number }[] = [];
+  try {
+    const raw = JSON.parse(product.images);
+    if (Array.isArray(raw)) {
+      imgs = raw.map((item) =>
+        typeof item === "string"
+          ? { url: item }
+          : { url: item.url, w: item.w, h: item.h },
+      );
+    }
+  } catch {
+    return { ok: false, error: "Kan foto's niet parsen" };
+  }
+
+  const target = imgs.find((i) => i.url === parsed.data.url);
+  if (!target) return { ok: false, error: "Foto niet gevonden in product" };
+
+  const publicId = extractPublicId(target.url);
+  if (!publicId) return { ok: false, error: "Ongeldige Cloudinary URL" };
+
+  const remaining = imgs.filter((i) => i.url !== parsed.data.url);
+
+  try {
+    await prisma.$transaction([
+      prisma.deletedImage.create({
+        data: {
+          productId: product.id,
+          productSlug: product.slug,
+          publicId,
+          url: target.url,
+          w: target.w ?? null,
+          h: target.h ?? null,
+        },
+      }),
+      prisma.product.update({
+        where: { id: product.id },
+        data: { images: JSON.stringify(remaining) },
+      }),
+    ]);
+  } catch {
+    return { ok: false, error: "Verplaatsen naar prullenbak mislukt" };
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/trash");
+  revalidatePath(`/products/${product.slug}`);
   return { ok: true };
 }

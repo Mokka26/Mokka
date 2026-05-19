@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const grouped = await prisma.product.groupBy({
     by: ["category"],
-    where: { hidden: false },
+    where: { hidden: false, deletedAt: null },
     _count: { _all: true },
   });
 

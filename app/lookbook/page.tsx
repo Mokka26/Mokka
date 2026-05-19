@@ -10,7 +10,7 @@ export const metadata = {
 async function getLookbookProducts() {
   try {
     return await prisma.product.findMany({
-      where: { featured: true },
+      where: { featured: true, hidden: false, deletedAt: null },
       take: 8,
       orderBy: { createdAt: "desc" },
     });

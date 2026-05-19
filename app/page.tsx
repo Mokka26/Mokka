@@ -13,7 +13,10 @@ export const dynamic = "force-dynamic";
 
 async function getFeaturedProducts() {
   try {
-    return await prisma.product.findMany({ where: { featured: true }, take: 8 });
+    return await prisma.product.findMany({
+      where: { featured: true, hidden: false, deletedAt: null },
+      take: 8,
+    });
   } catch {
     return [];
   }
@@ -23,7 +26,7 @@ async function getSpotlightProduct() {
   try {
     // Selecteer een uitgelicht product voor de editorial spotlight
     return await prisma.product.findFirst({
-      where: { featured: true, category: "banken" },
+      where: { featured: true, category: "banken", hidden: false, deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
   } catch {

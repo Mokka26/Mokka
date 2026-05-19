@@ -6,16 +6,18 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   const [total, featured, byCategoryRaw] = await Promise.all([
-    prisma.product.count(),
-    prisma.product.count({ where: { featured: true } }),
+    prisma.product.count({ where: { deletedAt: null } }),
+    prisma.product.count({ where: { featured: true, deletedAt: null } }),
     prisma.product.groupBy({
       by: ["category"],
+      where: { deletedAt: null },
       _count: { _all: true },
       orderBy: { category: "asc" },
     }),
   ]);
 
   const recent = await prisma.product.findMany({
+    where: { deletedAt: null },
     orderBy: { updatedAt: "desc" },
     take: 5,
     select: { id: true, slug: true, name: true, price: true, updatedAt: true, category: true },

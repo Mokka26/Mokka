@@ -11,12 +11,14 @@ import {
   LogOut,
   Menu,
   X,
+  Trash2,
 } from "lucide-react";
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Producten", icon: Package },
   { href: "/admin/orders", label: "Bestellingen", icon: ShoppingBag, disabled: true },
+  { href: "/admin/trash", label: "Prullenbak", icon: Trash2 },
   { href: "/admin/settings", label: "Instellingen", icon: Settings },
 ];
 

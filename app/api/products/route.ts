@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
 
   const where: Record<string, unknown> = {};
 
+  // Soft-deleted producten zijn nooit publiek zichtbaar (zitten in prullenbak)
+  where.deletedAt = null;
+
   // Default: alleen niet-verborgen producten tonen
   if (!includeHidden) {
     where.hidden = false;

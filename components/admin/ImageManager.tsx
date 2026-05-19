@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Trash2, Star, Upload, AlertCircle } from "lucide
 import {
   getCloudinarySignature,
   updateProductImages,
+  softDeleteProductImage,
 } from "@/app/admin/(protected)/products/actions";
 import type { ProductImage } from "@/lib/imageHelpers";
 
@@ -71,9 +72,26 @@ export default function ImageManager({
   };
 
   const removeAt = (i: number) => {
-    if (!confirm("Foto verwijderen? Het bestand blijft op Cloudinary staan.")) return;
-    const next = images.filter((_, idx) => idx !== i);
-    commit(next);
+    if (!confirm("Foto naar prullenbak? Daar kun je hem nog 30 dagen herstellen.")) return;
+    const target = images[i];
+    if (!target) return;
+    // Met productId: gebruik soft-delete server action (verplaatst naar DeletedImage tabel)
+    if (productId && persist) {
+      const next = images.filter((_, idx) => idx !== i);
+      setImages(next);
+      onChange?.(next);
+      startTransition(async () => {
+        const res = await softDeleteProductImage({ productId, url: target.url });
+        if (!res.ok) {
+          setError(res.error);
+          setImages(images);
+        }
+      });
+    } else {
+      // Geen persist (nieuw product): alleen lokaal verwijderen
+      const next = images.filter((_, idx) => idx !== i);
+      commit(next);
+    }
   };
 
   const handleFile = async (file: File) => {
