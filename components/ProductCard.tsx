@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cldOptimize } from "@/lib/cloudinary-url";
-import { imageUrls } from "@/lib/imageHelpers";
+import { imageUrls, parseImages } from "@/lib/imageHelpers";
 import { useInFrameParallax } from "@/hooks/useInFrameParallax";
 
 interface Product {
@@ -83,15 +83,19 @@ function getBadge(product: Product): string | null {
 }
 
 export default function ProductCard({ product, variants }: Props) {
+  const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
-  // 3:2 landscape kaart, smart-crop op subject, e_upscale voor 4K-bron, w=1600 voor retina
+  // Adaptive aspect: portrait source → c_pad (bank volledig zichtbaar, edge-color padding),
+  // landscape/square source → c_fill (smart-crop op subject)
+  const firstDim = parsed[0];
+  const isPortrait = !!(firstDim?.w && firstDim?.h && firstDim.h > firstDim.w * 1.1);
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: "3:2",
         w: 1600,
-        mode: "fill",
-        upscale: true,
+        mode: isPortrait ? "pad" : "fill",
+        upscale: !isPortrait,
         quality: "auto:best",
       })
     : "";

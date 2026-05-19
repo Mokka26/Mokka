@@ -66,7 +66,13 @@ const usps = [
 ];
 
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
-  const images: string[] = parseImages(product.images).map((i) => i.url);
+  const parsed = parseImages(product.images);
+  const images: string[] = parsed.map((i) => i.url);
+  // Adaptive aspect: portrait source → c_pad (geen crop), landscape → c_fill
+  const isPortraitAt = (idx: number): boolean => {
+    const d = parsed[idx];
+    return !!(d?.w && d?.h && d.h > d.w * 1.1);
+  };
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -194,8 +200,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           src={cldOptimize(img, {
                             ar: "3:2",
                             w: 1800,
-                            mode: "fill",
-                            upscale: true,
+                            mode: isPortraitAt(i) ? "pad" : "fill",
+                            upscale: !isPortraitAt(i),
                             quality: "auto:best",
                           })}
                           alt={`${product.name} — ${i + 1}`}
@@ -246,7 +252,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "3:2", w: 240, mode: "fill", quality: "auto:best" })} alt="" fill loading="lazy" className="object-cover" sizes="96px" />
+                      <Image src={cldOptimize(img, { ar: "3:2", w: 240, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:best" })} alt="" fill loading="lazy" className="object-cover" sizes="96px" />
                     </button>
                   ))}
                 </div>
@@ -272,8 +278,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         src={cldOptimize(images[selectedImage], {
                           ar: "3:2",
                           w: 2400,
-                          mode: "fill",
-                          upscale: true,
+                          mode: isPortraitAt(selectedImage) ? "pad" : "fill",
+                          upscale: !isPortraitAt(selectedImage),
                           quality: "auto:best",
                         })}
                         alt={product.name}
