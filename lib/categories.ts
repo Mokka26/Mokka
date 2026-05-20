@@ -1,0 +1,238 @@
+/**
+ * Bron van waarheid voor alle product-categorieën.
+ *
+ * Wordt gebruikt voor:
+ *  - Route-validatie (`app/[category]/page.tsx`)
+ *  - Sitemap generatie
+ *  - FilterBar groepering
+ *  - ProductsContent labels + intros
+ *  - JSON-LD CollectionPage schema
+ *
+ * Pseudo-categorieën (zoals "banken" = umbrella) zijn expliciet
+ * gemarkeerd; ze hebben geen 1-op-1 mapping naar Product.category in DB.
+ */
+
+export type CategorySlug =
+  | "banken"           // umbrella: hoekbanken + bankstellen
+  | "hoekbanken"
+  | "bankstellen"
+  | "bedden"
+  | "matrassen"
+  | "slaapkamers"
+  | "kasten"
+  | "tafels"
+  | "eettafels"
+  | "salontafels"
+  | "bijzettafels"
+  | "tv-meubels"
+  | "tafel-accessoires"
+  | "stoelen"
+  | "spiegels"
+  | "verlichting";
+
+export type Category = {
+  slug: CategorySlug;
+  label: string;
+  intro: string;
+  /**
+   * DB-mapping: welke `Product.category` waardes vallen onder deze slug.
+   * Umbrella's mappen naar meerdere DB-categorieën.
+   */
+  dbCategories: ReadonlyArray<string>;
+  /** True voor umbrella's die meerdere DB-categorieën combineren */
+  isUmbrella: boolean;
+  /** Hoort tot welke top-groep in FilterBar */
+  group: "Banken" | "Tafels" | "Stoelen" | "Slapen" | "Opbergen" | "Sfeer";
+};
+
+export const CATEGORIES: ReadonlyArray<Category> = [
+  // ─── Banken ──────────────────────────────────────────────────
+  {
+    slug: "banken",
+    label: "Alle banken",
+    intro: "De volledige bank-collectie — hoekbanken en bankstellen samen op één plek.",
+    dbCategories: ["banken", "hoekbanken", "bankstellen"],
+    isUmbrella: true,
+    group: "Banken",
+  },
+  {
+    slug: "hoekbanken",
+    label: "Hoekbanken",
+    intro: "De volledige collectie — single sofa's, L- en U-vorm modellen, lounge-banken.",
+    dbCategories: ["hoekbanken"],
+    isUmbrella: false,
+    group: "Banken",
+  },
+  {
+    slug: "bankstellen",
+    label: "Bankstellen",
+    intro: "Complete zit-sets in 3+2+1 of 3+2 configuratie. Eenheid in materiaal en lijn.",
+    dbCategories: ["bankstellen"],
+    isUmbrella: false,
+    group: "Banken",
+  },
+
+  // ─── Tafels ──────────────────────────────────────────────────
+  {
+    slug: "tafels",
+    label: "Tafels",
+    intro: "Om de tafel wordt geleefd. Van eiken eettafels tot marmeren salontafels.",
+    dbCategories: ["tafels"],
+    isUmbrella: false,
+    group: "Tafels",
+  },
+  {
+    slug: "eettafels",
+    label: "Eettafels",
+    intro: "De plek waar dagen beginnen en eindigen. Eettafels in eik, marmer en steen.",
+    dbCategories: ["eettafels"],
+    isUmbrella: false,
+    group: "Tafels",
+  },
+  {
+    slug: "salontafels",
+    label: "Salontafels",
+    intro: "Het middelpunt van de woonkamer — sculpturaal en functioneel.",
+    dbCategories: ["salontafels"],
+    isUmbrella: false,
+    group: "Tafels",
+  },
+  {
+    slug: "bijzettafels",
+    label: "Bijzettafels",
+    intro: "Klein maar betekenisvol. Accentstukken voor naast de bank of bij het bed.",
+    dbCategories: ["bijzettafels"],
+    isUmbrella: false,
+    group: "Tafels",
+  },
+  {
+    slug: "tv-meubels",
+    label: "TV-meubels",
+    intro: "Strakke lijnen voor het hart van je entertainmentruimte.",
+    dbCategories: ["tv-meubels"],
+    isUmbrella: false,
+    group: "Tafels",
+  },
+  {
+    slug: "tafel-accessoires",
+    label: "Tafel-accessoires",
+    intro: "Losse tafelbladen en onderdelen — marmer, sinter stone, glas.",
+    dbCategories: ["tafel-accessoires"],
+    isUmbrella: false,
+    group: "Tafels",
+  },
+
+  // ─── Stoelen ─────────────────────────────────────────────────
+  {
+    slug: "stoelen",
+    label: "Stoelen",
+    intro: "Sculpturaal comfort. Stoelen die niet alleen zitten, maar een statement maken.",
+    dbCategories: ["stoelen"],
+    isUmbrella: false,
+    group: "Stoelen",
+  },
+
+  // ─── Slapen ──────────────────────────────────────────────────
+  {
+    slug: "bedden",
+    label: "Bedden",
+    intro: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust en stille ochtenden.",
+    dbCategories: ["bedden"],
+    isUmbrella: false,
+    group: "Slapen",
+  },
+  {
+    slug: "matrassen",
+    label: "Matrassen",
+    intro: "Pocketveer en koudschuim — de basis van elke goede nachtrust.",
+    dbCategories: ["matrassen"],
+    isUmbrella: false,
+    group: "Slapen",
+  },
+  {
+    slug: "slaapkamers",
+    label: "Slaapkamers",
+    intro: "Rust begint hier. Zachte materialen en warme tinten voor de persoonlijkste ruimte.",
+    dbCategories: ["slaapkamers"],
+    isUmbrella: false,
+    group: "Slapen",
+  },
+
+  // ─── Opbergen ────────────────────────────────────────────────
+  {
+    slug: "kasten",
+    label: "Kasten",
+    intro: "Meer dan opbergruimte — kasten als architectuur die je interieur structureren.",
+    dbCategories: ["kasten"],
+    isUmbrella: false,
+    group: "Opbergen",
+  },
+
+  // ─── Sfeer ───────────────────────────────────────────────────
+  {
+    slug: "verlichting",
+    label: "Verlichting",
+    intro: "Sfeer maken begint bij licht. Hanglampen en plafondlampen met karakter.",
+    dbCategories: ["verlichting"],
+    isUmbrella: false,
+    group: "Sfeer",
+  },
+  {
+    slug: "spiegels",
+    label: "Spiegels",
+    intro: "Wandsculpturen die ruimte verdiepen en licht vermenigvuldigen.",
+    dbCategories: ["spiegels"],
+    isUmbrella: false,
+    group: "Sfeer",
+  },
+] as const;
+
+// ─── Lookup helpers ─────────────────────────────────────────────────
+
+const VALID_SLUGS = new Set<string>(CATEGORIES.map((c) => c.slug));
+
+export function isCategorySlug(slug: string): slug is CategorySlug {
+  return VALID_SLUGS.has(slug);
+}
+
+export function getCategory(slug: string): Category | null {
+  return CATEGORIES.find((c) => c.slug === slug) ?? null;
+}
+
+/**
+ * Geeft de canonieke route-slug voor een DB-product categorie.
+ * Voorbeeld: db.category="hoekbanken" → "hoekbanken"
+ * Wordt gebruikt in ProductCard om `/<category>/<slug>` te bouwen.
+ */
+export function dbCategoryToRouteSlug(dbCategory: string): CategorySlug {
+  // Direct match: dbCategory is een geldige slug
+  if (isCategorySlug(dbCategory)) return dbCategory;
+  // Fallback (mocht een product een DB-category hebben die geen route heeft)
+  return "banken";
+}
+
+/**
+ * Bouwt de canonieke product-URL: /<categorie>/<slug>
+ */
+export function productUrl(product: { category: string; slug: string }): string {
+  return `/${dbCategoryToRouteSlug(product.category)}/${product.slug}`;
+}
+
+/**
+ * Bouwt categorie-URL: /<categorie>
+ */
+export function categoryUrl(slug: CategorySlug): string {
+  return `/${slug}`;
+}
+
+/**
+ * Groepering voor FilterBar (geprefereerde display-volgorde per groep).
+ */
+export const GROUP_ORDER: ReadonlyArray<Category["group"]> = [
+  "Banken",
+  "Tafels",
+  "Stoelen",
+  "Slapen",
+  "Opbergen",
+  "Sfeer",
+] as const;
