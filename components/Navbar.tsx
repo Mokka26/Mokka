@@ -29,7 +29,8 @@ const navItems: NavItem[] = [
         links: [
           { label: "Alle banken", href: "/banken" },
           { label: "Hoekbanken", href: "/hoekbanken" },
-          { label: "Loungestoelen", href: "/stoelen" },
+          { label: "Bankstellen", href: "/bankstellen" },
+          { label: "Stoelen", href: "/stoelen" },
         ],
       },
       {
@@ -44,7 +45,6 @@ const navItems: NavItem[] = [
         heading: "Kasten & Opbergen",
         links: [
           { label: "Kasten", href: "/kasten" },
-          { label: "Dressoirs", href: "/kasten" },
           { label: "TV-meubels", href: "/tv-meubels" },
         ],
       },
@@ -70,6 +70,7 @@ const navItems: NavItem[] = [
         heading: "Eettafels",
         links: [
           { label: "Alle eettafels", href: "/eettafels" },
+          { label: "Bijzettafels", href: "/bijzettafels" },
           { label: "Tafelbladen", href: "/tafel-accessoires" },
         ],
       },
@@ -82,8 +83,7 @@ const navItems: NavItem[] = [
       {
         heading: "Opbergen",
         links: [
-          { label: "Dressoirs", href: "/kasten" },
-          { label: "Vitrinekasten", href: "/kasten" },
+          { label: "Kasten", href: "/kasten" },
         ],
       },
     ],
@@ -114,16 +114,13 @@ const navItems: NavItem[] = [
       {
         heading: "Verlichting",
         links: [
-          { label: "Hanglampen", href: "/verlichting" },
-          { label: "Tafellampen", href: "/verlichting" },
-          { label: "Vloerlampen", href: "/verlichting" },
+          { label: "Alle verlichting", href: "/verlichting" },
         ],
       },
       {
         heading: "Wandaccessoires",
         links: [
           { label: "Spiegels", href: "/spiegels" },
-          { label: "Wandobjecten", href: "/spiegels" },
         ],
       },
     ],
