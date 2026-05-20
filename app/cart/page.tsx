@@ -5,10 +5,11 @@ import { motion } from "framer-motion";
 import CartItem from "@/components/CartItem";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart } from "@/context/CartContext";
+import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 
 export default function CartPage() {
   const { items, totalPrice, totalItems } = useCart();
-  const shipping = totalPrice >= 100 ? 0 : 9.95;
+  const shipping = isEligibleForFreeShipping(totalPrice) ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
 
   return (
@@ -76,13 +77,13 @@ export default function CartPage() {
                   <span className="text-ink">{shipping === 0 ? "Gratis" : `\u20AC${shipping.toFixed(2)}`}</span>
                 </div>
                 {shipping > 0 && (
-                  <p className="text-[11px] text-stone uppercase tracking-[0.2em]">Gratis verzending vanaf &euro;100</p>
+                  <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.freeShippingCopyShort}</p>
                 )}
                 <div className="border-t border-line pt-5 flex justify-between items-baseline">
                   <span className="eyebrow">Totaal</span>
                   <span className="font-serif text-2xl text-ink">&euro;{total.toFixed(2)}</span>
                 </div>
-                <p className="text-[11px] text-stone uppercase tracking-[0.2em]">Inclusief 21% BTW</p>
+                <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.vatLabelLong}</p>
               </div>
               <Link href="/checkout" className="btn-primary w-full text-center block mt-8">
                 Afrekenen

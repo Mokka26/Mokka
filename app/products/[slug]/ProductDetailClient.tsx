@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getReviewsFor, type Review } from "@/lib/productReviews";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
+import { getUspsByKey } from "@/lib/shipping-info";
 
 interface Product {
   id: string;
@@ -59,11 +60,18 @@ interface Props {
   colorVariants: ColorVariant[];
 }
 
-const usps = [
-  { icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4", label: "Gratis verzending", sub: "Boven €100" },
-  { icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", label: "2 jaar garantie", sub: "Op alle producten" },
-  { icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15", label: "30 dagen retour", sub: "Gratis retourneren" },
-];
+// Icons matched op USP-key uit lib/shipping-info
+const USP_ICONS: Record<string, string> = {
+  shipping: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+  warranty: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+  return: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
+};
+
+const usps = getUspsByKey("shipping", "warranty", "return").map((u) => ({
+  icon: USP_ICONS[u.key] ?? "",
+  label: u.title,
+  sub: u.description,
+}));
 
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const parsed = parseImages(product.images);

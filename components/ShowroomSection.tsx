@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import {
+  businessInfo,
+  getMapsUrl,
+  getOpeningHoursCompact,
+  getPhoneLink,
+} from "@/lib/business-info";
 
 export default function ShowroomSection() {
+  const phoneLink = getPhoneLink();
+  const hours = getOpeningHoursCompact();
   return (
     <section className="relative py-32 lg:py-48 bg-paper overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
@@ -50,15 +58,15 @@ export default function ShowroomSection() {
               <div className="flex items-start gap-4">
                 <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Adres</span>
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=Dynamostraat+5%2C+2525+KB+Den+Haag"
+                  href={getMapsUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-ink hover:text-bronze transition-colors group inline-flex items-start gap-2"
                 >
                   <span>
-                    Dynamostraat 5
+                    {businessInfo.address.street}
                     <br />
-                    2525 KB Den Haag
+                    {businessInfo.address.postalCode} {businessInfo.address.city}
                   </span>
                   <svg className="w-3.5 h-3.5 mt-1 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -68,20 +76,27 @@ export default function ShowroomSection() {
               <div className="flex items-start gap-4">
                 <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Open</span>
                 <p className="text-ink">
-                  Ma — Vr 10:00—18:00
-                  <br />
-                  Za 11:00—17:00
+                  {hours.map((line, i) => (
+                    <span key={line}>
+                      {line.replace(/–/g, "—")}
+                      {i < hours.length - 1 && <br />}
+                    </span>
+                  ))}
                 </p>
               </div>
-              <div className="flex items-start gap-4">
-                <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Bel</span>
-                <a href="tel:+31701234567" className="text-ink hover:text-bronze transition-colors">+31 (0)70 123 4567</a>
-              </div>
+              {phoneLink && businessInfo.contact.phoneFormatted && (
+                <div className="flex items-start gap-4">
+                  <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Bel</span>
+                  <a href={phoneLink} className="text-ink hover:text-bronze transition-colors">
+                    {businessInfo.contact.phoneFormatted}
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="https://www.google.com/maps/search/?api=1&query=Dynamostraat+5%2C+2525+KB+Den+Haag"
+                href={getMapsUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-link"

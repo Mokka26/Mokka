@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
+import { shippingInfo } from "@/lib/shipping-info";
 
 interface Props {
   open: boolean;
@@ -182,7 +183,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                     </div>
                     {shipping > 0 && (
                       <p className="text-[10px] text-stone uppercase tracking-[0.2em] pt-1">
-                        Gratis verzending vanaf &euro;100
+                        {shippingInfo.freeShippingCopyShort}
                       </p>
                     )}
                   </div>

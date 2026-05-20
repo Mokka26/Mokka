@@ -3,10 +3,25 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import {
+  businessInfo,
+  getEmailLink,
+  getPhoneLink,
+  getMapsUrl,
+  getOpeningHoursCompact,
+  getActiveSocials,
+} from "@/lib/business-info";
+import { shippingInfo } from "@/lib/shipping-info";
 
 export default function Footer() {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
+
+  const phoneLink = getPhoneLink();
+  const emailLink = getEmailLink();
+  const socials = getActiveSocials();
+  const hoursLines = getOpeningHoursCompact();
+  const { address, foundingYear, foundingCity, kvk, btw, legalName, name, tagline, paymentMethods, legal } = businessInfo;
 
   return (
     <footer className="bg-ink text-white/60">
@@ -14,12 +29,7 @@ export default function Footer() {
       <div className="border-b border-white/10">
         <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
           <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/10">
-            {[
-              { title: "Gratis verzending", sub: "Vanaf €100 in NL" },
-              { title: "Montageservice", sub: "Op afspraak mogelijk" },
-              { title: "30 dagen retour", sub: "Geen vragen gesteld" },
-              { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
-            ].map((item) => (
+            {shippingInfo.footerUsps.map((item) => (
               <div key={item.title} className="py-8 lg:py-10 lg:px-8 first:lg:pl-0 last:lg:pr-0">
                 <p className="text-white text-sm font-medium mb-1">{item.title}</p>
                 <p className="text-xs text-white/50">{item.sub}</p>
@@ -36,17 +46,23 @@ export default function Footer() {
           <div className="lg:col-span-5">
             <Image
               src="/images/logo.png"
-              alt="Mokka Home Interior"
+              alt={name}
               width={220}
               height={80}
               className="h-14 w-auto mb-7 brightness-0 invert opacity-80"
             />
             <p className="font-serif text-2xl lg:text-3xl text-white/90 leading-snug max-w-md mb-6">
-              Meubels met een <span className="italic">ziel</span>, geselecteerd voor het moderne thuis.
+              {tagline.split("ziel").length > 1 ? (
+                <>
+                  {tagline.split("ziel")[0]}
+                  <span className="italic">ziel</span>
+                  {tagline.split("ziel")[1]}
+                </>
+              ) : tagline}
             </p>
             <div className="flex items-center gap-3 text-xs text-white/50">
               <span className="w-1.5 h-1.5 rounded-full bg-bronze" />
-              <span className="uppercase tracking-[0.25em]">Sinds 2024, Amsterdam</span>
+              <span className="uppercase tracking-[0.25em]">Sinds {foundingYear}, {foundingCity}</span>
             </div>
           </div>
 
@@ -109,21 +125,28 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-5">Bezoek</p>
             <address className="not-italic space-y-2.5 text-sm mb-5">
               <a
-                href="https://www.google.com/maps/search/?api=1&query=Dynamostraat+5%2C+2525+KB+Den+Haag"
+                href={getMapsUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block hover:text-white transition-colors"
               >
-                <p className="text-white">Dynamostraat 5</p>
-                <p>2525 KB Den Haag</p>
+                <p className="text-white">{address.street}</p>
+                <p>{address.postalCode} {address.city}</p>
               </a>
-              <p>Ma–Vr 10:00–18:00</p>
-              <p>Za 11:00–17:00</p>
+              {hoursLines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </address>
-            <div className="pt-4 border-t border-white/10 space-y-2 text-sm">
-              <p>hallo@mokkahome.nl</p>
-              <a href="tel:+31701234567" className="hover:text-white transition-colors">+31 (0)70 123 4567</a>
-            </div>
+            {(emailLink || phoneLink) && (
+              <div className="pt-4 border-t border-white/10 space-y-2 text-sm">
+                {emailLink && <p>{businessInfo.contact.email}</p>}
+                {phoneLink && businessInfo.contact.phoneFormatted && (
+                  <a href={phoneLink} className="hover:text-white transition-colors">
+                    {businessInfo.contact.phoneFormatted}
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -133,19 +156,11 @@ export default function Footer() {
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-4">Betaalmethoden</p>
             <div className="flex flex-wrap items-center gap-2">
-              {[
-                { name: "iDEAL", bg: "#CC0066" },
-                { name: "Visa", bg: "#1A1F71" },
-                { name: "Mastercard", bg: "#EB001B" },
-                { name: "Bancontact", bg: "#000000" },
-                { name: "Apple Pay", bg: "#000000" },
-                { name: "Klarna", bg: "#FFA8CD" },
-                { name: "PayPal", bg: "#003087" },
-              ].map((method) => (
+              {paymentMethods.map((method) => (
                 <div
                   key={method.name}
                   className="h-8 px-3 flex items-center justify-center text-[10px] font-semibold text-white rounded-sm"
-                  style={{ backgroundColor: method.bg }}
+                  style={{ backgroundColor: method.brandColor }}
                 >
                   {method.name}
                 </div>
@@ -153,42 +168,47 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Social */}
-          <div className="flex items-center gap-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40 mr-2">Volg ons</p>
-            <Link href="#" className="w-10 h-10 border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 transition-all" aria-label="Instagram">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-              </svg>
-            </Link>
-            <Link href="#" className="w-10 h-10 border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 transition-all">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm5.4 8.38a.73.73 0 01-.74.74 6.57 6.57 0 00-5.19 0 .74.74 0 01-.31-1.45A8 8 0 0116.66 7.7a.73.73 0 01.74.68zm-1.63 2.82a.64.64 0 01-.61.67 4.84 4.84 0 00-3.68-.13.64.64 0 01-.25-1.25A6.11 6.11 0 0115.08 10.53a.64.64 0 01.69.67zm-.84 2.52a.51.51 0 01-.51.51 3.26 3.26 0 00-2.5-.18.52.52 0 01-.2-1 4.3 4.3 0 013.28.23.51.51 0 01.44.44z"/>
-              </svg>
-            </Link>
-            <Link href="#" className="w-10 h-10 border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 transition-all">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.2 0H1.8A1.8 1.8 0 000 1.8v20.4A1.8 1.8 0 001.8 24h20.4a1.8 1.8 0 001.8-1.8V1.8A1.8 1.8 0 0022.2 0zM7.1 20.5H3.6V9h3.5zM5.3 7.4a2 2 0 110-4 2 2 0 010 4zm15.2 13.1H17V14.9c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.7h-3.5V9h3.4v1.5a3.7 3.7 0 013.3-1.8c3.6 0 4.2 2.3 4.2 5.3z"/>
-              </svg>
-            </Link>
-          </div>
+          {/* Social — alleen renderen als er actieve URLs zijn */}
+          {socials.length > 0 && (
+            <div className="flex items-center gap-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/40 mr-2">Volg ons</p>
+              {socials.map(({ platform, url }) => (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 transition-all capitalize text-[10px] uppercase tracking-wider"
+                  aria-label={platform}
+                >
+                  {platform.slice(0, 2)}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Onderlijn */}
         <div className="pt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs text-white/30">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center">
-            <p>&copy; {new Date().getFullYear()} Mokka Home Interior BV</p>
-            <span className="hidden sm:inline text-white/20">·</span>
-            <p>KvK 12345678</p>
-            <span className="hidden sm:inline text-white/20">·</span>
-            <p>BTW NL123456789B01</p>
+            <p>&copy; {new Date().getFullYear()} {legalName}</p>
+            {kvk && (
+              <>
+                <span className="hidden sm:inline text-white/20">·</span>
+                <p>KvK {kvk}</p>
+              </>
+            )}
+            {btw && (
+              <>
+                <span className="hidden sm:inline text-white/20">·</span>
+                <p>BTW {btw}</p>
+              </>
+            )}
           </div>
           <div className="flex gap-5">
-            <Link href="#" className="hover:text-white/70 transition-colors">Privacybeleid</Link>
-            <Link href="#" className="hover:text-white/70 transition-colors">Voorwaarden</Link>
-            <Link href="#" className="hover:text-white/70 transition-colors">Cookies</Link>
+            <Link href={legal.privacyPolicyUrl} className="hover:text-white/70 transition-colors">Privacybeleid</Link>
+            <Link href={legal.termsUrl} className="hover:text-white/70 transition-colors">Voorwaarden</Link>
+            <Link href={legal.cookiePolicyUrl} className="hover:text-white/70 transition-colors">Cookies</Link>
           </div>
         </div>
       </div>

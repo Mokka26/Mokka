@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
+import { shippingInfo } from "@/lib/shipping-info";
 
 type FormFields = {
   firstName: string;
@@ -297,7 +298,7 @@ export default function CheckoutPage() {
                 <span className="eyebrow">Totaal</span>
                 <span className="font-serif text-2xl text-ink">&euro;{total.toFixed(2)}</span>
               </div>
-              <p className="text-[11px] text-stone uppercase tracking-[0.2em]">Inclusief 21% BTW</p>
+              <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.vatLabelLong}</p>
             </div>
           </div>
         </AnimatedSection>

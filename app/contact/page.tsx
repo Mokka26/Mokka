@@ -3,11 +3,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
+import {
+  businessInfo,
+  getMapsUrl,
+  getOpeningHoursCompact,
+} from "@/lib/business-info";
+
+const EMAIL_ICON = "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z";
+const PHONE_ICON = "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z";
 
 const contactInfo = [
-  { icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z", label: "E-mail", value: "hallo@mokkahome.nl" },
-  { icon: "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z", label: "Telefoon", value: "+31 (0)70 123 4567" },
-];
+  businessInfo.contact.email && { icon: EMAIL_ICON, label: "E-mail", value: businessInfo.contact.email },
+  businessInfo.contact.phoneFormatted && { icon: PHONE_ICON, label: "Telefoon", value: businessInfo.contact.phoneFormatted },
+].filter((x): x is { icon: string; label: string; value: string } => Boolean(x));
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
@@ -71,12 +79,13 @@ export default function ContactPage() {
                 <div>
                   <p className="eyebrow mb-2">Adres</p>
                   <a
-                    href="https://www.google.com/maps/search/?api=1&query=Dynamostraat+5%2C+2525+KB+Den+Haag"
+                    href={getMapsUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-serif text-xl text-ink leading-snug hover:text-bronze transition-colors inline-block"
                   >
-                    Dynamostraat 5<br />2525 KB Den Haag
+                    {businessInfo.address.street}<br />
+                    {businessInfo.address.postalCode} {businessInfo.address.city}
                   </a>
                 </div>
               </div>
@@ -88,9 +97,15 @@ export default function ContactPage() {
                 <div>
                   <p className="eyebrow mb-2">Openingstijden</p>
                   <p className="font-serif text-xl text-ink leading-snug">
-                    Ma — Vr: 10:00 — 18:00<br />
-                    Za: 11:00 — 17:00<br />
-                    Zo: Gesloten
+                    {getOpeningHoursCompact().map((line, i) => (
+                      <span key={line}>
+                        {line}
+                        {i < getOpeningHoursCompact().length - 1 && <br />}
+                      </span>
+                    ))}
+                    {!businessInfo.openingHours.sunday && (
+                      <><br />Zo: Gesloten</>
+                    )}
                   </p>
                 </div>
               </div>

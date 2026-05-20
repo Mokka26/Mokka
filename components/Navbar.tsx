@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartDrawer from "./CartDrawer";
+import { businessInfo, getPhoneLink } from "@/lib/business-info";
 
 interface SubLink { label: string; href: string }
 interface NavItem {
@@ -408,8 +409,12 @@ export default function Navbar() {
               <div className="mt-10 pt-8 border-t border-line">
                 <p className="eyebrow mb-4">Contact</p>
                 <div className="space-y-2 text-sm text-slate">
-                  <p>hallo@mokkahome.nl</p>
-                  <p>+31 (0)70 123 4567</p>
+                  {businessInfo.contact.email && <p>{businessInfo.contact.email}</p>}
+                  {getPhoneLink() && businessInfo.contact.phoneFormatted && (
+                    <a href={getPhoneLink()!} className="block hover:text-ink transition-colors">
+                      {businessInfo.contact.phoneFormatted}
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

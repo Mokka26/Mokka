@@ -1,15 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-
-const messages = [
-  "Gratis verzending vanaf €100",
-  "Nieuwe voorjaarscollectie — nu online",
-  "30 dagen bedenktijd op elk product",
-  "Persoonlijk advies in onze showroom",
-];
+import { shippingInfo } from "@/lib/shipping-info";
 
 export default function TopBanner() {
+  const messages = shippingInfo.marqueeMessages;
+
   return (
     <div className="bg-ink text-white/80 border-b border-white/10 overflow-hidden">
       <div className="relative flex items-center justify-center h-9">
