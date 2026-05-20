@@ -89,7 +89,7 @@ export default function CartPage() {
                 Afrekenen
               </Link>
               <Link href="/products" className="block text-center mt-6">
-                <span className="eyebrow hover:text-bronze transition-colors">Verder Winkelen</span>
+                <span className="eyebrow hover:text-accent transition-colors">Verder Winkelen</span>
               </Link>
             </div>
           </AnimatedSection>

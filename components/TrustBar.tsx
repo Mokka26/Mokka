@@ -21,7 +21,7 @@ export default function TrustBar() {
             const Icon = ICONS[item.key as keyof typeof ICONS] ?? Truck;
             return (
               <div key={item.key} className="flex flex-col items-center text-center">
-                <div className="w-10 h-10 mb-4 flex items-center justify-center text-bronze">
+                <div className="w-10 h-10 mb-4 flex items-center justify-center text-accent">
                   <Icon className="w-7 h-7" strokeWidth={1.25} />
                 </div>
                 <h4 className="text-[11px] uppercase tracking-[0.2em] text-ink mb-2">

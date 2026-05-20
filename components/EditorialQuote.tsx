@@ -22,7 +22,7 @@ export default function EditorialQuote() {
       >
         {/* Openingsteken */}
         <div className="flex items-start gap-6 lg:gap-10">
-          <span className="font-serif italic text-6xl lg:text-8xl text-bronze leading-none -mt-2 lg:-mt-4 flex-shrink-0">
+          <span className="font-serif italic text-6xl lg:text-8xl text-accent leading-none -mt-2 lg:-mt-4 flex-shrink-0">
             &ldquo;
           </span>
           <div className="max-w-4xl">

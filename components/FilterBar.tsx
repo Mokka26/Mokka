@@ -288,7 +288,7 @@ function FilterContent(props: Props) {
             </label>
             <input type="range" min={0} max={5000} step={50} value={priceRange[0]}
               onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-              className="w-full accent-bronze h-1" />
+              className="w-full accent-accent h-1" />
           </div>
           <div>
             <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1.5">
@@ -296,7 +296,7 @@ function FilterContent(props: Props) {
             </label>
             <input type="range" min={0} max={5000} step={50} value={priceRange[1]}
               onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-              className="w-full accent-bronze h-1" />
+              className="w-full accent-accent h-1" />
           </div>
         </div>
       </Section>
@@ -652,7 +652,7 @@ function PricePopover({ priceRange, onPriceRangeChange }: Props) {
           </label>
           <input type="range" min={0} max={5000} step={50} value={priceRange[0]}
             onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-            className="w-full accent-bronze h-1" />
+            className="w-full accent-accent h-1" />
         </div>
         <div>
           <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1.5">
@@ -660,7 +660,7 @@ function PricePopover({ priceRange, onPriceRangeChange }: Props) {
           </label>
           <input type="range" min={0} max={5000} step={50} value={priceRange[1]}
             onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-            className="w-full accent-bronze h-1" />
+            className="w-full accent-accent h-1" />
         </div>
       </div>
     </div>
@@ -812,7 +812,7 @@ function PriceSectionInline({ priceRange, onPriceRangeChange }: Props) {
           </label>
           <input type="range" min={0} max={5000} step={50} value={priceRange[0]}
             onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-            className="w-full accent-bronze h-1" />
+            className="w-full accent-accent h-1" />
         </div>
         <div>
           <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1">
@@ -820,7 +820,7 @@ function PriceSectionInline({ priceRange, onPriceRangeChange }: Props) {
           </label>
           <input type="range" min={0} max={5000} step={50} value={priceRange[1]}
             onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-            className="w-full accent-bronze h-1" />
+            className="w-full accent-accent h-1" />
         </div>
       </div>
     </InlineSection>

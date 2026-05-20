@@ -72,7 +72,7 @@ export default async function HomePage() {
           <div className="max-w-xl mx-auto text-center">
             <p className="text-white/50 text-[11px] uppercase tracking-[0.3em] mb-5">Nieuwsbrief</p>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white mb-5 leading-[1.05]">
-              Nieuwe collecties, <span className="italic text-bronze">als eerste</span>.
+              Nieuwe collecties, <span className="italic text-accent">als eerste</span>.
             </h2>
             <p className="text-white/60 text-base mb-10 max-w-md mx-auto">
               Twee keer per maand — nieuwe stukken, stijladvies en exclusieve aanbiedingen.

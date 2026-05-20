@@ -191,7 +191,7 @@ export default function ImageManager({
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={pending}
-          className="aspect-square bg-white border-2 border-dashed border-line hover:border-bronze hover:bg-bone transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50"
+          className="aspect-square bg-white border-2 border-dashed border-line hover:border-accent hover:bg-bone transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50"
         >
           <Upload className="w-5 h-5 text-stone" />
           <span className="text-[10px] uppercase tracking-[0.25em] text-stone">

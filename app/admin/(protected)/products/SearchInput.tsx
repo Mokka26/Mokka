@@ -33,7 +33,7 @@ export default function SearchInput() {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Zoek op productnaam…"
-        className="w-full sm:w-80 pl-10 pr-10 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+        className="w-full sm:w-80 pl-10 pr-10 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
       />
       {value && (
         <button

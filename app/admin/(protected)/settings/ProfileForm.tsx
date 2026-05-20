@@ -44,7 +44,7 @@ export default function ProfileForm({
           required
           minLength={2}
           maxLength={100}
-          className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+          className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
         />
         {state.fieldErrors?.name && (
           <p className="text-[11px] text-red-700 mt-1.5">{state.fieldErrors.name}</p>
@@ -61,12 +61,12 @@ export default function ProfileForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors disabled:opacity-60"
+          className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
         >
           {pending ? "Opslaan…" : "Profiel opslaan"}
         </button>
         {savedAt && !pending && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-bronze">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-accent">
             <Check className="w-3.5 h-3.5" />
             Opgeslagen
           </span>

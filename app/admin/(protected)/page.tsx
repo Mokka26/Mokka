@@ -40,7 +40,7 @@ export default async function AdminDashboard() {
         <section className="bg-white border border-line">
           <div className="px-6 py-5 border-b border-line flex items-center justify-between">
             <h2 className="font-serif text-lg text-ink">Per categorie</h2>
-            <Link href="/admin/products" className="text-[10px] uppercase tracking-[0.25em] text-stone hover:text-bronze">
+            <Link href="/admin/products" className="text-[10px] uppercase tracking-[0.25em] text-stone hover:text-accent">
               Alles bekijken
             </Link>
           </div>
@@ -52,7 +52,7 @@ export default async function AdminDashboard() {
               >
                 <Link
                   href={`/admin/products?category=${row.category}`}
-                  className="text-sm text-ink capitalize hover:text-bronze"
+                  className="text-sm text-ink capitalize hover:text-accent"
                 >
                   {row.category}
                 </Link>
@@ -75,7 +75,7 @@ export default async function AdminDashboard() {
                 <div className="min-w-0">
                   <Link
                     href={`/admin/products/${p.slug}`}
-                    className="text-sm text-ink hover:text-bronze block truncate"
+                    className="text-sm text-ink hover:text-accent block truncate"
                   >
                     {p.name}
                   </Link>

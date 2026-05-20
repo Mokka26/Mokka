@@ -16,7 +16,7 @@ export default async function NewProductPage() {
     <div>
       <Link
         href="/admin/products"
-        className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] text-stone hover:text-bronze mb-6"
+        className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent mb-6"
       >
         <ChevronLeft className="w-3.5 h-3.5" />
         Terug naar producten

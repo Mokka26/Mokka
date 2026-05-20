@@ -57,7 +57,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="inline-flex items-center gap-2 bg-ink text-white px-5 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors"
+          className="inline-flex items-center gap-2 bg-ink text-white px-5 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Nieuw product
@@ -115,7 +115,7 @@ function CategoryChip({
       className={`px-3.5 py-1.5 text-[11px] uppercase tracking-[0.2em] border transition-colors ${
         active
           ? "bg-ink text-white border-ink"
-          : "bg-white text-ink border-line hover:border-bronze"
+          : "bg-white text-ink border-line hover:border-accent"
       }`}
     >
       {label} <span className="opacity-60 ml-1 tabular-nums">{count}</span>

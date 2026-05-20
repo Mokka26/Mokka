@@ -73,3 +73,5 @@ scripts/app4sales-products.json
 # Prisma binaries (voor Vercel)
 !prisma/schema.prisma
 .claude/
+
+.claude/settings.local.json

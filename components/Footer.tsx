@@ -61,7 +61,7 @@ export default function Footer() {
               ) : tagline}
             </p>
             <div className="flex items-center gap-3 text-xs text-white/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-bronze" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               <span className="uppercase tracking-[0.25em]">Sinds {foundingYear}, {foundingCity}</span>
             </div>
           </div>

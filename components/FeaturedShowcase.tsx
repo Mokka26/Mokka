@@ -108,7 +108,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
               <div className="flex items-start justify-between gap-6">
                 <div className="flex-1 min-w-0">
                   <p className="eyebrow mb-2">{active.category}</p>
-                  <h3 className="display-md text-ink group-hover:text-bronze transition-colors leading-tight">
+                  <h3 className="display-md text-ink group-hover:text-accent transition-colors leading-tight">
                     {active.name}
                   </h3>
                 </div>

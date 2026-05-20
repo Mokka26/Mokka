@@ -85,7 +85,7 @@ function Scene({ progressRef }: { progressRef: ProgressRef }) {
 function Fallback() {
   return (
     <div className="absolute inset-0 bg-bone flex items-center justify-center">
-      <div className="w-12 h-12 border-2 border-bronze/30 border-t-bronze rounded-full animate-spin" />
+      <div className="w-12 h-12 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
     </div>
   );
 }
@@ -222,7 +222,7 @@ export default function CinematicHero() {
               <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] mb-2">
                 Stille kracht.
               </h1>
-              <h1 className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-bronze">
+              <h1 className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-accent">
                 Eerlijke materialen.
               </h1>
             </div>
@@ -238,7 +238,7 @@ export default function CinematicHero() {
               </p>
               <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl leading-[1.1] max-w-3xl mx-auto">
                 Gemaakt voor het moderne thuis — handgemaakt,
-                <span className="italic text-bronze"> tijdloos</span>.
+                <span className="italic text-accent"> tijdloos</span>.
               </h2>
             </div>
 

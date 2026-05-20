@@ -16,7 +16,7 @@ export default function TopBanner() {
         >
           {[...messages, ...messages].map((msg, i) => (
             <span key={i} className="flex items-center gap-6 flex-shrink-0">
-              <span className="w-1 h-1 rounded-full bg-bronze" />
+              <span className="w-1 h-1 rounded-full bg-accent" />
               <span className="text-[11px] uppercase tracking-[0.3em]">{msg}</span>
             </span>
           ))}

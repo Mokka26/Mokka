@@ -34,7 +34,7 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 1.2 }}
             className="absolute bottom-6 left-6 sm:bottom-8 sm:left-8 flex items-center gap-3 bg-white/90 backdrop-blur-sm px-4 py-2"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-bronze" />
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             <span className="text-ink text-[10px] uppercase tracking-[0.3em]">Voorjaar — 2026</span>
           </motion.div>
         </div>
@@ -49,7 +49,7 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="flex items-center gap-4 mb-8 lg:mb-10"
             >
-              <span className="font-serif italic text-bronze text-sm">— 01</span>
+              <span className="font-serif italic text-accent text-sm">— 01</span>
               <span className="eyebrow">Nieuwe collectie</span>
             </motion.div>
 

@@ -374,7 +374,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 pt-8 border-t border-line">
                 {usps.map((usp) => (
                   <div key={usp.label} className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-bronze flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+                    <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d={usp.icon} />
                     </svg>
                     <span className="text-stone text-[11px] uppercase tracking-[0.2em] font-medium">{usp.label}</span>
@@ -581,7 +581,7 @@ function StarRow({ rating }: { rating: 4 | 5 }) {
         <Star
           key={i}
           className={`w-3.5 h-3.5 ${
-            i < rating ? "fill-bronze text-bronze" : "text-line"
+            i < rating ? "fill-accent text-accent" : "text-line"
           }`}
         />
       ))}
@@ -620,7 +620,7 @@ function ColorVariantPicker({
               className={`relative w-10 h-10 border-2 transition-all ${
                 isCurrent
                   ? "border-ink scale-100"
-                  : "border-line hover:border-bronze hover:scale-105"
+                  : "border-line hover:border-accent hover:scale-105"
               }`}
               style={{ backgroundColor: swatch }}
             >
@@ -686,9 +686,9 @@ function DescriptionSection({ product }: { product: Product }) {
             </p>
             <h2 className="font-serif text-3xl lg:text-4xl text-ink leading-[1.1] mb-6">
               Het verhaal van{" "}
-              <span className="italic text-bronze">{product.name.split(" ")[0]}</span>
+              <span className="italic text-accent">{product.name.split(" ")[0]}</span>
             </h2>
-            <div className="w-10 h-[1px] bg-bronze" />
+            <div className="w-10 h-[1px] bg-accent" />
           </div>
           <div className="lg:col-span-8 space-y-6">
             {paragraphs.length > 0 ? (

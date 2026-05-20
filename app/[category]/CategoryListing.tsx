@@ -66,7 +66,7 @@ export default function CategoryListing({ category, products }: Props) {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="bg-transparent border border-line px-3 py-2 text-ink focus:outline-none focus:border-bronze"
+              className="bg-transparent border border-line px-3 py-2 text-ink focus:outline-none focus:border-accent"
             >
               <option value="newest">Aanbevolen</option>
               <option value="price-asc">Prijs ↑</option>

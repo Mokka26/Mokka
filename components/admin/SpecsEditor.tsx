@@ -63,13 +63,13 @@ export default function SpecsEditor({
                 value={row.key}
                 onChange={(e) => updateRow(row.id, { key: e.target.value })}
                 placeholder="Label (bijv. Afmetingen)"
-                className="w-44 px-3 py-2 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+                className="w-44 px-3 py-2 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
               />
               <input
                 value={row.value}
                 onChange={(e) => updateRow(row.id, { value: e.target.value })}
                 placeholder="Waarde (bijv. 220x90x80cm)"
-                className="flex-1 px-3 py-2 bg-white border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+                className="flex-1 px-3 py-2 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
               />
               <button
                 type="button"
@@ -92,7 +92,7 @@ export default function SpecsEditor({
                 key={p}
                 type="button"
                 onClick={() => addRow(p)}
-                className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 border border-line text-stone hover:border-bronze hover:text-ink transition-colors"
+                className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 border border-line text-stone hover:border-accent hover:text-ink transition-colors"
               >
                 + {p}
               </button>
@@ -102,7 +102,7 @@ export default function SpecsEditor({
         <button
           type="button"
           onClick={() => addRow()}
-          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 bg-ink text-white hover:bg-bronze transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 bg-ink text-white hover:bg-accent transition-colors"
         >
           <Plus className="w-3 h-3" />
           Eigen

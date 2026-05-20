@@ -88,7 +88,7 @@ export default function CategoriesShowcase() {
                   </div>
                   <Link
                     href={`/${active.slug}`}
-                    className="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 bg-white text-ink flex items-center justify-center hover:bg-bronze hover:text-white transition-colors"
+                    className="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 bg-white text-ink flex items-center justify-center hover:bg-accent hover:text-white transition-colors"
                     aria-label={`Bekijk ${active.name}`}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>

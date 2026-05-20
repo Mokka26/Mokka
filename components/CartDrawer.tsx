@@ -76,7 +76,7 @@ export default function CartDrawer({ open, onClose }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="text-ink hover:text-bronze transition-colors p-1"
+                className="text-ink hover:text-accent transition-colors p-1"
                 aria-label="Sluiten"
               >
                 <X className="w-5 h-5" strokeWidth={1.5} />

@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Geist:wght@300..600&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -22,15 +21,15 @@
   --color-accent: #B96B4C;        /* Signature accent — CTA's, links, prijzen */
   --color-accent-light: #C9876C;  /* Op donkere achtergronden */
   --color-accent-dark: #9A5639;   /* Hover state */
-  --color-bronze: #8B6F47;        /* Legacy — niet meer als primair accent gebruiken */
+  /* Legacy `bronze` token verwijderd in 2026 — vervangen door `accent`. */
 
   /* ─── FEEDBACK ─── */
   --color-success: #3D6B4A;
   --color-error: #8B3A3A;
 
-  /* ─── TYPOGRAFIE — variable fonts ─── */
-  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
-  --font-serif: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  /* ─── TYPOGRAFIE — variable fonts via next/font/google (self-hosted) ─── */
+  --font-sans: var(--font-geist), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-fraunces), "Cormorant Garamond", Georgia, serif;
 
   /* ─── MOTION — custom easings + duration ladder ─── */
   --ease-out-strong: cubic-bezier(0.22, 1, 0.36, 1);

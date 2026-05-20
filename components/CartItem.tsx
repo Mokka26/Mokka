@@ -30,9 +30,9 @@ export default function CartItem({ item }: Props) {
       </div>
       <div className="col-span-4 md:col-span-2 flex items-center justify-center">
         <div className="flex items-center border border-line">
-          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="px-3 py-2 text-stone hover:text-bronze transition-colors text-sm">-</button>
+          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">-</button>
           <span className="px-3 py-2 text-xs text-ink min-w-[2rem] text-center">{item.quantity}</span>
-          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="px-3 py-2 text-stone hover:text-bronze transition-colors text-sm">+</button>
+          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">+</button>
         </div>
       </div>
       <div className="col-span-4 md:col-span-2 text-right text-stone text-sm font-light">&euro;{item.product.price.toFixed(2)}</div>

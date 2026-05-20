@@ -110,7 +110,7 @@ export default function CheckoutPage() {
           className="bg-white border border-line p-12 sm:p-20 text-center max-w-2xl w-full"
         >
           <div className="w-16 h-16 border border-line rounded-full flex items-center justify-center mx-auto mb-10">
-            <svg className="w-7 h-7 text-bronze" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -242,17 +242,17 @@ export default function CheckoutPage() {
               <h3 className="font-serif text-2xl text-ink mt-3 mb-10">Betaalmethode</h3>
               <div className="space-y-4">
                 <label className="flex items-center gap-4 p-5 border border-ink cursor-pointer transition-colors">
-                  <input type="radio" name="payment" defaultChecked className="accent-bronze" />
+                  <input type="radio" name="payment" defaultChecked className="accent-accent" />
                   <span className="text-ink text-sm font-medium">iDEAL</span>
                   <span className="text-stone text-xs ml-auto uppercase tracking-[0.2em]">Direct via je bank</span>
                 </label>
                 <label className="flex items-center gap-4 p-5 border border-line cursor-pointer hover:border-stone transition-colors">
-                  <input type="radio" name="payment" className="accent-bronze" />
+                  <input type="radio" name="payment" className="accent-accent" />
                   <span className="text-ink text-sm font-medium">Creditcard</span>
                   <span className="text-stone text-xs ml-auto uppercase tracking-[0.2em]">Visa, Mastercard</span>
                 </label>
                 <label className="flex items-center gap-4 p-5 border border-line cursor-pointer hover:border-stone transition-colors">
-                  <input type="radio" name="payment" className="accent-bronze" />
+                  <input type="radio" name="payment" className="accent-accent" />
                   <span className="text-ink text-sm font-medium">Bancontact</span>
                   <span className="text-stone text-xs ml-auto uppercase tracking-[0.2em]">Voor Belgische klanten</span>
                 </label>
@@ -280,7 +280,7 @@ export default function CheckoutPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-ink text-sm font-medium truncate">{item.product.name}</p>
                     <p className="text-stone text-[11px] uppercase tracking-[0.2em] mt-1">Aantal: {item.quantity}</p>
-                    <p className="text-bronze text-sm font-medium mt-1">&euro;{(item.product.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-accent text-sm font-medium mt-1">&euro;{(item.product.price * item.quantity).toFixed(2)}</p>
                   </div>
                 </div>
               ))}

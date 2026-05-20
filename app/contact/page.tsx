@@ -61,7 +61,7 @@ export default function ContactPage() {
             <div className="space-y-10">
               {contactInfo.map((item) => (
                 <div key={item.label} className="flex items-start gap-5">
-                  <svg className="w-5 h-5 text-bronze flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+                  <svg className="w-5 h-5 text-accent flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                   </svg>
                   <div>
@@ -72,7 +72,7 @@ export default function ContactPage() {
               ))}
 
               <div className="flex items-start gap-5">
-                <svg className="w-5 h-5 text-bronze flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+                <svg className="w-5 h-5 text-accent flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -82,7 +82,7 @@ export default function ContactPage() {
                     href={getMapsUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-serif text-xl text-ink leading-snug hover:text-bronze transition-colors inline-block"
+                    className="font-serif text-xl text-ink leading-snug hover:text-accent transition-colors inline-block"
                   >
                     {businessInfo.address.street}<br />
                     {businessInfo.address.postalCode} {businessInfo.address.city}
@@ -91,7 +91,7 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-start gap-5">
-                <svg className="w-5 h-5 text-bronze flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+                <svg className="w-5 h-5 text-accent flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
@@ -122,7 +122,7 @@ export default function ContactPage() {
               className="bg-white border border-line p-12 lg:p-20 text-center"
             >
               <div className="w-16 h-16 border border-line rounded-full flex items-center justify-center mx-auto mb-10">
-                <svg className="w-7 h-7 text-bronze" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>

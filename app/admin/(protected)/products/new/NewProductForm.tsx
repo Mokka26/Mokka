@@ -40,7 +40,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
               if (!slugTouched) setSlug("");
             }}
             required
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
           />
         </Field>
 
@@ -53,7 +53,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
               setSlugTouched(true);
             }}
             required
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm font-mono focus:outline-none focus:border-bronze"
+            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm font-mono focus:outline-none focus:border-accent"
           />
           <p className="text-[11px] text-stone mt-1.5">
             Wordt: <span className="font-mono">/products/{effectiveSlug || "…"}</span>
@@ -65,7 +65,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
             name="description"
             required
             rows={10}
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm leading-relaxed focus:outline-none focus:border-bronze font-serif"
+            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm leading-relaxed focus:outline-none focus:border-accent font-serif"
           />
         </Field>
       </div>
@@ -79,7 +79,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
               step="0.01"
               min="0"
               required
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-serif tabular-nums focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -88,7 +88,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
               name="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm capitalize focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm capitalize focus:outline-none focus:border-accent"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -104,7 +104,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
               step="1"
               defaultValue={10}
               required
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -113,7 +113,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
               name="deliveryTime"
               placeholder="Bijv. 1-3 werkdagen"
               maxLength={80}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -121,7 +121,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
             <input
               name="featured"
               type="checkbox"
-              className="w-4 h-4 accent-bronze"
+              className="w-4 h-4 accent-accent"
             />
             <span className="text-sm text-ink">Featured op homepage</span>
           </label>
@@ -136,7 +136,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
         <button
           type="submit"
           disabled={pending}
-          className="w-full bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors disabled:opacity-60"
+          className="w-full bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
         >
           {pending ? "Aanmaken…" : "Product aanmaken"}
         </button>

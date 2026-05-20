@@ -87,7 +87,7 @@ function ProductRow({ product }: { product: Row }) {
         )}
       </td>
       <td className="px-4 py-3">
-        <Link href={`/admin/products/${product.slug}`} className="text-sm text-ink hover:text-bronze">
+        <Link href={`/admin/products/${product.slug}`} className="text-sm text-ink hover:text-accent">
           {product.name}
         </Link>
       </td>
@@ -110,7 +110,7 @@ function ProductRow({ product }: { product: Row }) {
         >
           <Star
             className={`w-4 h-4 ${
-              featured ? "fill-bronze text-bronze" : "text-stone"
+              featured ? "fill-accent text-accent" : "text-stone"
             }`}
           />
         </button>
@@ -175,7 +175,7 @@ function StockCell({ id, initial }: { id: string; initial: number }) {
             setEditing(false);
           }
         }}
-        className="w-20 px-2 py-1 text-sm border border-bronze focus:outline-none text-right tabular-nums"
+        className="w-20 px-2 py-1 text-sm border border-accent focus:outline-none text-right tabular-nums"
         type="number"
         min="0"
       />
@@ -249,7 +249,7 @@ function PriceCell({ id, initial }: { id: string; initial: number }) {
               setEditing(false);
             }
           }}
-          className="w-24 px-2 py-1 text-sm font-serif border border-bronze focus:outline-none text-right tabular-nums"
+          className="w-24 px-2 py-1 text-sm font-serif border border-accent focus:outline-none text-right tabular-nums"
         />
       </div>
     );

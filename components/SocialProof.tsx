@@ -44,7 +44,7 @@ export default function SocialProof() {
         >
           <div className="flex items-center justify-center gap-1 mb-5">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-5 h-5 fill-bronze text-bronze" strokeWidth={0} />
+              <Star key={i} className="w-5 h-5 fill-accent text-accent" strokeWidth={0} />
             ))}
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-ink leading-[1] mb-4">
@@ -69,7 +69,7 @@ export default function SocialProof() {
               {/* Sterren */}
               <div className="flex gap-0.5 mb-5">
                 {[...Array(review.rating)].map((_, s) => (
-                  <Star key={s} className="w-3.5 h-3.5 fill-bronze text-bronze" strokeWidth={0} />
+                  <Star key={s} className="w-3.5 h-3.5 fill-accent text-accent" strokeWidth={0} />
                 ))}
               </div>
 

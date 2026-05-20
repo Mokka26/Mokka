@@ -49,12 +49,12 @@ export default function PasswordForm() {
         <button
           type="submit"
           disabled={pending}
-          className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors disabled:opacity-60"
+          className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
         >
           {pending ? "Wijzigen…" : "Wachtwoord wijzigen"}
         </button>
         {savedAt && !pending && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-bronze">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-accent">
             <Check className="w-3.5 h-3.5" />
             Wachtwoord gewijzigd
           </span>
@@ -89,7 +89,7 @@ function PasswordField({
         type="password"
         autoComplete={autoComplete}
         required
-        className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+        className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
       />
       {error && <p className="text-[11px] text-red-700 mt-1.5">{error}</p>}
     </div>

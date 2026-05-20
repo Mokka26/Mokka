@@ -61,7 +61,7 @@ export default function ShowroomSection() {
                   href={getMapsUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-ink hover:text-bronze transition-colors group inline-flex items-start gap-2"
+                  className="text-ink hover:text-accent transition-colors group inline-flex items-start gap-2"
                 >
                   <span>
                     {businessInfo.address.street}
@@ -87,7 +87,7 @@ export default function ShowroomSection() {
               {phoneLink && businessInfo.contact.phoneFormatted && (
                 <div className="flex items-start gap-4">
                   <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Bel</span>
-                  <a href={phoneLink} className="text-ink hover:text-bronze transition-colors">
+                  <a href={phoneLink} className="text-ink hover:text-accent transition-colors">
                     {businessInfo.contact.phoneFormatted}
                   </a>
                 </div>

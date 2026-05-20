@@ -11,7 +11,7 @@ interface Banner {
   href: string;
   cta: string;
   image: string;
-  accent?: "bronze" | "ink";
+  accent?: "accent" | "ink";
 }
 
 const banners: Banner[] = [
@@ -22,7 +22,7 @@ const banners: Banner[] = [
     href: "/products?sort=price-asc",
     cta: "Bekijk aanbiedingen",
     image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=900&q=85",
-    accent: "bronze",
+    accent: "accent",
   },
   {
     eyebrow: "Nieuw",
@@ -56,7 +56,7 @@ function BannerTile({ b, delay }: { b: Banner; delay: number }) {
           style={{ backgroundImage: `url(${b.image})` }}
         />
         <div className={`absolute inset-0 ${
-          b.accent === "bronze"
+          b.accent === "accent"
             ? "bg-gradient-to-t from-accent/90 via-accent/30 to-transparent"
             : b.accent === "ink"
             ? "bg-gradient-to-t from-ink/90 via-ink/40 to-transparent"

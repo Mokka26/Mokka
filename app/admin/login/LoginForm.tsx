@@ -23,7 +23,7 @@ export default function LoginForm({ from }: { from?: string }) {
           autoComplete="email"
           required
           disabled={pending}
-          className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze transition-colors disabled:opacity-60"
+          className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
         />
         {state.fieldErrors?.email && (
           <p className="text-[11px] text-red-700 mt-1.5">{state.fieldErrors.email}</p>
@@ -41,7 +41,7 @@ export default function LoginForm({ from }: { from?: string }) {
           autoComplete="current-password"
           required
           disabled={pending}
-          className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze transition-colors disabled:opacity-60"
+          className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
         />
         {state.fieldErrors?.password && (
           <p className="text-[11px] text-red-700 mt-1.5">{state.fieldErrors.password}</p>
@@ -57,7 +57,7 @@ export default function LoginForm({ from }: { from?: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors disabled:opacity-60"
+        className="w-full bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
       >
         {pending ? "Inloggen…" : "Inloggen"}
       </button>

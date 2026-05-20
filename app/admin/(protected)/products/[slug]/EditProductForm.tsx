@@ -46,7 +46,7 @@ export default function EditProductForm({ product, categories }: Props) {
             name="name"
             defaultValue={product.name}
             required
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
           />
         </Field>
 
@@ -56,7 +56,7 @@ export default function EditProductForm({ product, categories }: Props) {
             defaultValue={product.description}
             required
             rows={10}
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm leading-relaxed focus:outline-none focus:border-bronze font-serif"
+            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm leading-relaxed focus:outline-none focus:border-accent font-serif"
           />
         </Field>
 
@@ -81,7 +81,7 @@ export default function EditProductForm({ product, categories }: Props) {
               min="0"
               defaultValue={product.price.toFixed(2)}
               required
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-serif tabular-nums focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -89,7 +89,7 @@ export default function EditProductForm({ product, categories }: Props) {
             <select
               name="category"
               defaultValue={product.category}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm capitalize focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm capitalize focus:outline-none focus:border-accent"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -105,7 +105,7 @@ export default function EditProductForm({ product, categories }: Props) {
               step="1"
               defaultValue={product.stock}
               required
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -115,7 +115,7 @@ export default function EditProductForm({ product, categories }: Props) {
               defaultValue={product.deliveryTime ?? ""}
               placeholder="Bijv. 1-3 werkdagen"
               maxLength={80}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -124,7 +124,7 @@ export default function EditProductForm({ product, categories }: Props) {
               name="featured"
               type="checkbox"
               defaultChecked={product.featured}
-              className="w-4 h-4 accent-bronze"
+              className="w-4 h-4 accent-accent"
             />
             <span className="text-sm text-ink">Featured op homepage</span>
           </label>
@@ -142,7 +142,7 @@ export default function EditProductForm({ product, categories }: Props) {
               defaultValue={product.colorGroup ?? ""}
               placeholder="bijv. lucce"
               maxLength={80}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-mono focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-mono focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -152,7 +152,7 @@ export default function EditProductForm({ product, categories }: Props) {
               defaultValue={product.colorName ?? ""}
               placeholder="bijv. Bruin"
               maxLength={40}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-bronze"
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
             />
           </Field>
 
@@ -171,12 +171,12 @@ export default function EditProductForm({ product, categories }: Props) {
           <button
             type="submit"
             disabled={pending}
-            className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-bronze transition-colors disabled:opacity-60"
+            className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
           >
             {pending ? "Opslaan…" : "Wijzigingen opslaan"}
           </button>
           {savedAt && !pending && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-bronze">
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-accent">
               <Check className="w-3.5 h-3.5" />
               Opgeslagen
             </span>
@@ -186,7 +186,7 @@ export default function EditProductForm({ product, categories }: Props) {
         <Link
           href={`/${dbCategoryToRouteSlug(product.category)}/${product.slug}`}
           target="_blank"
-          className="block text-center text-[11px] uppercase tracking-[0.25em] text-stone hover:text-bronze pt-2"
+          className="block text-center text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent pt-2"
         >
           Bekijk live →
         </Link>
@@ -235,7 +235,7 @@ function ColorHexInput({ defaultValue }: { defaultValue: string }) {
         onChange={(e) => setVal(e.target.value)}
         placeholder="#8B6F47"
         maxLength={7}
-        className="flex-1 px-3 py-2.5 bg-bone border border-line text-ink text-sm font-mono focus:outline-none focus:border-bronze"
+        className="flex-1 px-3 py-2.5 bg-bone border border-line text-ink text-sm font-mono focus:outline-none focus:border-accent"
       />
       {val && !isValid && (
         <span className="text-[10px] text-red-700 whitespace-nowrap">Ongeldig</span>
