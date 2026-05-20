@@ -4,7 +4,6 @@ import { firstImageUrl } from "@/lib/imageHelpers";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { businessInfo } from "@/lib/business-info";
 
-export const runtime = "edge";
 export const alt = "Product";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

@@ -4,7 +4,6 @@ import { businessInfo } from "@/lib/business-info";
 // Standaard OG image voor home + statische routes.
 // Per-categorie en per-product OG images leven in hun eigen route-files.
 
-export const runtime = "edge";
 export const alt = "Mokka Home Interior";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

@@ -1,16 +1,10 @@
 import { ImageResponse } from "next/og";
-import { CATEGORIES, getCategory } from "@/lib/categories";
+import { getCategory } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 
-export const runtime = "edge";
 export const alt = "Mokka Home — Categorie";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-
-export function generateImageMetadata({ params }: { params: { category: string } }) {
-  const cat = getCategory(params.category);
-  return [{ alt: `${cat?.label ?? "Categorie"} — ${businessInfo.name}` }];
-}
 
 export default async function CategoryOpengraphImage({
   params,
@@ -89,7 +83,3 @@ export default async function CategoryOpengraphImage({
   );
 }
 
-// Pre-generate per categorie bij build (zelfde paths als page.tsx)
-export function generateStaticParams() {
-  return CATEGORIES.map((c) => ({ category: c.slug }));
-}
