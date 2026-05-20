@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
     where.hidden = false;
   }
 
-  if (category) {
+  if (category === "alle-banken") {
+    // Umbrella: standaard banken + Loungebanken + hoekbanken + U-Banken
+    where.category = { in: ["banken", "hoekbanken"] };
+  } else if (category) {
     where.category = category;
   }
 

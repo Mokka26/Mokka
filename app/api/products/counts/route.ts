@@ -16,6 +16,9 @@ export async function GET() {
     counts[g.category] = g._count._all;
     counts._total += g._count._all;
   }
+  // Umbrella: banken + hoekbanken samen
+  counts["alle-banken"] = (counts["banken"] ?? 0) + (counts["hoekbanken"] ?? 0);
+
   return NextResponse.json(
     { counts },
     { headers: { "Cache-Control": "no-store, must-revalidate" } },

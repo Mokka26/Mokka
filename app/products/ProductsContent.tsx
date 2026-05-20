@@ -64,8 +64,10 @@ function dedupeByColorGroup(products: Product[]): ProductWithVariants[] {
 }
 
 const categoryLabels: Record<string, string> = {
+  "alle-banken": "Alle banken",
   banken: "Banken",
   hoekbanken: "Hoekbanken",
+  bankstellen: "Bankstellen",
   bedden: "Bedden",
   matrassen: "Matrassen",
   slaapkamers: "Slaapkamers",
@@ -82,8 +84,10 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryIntros: Record<string, string> = {
+  "alle-banken": "Alle banken op één plek — single sofa's, hoekbanken, U-banken en lounge-modellen.",
   banken: "Het hart van elke woonkamer. Comfort en design, gemaakt voor het dagelijks leven.",
-  hoekbanken: "Royale L-vorm modellen die de hoek van je woonkamer transformeren tot lounge.",
+  hoekbanken: "Royale L- en U-vorm modellen die de hoek van je woonkamer transformeren tot lounge.",
+  bankstellen: "Complete zit-sets in 3+2+1 of 3+2 configuratie. Eenheid in materiaal en lijn.",
   bedden: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust en stille ochtenden.",
   matrassen: "Pocketveer en koudschuim — de basis van elke goede nachtrust.",
   slaapkamers: "Rust begint hier. Zachte materialen en warme tinten voor de persoonlijkste ruimte.",
