@@ -5,6 +5,7 @@ import { useActionState, useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import SpecsEditor from "@/components/admin/SpecsEditor";
 import { updateProductFull, type FullUpdateState } from "../actions";
+import { dbCategoryToRouteSlug } from "@/lib/categories";
 
 const initial: FullUpdateState = {};
 
@@ -183,7 +184,7 @@ export default function EditProductForm({ product, categories }: Props) {
         </div>
 
         <Link
-          href={`/products/${product.slug}`}
+          href={`/${dbCategoryToRouteSlug(product.category)}/${product.slug}`}
           target="_blank"
           className="block text-center text-[11px] uppercase tracking-[0.25em] text-stone hover:text-bronze pt-2"
         >

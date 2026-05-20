@@ -87,7 +87,7 @@ export default function CategoriesShowcase() {
                     <p className="text-white/70 text-sm max-w-sm hidden sm:block">{active.description}</p>
                   </div>
                   <Link
-                    href={`/products?category=${active.slug}`}
+                    href={`/${active.slug}`}
                     className="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 bg-white text-ink flex items-center justify-center hover:bg-bronze hover:text-white transition-colors"
                     aria-label={`Bekijk ${active.name}`}
                   >

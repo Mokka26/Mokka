@@ -22,108 +22,108 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     label: "Woonkamer",
-    href: "/products?category=banken",
+    href: "/banken",
     subLinks: [
       {
         heading: "Banken & Stoelen",
         links: [
-          { label: "Alle banken", href: "/products?category=banken" },
-          { label: "Hoekbanken", href: "/products?category=hoekbanken" },
-          { label: "Loungestoelen", href: "/products?category=stoelen" },
+          { label: "Alle banken", href: "/banken" },
+          { label: "Hoekbanken", href: "/hoekbanken" },
+          { label: "Loungestoelen", href: "/stoelen" },
         ],
       },
       {
         heading: "Tafels",
         links: [
-          { label: "Salontafels", href: "/products?category=salontafels" },
-          { label: "Bijzettafels", href: "/products?category=bijzettafels" },
-          { label: "Tafel-accessoires", href: "/products?category=tafel-accessoires" },
+          { label: "Salontafels", href: "/salontafels" },
+          { label: "Bijzettafels", href: "/bijzettafels" },
+          { label: "Tafel-accessoires", href: "/tafel-accessoires" },
         ],
       },
       {
         heading: "Kasten & Opbergen",
         links: [
-          { label: "Kasten", href: "/products?category=kasten" },
-          { label: "Dressoirs", href: "/products?category=kasten" },
-          { label: "TV-meubels", href: "/products?category=tv-meubels" },
+          { label: "Kasten", href: "/kasten" },
+          { label: "Dressoirs", href: "/kasten" },
+          { label: "TV-meubels", href: "/tv-meubels" },
         ],
       },
       {
         heading: "Accessoires",
         links: [
-          { label: "Verlichting", href: "/products?category=verlichting" },
-          { label: "Spiegels", href: "/products?category=spiegels" },
+          { label: "Verlichting", href: "/verlichting" },
+          { label: "Spiegels", href: "/spiegels" },
         ],
       },
     ],
     featured: {
       image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=90",
       label: "Voorjaar 2026",
-      href: "/products?category=banken",
+      href: "/banken",
     },
   },
   {
     label: "Eetkamer",
-    href: "/products?category=eettafels",
+    href: "/eettafels",
     subLinks: [
       {
         heading: "Eettafels",
         links: [
-          { label: "Alle eettafels", href: "/products?category=eettafels" },
-          { label: "Tafelbladen", href: "/products?category=tafel-accessoires" },
+          { label: "Alle eettafels", href: "/eettafels" },
+          { label: "Tafelbladen", href: "/tafel-accessoires" },
         ],
       },
       {
         heading: "Stoelen",
         links: [
-          { label: "Eetkamerstoelen", href: "/products?category=stoelen" },
+          { label: "Eetkamerstoelen", href: "/stoelen" },
         ],
       },
       {
         heading: "Opbergen",
         links: [
-          { label: "Dressoirs", href: "/products?category=kasten" },
-          { label: "Vitrinekasten", href: "/products?category=kasten" },
+          { label: "Dressoirs", href: "/kasten" },
+          { label: "Vitrinekasten", href: "/kasten" },
         ],
       },
     ],
   },
   {
     label: "Slaapkamer",
-    href: "/products?category=bedden",
+    href: "/bedden",
     subLinks: [
       {
         heading: "Bedden",
         links: [
-          { label: "Alle bedden", href: "/products?category=bedden" },
-          { label: "Matrassen", href: "/products?category=matrassen" },
-          { label: "Complete slaapkamers", href: "/products?category=slaapkamers" },
+          { label: "Alle bedden", href: "/bedden" },
+          { label: "Matrassen", href: "/matrassen" },
+          { label: "Complete slaapkamers", href: "/slaapkamers" },
         ],
       },
     ],
     featured: {
       image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&q=90",
       label: "Nieuwe bedcollectie",
-      href: "/products?category=bedden",
+      href: "/bedden",
     },
   },
   {
     label: "Sfeer",
-    href: "/products?category=verlichting",
+    href: "/verlichting",
     subLinks: [
       {
         heading: "Verlichting",
         links: [
-          { label: "Hanglampen", href: "/products?category=verlichting" },
-          { label: "Tafellampen", href: "/products?category=verlichting" },
-          { label: "Vloerlampen", href: "/products?category=verlichting" },
+          { label: "Hanglampen", href: "/verlichting" },
+          { label: "Tafellampen", href: "/verlichting" },
+          { label: "Vloerlampen", href: "/verlichting" },
         ],
       },
       {
         heading: "Wandaccessoires",
         links: [
-          { label: "Spiegels", href: "/products?category=spiegels" },
-          { label: "Wandobjecten", href: "/products?category=spiegels" },
+          { label: "Spiegels", href: "/spiegels" },
+          { label: "Wandobjecten", href: "/spiegels" },
         ],
       },
     ],

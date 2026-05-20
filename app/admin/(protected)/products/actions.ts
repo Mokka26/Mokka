@@ -158,6 +158,8 @@ export async function updateProductFull(
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath(`/products/${updated.slug}`);
+  revalidatePath(`/${updated.category}`);
+  revalidatePath(`/${updated.category}/${updated.slug}`);
   return { ok: true };
 }
 
@@ -198,6 +200,8 @@ export async function updateProductImages(
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath(`/products/${updated.slug}`);
+  revalidatePath(`/${updated.category}`);
+  revalidatePath(`/${updated.category}/${updated.slug}`);
   return { ok: true };
 }
 
@@ -370,7 +374,7 @@ export async function softDeleteProductImage(
 
   const product = await prisma.product.findUnique({
     where: { id: parsed.data.productId },
-    select: { id: true, slug: true, images: true },
+    select: { id: true, slug: true, category: true, images: true },
   });
   if (!product) return { ok: false, error: "Product niet gevonden" };
 
@@ -421,5 +425,7 @@ export async function softDeleteProductImage(
   revalidatePath("/admin/products");
   revalidatePath("/admin/trash");
   revalidatePath(`/products/${product.slug}`);
+  revalidatePath(`/${product.category}`);
+  revalidatePath(`/${product.category}/${product.slug}`);
   return { ok: true };
 }

@@ -8,6 +8,7 @@ import { X, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { shippingInfo } from "@/lib/shipping-info";
+import { productUrl } from "@/lib/categories";
 
 interface Props {
   open: boolean;
@@ -108,7 +109,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                         <li key={item.productId} className="flex gap-4">
                           {/* Afbeelding */}
                           <Link
-                            href={`/products/${item.productId}`}
+                            href={productUrl(item.product)}
                             onClick={onClose}
                             className="relative w-20 h-24 flex-shrink-0 overflow-hidden bg-bone"
                           >

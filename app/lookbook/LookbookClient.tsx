@@ -7,6 +7,7 @@ import { ArrowUpRight, ArrowLeft, ArrowRight } from "lucide-react";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { useReveal } from "@/hooks/useReveal";
+import { productUrl } from "@/lib/categories";
 
 interface Product {
   id: string;
@@ -178,7 +179,7 @@ function LookbookFrame({
         }`}
       >
         <Link
-          href={`/products/${product.slug}`}
+          href={productUrl(product)}
           className="group block relative aspect-[4/5] lg:aspect-auto lg:min-h-[72vh] overflow-hidden bg-bone rounded-[10px]"
         >
           {image && (
@@ -224,7 +225,7 @@ function LookbookFrame({
               </p>
             </div>
             <Link
-              href={`/products/${product.slug}`}
+              href={productUrl(product)}
               className="group inline-flex items-center gap-3 bg-ink text-paper px-7 py-3.5 rounded-[10px] text-[11px] uppercase tracking-[0.14em] font-medium hover:bg-accent transition-colors duration-[280ms]"
             >
               Bekijk dit stuk

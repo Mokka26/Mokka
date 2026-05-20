@@ -6,6 +6,7 @@ import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import { motion } from "framer-motion";
 import { firstImageUrl } from "@/lib/imageHelpers";
+import { productUrl } from "@/lib/categories";
 
 interface Product {
   id: string;
@@ -80,7 +81,7 @@ export default function FeaturedShowcase({ products }: { products: Product[] }) 
             transition={{ duration: 0.6 }}
             className="lg:col-span-7 lg:sticky lg:top-32"
           >
-            <Link href={`/products/${active.slug}`} className="group block">
+            <Link href={productUrl(active)} className="group block">
               <div className="relative aspect-[4/5] overflow-hidden bg-bone mb-6 rounded-[10px]">
                 <motion.div
                   key={active.id}

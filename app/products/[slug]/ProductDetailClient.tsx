@@ -146,7 +146,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
-      addToCart({ id: product.id, name: product.name, price: product.price, images: product.images, category: product.category });
+      addToCart({ id: product.id, slug: product.slug, name: product.name, price: product.price, images: product.images, category: product.category });
     }
     toast.success(`${product.name} toegevoegd aan winkelwagen`, {
       description: `Aantal: ${quantity}`,
@@ -172,7 +172,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             <span className="mx-3 text-mist">/</span>
             <Link href="/products" className="hover:text-accent transition-colors duration-[280ms]">Producten</Link>
             <span className="mx-3 text-mist">/</span>
-            <Link href={`/products?category=${product.category}`} className="hover:text-accent transition-colors duration-[280ms] capitalize">{product.category}</Link>
+            <Link href={`/${product.category}`} className="hover:text-accent transition-colors duration-[280ms] capitalize">{product.category}</Link>
             <span className="mx-3 text-mist">/</span>
             <span className="text-ink">{product.name}</span>
           </nav>
@@ -403,7 +403,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   label="Meer uit deze collectie"
                   title="Gerelateerde"
                   titleItalic="producten"
-                  linkHref={`/products?category=${product.category}`}
+                  linkHref={`/${product.category}`}
                   linkLabel="Alles bekijken"
                 />
               </div>

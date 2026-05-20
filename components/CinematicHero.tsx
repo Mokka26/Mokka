@@ -263,7 +263,7 @@ export default function CinematicHero() {
                   <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
                 </Link>
                 <Link
-                  href="/products?category=banken"
+                  href="/banken"
                   className="inline-flex items-center gap-3 border border-white/60 text-white px-7 py-4 text-[11px] uppercase tracking-[0.22em] hover:bg-white hover:text-ink transition-colors"
                 >
                   Voorjaar Banken

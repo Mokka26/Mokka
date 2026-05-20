@@ -91,12 +91,12 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-5">Shop</p>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/products" className="hover:text-white transition-colors">Alle producten</Link></li>
-              <li><Link href="/products?category=banken" className="hover:text-white transition-colors">Banken</Link></li>
-              <li><Link href="/products?category=bedden" className="hover:text-white transition-colors">Bedden</Link></li>
-              <li><Link href="/products?category=tafels" className="hover:text-white transition-colors">Tafels</Link></li>
-              <li><Link href="/products?category=stoelen" className="hover:text-white transition-colors">Stoelen</Link></li>
-              <li><Link href="/products?category=slaapkamers" className="hover:text-white transition-colors">Slaapkamers</Link></li>
-              <li><Link href="/products?category=kasten" className="hover:text-white transition-colors">Kasten</Link></li>
+              <li><Link href="/banken" className="hover:text-white transition-colors">Banken</Link></li>
+              <li><Link href="/bedden" className="hover:text-white transition-colors">Bedden</Link></li>
+              <li><Link href="/tafels" className="hover:text-white transition-colors">Tafels</Link></li>
+              <li><Link href="/stoelen" className="hover:text-white transition-colors">Stoelen</Link></li>
+              <li><Link href="/slaapkamers" className="hover:text-white transition-colors">Slaapkamers</Link></li>
+              <li><Link href="/kasten" className="hover:text-white transition-colors">Kasten</Link></li>
             </ul>
           </div>
 

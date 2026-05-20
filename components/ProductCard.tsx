@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { imageUrls, parseImages } from "@/lib/imageHelpers";
+import { dbCategoryToRouteSlug, productUrl } from "@/lib/categories";
 import { useInFrameParallax } from "@/hooks/useInFrameParallax";
 
 interface Product {
@@ -126,7 +127,7 @@ export default function ProductCard({ product, variants }: Props) {
 
   return (
     <article className="product-card group">
-      <Link href={`/products/${product.slug}`} className="block">
+      <Link href={productUrl(product)} className="block">
         {/* Image — aspect 4/5 magazine-feel, in-frame parallax, geen ring/rounded */}
         <figure
           ref={figureRef}
@@ -221,7 +222,7 @@ export default function ProductCard({ product, variants }: Props) {
               return (
                 <Link
                   key={v.slug}
-                  href={`/products/${v.slug}`}
+                  href={`/${dbCategoryToRouteSlug(product.category)}/${v.slug}`}
                   title={v.colorName ?? ""}
                   aria-label={v.colorName ?? "Variant"}
                   className={`block w-4 h-4 rounded-full border transition-all duration-[280ms] ${
