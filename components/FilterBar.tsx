@@ -37,7 +37,6 @@ interface Group { label: string; subs: SubCat[] }
 const groups: Group[] = [
   { label: "Banken", subs: [
     { label: "Alle banken", value: "alle-banken" },
-    { label: "Banken", value: "banken" },
     { label: "Hoekbanken", value: "hoekbanken" },
     { label: "Bankstellen", value: "bankstellen" },
   ]},

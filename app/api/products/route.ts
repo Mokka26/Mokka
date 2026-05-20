@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (category === "alle-banken") {
-    // Umbrella: standaard banken + Loungebanken + hoekbanken + U-Banken
-    where.category = { in: ["banken", "hoekbanken"] };
+    // Umbrella: alle bank-types samen — hoekbanken (alle folder-banken) + bankstellen
+    where.category = { in: ["banken", "hoekbanken", "bankstellen"] };
   } else if (category) {
     where.category = category;
   }

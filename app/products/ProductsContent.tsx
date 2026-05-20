@@ -84,9 +84,9 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryIntros: Record<string, string> = {
-  "alle-banken": "Alle banken op één plek — single sofa's, hoekbanken, U-banken en lounge-modellen.",
+  "alle-banken": "De volledige bank-collectie — hoekbanken en bankstellen samen op één plek.",
   banken: "Het hart van elke woonkamer. Comfort en design, gemaakt voor het dagelijks leven.",
-  hoekbanken: "Royale L- en U-vorm modellen die de hoek van je woonkamer transformeren tot lounge.",
+  hoekbanken: "De volledige collectie — single sofa's, L- en U-vorm modellen, lounge-banken.",
   bankstellen: "Complete zit-sets in 3+2+1 of 3+2 configuratie. Eenheid in materiaal en lijn.",
   bedden: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust en stille ochtenden.",
   matrassen: "Pocketveer en koudschuim — de basis van elke goede nachtrust.",
