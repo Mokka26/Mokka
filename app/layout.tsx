@@ -11,6 +11,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import ToastProvider from "@/components/ToastProvider";
 import ScrollProgress from "@/components/ScrollProgress";
 import CustomCursor from "@/components/CustomCursor";
+import CookieBanner from "@/components/CookieBanner";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -89,6 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
+          <CookieBanner />
         </CartProvider>
       </body>
     </html>
