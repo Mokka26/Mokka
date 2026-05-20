@@ -63,45 +63,12 @@ function dedupeByColorGroup(products: Product[]): ProductWithVariants[] {
   return out;
 }
 
-const categoryLabels: Record<string, string> = {
-  "alle-banken": "Alle banken",
-  banken: "Banken",
-  hoekbanken: "Hoekbanken",
-  bankstellen: "Bankstellen",
-  bedden: "Bedden",
-  matrassen: "Matrassen",
-  slaapkamers: "Slaapkamers",
-  kasten: "Kasten",
-  tafels: "Tafels",
-  eettafels: "Eettafels",
-  salontafels: "Salontafels",
-  bijzettafels: "Bijzettafels",
-  "tv-meubels": "TV-meubels",
-  "tafel-accessoires": "Tafel-accessoires",
-  stoelen: "Stoelen",
-  spiegels: "Spiegels",
-  verlichting: "Verlichting",
-};
+import { getCategory } from "@/lib/categories";
 
-const categoryIntros: Record<string, string> = {
-  "alle-banken": "De volledige bank-collectie — hoekbanken en bankstellen samen op één plek.",
-  banken: "Het hart van elke woonkamer. Comfort en design, gemaakt voor het dagelijks leven.",
-  hoekbanken: "De volledige collectie — single sofa's, L- en U-vorm modellen, lounge-banken.",
-  bankstellen: "Complete zit-sets in 3+2+1 of 3+2 configuratie. Eenheid in materiaal en lijn.",
-  bedden: "Slapen als ritueel. Boxsprings en bedframes voor diepe rust en stille ochtenden.",
-  matrassen: "Pocketveer en koudschuim — de basis van elke goede nachtrust.",
-  slaapkamers: "Rust begint hier. Zachte materialen en warme tinten voor de persoonlijkste ruimte.",
-  kasten: "Meer dan opbergruimte — kasten als architectuur die je interieur structureren.",
-  tafels: "Om de tafel wordt geleefd. Van eiken eettafels tot marmeren salontafels.",
-  eettafels: "De plek waar dagen beginnen en eindigen. Eettafels in eik, marmer en steen.",
-  salontafels: "Het middelpunt van de woonkamer — sculpturaal en functioneel.",
-  bijzettafels: "Klein maar betekenisvol. Accentstukken voor naast de bank of bij het bed.",
-  "tv-meubels": "Strakke lijnen voor het hart van je entertainmentruimte.",
-  "tafel-accessoires": "Losse tafelbladen en onderdelen — marmer, sinter stone, glas.",
-  stoelen: "Sculpturaal comfort. Stoelen die niet alleen zitten, maar een statement maken.",
-  spiegels: "Wandsculpturen die ruimte verdiepen en licht vermenigvuldigen.",
-  verlichting: "Sfeer maken begint bij licht. Hanglampen en plafondlampen met karakter.",
-};
+const categoryLabels = (slug: string): string =>
+  getCategory(slug)?.label ?? slug;
+const categoryIntros = (slug: string): string =>
+  getCategory(slug)?.intro ?? "";
 
 export default function ProductsContent() {
   const searchParams = useSearchParams();
@@ -174,12 +141,12 @@ export default function ProductsContent() {
   const pageTitle = searchQuery
     ? `Resultaten: "${searchQuery}"`
     : category
-    ? categoryLabels[category] || category
+    ? categoryLabels(category) || category
     : "De Collectie";
   const pageSubtitle = searchQuery
     ? `${filteredProducts.length} resultaten`
     : category
-    ? categoryIntros[category] || ""
+    ? categoryIntros(category) || ""
     : "Zorgvuldig geselecteerde meubels en interieur, voor het moderne thuis.";
 
   const eyebrowLabel = category ? "Categorie" : searchQuery ? "Zoeken" : "Collectie";
@@ -197,7 +164,7 @@ export default function ProductsContent() {
           {category && (
             <>
               <span className="text-stone/40">/</span>
-              <span className="text-ink">{categoryLabels[category] ?? category}</span>
+              <span className="text-ink">{categoryLabels(category) || category}</span>
             </>
           )}
           {searchQuery && (
