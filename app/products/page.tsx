@@ -1,7 +1,28 @@
 import { Suspense } from "react";
+import { permanentRedirect } from "next/navigation";
+import { isCategorySlug } from "@/lib/categories";
 import ProductsContent from "./ProductsContent";
 
-export default function ProductsPage() {
+interface Props {
+  searchParams: Promise<{ category?: string }>;
+}
+
+/**
+ * /products — overzicht "alle producten" (geen filter).
+ *
+ * Als ?category=X aanwezig → 301-redirect naar canonieke /<categorie>.
+ * Speciale waarde "alle-banken" mapt naar /banken (umbrella).
+ */
+export default async function ProductsPage({ searchParams }: Props) {
+  const { category } = await searchParams;
+
+  if (category) {
+    const target = category === "alle-banken" ? "banken" : category;
+    if (isCategorySlug(target)) {
+      permanentRedirect(`/${target}`);
+    }
+  }
+
   return (
     <Suspense fallback={
       <div className="pt-28 lg:pt-32 pb-20">
