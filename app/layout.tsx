@@ -78,7 +78,7 @@ function buildOrganizationSchema() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const organizationSchema = buildOrganizationSchema();
   return (
-    <html lang="nl" className={`${fraunces.variable} ${geist.variable}`}>
+    <html lang="nl" data-scroll-behavior="smooth" className={`${fraunces.variable} ${geist.variable}`}>
       <body className="min-h-screen flex flex-col bg-paper">
         <script
           type="application/ld+json"
