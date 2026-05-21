@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import CinematicHero from "@/components/CinematicHero";
 import PromoBanners from "@/components/PromoBanners";
 import CollectionPreview from "@/components/CollectionPreview";
@@ -8,8 +9,22 @@ import SocialProof from "@/components/SocialProof";
 import TrustBar from "@/components/TrustBar";
 import DarkNewsletterForm from "@/components/DarkNewsletterForm";
 import { prisma } from "@/lib/prisma";
+import { businessInfo } from "@/lib/business-info";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: `${businessInfo.name} — Premium designmeubels`,
+  description: `${businessInfo.tagline} Ontdek banken, eettafels, verlichting en meer in onze showroom in ${businessInfo.address.city} of online.`,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: `${businessInfo.name} — Premium designmeubels`,
+    description: businessInfo.tagline,
+    type: "website",
+    url: "/",
+    locale: "nl_NL",
+  },
+};
 
 async function getFeaturedProducts() {
   try {
