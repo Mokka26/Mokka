@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Fraunces, Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -7,12 +8,14 @@ import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
 import TouchHoverProvider from "@/components/TouchHoverProvider";
-import SmoothScroll from "@/components/SmoothScroll";
 import ToastProvider from "@/components/ToastProvider";
 import ScrollProgress from "@/components/ScrollProgress";
 import CustomCursor from "@/components/CustomCursor";
 import CookieBanner from "@/components/CookieBanner";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+// Lenis (~30kB) is nooit kritiek voor first paint — laad client-side
+const SmoothScroll = dynamic(() => import("@/components/SmoothScroll"));
 
 // Fraunces (serif) — display font voor headings + italic accents.
 // preload=false: italic-variant is meestal niet above-the-fold; Next
