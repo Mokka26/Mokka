@@ -207,7 +207,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         <Image
                           src={cldOptimize(img, {
                             ar: "3:2",
-                            w: 1800,
+                            w: 2200,
                             mode: isPortraitAt(i) ? "pad" : "fill",
                             upscale: !isPortraitAt(i),
                             quality: "auto:best",
@@ -260,7 +260,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "3:2", w: 240, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:best" })} alt="" fill loading="lazy" className="object-cover" sizes="96px" />
+                      <Image src={cldOptimize(img, { ar: "3:2", w: 320, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:best" })} alt="" fill loading="lazy" className="object-cover" sizes="96px" />
                     </button>
                   ))}
                 </div>
