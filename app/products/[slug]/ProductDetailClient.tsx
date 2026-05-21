@@ -215,6 +215,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           alt={`${product.name} — ${i + 1}`}
                           fill
                           priority={i === 0}
+                          unoptimized
                           className="object-cover"
                           sizes="(max-width: 640px) 92vw, 88vw"
                         />
@@ -260,7 +261,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "3:2", w: 320, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:best" })} alt="" fill loading="lazy" className="object-cover" sizes="96px" />
+                      <Image src={cldOptimize(img, { ar: "3:2", w: 320, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:best" })} alt="" fill loading="lazy" unoptimized className="object-cover" sizes="96px" />
                     </button>
                   ))}
                 </div>
@@ -293,6 +294,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         alt={product.name}
                         fill
                         priority
+                        unoptimized
                         className="object-cover transition-transform duration-200 ease-out will-change-transform"
                         style={
                           zoomActive
@@ -493,6 +495,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         src={cldOptimize(img, { w: 2400, upscale: true, quality: "auto:best" })}
                         alt={`${product.name} — ${i + 1}`}
                         fill
+                        unoptimized
                         className="object-contain"
                         sizes="100vw"
                       />

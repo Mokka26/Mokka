@@ -141,6 +141,7 @@ export default function ProductCard({ product, variants }: Props) {
               alt={product.name}
               fill
               loading="lazy"
+              unoptimized
               className="object-cover"
               style={{
                 transform: "translate(var(--parallax-x, 0px), var(--parallax-y, 0px)) scale(1.06)",
