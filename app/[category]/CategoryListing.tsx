@@ -190,7 +190,7 @@ export default function CategoryListing({ category, products }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
             {filtered.map((p, i) => (
-              <ProductCard key={p.id} product={p} priority={i === 0} />
+              <ProductCard key={p.id} product={p} priority={i < 4} />
             ))}
           </div>
         )}

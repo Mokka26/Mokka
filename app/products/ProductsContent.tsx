@@ -269,7 +269,7 @@ export default function ProductsContent() {
                           visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.4, 0.25, 1] } },
                         }}
                       >
-                        <ProductCard product={product} variants={product.variants} priority={i === 0} />
+                        <ProductCard product={product} variants={product.variants} priority={i < 4} />
                       </motion.div>
                     ))}
                   </motion.div>
