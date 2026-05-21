@@ -20,6 +20,9 @@ export default withSentryConfig(nextConfig, {
   project: "javascript-nextjs",
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  disableLogger: true,
-  automaticVercelMonitors: true,
+  // Deprecated keys vervangen door webpack-options (Next 16 / Sentry 10):
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: true,
+  },
 });

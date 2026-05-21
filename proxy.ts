@@ -1,3 +1,4 @@
+// Next.js 16: "middleware" is hernoemd naar "proxy". Inhoud identiek.
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 
