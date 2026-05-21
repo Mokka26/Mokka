@@ -12,6 +12,7 @@ import ToastProvider from "@/components/ToastProvider";
 import ScrollProgress from "@/components/ScrollProgress";
 import CustomCursor from "@/components/CustomCursor";
 import CookieBanner from "@/components/CookieBanner";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Fraunces (serif) — display font voor headings + italic accents.
 // preload=false: italic-variant is meestal niet above-the-fold; Next
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <CookieBanner />
         </CartProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
