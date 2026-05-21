@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
+import RecentlyViewed from "@/components/RecentlyViewed";
 import {
   CATEGORIES,
   dbCategoryToRouteSlug,
@@ -171,6 +172,7 @@ export default async function ProductPageInCategory({ params }: Props) {
         relatedProducts={relatedProducts}
         colorVariants={colorVariants}
       />
+      <RecentlyViewed currentSlug={product.slug} />
     </>
   );
 }
