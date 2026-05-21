@@ -13,6 +13,9 @@ import ScrollProgress from "@/components/ScrollProgress";
 import CustomCursor from "@/components/CustomCursor";
 import CookieBanner from "@/components/CookieBanner";
 
+// Fraunces (serif) — display font voor headings + italic accents.
+// preload=false: italic-variant is meestal niet above-the-fold; Next
+// laadt on-demand via CSS, display:swap zorgt voor smooth fallback.
 const fraunces = Fraunces({
   subsets: ["latin"],
   weight: "variable",
@@ -20,8 +23,10 @@ const fraunces = Fraunces({
   axes: ["opsz"],
   variable: "--font-fraunces",
   display: "swap",
+  preload: false,
 });
 
+// Geist (sans) — body text op elke pagina, preload=true (default) terecht.
 const geist = Geist({
   subsets: ["latin"],
   weight: "variable",
