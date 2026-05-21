@@ -715,117 +715,6 @@ function DeliveryPopover({ selectedDelivery = [], onDeliveryChange, productsForF
   );
 }
 
-// Desktop panel: secties naast elkaar in 4-koloms grid
-function DesktopFilterPanel(props: Props) {
-  return (
-    <div className="grid grid-cols-4 gap-x-12 py-6">
-      <div><CategorySectionInline {...props} /></div>
-      <div>
-        <PriceSectionInline {...props} />
-        <StockSectionInline {...props} />
-      </div>
-      <div><ColorSectionInline {...props} /></div>
-      <div>
-        <MaterialSectionInline {...props} />
-        <DeliverySectionInline {...props} />
-      </div>
-    </div>
-  );
-}
-
-// Per-section inline (geen accordion wrapper — section is altijd zichtbaar in zijn kolom)
-function InlineSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-6 last:mb-0">
-      <h4 className="text-[11px] uppercase tracking-[0.22em] font-medium text-ink mb-3 pb-2 border-b border-line">
-        {title}
-      </h4>
-      <div className="pl-3">{children}</div>
-    </div>
-  );
-}
-
-function CategorySectionInline({ category, onCategoryChange }: Props) {
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [expanded, setExpanded] = useState<Set<string>>(() => {
-    const set = new Set<string>();
-    if (category) { const g = findGroupOf(category); if (g) set.add(g.label); }
-    return set;
-  });
-  useEffect(() => {
-    fetch("/api/products/counts", { cache: "no-store" }).then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
-  }, []);
-  const toggleGroup = (label: string) => setExpanded((p) => {
-    const n = new Set(p); if (n.has(label)) n.delete(label); else n.add(label); return n;
-  });
-  const groupCount = (g: Group) => g.subs.reduce((s, sub) => s + (counts[sub.value] ?? 0), 0);
-  return (
-    <InlineSection title="Categorie">
-      <FilterRow label="Alle producten" count={counts._total ?? 0} active={!category} onClick={() => onCategoryChange("")} />
-      {groups.map((g) => {
-        const isExp = expanded.has(g.label);
-        const hasActive = g.subs.some((s) => s.value === category);
-        return (
-          <div key={g.label}>
-            <button
-              onClick={() => toggleGroup(g.label)}
-              className={`relative group w-full flex items-center justify-between py-2 text-left text-sm transition-colors ${
-                hasActive ? "text-ink font-medium" : "text-stone hover:text-ink"
-              }`}
-            >
-              <span>{g.label}</span>
-              <span className="flex items-center gap-2">
-                <span className={`text-[10px] tabular-nums transition-opacity ${hasActive ? "text-stone/80 opacity-100" : "text-stone/50 opacity-0 group-hover:opacity-100"}`}>
-                  {groupCount(g)}
-                </span>
-                <ChevronDown className={`w-3 h-3 text-stone/60 transition-transform ${isExp ? "rotate-180" : ""}`} strokeWidth={1.5} />
-              </span>
-            </button>
-            <AnimatePresence initial={false}>
-              {isExp && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                  <div>
-                    {g.subs.map((s) => (
-                      <FilterRow key={s.value} label={s.label} count={counts[s.value] ?? 0} active={category === s.value} onClick={() => onCategoryChange(s.value)} indent={1} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
-    </InlineSection>
-  );
-}
-
-function PriceSectionInline({ priceRange, onPriceRangeChange }: Props) {
-  return (
-    <InlineSection title="Prijs">
-      <div className="font-serif text-base text-ink mb-3 tabular-nums">
-        €{priceRange[0]} <span className="text-stone/40 mx-1">—</span> €{priceRange[1]}
-      </div>
-      <div className="space-y-3 pr-2">
-        <div>
-          <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1">
-            <span>Min</span><span className="tabular-nums">€{priceRange[0]}</span>
-          </label>
-          <input type="range" min={0} max={5000} step={50} value={priceRange[0]}
-            onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-            className="w-full accent-accent h-1" />
-        </div>
-        <div>
-          <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1">
-            <span>Max</span><span className="tabular-nums">€{priceRange[1]}</span>
-          </label>
-          <input type="range" min={0} max={5000} step={50} value={priceRange[1]}
-            onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-            className="w-full accent-accent h-1" />
-        </div>
-      </div>
-    </InlineSection>
-  );
-}
 
 function useFacets(productsForFacets: ProductForFilter[] = []) {
   return useMemo(() => {
@@ -856,64 +745,6 @@ function useFacets(productsForFacets: ProductForFilter[] = []) {
   }, [productsForFacets]);
 }
 
-function StockSectionInline({ inStockOnly = false, onInStockOnlyChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onInStockOnlyChange || f.stockCount === 0) return null;
-  return (
-    <InlineSection title="Voorraad">
-      <FilterRow label="Alleen op voorraad" count={f.stockCount} active={inStockOnly} onClick={() => onInStockOnlyChange(!inStockOnly)} />
-    </InlineSection>
-  );
-}
-
-function ColorSectionInline({ selectedColors = [], onColorsChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onColorsChange || f.colors.length === 0) return null;
-  return (
-    <InlineSection title="Kleur">
-      {f.colors.map(([name, { hex, count }]) => (
-        <FilterRow
-          key={name} label={name} count={count} swatch={hex}
-          active={selectedColors.includes(name)}
-          onClick={() => onColorsChange(selectedColors.includes(name) ? selectedColors.filter((c) => c !== name) : [...selectedColors, name])}
-        />
-      ))}
-    </InlineSection>
-  );
-}
-
-function MaterialSectionInline({ selectedMaterials = [], onMaterialsChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onMaterialsChange || f.materials.length === 0) return null;
-  return (
-    <InlineSection title="Materiaal">
-      {f.materials.map(([mat, count]) => (
-        <FilterRow
-          key={mat} label={mat} count={count}
-          active={selectedMaterials.includes(mat)}
-          onClick={() => onMaterialsChange(selectedMaterials.includes(mat) ? selectedMaterials.filter((m) => m !== mat) : [...selectedMaterials, mat])}
-        />
-      ))}
-    </InlineSection>
-  );
-}
-
-function DeliverySectionInline({ selectedDelivery = [], onDeliveryChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onDeliveryChange || f.deliveries.length === 0) return null;
-  return (
-    <InlineSection title="Levertijd">
-      {f.deliveries.map(([del, count]) => (
-        <FilterRow
-          key={del} label={del} count={count}
-          active={selectedDelivery.includes(del)}
-          onClick={() => onDeliveryChange(selectedDelivery.includes(del) ? selectedDelivery.filter((d) => d !== del) : [...selectedDelivery, del])}
-        />
-      ))}
-    </InlineSection>
-  );
-}
-
 export default function FilterBar(props: Props) {
   const {
     category, priceRange,
@@ -924,7 +755,6 @@ export default function FilterBar(props: Props) {
     selectedDelivery = [],
   } = props;
 
-  const [desktopPanelOpen, setDesktopPanelOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false); // mobile filter
   const [sortOpen, setSortOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
@@ -935,7 +765,7 @@ export default function FilterBar(props: Props) {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setSortOpen(false); setDrawerOpen(false); setMobileSortOpen(false); setDesktopPanelOpen(false); }
+      if (e.key === "Escape") { setSortOpen(false); setDrawerOpen(false); setMobileSortOpen(false); }
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -957,7 +787,6 @@ export default function FilterBar(props: Props) {
     selectedColors.length + selectedMaterials.length + selectedDelivery.length +
     (inStockOnly ? 1 : 0);
   const hasActiveFilters = activeCount > 0;
-  const activeSubLabel = category ? findSubLabel(category) : null;
   const activeSortLabel = sortOptions.find((o) => o.value === sortBy)?.label;
 
   const resetAll = () => {

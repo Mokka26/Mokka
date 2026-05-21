@@ -20,7 +20,7 @@ function Scene({ progressRef }: { progressRef: ProgressRef }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const texture = useTexture(SCENE_IMAGE);
-  const { viewport, size } = useThree();
+  const { viewport } = useThree();
 
   // Aspect-aware plane sizing
   const planeWidth = viewport.width * 1.2;

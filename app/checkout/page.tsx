@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
@@ -275,7 +276,15 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div key={item.productId} className="flex gap-4">
                   <div className="relative w-20 h-20 bg-bone flex-shrink-0 overflow-hidden">
-                    {firstImageUrl(item.product.images) && <img src={firstImageUrl(item.product.images)!} alt={item.product.name} className="w-full h-full object-cover" />}
+                    {firstImageUrl(item.product.images) && (
+                      <Image
+                        src={firstImageUrl(item.product.images)!}
+                        alt={item.product.name}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-ink text-sm font-medium truncate">{item.product.name}</p>

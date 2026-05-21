@@ -111,7 +111,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     };
   }, [emblaApi]);
 
-  // Lightbox: sync swipe → index, jump to start index on open
+  // Lightbox: sync swipe → index, jump to start index on open.
+  // lightboxIndex is hier alleen seed bij init; embla "select" stuurt het verder.
   useEffect(() => {
     if (!lightboxApi) return;
     lightboxApi.scrollTo(lightboxIndex, true);
@@ -120,7 +121,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     return () => {
       lightboxApi.off("select", onSelect);
     };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightboxApi]);
 
   // Lightbox: scroll lock + keyboard navigation
