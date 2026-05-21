@@ -71,6 +71,8 @@ type ColorVariant = {
 interface Props {
   product: Product;
   variants?: ColorVariant[];
+  /** Eerste card op een listing → priority + eager loading voor LCP */
+  priority?: boolean;
 }
 
 function getBadge(product: Product): string | null {
@@ -83,7 +85,7 @@ function getBadge(product: Product): string | null {
   return null;
 }
 
-export default function ProductCard({ product, variants }: Props) {
+export default function ProductCard({ product, variants, priority = false }: Props) {
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
@@ -140,7 +142,8 @@ export default function ProductCard({ product, variants }: Props) {
               src={first}
               alt={product.name}
               fill
-              loading="lazy"
+              loading={priority ? "eager" : "lazy"}
+              priority={priority}
               unoptimized
               className="object-cover"
               style={{

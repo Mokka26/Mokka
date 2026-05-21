@@ -261,7 +261,7 @@ export default function ProductsContent() {
                     animate="visible"
                     variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.03 } } }}
                   >
-                    {visible.map((product) => (
+                    {visible.map((product, i) => (
                       <motion.div
                         key={product.id}
                         variants={{
@@ -269,7 +269,7 @@ export default function ProductsContent() {
                           visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.4, 0.25, 1] } },
                         }}
                       >
-                        <ProductCard product={product} variants={product.variants} />
+                        <ProductCard product={product} variants={product.variants} priority={i === 0} />
                       </motion.div>
                     ))}
                   </motion.div>
