@@ -64,6 +64,10 @@ scripts/index-children.json
 scripts/pdf-pages.json
 scripts/app4sales-products.json
 
+# Audit-output (root-level): door scripts gegenereerd, niet checked in
+cloudinary-orphans.json
+cloudinary-audit.txt
+
 # Tests
 /coverage
 
