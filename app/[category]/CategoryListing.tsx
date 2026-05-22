@@ -62,6 +62,18 @@ export default function CategoryListing({ category, products }: Props) {
     };
   }, [mobileSheetOpen]);
 
+  // Group color-broers per colorGroup → ProductCard rendert swatch-row
+  const variantsByGroup = useMemo(() => {
+    const map = new Map<string, { slug: string; colorName: string | null; colorHex: string | null }[]>();
+    for (const p of products) {
+      if (!p.colorGroup) continue;
+      const arr = map.get(p.colorGroup) ?? [];
+      arr.push({ slug: p.slug, colorName: p.colorName, colorHex: p.colorHex });
+      map.set(p.colorGroup, arr);
+    }
+    return map;
+  }, [products]);
+
   const availableMaterials = useMemo(() => {
     const counts = new Map<string, number>();
     for (const p of products) {
@@ -190,7 +202,12 @@ export default function CategoryListing({ category, products }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
             {filtered.map((p, i) => (
-              <ProductCard key={p.id} product={p} priority={i < 4} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                priority={i < 4}
+                variants={p.colorGroup ? variantsByGroup.get(p.colorGroup) : undefined}
+              />
             ))}
           </div>
         )}

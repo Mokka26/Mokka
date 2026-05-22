@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,6 +91,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [zoomActive, setZoomActive] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  // Portal mount-flag: createPortal vereist een client-side document
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const { addToCart } = useCart();
 
   // Mobile swipe carousel
@@ -457,7 +461,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         <div className="lg:hidden h-20" />
       </div>
 
-      {/* Fullscreen Lightbox */}
+      {/* Fullscreen Lightbox — via Portal naar document.body om stacking-context
+          issues (transform-parents, SmoothScroll, overflow:hidden) te vermijden */}
+      {mounted && createPortal(
       <AnimatePresence>
         {lightboxOpen && (
           <motion.div
@@ -530,7 +536,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
     </>
   );
 }

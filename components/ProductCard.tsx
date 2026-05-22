@@ -96,11 +96,11 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: "3:2",
-        w: 2000,
+        w: 1400,
         mode: isPortrait ? "pad" : "fill",
         upscale: !isPortrait,
         sourceW: firstDim?.w,
-        quality: "auto:best",
+        quality: "auto:good",
       })
     : "";
 
@@ -114,19 +114,27 @@ export default function ProductCard({ product, variants, priority = false }: Pro
 
   const s = parseSpecs(product.specs);
   const eyebrow = s.serie ?? product.category;
-  // Titel = productnaam. Afmetingen als optionele suffix.
-  const title = s.afmetingen ? `${displayName} · ${s.afmetingen}` : displayName;
-  const subParts: string[] = [];
+  // Titel = ENKEL productnaam. Afmetingen + materiaal staan in gestructureerd
+  // info-blok eronder, niet meer in title-regel.
+  const title = displayName;
+
+  // Materiaal-regel: dedupe waardes die elkaar overlappen (bv "Stof" + "Stoffering")
+  const materialParts: string[] = [];
   const addUnique = (val?: string) => {
     if (!val) return;
-    const joined = subParts.join(" ").toLowerCase();
-    if (!joined.includes(val.toLowerCase())) subParts.push(val);
+    const joined = materialParts.join(" ").toLowerCase();
+    if (!joined.includes(val.toLowerCase())) materialParts.push(val);
   };
   addUnique(s.materiaal);
   addUnique(s.stoffering);
   addUnique(s.patroon);
-  addUnique(s.kleur);
-  const subtitle = subParts.join(" · ");
+  const materialLine = materialParts.join(" · ");
+
+  // Color swatches: max 4 dots, rest als "+N"
+  const colorDots = variants && variants.length > 1
+    ? variants.filter((v) => v.colorHex).slice(0, 4)
+    : [];
+  const extraColors = variants && variants.length > 4 ? variants.length - 4 : 0;
 
   return (
     <article className="product-card group">
@@ -174,42 +182,69 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           )}
         </figure>
 
-        {/* Info block — left-aligned, hairline-marker signature */}
+        {/* Info block — left-aligned, gestructureerd label/value pattern */}
         <div className="text-left">
           {/* Eyebrow — serie of categorie */}
           <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-2">
             {eyebrow}
           </p>
 
-          {/* Hoofdnaam — groot serif (Source Serif 4) */}
-          <h3
-            className="font-serif text-xl sm:text-2xl text-ink leading-[1.05] tracking-[-0.025em] transition-colors duration-[280ms]"
-            style={{
-              fontVariationSettings: '"opsz" 96',
-              transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          >
+          {/* Hoofdnaam — alleen productnaam, geen afmetingen */}
+          <h3 className="font-serif text-xl sm:text-2xl text-ink leading-[1.15] tracking-[-0.015em] mb-3">
             <span className="card-name">{title}</span>
           </h3>
 
-          {/* SIGNATURE: 16px hairline-marker in accent-light tussen naam en subtitle */}
-          <div className="w-4 h-px bg-[var(--color-accent-light)] my-4" />
+          {/* SIGNATURE: hairline-marker */}
+          <div className="w-4 h-px bg-[var(--color-accent-light)] mb-4" />
 
-          {subtitle && (
-            <p className="text-sm text-stone leading-[1.45] mb-3">{subtitle}</p>
+          {/* Spec-grid: label kort/uppercase links, value rechts */}
+          {(s.afmetingen || materialLine || colorDots.length > 0) && (
+            <dl className="space-y-1.5 mb-4 text-sm leading-[1.4]">
+              {s.afmetingen && (
+                <div className="flex items-baseline gap-3">
+                  <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Afmeting</dt>
+                  <dd className="text-ink tabular-nums">{s.afmetingen}</dd>
+                </div>
+              )}
+              {materialLine && (
+                <div className="flex items-baseline gap-3">
+                  <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Materiaal</dt>
+                  <dd className="text-ink">{materialLine}</dd>
+                </div>
+              )}
+              {colorDots.length > 0 && (
+                <div className="flex items-baseline gap-3">
+                  <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Kleuren</dt>
+                  <dd className="flex items-center gap-1.5">
+                    {colorDots.map((v) => (
+                      <span
+                        key={v.slug}
+                        title={v.colorName ?? ""}
+                        className="w-3.5 h-3.5 rounded-full border border-line"
+                        style={{ backgroundColor: v.colorHex ?? "transparent" }}
+                      />
+                    ))}
+                    {extraColors > 0 && (
+                      <span className="text-[10px] uppercase tracking-[0.14em] text-stone ml-0.5">+{extraColors}</span>
+                    )}
+                  </dd>
+                </div>
+              )}
+            </dl>
           )}
 
-          <div className="flex items-baseline justify-between gap-3 pt-1">
-            <p className="font-serif text-lg sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
-              &euro;{product.price.toFixed(0)},-
+          {/* Footer: prijs + voorraad */}
+          <div className="flex items-baseline justify-between gap-3 pt-1 border-t border-line/60 mt-1">
+            <p className="font-serif text-lg sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em] mt-3">
+              &euro; {product.price.toFixed(0)},-
             </p>
             {!isOutOfStock ? (
-              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone">
+              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone mt-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                 Op voorraad
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60">
+              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60 mt-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-stone/40" />
                 Uitverkocht
               </span>

@@ -59,7 +59,7 @@ export function cldOptimize(
     /** Source-pixel-breedte uit DB; gebruikt om e_upscale veilig te kiezen. */
     sourceW?: number;
     dpr?: "auto" | number;
-    quality?: "auto" | "auto:best" | "auto:eco" | number;
+    quality?: "auto" | "auto:best" | "auto:good" | "auto:eco" | number;
   } = {},
 ): string {
   if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
