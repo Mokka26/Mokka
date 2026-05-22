@@ -81,6 +81,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     const d = parsed[idx];
     return !!(d?.w && d?.h && d.h > d.w * 1.1);
   };
+  const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -211,6 +212,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                             w: 2200,
                             mode: isPortraitAt(i) ? "pad" : "fill",
                             upscale: !isPortraitAt(i),
+                            sourceW: sourceWAt(i),
                             quality: "auto:best",
                           })}
                           alt={`${product.name} — ${i + 1}`}
@@ -290,6 +292,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           w: 2400,
                           mode: isPortraitAt(selectedImage) ? "pad" : "fill",
                           upscale: !isPortraitAt(selectedImage),
+                          sourceW: sourceWAt(selectedImage),
                           quality: "auto:best",
                         })}
                         alt={product.name}
@@ -493,7 +496,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   >
                     <div className="relative w-full h-full max-w-[1800px] max-h-[90vh] mx-auto">
                       <Image
-                        src={cldOptimize(img, { w: 2400, upscale: true, quality: "auto:best" })}
+                        src={cldOptimize(img, { w: 2400, upscale: true, sourceW: sourceWAt(i), quality: "auto:best" })}
                         alt={`${product.name} — ${i + 1}`}
                         fill
                         unoptimized

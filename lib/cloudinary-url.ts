@@ -56,6 +56,8 @@ export function cldOptimize(
     w?: number;
     mode?: "pad" | "fill" | "thumb";
     upscale?: boolean;
+    /** Source-pixel-breedte uit DB; gebruikt om e_upscale veilig te kiezen. */
+    sourceW?: number;
     dpr?: "auto" | number;
     quality?: "auto" | "auto:best" | "auto:eco" | number;
   } = {},
@@ -66,7 +68,15 @@ export function cldOptimize(
 
   const mode = options.mode ?? "pad";
   const parts: string[] = [];
-  if (options.upscale) parts.push("e_upscale");
+  // e_upscale heeft Cloudinary-limiet 1.5x. Bij 2x+ upscale of bij downscale
+  // geeft Cloudinary 400 Bad Request. Skip e_upscale als source al groot genoeg
+  // is, of als de upscale-factor de limiet overschrijdt.
+  const canUpscale =
+    options.upscale === true &&
+    options.w !== undefined &&
+    (options.sourceW === undefined ||
+      (options.sourceW < options.w && options.w / options.sourceW <= 1.5));
+  if (canUpscale) parts.push("e_upscale");
   if (options.ar) {
     if (mode === "thumb") {
       parts.push("c_thumb", "g_auto", `ar_${options.ar}`);
