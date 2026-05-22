@@ -8,34 +8,11 @@
 
 import { PrismaClient } from "@prisma/client";
 import { config } from "dotenv";
+import { parseImages } from "@/lib/imageHelpers";
 
 config({ path: ".env.local" });
 
 const prisma = new PrismaClient();
-
-type ProductImage = { url: string; w?: number; h?: number };
-
-function parseImages(raw: string): ProductImage[] {
-  try {
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr)) return [];
-    return arr.flatMap((item): ProductImage[] => {
-      if (typeof item === "string") return [{ url: item }];
-      if (item && typeof item === "object" && typeof item.url === "string") {
-        return [
-          {
-            url: item.url,
-            w: typeof item.w === "number" ? item.w : undefined,
-            h: typeof item.h === "number" ? item.h : undefined,
-          },
-        ];
-      }
-      return [];
-    });
-  } catch {
-    return [];
-  }
-}
 
 async function isAlive(url: string): Promise<boolean> {
   try {

@@ -13,6 +13,8 @@
 import { PrismaClient } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "dotenv";
+import { parseImages, type ProductImage } from "@/lib/imageHelpers";
+import { extractPublicId } from "@/lib/cloudinary-helpers";
 
 config({ path: ".env.local" });
 
@@ -24,56 +26,6 @@ cloudinary.config({
 });
 
 const prisma = new PrismaClient();
-
-type ProductImage = { url: string; w?: number; h?: number };
-
-function parseImages(raw: string): ProductImage[] {
-  try {
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr)) return [];
-    return arr.flatMap((item): ProductImage[] => {
-      if (typeof item === "string") return [{ url: item }];
-      if (item && typeof item === "object" && typeof item.url === "string") {
-        return [
-          {
-            url: item.url,
-            w: typeof item.w === "number" ? item.w : undefined,
-            h: typeof item.h === "number" ? item.h : undefined,
-          },
-        ];
-      }
-      return [];
-    });
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Extraheer de Cloudinary public_id uit een secure URL.
- *
- * Format: https://res.cloudinary.com/{cloud}/image/upload/[transforms/][v123/]{public_id}.{ext}
- */
-function extractPublicId(url: string): string | null {
-  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) return null;
-  const after = url.split("/upload/")[1];
-  if (!after) return null;
-  // Strip version segment (vNNNN/)
-  const noVersion = after.replace(/^v\d+\//, "");
-  // Strip transformaties (segmenten met komma's voor het pad)
-  const segments = noVersion.split("/");
-  // Eerste segment kan transforms zijn (heeft komma's of underscore-prefixes als c_, f_, q_)
-  const isTransformSegment = (s: string) =>
-    /^[a-z]_/.test(s) || s.includes(",");
-  while (segments.length > 1 && isTransformSegment(segments[0])) {
-    segments.shift();
-  }
-  // Verwijder file-extensie van laatste segment
-  const last = segments[segments.length - 1];
-  const dot = last.lastIndexOf(".");
-  if (dot > 0) segments[segments.length - 1] = last.slice(0, dot);
-  return segments.join("/");
-}
 
 async function getDims(publicId: string): Promise<{ w: number; h: number } | null> {
   try {
