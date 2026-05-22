@@ -90,11 +90,25 @@ function Fallback() {
   );
 }
 
+// Wanneer WebGL-context verloren gaat (mobile tab-zwitch, GPU-stress,
+// te veel parallelle 3D-contexts): toon statische scene-image in plaats
+// van zwart canvas. Tekst-overlay buiten Canvas blijft werken.
+function StaticHeroBg() {
+  return (
+    <div
+      className="absolute inset-0 bg-cover bg-center"
+      style={{ backgroundImage: `url(${SCENE_IMAGE})`, backgroundColor: "#EEEAE3" }}
+      aria-hidden
+    />
+  );
+}
+
 export default function CinematicHero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [webglLost, setWebglLost] = useState(false);
   const fmReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -183,22 +197,35 @@ export default function CinematicHero() {
     >
       {/* Sticky viewport — blijft staan tijdens scroll */}
       <div className="sticky top-0 h-screen overflow-hidden">
-        {/* Three.js Canvas */}
+        {/* Three.js Canvas — fallback naar statische image bij context-loss */}
         <div className="absolute inset-0">
-          <Suspense fallback={<Fallback />}>
-            <Canvas
-              dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2)]}
-              gl={{
-                antialias: true,
-                powerPreference: "high-performance",
-                alpha: false,
-              }}
-              style={{ background: "#EEEAE3" }}
-              shadows
-            >
-              <Scene progressRef={progressRef} />
-            </Canvas>
-          </Suspense>
+          {webglLost ? (
+            <StaticHeroBg />
+          ) : (
+            <Suspense fallback={<Fallback />}>
+              <Canvas
+                dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2)]}
+                gl={{
+                  antialias: true,
+                  powerPreference: "high-performance",
+                  alpha: false,
+                }}
+                style={{ background: "#EEEAE3" }}
+                shadows
+                onCreated={({ gl }) => {
+                  const canvas = gl.domElement;
+                  const onLost = (e: Event) => {
+                    e.preventDefault();
+                    setWebglLost(true);
+                  };
+                  canvas.addEventListener("webglcontextlost", onLost, { passive: false });
+                  canvas.addEventListener("webglcontextrestored", () => setWebglLost(false));
+                }}
+              >
+                <Scene progressRef={progressRef} />
+              </Canvas>
+            </Suspense>
+          )}
         </div>
 
         {/* Gradient-overlay voor leesbaarheid tekst */}
