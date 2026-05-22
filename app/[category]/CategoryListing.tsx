@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
@@ -94,6 +94,12 @@ export default function CategoryListing({ category, products }: Props) {
       return next;
     });
 
+  // Paginatie — initial 24 cards, IntersectionObserver laadt batches van 24 bij
+  // bereiken sentinel. Bij filter-wijziging reset naar 24.
+  const PAGE_SIZE = 24;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
   const filtered = useMemo(() => {
     let arr = products.filter((p) => p.price <= maxFilter);
     if (inStockOnly) arr = arr.filter((p) => (p.stock ?? 0) > 0);
@@ -114,6 +120,30 @@ export default function CategoryListing({ category, products }: Props) {
         return arr;
     }
   }, [products, maxFilter, inStockOnly, selectedMaterials, sortBy]);
+
+  // Reset paginatie wanneer filter/sort verandert — anders blijft visibleCount
+  // hoog terwijl filtered nu kleinere set is.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [maxFilter, inStockOnly, selectedMaterials, sortBy]);
+
+  // IntersectionObserver: sentinel komt in view → laad volgende batch
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || visibleCount >= filtered.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [visibleCount, filtered.length]);
+
+  const visible = filtered.slice(0, visibleCount);
 
   const activeFilterCount =
     (maxFilter < maxPrice ? 1 : 0) +
@@ -200,8 +230,9 @@ export default function CategoryListing({ category, products }: Props) {
             )}
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
-            {filtered.map((p, i) => (
+            {visible.map((p, i) => (
               <ProductCard
                 key={p.id}
                 product={p}
@@ -210,6 +241,16 @@ export default function CategoryListing({ category, products }: Props) {
               />
             ))}
           </div>
+          {visibleCount < filtered.length && (
+            <div
+              ref={sentinelRef}
+              aria-hidden
+              className="h-12 mt-12 flex items-center justify-center text-[10px] uppercase tracking-[0.2em] text-stone"
+            >
+              {visible.length} van {filtered.length} geladen…
+            </div>
+          )}
+          </>
         )}
       </div>
 

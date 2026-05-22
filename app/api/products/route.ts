@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// Public listing-endpoint: korte cache OK (admin-mutaties zijn niet
+// kritiek-real-time). s-maxage=60 = CDN cached 60s, stale-while-revalidate
+// 300s = klant ziet altijd directe response terwijl achtergrond ververst.
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -55,6 +57,10 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(
     { products },
-    { headers: { "Cache-Control": "no-store, must-revalidate" } },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    },
   );
 }

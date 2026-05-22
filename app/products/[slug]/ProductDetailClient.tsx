@@ -492,10 +492,15 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </div>
             )}
 
-            {/* Carousel */}
+            {/* Carousel — slides buiten current ±1 zijn lazy om 10MB+
+                upfront-bytes te besparen (4 foto's × 2400w) */}
             <div className="w-full h-full overflow-hidden" ref={lightboxRef}>
               <div className="flex h-full">
-                {images.map((img, i) => (
+                {images.map((img, i) => {
+                  const isNear = Math.abs(i - lightboxIndex) <= 1 ||
+                    (lightboxIndex === 0 && i === images.length - 1) ||
+                    (lightboxIndex === images.length - 1 && i === 0);
+                  return (
                   <div
                     key={i}
                     className="relative flex-[0_0_100%] h-full flex items-center justify-center p-6 lg:p-20"
@@ -506,12 +511,14 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         alt={`${product.name} — ${i + 1}`}
                         fill
                         unoptimized
+                        loading={isNear ? "eager" : "lazy"}
                         className="object-contain"
                         sizes="100vw"
                       />
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
