@@ -68,14 +68,23 @@ export function cldOptimize(
 
   const mode = options.mode ?? "pad";
   const parts: string[] = [];
-  // e_upscale heeft Cloudinary-limiet 1.5x. Bij 2x+ upscale of bij downscale
-  // geeft Cloudinary 400 Bad Request. Skip e_upscale als source al groot genoeg
-  // is, of als de upscale-factor de limiet overschrijdt.
+  // Cloudinary's e_upscale (AI-upscale) is een zware transform met meerdere
+  // limieten die 400 Bad Request geven:
+  //   1. source ≥ ~1500px werkt onbetrouwbaar (Cloudinary's AI faalt vaak)
+  //   2. upscale-factor > 1.5x → 400
+  //   3. downscale (source ≥ target) → 400
+  //   4. zonder source-dims weten we niet of het veilig is
+  // Conservatieve regel: alleen toepassen als source bekend, <1500px, en de
+  // gevraagde upscale-factor binnen 1.0–1.5x ligt. Anders skip — Cloudinary
+  // doet dan normale resize (browser scaled de rest).
+  const UPSCALE_SOURCE_MAX = 1500;
   const canUpscale =
     options.upscale === true &&
     options.w !== undefined &&
-    (options.sourceW === undefined ||
-      (options.sourceW < options.w && options.w / options.sourceW <= 1.5));
+    options.sourceW !== undefined &&
+    options.sourceW < UPSCALE_SOURCE_MAX &&
+    options.sourceW < options.w &&
+    options.w / options.sourceW <= 1.5;
   if (canUpscale) parts.push("e_upscale");
   if (options.ar) {
     if (mode === "thumb") {
