@@ -181,7 +181,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
             {eyebrow}
           </p>
 
-          {/* Hoofdnaam — groot serif, Fraunces opsz 96 */}
+          {/* Hoofdnaam — groot serif (Source Serif 4) */}
           <h3
             className="font-serif text-xl sm:text-2xl text-ink leading-[1.05] tracking-[-0.025em] transition-colors duration-[280ms]"
             style={{

@@ -29,7 +29,7 @@
 
   /* ─── TYPOGRAFIE — variable fonts via next/font/google (self-hosted) ─── */
   --font-sans: var(--font-geist), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-fraunces), "Cormorant Garamond", Georgia, serif;
+  --font-serif: var(--font-serif-display), "Source Serif Pro", Georgia, serif;
 
   /* ─── MOTION — custom easings + duration ladder ─── */
   --ease-out-strong: cubic-bezier(0.22, 1, 0.36, 1);

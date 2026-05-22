@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
-import { Fraunces, Geist } from "next/font/google";
+import { Source_Serif_4, Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { businessInfo, getActiveSocials } from "@/lib/business-info";
@@ -17,15 +17,15 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 // Lenis (~30kB) is nooit kritiek voor first paint — laad client-side
 const SmoothScroll = dynamic(() => import("@/components/SmoothScroll"));
 
-// Fraunces (serif) — display font voor headings + italic accents.
-// preload=false: italic-variant is meestal niet above-the-fold; Next
-// laadt on-demand via CSS, display:swap zorgt voor smooth fallback.
-const fraunces = Fraunces({
+// Source Serif 4 (display-serif) — leesbaar voor brede doelgroep (27-70),
+// behoudt serif-karakter (industrial-luxe brand) zonder Fraunces' ornament.
+// preload=false: titles zijn niet altijd above-the-fold; display:swap geeft
+// directe paint met system-fallback.
+const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
   weight: "variable",
   style: ["normal", "italic"],
-  axes: ["opsz"],
-  variable: "--font-fraunces",
+  variable: "--font-serif-display",
   display: "swap",
   preload: false,
 });
@@ -82,7 +82,7 @@ function buildOrganizationSchema() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const organizationSchema = buildOrganizationSchema();
   return (
-    <html lang="nl" data-scroll-behavior="smooth" className={`${fraunces.variable} ${geist.variable}`}>
+    <html lang="nl" data-scroll-behavior="smooth" className={`${sourceSerif.variable} ${geist.variable}`}>
       <body className="min-h-screen flex flex-col bg-paper">
         <script
           type="application/ld+json"
