@@ -1,7 +1,21 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { permanentRedirect } from "next/navigation";
 import { isCategorySlug } from "@/lib/categories";
+import { businessInfo } from "@/lib/business-info";
 import ProductsContent from "./ProductsContent";
+
+export const metadata: Metadata = {
+  title: `Alle producten — ${businessInfo.name}`,
+  description: `Ontdek het volledige assortiment van ${businessInfo.name}: banken, eettafels, verlichting en meer. Bekijk per categorie of doorzoek de hele collectie.`,
+  alternates: { canonical: "/products" },
+  openGraph: {
+    title: `Alle producten — ${businessInfo.name}`,
+    description: "Het volledige Mokka Home Interior assortiment in één overzicht.",
+    type: "website",
+    url: "/products",
+  },
+};
 
 interface Props {
   searchParams: Promise<{ category?: string }>;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import CinematicHero from "@/components/CinematicHero";
+import CinematicHero from "@/components/CinematicHeroLazy";
 import PromoBanners from "@/components/PromoBanners";
 import CollectionPreview from "@/components/CollectionPreview";
 import CategoriesGrid from "@/components/CategoriesGrid";
@@ -11,7 +11,9 @@ import DarkNewsletterForm from "@/components/DarkNewsletterForm";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
 
-export const dynamic = "force-dynamic";
+// ISR: featured + spotlight veranderen alleen bij admin-mutaties.
+// 1h revalidate balanceert verse content tegen CDN-cache hits.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: `${businessInfo.name} — Premium designmeubels`,
@@ -26,10 +28,29 @@ export const metadata: Metadata = {
   },
 };
 
+// select-clauses houden response klein: alleen wat CollectionPreview +
+// FeaturedStory daadwerkelijk tonen. Slug/description meegegeven want
+// FeaturedStory linkt + toont productbeschrijving.
+
 async function getFeaturedProducts() {
   try {
     return await prisma.product.findMany({
       where: { featured: true, hidden: false, deletedAt: null },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        price: true,
+        category: true,
+        images: true,
+        featured: true,
+        stock: true,
+        createdAt: true,
+        colorGroup: true,
+        colorName: true,
+        colorHex: true,
+        specs: true,
+      },
       take: 8,
     });
   } catch {
@@ -39,9 +60,17 @@ async function getFeaturedProducts() {
 
 async function getSpotlightProduct() {
   try {
-    // Selecteer een uitgelicht product voor de editorial spotlight
     return await prisma.product.findFirst({
       where: { featured: true, category: "banken", hidden: false, deletedAt: null },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        description: true,
+        price: true,
+        category: true,
+        images: true,
+      },
       orderBy: { createdAt: "desc" },
     });
   } catch {

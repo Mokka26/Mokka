@@ -43,12 +43,30 @@ export default async function CategoryPage({ params }: Props) {
   const category = getCategory(categorySlug);
   if (!category) notFound();
 
-  // Haal producten op uit alle relevante DB-categorieën (umbrella's combineren)
+  // Haal producten op uit alle relevante DB-categorieën (umbrella's combineren).
+  // select-clause: alleen velden die CategoryListing + ProductCard tonen.
+  // Skipped: description (PDP-only), updatedAt (admin-only), deliveryTime
+  // (specs JSON dekt het), discount-velden indien ongebruikt op listing.
   const products = await prisma.product.findMany({
     where: {
       category: { in: [...category.dbCategories] },
       hidden: false,
       deletedAt: null,
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      price: true,
+      category: true,
+      images: true,
+      featured: true,
+      stock: true,
+      createdAt: true,
+      colorGroup: true,
+      colorName: true,
+      colorHex: true,
+      specs: true,
     },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
