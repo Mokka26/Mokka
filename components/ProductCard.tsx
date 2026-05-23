@@ -90,6 +90,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
         mode: isPortrait ? "pad" : "fill",
         upscale: !isPortrait,
         sourceW: firstDim?.w,
+        dpr: "auto",
         quality: "auto:good",
       })
     : "";

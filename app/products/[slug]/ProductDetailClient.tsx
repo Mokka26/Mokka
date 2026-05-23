@@ -217,7 +217,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                             mode: isPortraitAt(i) ? "pad" : "fill",
                             upscale: !isPortraitAt(i),
                             sourceW: sourceWAt(i),
-                            quality: "auto:best",
+                            dpr: "auto",
+                            quality: "auto:good",
                           })}
                           alt={`${product.name} — ${i + 1}`}
                           fill
@@ -268,7 +269,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "3:2", w: 320, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:best" })} alt="" fill loading="lazy" unoptimized className="object-cover" sizes="96px" />
+                      <Image src={cldOptimize(img, { ar: "3:2", w: 320, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:good" })} alt="" fill loading="lazy" unoptimized className="object-cover" sizes="96px" />
                     </button>
                   ))}
                 </div>
@@ -297,7 +298,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           mode: isPortraitAt(selectedImage) ? "pad" : "fill",
                           upscale: !isPortraitAt(selectedImage),
                           sourceW: sourceWAt(selectedImage),
-                          quality: "auto:best",
+                          dpr: "auto",
+                          quality: "auto:good",
                         })}
                         alt={product.name}
                         fill
