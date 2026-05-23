@@ -108,15 +108,17 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const isOutOfStock = product.stock === 0;
   const { ref: figureRef, onMouseMove, onMouseLeave } = useInFrameParallax<HTMLElement>({ maxOffset: 10 });
 
-  const displayName = variants && variants.length > 1 && product.colorName
-    ? product.name.replace(new RegExp(`\\s*${product.colorName}$`, "i"), "")
-    : product.name;
-
+  // Titel = volledige productnaam (incl. kleur indien aanwezig). User-voorkeur:
+  // "Mirage Bankstel Brons" i.p.v. gestripte versie zonder kleur.
   const s = parseSpecs(product.specs);
-  const eyebrow = s.serie ?? product.category;
-  // Titel = ENKEL productnaam. Afmetingen + materiaal staan in gestructureerd
-  // info-blok eronder, niet meer in title-regel.
-  const title = displayName;
+  const title = product.name;
+
+  // Eyebrow toont serie/collectie alleen als die niet al in de naam zit.
+  // Voorkomt "Mirage" eyebrow + "Mirage Bankstel Brons" titel = dubbele naam.
+  const eyebrow =
+    s.serie && !product.name.toLowerCase().includes(s.serie.toLowerCase())
+      ? s.serie
+      : null;
 
   // Materiaal-regel: dedupe waardes die elkaar overlappen (bv "Stof" + "Stoffering")
   const materialParts: string[] = [];
@@ -184,12 +186,14 @@ export default function ProductCard({ product, variants, priority = false }: Pro
 
         {/* Info block — left-aligned, gestructureerd label/value pattern */}
         <div className="text-left">
-          {/* Eyebrow — serie of categorie */}
-          <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-2">
-            {eyebrow}
-          </p>
+          {/* Eyebrow — alleen collectie/serie als die meerwaarde geeft */}
+          {eyebrow && (
+            <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-2">
+              {eyebrow}
+            </p>
+          )}
 
-          {/* Hoofdnaam — alleen productnaam, geen afmetingen */}
+          {/* Hoofdnaam — volledige productnaam (incl. kleur) */}
           <h3 className="font-serif text-xl sm:text-2xl text-ink leading-[1.15] tracking-[-0.015em] mb-3">
             <span className="card-name">{title}</span>
           </h3>
