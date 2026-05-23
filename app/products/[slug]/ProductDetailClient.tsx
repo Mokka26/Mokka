@@ -185,7 +185,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         </div>
 
         {/* Product — magazine-spread: image bleed naar left edge op desktop */}
-        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-20 items-start">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-12 items-start">
           {/* Vertical chapter label — sticky in left margin op desktop */}
           <div className="hidden lg:block absolute left-6 top-44 z-10 pointer-events-none">
             <span className="block origin-top-left rotate-90 translate-x-[2px] eyebrow text-stone whitespace-nowrap">

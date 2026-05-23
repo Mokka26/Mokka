@@ -231,7 +231,7 @@ export default function CategoryListing({ category, products }: Props) {
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-16 sm:gap-x-6 sm:gap-y-20">
             {visible.map((p, i) => (
               <ProductCard
                 key={p.id}

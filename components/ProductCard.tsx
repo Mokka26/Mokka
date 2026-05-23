@@ -139,8 +139,8 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const extraColors = variants && variants.length > 4 ? variants.length - 4 : 0;
 
   return (
-    <article className="product-card group">
-      <Link href={productUrl(product)} className="block">
+    <article className="product-card group h-full">
+      <Link href={productUrl(product)} className="flex flex-col h-full">
         {/* Image — aspect 4/5 magazine-feel, in-frame parallax, geen ring/rounded */}
         <figure
           ref={figureRef}
@@ -162,7 +162,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
                 transition: "transform 480ms cubic-bezier(0.22, 1, 0.36, 1)",
                 willChange: "transform",
               }}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 768px) 50vw, 33vw"
             />
           )}
 
@@ -184,8 +184,9 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           )}
         </figure>
 
-        {/* Info block — left-aligned, gestructureerd label/value pattern */}
-        <div className="text-left">
+        {/* Info block — flex-col zodat footer (prijs+voorraad) altijd op
+            zelfde Y-positie eindigt ongeacht spec-grid lengte */}
+        <div className="text-left flex flex-col flex-1">
           {/* Eyebrow — alleen collectie/serie als die meerwaarde geeft */}
           {eyebrow && (
             <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-2">
@@ -244,18 +245,19 @@ export default function ProductCard({ product, variants, priority = false }: Pro
             </dl>
           )}
 
-          {/* Footer: prijs + voorraad */}
-          <div className="flex items-baseline justify-between gap-3 pt-1 border-t border-line/60 mt-1">
-            <p className="font-serif text-lg sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em] mt-3">
+          {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
+              cards in een grid-rij hun prijs op gelijke hoogte hebben */}
+          <div className="flex items-center justify-between gap-3 pt-4 border-t border-line/60 mt-auto">
+            <p className="font-serif text-lg sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]">
               &euro; {product.price.toFixed(0)},-
             </p>
             {!isOutOfStock ? (
-              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone mt-3">
+              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                 Op voorraad
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60 mt-3">
+              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60">
                 <span className="w-1.5 h-1.5 rounded-full bg-stone/40" />
                 Uitverkocht
               </span>
