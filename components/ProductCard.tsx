@@ -194,72 +194,109 @@ export default function ProductCard({ product, variants, priority = false }: Pro
             </p>
           )}
 
-          {/* Hoofdnaam — volledige productnaam (incl. kleur) */}
-          <h3 className="font-serif text-xl sm:text-2xl text-ink leading-[1.15] tracking-[-0.015em] mb-3">
+          {/* Hoofdnaam — volledige productnaam (incl. kleur).
+              Mobile: kleiner + line-clamp-2 voor consistente kaart-hoogte */}
+          <h3 className="font-serif text-base sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-3 line-clamp-2 sm:line-clamp-none">
             <span className="card-name">{title}</span>
           </h3>
 
           {/* SIGNATURE: hairline-marker */}
           <div className="w-4 h-px bg-[var(--color-accent-light)] mb-4" />
 
-          {/* Spec-grid: label kort/uppercase links, value rechts */}
+          {/* Spec-info — twee renders:
+              - Mobile (sm-): compacte stack zonder labels (label krijgt te
+                weinig ruimte op 150-180px cards)
+              - sm+: gestructureerde label/value grid */}
           {(s.afmetingen || materialLine || colorDots.length > 0) && (
-            <dl className="space-y-1.5 mb-4 text-sm leading-[1.4]">
-              {s.afmetingen && (
-                <div className="flex items-baseline gap-3">
-                  <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Afmeting</dt>
-                  <dd className="text-ink tabular-nums">{s.afmetingen}</dd>
-                </div>
-              )}
-              {materialLine && (
-                <div className="flex items-baseline gap-3">
-                  <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Materiaal</dt>
-                  <dd className="text-ink">{materialLine}</dd>
-                </div>
-              )}
-              {colorDots.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Kleuren</dt>
-                  <dd className="flex items-center -ml-1.5">
-                    {/* Visuele 14px dot binnen 44×44 hit-zone (WCAG 2.5.5 AA).
-                        Negatieve marge naast eerste dot houdt visuele rij compact. */}
+            <>
+              {/* MOBILE — compact, geen label-kolom */}
+              <div className="sm:hidden mb-4 space-y-1 text-[13px] leading-[1.45] text-ink">
+                {s.afmetingen && (
+                  <p className="tabular-nums truncate" title={s.afmetingen}>{s.afmetingen}</p>
+                )}
+                {materialLine && (
+                  <p className="text-stone truncate" title={materialLine}>{materialLine}</p>
+                )}
+                {colorDots.length > 0 && (
+                  <div className="flex items-center gap-1.5 pt-1">
                     {colorDots.map((v) => (
                       <span
                         key={v.slug}
                         title={v.colorName ?? ""}
                         aria-label={v.colorName ? `Kleur: ${v.colorName}` : undefined}
-                        className="inline-flex items-center justify-center w-11 h-11"
-                      >
-                        <span
-                          className="w-3.5 h-3.5 rounded-full border border-line"
-                          style={{ backgroundColor: v.colorHex ?? "transparent" }}
-                        />
-                      </span>
+                        className="w-3 h-3 rounded-full border border-line"
+                        style={{ backgroundColor: v.colorHex ?? "transparent" }}
+                      />
                     ))}
                     {extraColors > 0 && (
-                      <span className="text-[10px] uppercase tracking-[0.14em] text-stone ml-0.5">+{extraColors}</span>
+                      <span className="text-[10px] uppercase tracking-[0.14em] text-stone ml-1">+{extraColors}</span>
                     )}
-                  </dd>
-                </div>
-              )}
-            </dl>
+                  </div>
+                )}
+              </div>
+
+              {/* sm+ — gestructureerde label/value grid */}
+              <dl className="hidden sm:block space-y-1.5 mb-4 text-sm leading-[1.4]">
+                {s.afmetingen && (
+                  <div className="flex items-baseline gap-3">
+                    <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Afmeting</dt>
+                    <dd className="text-ink tabular-nums">{s.afmetingen}</dd>
+                  </div>
+                )}
+                {materialLine && (
+                  <div className="flex items-baseline gap-3">
+                    <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Materiaal</dt>
+                    <dd className="text-ink">{materialLine}</dd>
+                  </div>
+                )}
+                {colorDots.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Kleuren</dt>
+                    <dd className="flex items-center -ml-1.5">
+                      {colorDots.map((v) => (
+                        <span
+                          key={v.slug}
+                          title={v.colorName ?? ""}
+                          aria-label={v.colorName ? `Kleur: ${v.colorName}` : undefined}
+                          className="inline-flex items-center justify-center w-11 h-11"
+                        >
+                          <span
+                            className="w-3.5 h-3.5 rounded-full border border-line"
+                            style={{ backgroundColor: v.colorHex ?? "transparent" }}
+                          />
+                        </span>
+                      ))}
+                      {extraColors > 0 && (
+                        <span className="text-[10px] uppercase tracking-[0.14em] text-stone ml-0.5">+{extraColors}</span>
+                      )}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </>
           )}
 
           {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
               cards in een grid-rij hun prijs op gelijke hoogte hebben */}
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-line/60 mt-auto">
-            <p className="font-serif text-lg sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]">
+          <div className="flex items-center justify-between gap-2 pt-3 sm:pt-4 border-t border-line/60 mt-auto">
+            <p className="font-serif text-base sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]">
               &euro; {product.price.toFixed(0)},-
             </p>
             {!isOutOfStock ? (
-              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                Op voorraad
+              <span
+                className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone whitespace-nowrap"
+                aria-label="Op voorraad"
+              >
+                <span className="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-accent" aria-hidden />
+                <span className="hidden sm:inline">Op voorraad</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-stone/40" />
-                Uitverkocht
+              <span
+                className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60 whitespace-nowrap"
+                aria-label="Uitverkocht"
+              >
+                <span className="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-stone/40" aria-hidden />
+                <span className="hidden sm:inline">Uitverkocht</span>
               </span>
             )}
           </div>
