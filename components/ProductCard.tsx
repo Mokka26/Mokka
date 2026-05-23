@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { imageUrls, parseImages } from "@/lib/imageHelpers";
-import { dbCategoryToRouteSlug, productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/categories";
 import { useInFrameParallax } from "@/hooks/useInFrameParallax";
 
 interface Product {
@@ -263,37 +263,6 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           </div>
         </div>
       </Link>
-
-      {/* Kleur-varianten onder de kaart */}
-      {variants && variants.length > 1 && (
-        <div className="mt-4 flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            {variants.map((v) => {
-              const isCurrent = v.slug === product.slug;
-              return (
-                <Link
-                  key={v.slug}
-                  href={`/${dbCategoryToRouteSlug(product.category)}/${v.slug}`}
-                  title={v.colorName ?? ""}
-                  aria-label={v.colorName ?? "Variant"}
-                  className={`block w-4 h-4 rounded-full border transition-all duration-[280ms] ${
-                    isCurrent
-                      ? "border-ink scale-110"
-                      : "border-line hover:border-accent hover:scale-110"
-                  }`}
-                  style={{
-                    backgroundColor: v.colorHex ?? "#CFCFCF",
-                    transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-                  }}
-                />
-              );
-            })}
-          </div>
-          <span className="text-[10px] uppercase tracking-[0.14em] font-medium text-stone">
-            {variants.length} kleuren
-          </span>
-        </div>
-      )}
     </article>
   );
 }
