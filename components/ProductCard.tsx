@@ -86,7 +86,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: "3:2",
-        w: 1400,
+        w: 1200,
         mode: isPortrait ? "pad" : "fill",
         upscale: !isPortrait,
         sourceW: firstDim?.w,

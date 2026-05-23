@@ -83,6 +83,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const organizationSchema = buildOrganizationSchema();
   return (
     <html lang="nl" data-scroll-behavior="smooth" className={`${sourceSerif.variable} ${geist.variable}`}>
+      <head>
+        {/* Preconnect naar Cloudinary CDN — slaat DNS+TLS-handshake (~150-300ms)
+            over voor eerste image-request. Cruciaal want we gebruiken unoptimized
+            zodat images direct van Cloudinary komen, niet via Next-proxy. */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+      </head>
       <body className="min-h-screen flex flex-col bg-paper">
         <script
           type="application/ld+json"
