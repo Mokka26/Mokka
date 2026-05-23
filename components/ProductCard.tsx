@@ -146,7 +146,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           ref={figureRef}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className="relative aspect-[3/2] overflow-hidden bg-bone mb-6 rounded-[10px]"
+          className="relative aspect-[3/2] overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]"
         >
           {first && (
             <Image
@@ -189,19 +189,19 @@ export default function ProductCard({ product, variants, priority = false }: Pro
         <div className="text-left flex flex-col flex-1">
           {/* Eyebrow — alleen collectie/serie als die meerwaarde geeft */}
           {eyebrow && (
-            <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-2">
+            <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-1">
               {eyebrow}
             </p>
           )}
 
           {/* Hoofdnaam — volledige productnaam (incl. kleur).
               Mobile: kleiner + line-clamp-2 voor consistente kaart-hoogte */}
-          <h3 className="font-serif text-base sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-3 line-clamp-2 sm:line-clamp-none">
+          <h3 className="font-serif text-base sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-2 line-clamp-2 sm:line-clamp-none">
             <span className="card-name">{title}</span>
           </h3>
 
           {/* SIGNATURE: hairline-marker */}
-          <div className="w-4 h-px bg-[var(--color-accent-light)] mb-4" />
+          <div className="w-4 h-px bg-[var(--color-accent-light)] mb-2 sm:mb-3" />
 
           {/* Spec-info — twee renders:
               - Mobile (sm-): compacte stack zonder labels (label krijgt te
@@ -210,7 +210,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           {(s.afmetingen || materialLine || colorDots.length > 0) && (
             <>
               {/* MOBILE — compact, geen label-kolom */}
-              <div className="sm:hidden mb-4 space-y-1 text-[13px] leading-[1.45] text-ink">
+              <div className="sm:hidden mb-3 space-y-0.5 text-[13px] leading-[1.4] text-ink">
                 {s.afmetingen && (
                   <p className="tabular-nums truncate" title={s.afmetingen}>{s.afmetingen}</p>
                 )}
@@ -236,7 +236,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
               </div>
 
               {/* sm+ — gestructureerde label/value grid */}
-              <dl className="hidden sm:block space-y-1.5 mb-4 text-sm leading-[1.4]">
+              <dl className="hidden sm:block space-y-1.5 mb-3 text-sm leading-[1.4]">
                 {s.afmetingen && (
                   <div className="flex items-baseline gap-3">
                     <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Afmeting</dt>
@@ -278,7 +278,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
 
           {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
               cards in een grid-rij hun prijs op gelijke hoogte hebben */}
-          <div className="flex items-center justify-between gap-2 pt-3 sm:pt-4 border-t border-line/60 mt-auto">
+          <div className="flex items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-line/60 mt-auto">
             <p className="font-serif text-base sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]">
               &euro; {product.price.toFixed(0)},-
             </p>

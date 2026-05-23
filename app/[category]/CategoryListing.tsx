@@ -174,7 +174,7 @@ export default function CategoryListing({ category, products }: Props) {
   return (
     <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
       {/* Header */}
-      <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-10 lg:mb-14">
+      <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
         <p className="eyebrow mb-4">Collectie</p>
         <h1 className="display-lg text-ink mb-6">{category.label}</h1>
         <p className="body-lg text-slate max-w-2xl">{category.intro}</p>
@@ -231,7 +231,7 @@ export default function CategoryListing({ category, products }: Props) {
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-10 sm:gap-x-6 sm:gap-y-20">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
             {visible.map((p, i) => (
               <ProductCard
                 key={p.id}
