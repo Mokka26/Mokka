@@ -75,16 +75,6 @@ interface Props {
   priority?: boolean;
 }
 
-function getBadge(product: Product): string | null {
-  if (product.stock === 0) return "Uitverkocht";
-  if (!product.createdAt) return product.featured ? "Uitgelicht" : null;
-  const created = typeof product.createdAt === "string" ? new Date(product.createdAt) : product.createdAt;
-  const daysSinceCreation = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
-  if (daysSinceCreation < 30) return "Nieuw";
-  if (product.featured) return "Uitgelicht";
-  return null;
-}
-
 export default function ProductCard({ product, variants, priority = false }: Props) {
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
@@ -104,7 +94,6 @@ export default function ProductCard({ product, variants, priority = false }: Pro
       })
     : "";
 
-  const badge = getBadge(product);
   const isOutOfStock = product.stock === 0;
   const { ref: figureRef, onMouseMove, onMouseLeave } = useInFrameParallax<HTMLElement>({ maxOffset: 10 });
 
@@ -164,19 +153,6 @@ export default function ProductCard({ product, variants, priority = false }: Pro
               }}
               sizes="(max-width: 768px) 50vw, 33vw"
             />
-          )}
-
-          {/* Badge — square, minimal */}
-          {badge && (
-            <div className="absolute top-4 left-4 z-10">
-              <span className={`inline-block text-[10px] uppercase tracking-[0.14em] font-medium px-2.5 py-1 ${
-                isOutOfStock
-                  ? "bg-paper/90 text-stone backdrop-blur-sm"
-                  : "bg-paper/95 text-ink backdrop-blur-sm"
-              }`}>
-                {badge}
-              </span>
-            </div>
           )}
 
           {isOutOfStock && (
