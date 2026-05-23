@@ -146,7 +146,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           ref={figureRef}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className="relative aspect-[3/2] overflow-hidden bg-bone mb-6 rounded-[10px]"
+          className="relative aspect-[4/5] sm:aspect-[3/2] overflow-hidden bg-bone mb-5 sm:mb-6 rounded-[10px]"
         >
           {first && (
             <Image

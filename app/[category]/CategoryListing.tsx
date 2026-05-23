@@ -188,6 +188,27 @@ export default function CategoryListing({ category, products }: Props) {
           </div>
         </div>
 
+        {/* MOBILE FILTER-TRIGGER — inline boven grid (geen fixed-bottom meer
+            zodat onderste cards niet bedekt worden) */}
+        <div className="lg:hidden mb-6 flex items-center justify-between gap-3 border-y border-line py-3 px-2">
+          <button
+            type="button"
+            onClick={() => setMobileSheetOpen(true)}
+            className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink font-medium"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Filters & sortering
+            {activeFilterCount > 0 && (
+              <span className="ml-1 min-w-5 h-5 inline-flex items-center justify-center rounded-full bg-accent text-white text-[10px] px-1.5">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <span className="text-[10px] uppercase tracking-[0.16em] text-stone">
+            {filtered.length} producten
+          </span>
+        </div>
+
         {/* Resultaten + sort (mobile + desktop) */}
         <div className="flex items-center justify-between mb-8 px-2">
           <p className="text-[11px] uppercase tracking-[0.2em] text-stone">
@@ -254,24 +275,7 @@ export default function CategoryListing({ category, products }: Props) {
         )}
       </div>
 
-      {/* MOBILE FILTER — sticky bottom bar (knop) */}
-      <div className="lg:hidden fixed bottom-4 inset-x-4 z-30 flex justify-center pointer-events-none">
-        <button
-          type="button"
-          onClick={() => setMobileSheetOpen(true)}
-          className="pointer-events-auto flex items-center gap-2.5 bg-ink text-white px-6 py-3.5 text-[11px] uppercase tracking-[0.25em] shadow-[0_12px_30px_-8px_rgba(20,17,13,0.4)] hover:bg-accent transition-colors"
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span>Filters & sortering</span>
-          {activeFilterCount > 0 && (
-            <span className="ml-1 min-w-5 h-5 inline-flex items-center justify-center rounded-full bg-accent text-[10px] px-1.5">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* MOBILE FILTER — bottom-sheet (modal) */}
+      {/* MOBILE FILTER — bottom-sheet (modal, triggered door inline knop boven grid) */}
       <AnimatePresence>
         {mobileSheetOpen && (
           <motion.div
