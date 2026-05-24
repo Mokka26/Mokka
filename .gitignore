@@ -50,6 +50,7 @@ public/products/
 public/wetransfer*/
 public/catalogus*.pdf
 photos-todo/
+_import-*/
 
 # Lokale notes en credentials
 links.txt
