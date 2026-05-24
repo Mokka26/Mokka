@@ -77,14 +77,10 @@ const usps = getUspsByKey("shipping", "warranty", "return").map((u) => ({
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const parsed = parseImages(product.images);
   const images: string[] = parsed.map((i) => i.url);
-  // Adaptive aspect: source smaller dan 3:2 → c_pad (geen crop, edge-color
-  // padding); source breder ≥3:2 → c_fill (smart-crop op subject).
-  // Voorbeeld: vierkante lamp 1200×1200 (AR 1.0) krijgt pad, anders top/bot crop.
-  const CARD_AR = 3 / 2;
+  // Adaptive aspect: portrait source → c_pad (geen crop), landscape → c_fill
   const isPortraitAt = (idx: number): boolean => {
     const d = parsed[idx];
-    if (!d?.w || !d?.h) return false;
-    return d.w / d.h < CARD_AR;
+    return !!(d?.w && d?.h && d.h > d.w * 1.1);
   };
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
   const [added, setAdded] = useState(false);
