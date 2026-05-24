@@ -50,6 +50,16 @@ const CONFIGS: Record<string, Conf> = {
       { slug: "soprano-fauteuil", name: "Soprano Fauteuil", category: "bankstellen", fabric: true, match: ["0562","0563","0564"] },
     ],
   },
+  "japon": {
+    roomDir: "_import-japon/1 - Ürünler - Product/1 - Yatak ve Yemek & Bedroom and Dining Room/2026 - JAPON",
+    serie: "JAPON", kleur: "Goud-eiken", materiaalHard: "Melamine (E1 spaanplaat) met goud-eiken decor",
+    products: [
+      { slug: "japon-bed", name: "Japon Bed", category: "bedden", fabric: true, match: ["JAPON-1", "JAPON-2", "JAPON-3"] },
+      { slug: "japon-kledingkast", name: "Japon Kledingkast", category: "kasten", match: ["KAPAKLI", "ahşapKAPAK", "camKAPAK", "ADA"] },
+      { slug: "japon-nachtkastje", name: "Japon Nachtkastje", category: "kasten", match: ["0741", "0742", "0743"] },
+      { slug: "japon-ladekast", name: "Japon Ladekast", category: "kasten", match: ["0747", "0748", "0749", "0750"] },
+    ],
+  },
 };
 
 function fileForMatch(imgs: string[], m: string): string | null {
