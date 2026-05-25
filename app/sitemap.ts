@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, dbCategoryToRouteSlug } from "@/lib/categories";
+import { businessInfo } from "@/lib/business-info";
 
 /**
  * Genereert sitemap.xml met:
@@ -11,7 +12,7 @@ import { CATEGORIES, dbCategoryToRouteSlug } from "@/lib/categories";
  * Admin en API routes worden geblokkeerd in robots.ts.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://mokkahome.nl";
+  const baseUrl = businessInfo.siteUrl;
 
   // Statische pagina's
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -19,7 +20,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/contact`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/lookbook`, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${baseUrl}/products`, changeFrequency: "daily", priority: 0.7 },
+    { url: `${baseUrl}/products`, changeFrequency: "daily", priority: 0.5 },
+    { url: `${baseUrl}/retourneren`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/algemene-voorwaarden`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/cookies`, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   // Categorie-pagina's

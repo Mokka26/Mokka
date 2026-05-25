@@ -85,6 +85,13 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Server-gerenderde H1 — altijd in de HTML voor SEO/screenreaders.
+          De cinematic hero is ssr:false en toont de kop visueel; deze H1
+          draagt de semantiek (de zichtbare hero-koppen zijn non-heading). */}
+      <h1 className="sr-only">
+        Mokka Home — meubels met stille kracht en eerlijke materialen
+      </h1>
+
       {/* 01 — CINEMATIC HERO    Three.js + GSAP scroll-driven */}
       <CinematicHero />
 

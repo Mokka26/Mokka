@@ -29,6 +29,8 @@ export const businessInfo = {
   name: "Mokka Home",
   // Juridische naam (KvK-geregistreerd, in footer + schema)
   legalName: "Mokka Home Interior BV",
+  // Canonieke site-URL — bron van waarheid voor metadataBase, sitemap, JSON-LD
+  siteUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://mokkahome.nl",
   // Statement-tagline (footer hero-tekst)
   tagline: "Meubels met een ziel, geselecteerd voor het moderne thuis.",
 

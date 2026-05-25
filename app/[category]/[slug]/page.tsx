@@ -120,7 +120,7 @@ export default async function ProductPageInCategory({ params }: Props) {
         product.stock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-      url: `/${category.slug}/${product.slug}`,
+      url: `${businessInfo.siteUrl}/${category.slug}/${product.slug}`,
       seller: { "@type": "Organization", name: businessInfo.legalName },
       shippingDetails: {
         "@type": "OfferShippingDetails",
@@ -142,18 +142,18 @@ export default async function ProductPageInCategory({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "/" },
+      { "@type": "ListItem", position: 1, name: "Home", item: `${businessInfo.siteUrl}/` },
       {
         "@type": "ListItem",
         position: 2,
         name: category.label,
-        item: `/${category.slug}`,
+        item: `${businessInfo.siteUrl}/${category.slug}`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: product.name,
-        item: `/${category.slug}/${product.slug}`,
+        item: `${businessInfo.siteUrl}/${category.slug}/${product.slug}`,
       },
     ],
   };

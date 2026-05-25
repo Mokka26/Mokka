@@ -171,10 +171,10 @@ export default function CinematicHero() {
               <p className="text-[11px] uppercase tracking-[0.3em] text-white/70 mb-5">
                 Mokka — Voorjaar 2026
               </p>
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-7xl leading-[1.02] mb-7">
+              <p className="font-serif text-4xl sm:text-5xl lg:text-7xl leading-[1.02] mb-7">
                 Stille kracht.<br />
                 <span className="italic">Eerlijke materialen.</span>
-              </h1>
+              </p>
               <Link
                 href="/products"
                 className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.22em] hover:bg-accent hover:text-white transition-colors"
@@ -246,12 +246,12 @@ export default function CinematicHero() {
               <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-white/75 mb-6">
                 Mokka Home Interior · Voorjaar 2026
               </p>
-              <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] mb-2">
+              <p className="font-serif text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] mb-2">
                 Stille kracht.
-              </h1>
-              <h1 className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-accent">
+              </p>
+              <p className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-accent">
                 Eerlijke materialen.
-              </h1>
+              </p>
             </div>
 
             {/* Stage 2 — diepte (40-75%) */}

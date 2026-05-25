@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { CATEGORIES, getCategory, isCategorySlug } from "@/lib/categories";
+import { CATEGORIES, dbCategoryToRouteSlug, getCategory, isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { jsonLdHtml } from "@/lib/jsonLd";
 import CategoryListing from "./CategoryListing";
@@ -78,14 +78,14 @@ export default async function CategoryPage({ params }: Props) {
     "@type": "CollectionPage",
     name: `${category.label} — ${businessInfo.name}`,
     description: category.intro,
-    url: `/${category.slug}`,
+    url: `${businessInfo.siteUrl}/${category.slug}`,
     mainEntity: {
       "@type": "ItemList",
       numberOfItems: products.length,
       itemListElement: products.slice(0, 20).map((p, idx) => ({
         "@type": "ListItem",
         position: idx + 1,
-        url: `/${category.slug}/${p.slug}`,
+        url: `${businessInfo.siteUrl}/${dbCategoryToRouteSlug(p.category)}/${p.slug}`,
         name: p.name,
       })),
     },
