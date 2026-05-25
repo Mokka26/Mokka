@@ -62,6 +62,16 @@ function parseSpecs(specs?: string | null): ProductSpecs {
   }
 }
 
+// Verlichting-categorieën: alleen deze krijgen pad-modus (product volledig in
+// beeld met witte padding). Spiegelt de umbrella in lib/categories.ts.
+const LIGHTING_CATEGORIES = new Set<string>([
+  "verlichting",
+  "plafondlampen",
+  "vloerlampen",
+  "tafellampen",
+  "wandlampen",
+]);
+
 type ColorVariant = {
   slug: string;
   colorName: string | null;
@@ -79,14 +89,15 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
-  // Adaptive aspect: source smaller dan card-AR (3:2 = 1.5) → c_pad met witte
-  // achtergrond (product volledig zichtbaar, geen crop). Voorbeeld: vierkante
-  // lamp 1200×1200 (AR 1.0) of portret-bank → pad. Alleen écht landscape source
-  // (AR ≥ 1.5) → c_fill smart-crop op subject.
+  // Pad-modus (c_pad + witte achtergrond → product volledig zichtbaar, "uitgezoomd")
+  // geldt ALLEEN voor verlichting: lampen zijn smal/vierkant en mogen niet
+  // weggesneden worden. Alle andere categorieën (banken, tafels, kasten …)
+  // gebruiken c_fill → de foto vult de tegel, geen witte randen, geen uitzoom.
   const firstDim = parsed[0];
   const CARD_AR = 3 / 2;
   const sourceAR = firstDim?.w && firstDim?.h ? firstDim.w / firstDim.h : null;
-  const usePad = sourceAR !== null && sourceAR < CARD_AR;
+  const isLighting = LIGHTING_CATEGORIES.has(product.category);
+  const usePad = isLighting && sourceAR !== null && sourceAR < CARD_AR;
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: "3:2",
