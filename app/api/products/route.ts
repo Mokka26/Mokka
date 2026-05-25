@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 // Public listing-endpoint: korte cache OK (admin-mutaties zijn niet
 // kritiek-real-time). s-maxage=60 = CDN cached 60s, stale-while-revalidate
@@ -14,7 +15,11 @@ export async function GET(request: NextRequest) {
   const minPrice = parseFloat(searchParams.get("minPrice") || "0");
   const maxPrice = parseFloat(searchParams.get("maxPrice") || "99999");
 
-  const includeHidden = searchParams.get("includeHidden") === "1";
+  // includeHidden alleen voor ingelogde admins — anonieme bezoekers mogen
+  // verborgen (niet-gepubliceerde) producten nooit zien, ook niet via de query.
+  const session = await auth();
+  const includeHidden =
+    searchParams.get("includeHidden") === "1" && Boolean(session?.user);
 
   const where: Record<string, unknown> = {};
 

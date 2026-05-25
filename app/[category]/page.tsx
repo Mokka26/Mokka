@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, getCategory, isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
+import { jsonLdHtml } from "@/lib/jsonLd";
 import CategoryListing from "./CategoryListing";
 
 interface Props {
@@ -94,7 +95,7 @@ export default async function CategoryPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(collectionSchema) }}
       />
       <CategoryListing category={category} products={products} />
     </>

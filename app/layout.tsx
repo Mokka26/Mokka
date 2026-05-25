@@ -4,6 +4,7 @@ import { Source_Serif_4, Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { businessInfo, getActiveSocials } from "@/lib/business-info";
+import { jsonLdHtml } from "@/lib/jsonLd";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
@@ -93,7 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col bg-paper">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(organizationSchema) }}
         />
         <CartProvider>
           <SmoothScroll />

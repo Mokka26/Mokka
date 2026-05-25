@@ -16,7 +16,7 @@ interface Props {
 export default async function LegacyProductRedirect({ params }: Props) {
   const { slug } = await params;
   const product = await prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, hidden: false, deletedAt: null },
     select: { slug: true, category: true },
   });
 

@@ -12,6 +12,7 @@ import {
 import { businessInfo } from "@/lib/business-info";
 import { firstImageUrl, parseImages } from "@/lib/imageHelpers";
 import { shippingInfo } from "@/lib/shipping-info";
+import { jsonLdHtml } from "@/lib/jsonLd";
 
 interface Props {
   params: Promise<{ category: string; slug: string }>;
@@ -34,7 +35,7 @@ export const revalidate = 3600;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: categorySlug, slug } = await params;
   const product = await prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, hidden: false, deletedAt: null },
   });
   if (!product) return { title: "Product niet gevonden" };
 
@@ -63,7 +64,7 @@ export default async function ProductPageInCategory({ params }: Props) {
   if (!category) notFound();
 
   const product = await prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, hidden: false, deletedAt: null },
   });
   if (!product) notFound();
 
@@ -161,11 +162,11 @@ export default async function ProductPageInCategory({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(productSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbSchema) }}
       />
       <ProductDetailClient
         product={product}
