@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -12,7 +12,7 @@ interface Product {
   id: string;
   slug: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
   category: string;
   images: string;
@@ -70,10 +70,10 @@ const categoryLabels = (slug: string): string =>
 const categoryIntros = (slug: string): string =>
   getCategory(slug)?.intro ?? "";
 
-export default function ProductsContent() {
+export default function ProductsContent({ initialProducts }: { initialProducts: Product[] }) {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [sortBy, setSortBy] = useState("newest");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
@@ -101,7 +101,18 @@ export default function ProductsContent() {
     setDisplayedCount(PAGE_SIZE);
   }, [category, sortBy, priceRange, searchQuery, selectedColors, selectedMaterials, selectedDelivery, inStockOnly]);
 
+  // Eerste render gebruikt initialProducts (server-side, in de SSR-HTML).
+  // Pas bij een filter-wijziging die de server raakt (categorie/sort/prijs/zoek)
+  // halen we opnieuw op. De default-staat wordt al door initialProducts gedekt.
+  const firstRun = useRef(true);
   useEffect(() => {
+    const isDefault =
+      !category && !searchQuery && sortBy === "newest" &&
+      priceRange[0] === 0 && priceRange[1] === 5000;
+    if (firstRun.current) {
+      firstRun.current = false;
+      if (isDefault) return;
+    }
     const fetchProducts = async () => {
       setLoading(true);
       const params = new URLSearchParams();

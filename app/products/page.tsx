@@ -3,7 +3,10 @@ import { Suspense } from "react";
 import { permanentRedirect } from "next/navigation";
 import { isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
+import { prisma } from "@/lib/prisma";
 import ProductsContent from "./ProductsContent";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: `Alle producten — ${businessInfo.name}`,
@@ -37,6 +40,18 @@ export default async function ProductsPage({ searchParams }: Props) {
     }
   }
 
+  // Server-side ophalen → producten staan in de SSR-HTML (SEO + LCP),
+  // geen client-fetch + spinner bij eerste load. Filters blijven client-side.
+  const initialProducts = await prisma.product.findMany({
+    where: { hidden: false, deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true, slug: true, name: true, price: true, category: true,
+      images: true, featured: true, stock: true, createdAt: true,
+      colorGroup: true, colorName: true, colorHex: true, specs: true,
+    },
+  });
+
   return (
     <Suspense fallback={
       <div className="pt-28 lg:pt-32 pb-20">
@@ -58,7 +73,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       </div>
     }>
-      <ProductsContent />
+      <ProductsContent initialProducts={initialProducts} />
     </Suspense>
   );
 }
