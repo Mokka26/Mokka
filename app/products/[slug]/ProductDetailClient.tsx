@@ -77,10 +77,13 @@ const usps = getUspsByKey("shipping", "warranty", "return").map((u) => ({
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const parsed = parseImages(product.images);
   const images: string[] = parsed.map((i) => i.url);
-  // Adaptive aspect: portrait source → c_pad (geen crop), landscape → c_fill
+  // Adaptive aspect: source smaller dan 3:2 → c_pad met witte achtergrond
+  // (product volledig zichtbaar, geen crop); source ≥3:2 → c_fill smart-crop.
+  const CARD_AR = 3 / 2;
   const isPortraitAt = (idx: number): boolean => {
     const d = parsed[idx];
-    return !!(d?.w && d?.h && d.h > d.w * 1.1);
+    if (!d?.w || !d?.h) return false;
+    return d.w / d.h < CARD_AR;
   };
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
   const [added, setAdded] = useState(false);

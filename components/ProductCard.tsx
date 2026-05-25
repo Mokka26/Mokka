@@ -79,16 +79,20 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
-  // Adaptive aspect: portrait source → c_pad (bank volledig zichtbaar, edge-color padding),
-  // landscape/square source → c_fill (smart-crop op subject)
+  // Adaptive aspect: source smaller dan card-AR (3:2 = 1.5) → c_pad met witte
+  // achtergrond (product volledig zichtbaar, geen crop). Voorbeeld: vierkante
+  // lamp 1200×1200 (AR 1.0) of portret-bank → pad. Alleen écht landscape source
+  // (AR ≥ 1.5) → c_fill smart-crop op subject.
   const firstDim = parsed[0];
-  const isPortrait = !!(firstDim?.w && firstDim?.h && firstDim.h > firstDim.w * 1.1);
+  const CARD_AR = 3 / 2;
+  const sourceAR = firstDim?.w && firstDim?.h ? firstDim.w / firstDim.h : null;
+  const usePad = sourceAR !== null && sourceAR < CARD_AR;
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: "3:2",
         w: 1200,
-        mode: isPortrait ? "pad" : "fill",
-        upscale: !isPortrait,
+        mode: usePad ? "pad" : "fill",
+        upscale: !usePad,
         sourceW: firstDim?.w,
         dpr: "auto",
         quality: "auto:good",
