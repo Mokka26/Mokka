@@ -34,7 +34,11 @@ export type CategorySlug =
   | "tafel-accessoires"
   | "stoelen"
   | "spiegels"
-  | "verlichting";
+  | "verlichting"      // umbrella: plafondlampen + vloerlampen + tafellampen + wandlampen
+  | "plafondlampen"
+  | "vloerlampen"
+  | "tafellampen"
+  | "wandlampen";
 
 export type Category = {
   slug: CategorySlug;
@@ -225,9 +229,41 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Sfeer ───────────────────────────────────────────────────
   {
     slug: "verlichting",
-    label: "Verlichting",
-    intro: "Sfeer maken begint bij licht. Hanglampen en plafondlampen met karakter.",
-    dbCategories: ["verlichting"],
+    label: "Alle verlichting",
+    intro: "Sfeer maken begint bij licht. Plafond-, vloer-, tafel- en wandlampen met karakter.",
+    dbCategories: ["verlichting", "plafondlampen", "vloerlampen", "tafellampen", "wandlampen"],
+    isUmbrella: true,
+    group: "Sfeer",
+  },
+  {
+    slug: "plafondlampen",
+    label: "Plafondlampen",
+    intro: "Het licht van bovenaf — hang- en plafondlampen die de ruimte definiëren.",
+    dbCategories: ["plafondlampen"],
+    isUmbrella: false,
+    group: "Sfeer",
+  },
+  {
+    slug: "vloerlampen",
+    label: "Vloerlampen",
+    intro: "Staand licht voor een leeshoek of als sculpturaal accent naast de bank.",
+    dbCategories: ["vloerlampen"],
+    isUmbrella: false,
+    group: "Sfeer",
+  },
+  {
+    slug: "tafellampen",
+    label: "Tafellampen",
+    intro: "Warm licht op ooghoogte — voor op het dressoir, bureau of nachtkastje.",
+    dbCategories: ["tafellampen"],
+    isUmbrella: false,
+    group: "Sfeer",
+  },
+  {
+    slug: "wandlampen",
+    label: "Wandlampen",
+    intro: "Subtiel licht aan de muur — wandlampen en appliques voor sfeer en accent.",
+    dbCategories: ["wandlampen"],
     isUmbrella: false,
     group: "Sfeer",
   },

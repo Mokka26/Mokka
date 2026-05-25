@@ -127,6 +127,10 @@ const navItems: NavItem[] = [
         heading: "Verlichting",
         links: [
           { label: "Alle verlichting", href: "/verlichting" },
+          { label: "Plafondlampen", href: "/plafondlampen" },
+          { label: "Vloerlampen", href: "/vloerlampen" },
+          { label: "Tafellampen", href: "/tafellampen" },
+          { label: "Wandlampen", href: "/wandlampen" },
         ],
       },
       {
