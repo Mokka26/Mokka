@@ -16,10 +16,16 @@ export type CategorySlug =
   | "banken"           // umbrella: hoekbanken + bankstellen
   | "hoekbanken"
   | "bankstellen"
+  | "fauteuils"
   | "bedden"
   | "matrassen"
   | "slaapkamers"
-  | "kasten"
+  | "kasten"           // umbrella: kledingkasten + dressoirs + nachtkastjes + ladekasten + kapstokken
+  | "kledingkasten"
+  | "dressoirs"
+  | "nachtkastjes"
+  | "ladekasten"
+  | "kapstokken"
   | "tafels"
   | "eettafels"
   | "salontafels"
@@ -68,6 +74,14 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     label: "Bankstellen",
     intro: "Complete zit-sets in 3+2+1 of 3+2 configuratie. Eenheid in materiaal en lijn.",
     dbCategories: ["bankstellen"],
+    isUmbrella: false,
+    group: "Banken",
+  },
+  {
+    slug: "fauteuils",
+    label: "Fauteuils",
+    intro: "Losse fauteuils en armstoelen — een comfortabele zit naast de bank of als accent.",
+    dbCategories: ["fauteuils"],
     isUmbrella: false,
     group: "Banken",
   },
@@ -161,9 +175,49 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Opbergen ────────────────────────────────────────────────
   {
     slug: "kasten",
-    label: "Kasten",
+    label: "Alle kasten",
     intro: "Meer dan opbergruimte — kasten als architectuur die je interieur structureren.",
-    dbCategories: ["kasten"],
+    dbCategories: ["kasten", "kledingkasten", "dressoirs", "nachtkastjes", "ladekasten", "kapstokken"],
+    isUmbrella: true,
+    group: "Opbergen",
+  },
+  {
+    slug: "kledingkasten",
+    label: "Kledingkasten",
+    intro: "Ruime garderobekasten met schuif- of draaideuren — orde in de slaapkamer.",
+    dbCategories: ["kledingkasten"],
+    isUmbrella: false,
+    group: "Opbergen",
+  },
+  {
+    slug: "dressoirs",
+    label: "Dressoirs",
+    intro: "Lage opbergkasten voor de woon- of eetkamer — opbergruimte met allure.",
+    dbCategories: ["dressoirs"],
+    isUmbrella: false,
+    group: "Opbergen",
+  },
+  {
+    slug: "nachtkastjes",
+    label: "Nachtkastjes",
+    intro: "Het kleine meubel naast je bed — voor wat altijd binnen handbereik moet zijn.",
+    dbCategories: ["nachtkastjes"],
+    isUmbrella: false,
+    group: "Opbergen",
+  },
+  {
+    slug: "ladekasten",
+    label: "Ladekasten & Commodes",
+    intro: "Lades vol opbergruimte — commodes en ladekasten voor slaapkamer en hal.",
+    dbCategories: ["ladekasten"],
+    isUmbrella: false,
+    group: "Opbergen",
+  },
+  {
+    slug: "kapstokken",
+    label: "Kapstokken",
+    intro: "Een warm welkom in de hal — kapstokken en garderobe-oplossingen.",
+    dbCategories: ["kapstokken"],
     isUmbrella: false,
     group: "Opbergen",
   },

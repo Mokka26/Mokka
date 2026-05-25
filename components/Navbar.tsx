@@ -25,12 +25,12 @@ const navItems: NavItem[] = [
     href: "/banken",
     subLinks: [
       {
-        heading: "Banken & Stoelen",
+        heading: "Zitmeubelen",
         links: [
           { label: "Alle banken", href: "/banken" },
           { label: "Hoekbanken", href: "/hoekbanken" },
           { label: "Bankstellen", href: "/bankstellen" },
-          { label: "Stoelen", href: "/stoelen" },
+          { label: "Fauteuils", href: "/fauteuils" },
         ],
       },
       {
@@ -44,8 +44,10 @@ const navItems: NavItem[] = [
       {
         heading: "Kasten & Opbergen",
         links: [
-          { label: "Kasten", href: "/kasten" },
+          { label: "Alle kasten", href: "/kasten" },
+          { label: "Dressoirs", href: "/dressoirs" },
           { label: "TV-meubels", href: "/tv-meubels" },
+          { label: "Kapstokken", href: "/kapstokken" },
         ],
       },
       {
@@ -84,7 +86,8 @@ const navItems: NavItem[] = [
       {
         heading: "Opbergen",
         links: [
-          { label: "Kasten", href: "/kasten" },
+          { label: "Dressoirs", href: "/dressoirs" },
+          { label: "Tv-meubels", href: "/tv-meubels" },
         ],
       },
     ],
@@ -99,6 +102,14 @@ const navItems: NavItem[] = [
           { label: "Alle bedden", href: "/bedden" },
           { label: "Matrassen", href: "/matrassen" },
           { label: "Complete slaapkamers", href: "/slaapkamers" },
+        ],
+      },
+      {
+        heading: "Opbergen",
+        links: [
+          { label: "Kledingkasten", href: "/kledingkasten" },
+          { label: "Nachtkastjes", href: "/nachtkastjes" },
+          { label: "Ladekasten & Commodes", href: "/ladekasten" },
         ],
       },
     ],
