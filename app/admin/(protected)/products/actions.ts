@@ -17,7 +17,7 @@ function slugify(input: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Inline updates (price, featured)
+// Inline updates (price, featured, stock, hidden)
 // ─────────────────────────────────────────────────────────────────────
 
 const inlineUpdateSchema = z.object({
@@ -25,6 +25,7 @@ const inlineUpdateSchema = z.object({
   price: z.number().nonnegative().max(999999).optional(),
   featured: z.boolean().optional(),
   stock: z.number().int().nonnegative().max(99999).optional(),
+  hidden: z.boolean().optional(),
 });
 
 export type InlineUpdateInput = z.infer<typeof inlineUpdateSchema>;
@@ -72,6 +73,7 @@ const fullUpdateSchema = z.object({
   price: z.number().nonnegative().max(999999),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
+  hidden: z.boolean(),
   specs: specsRecordSchema.nullable(),
   stock: z.number().int().nonnegative().max(99999),
   deliveryTime: z.string().max(80).nullable(),
@@ -125,6 +127,7 @@ export async function updateProductFull(
     price: Number(formData.get("price")),
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
+    hidden: formData.get("hidden") === "on",
     specs: specsParsed,
     stock: Number(formData.get("stock") ?? 0),
     deliveryTime: trimOrNull(formData.get("deliveryTime")),

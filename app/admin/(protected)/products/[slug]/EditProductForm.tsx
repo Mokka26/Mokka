@@ -18,6 +18,7 @@ type Props = {
     price: number;
     category: string;
     featured: boolean;
+    hidden: boolean;
     specs: Record<string, string>;
     stock: number;
     deliveryTime: string | null;
@@ -128,6 +129,23 @@ export default function EditProductForm({ product, categories }: Props) {
             />
             <span className="text-sm text-ink">Featured op homepage</span>
           </label>
+
+          <div className="pt-4 border-t border-line">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                name="hidden"
+                type="checkbox"
+                defaultChecked={product.hidden}
+                className="w-4 h-4 mt-0.5 accent-accent"
+              />
+              <span className="text-sm text-ink">
+                Verborgen op site
+                <span className="block text-[11px] text-stone mt-0.5">
+                  Vink uit om te publiceren. Verborgen producten zijn niet zichtbaar voor klanten.
+                </span>
+              </span>
+            </label>
+          </div>
         </div>
 
         <div className="bg-white border border-line p-5 space-y-5">

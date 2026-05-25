@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useTransition } from "react";
-import { Star, X, Edit3 } from "lucide-react";
+import { Star, X, Edit3, Eye, EyeOff } from "lucide-react";
 import { updateProductInline } from "./actions";
 import { firstImageUrl } from "@/lib/imageHelpers";
 
@@ -14,6 +14,7 @@ type Row = {
   price: number;
   category: string;
   featured: boolean;
+  hidden: boolean;
   images: string;
   updatedAt: Date;
   stock: number;
@@ -40,6 +41,7 @@ export default function ProductsTable({ products }: { products: Row[] }) {
             <Th className="text-right">Prijs</Th>
             <Th className="text-right w-[100px]">Voorraad</Th>
             <Th className="text-center w-[80px]">Featured</Th>
+            <Th className="text-center w-[90px]">Zichtbaar</Th>
             <Th className="w-[60px]" />
           </tr>
         </thead>
@@ -64,6 +66,7 @@ function Th({ children, className = "" }: { children?: React.ReactNode; classNam
 function ProductRow({ product }: { product: Row }) {
   const img = firstImageUrl(product.images);
   const [featured, setFeatured] = useState(product.featured);
+  const [hidden, setHidden] = useState(product.hidden);
   const [pending, startTransition] = useTransition();
 
   const toggleFeatured = () => {
@@ -72,6 +75,15 @@ function ProductRow({ product }: { product: Row }) {
     startTransition(async () => {
       const res = await updateProductInline({ id: product.id, featured: next });
       if (!res.ok) setFeatured(!next);
+    });
+  };
+
+  const toggleHidden = () => {
+    const next = !hidden;
+    setHidden(next);
+    startTransition(async () => {
+      const res = await updateProductInline({ id: product.id, hidden: next });
+      if (!res.ok) setHidden(!next);
     });
   };
 
@@ -113,6 +125,22 @@ function ProductRow({ product }: { product: Row }) {
               featured ? "fill-accent text-accent" : "text-stone"
             }`}
           />
+        </button>
+      </td>
+      <td className="px-4 py-3 text-center">
+        <button
+          type="button"
+          onClick={toggleHidden}
+          disabled={pending}
+          aria-label={hidden ? "Publiceren (nu verborgen)" : "Verbergen (nu zichtbaar)"}
+          title={hidden ? "Verborgen — klik om te publiceren" : "Zichtbaar — klik om te verbergen"}
+          className="inline-flex items-center justify-center w-8 h-8 hover:bg-bone transition-colors disabled:opacity-50"
+        >
+          {hidden ? (
+            <EyeOff className="w-4 h-4 text-stone" />
+          ) : (
+            <Eye className="w-4 h-4 text-accent" />
+          )}
         </button>
       </td>
       <td className="px-4 py-3 text-right">

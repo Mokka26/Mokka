@@ -70,6 +70,7 @@ export default async function AdminProductEditPage({
           price: product.price,
           category: product.category,
           featured: product.featured,
+          hidden: product.hidden,
           specs: parseSpecs(product.specs),
           stock: product.stock,
           deliveryTime: product.deliveryTime,
