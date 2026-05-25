@@ -6,12 +6,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
-import { X, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
-import { getReviewsFor, type Review } from "@/lib/productReviews";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
 import { getUspsByKey } from "@/lib/shipping-info";
@@ -405,9 +404,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         {/* Specificaties — eigen sectie */}
         <SpecificationsSection specs={parseSpecs(product.specs)} />
 
-        {/* Reviews */}
-        <ProductReviews category={product.category} />
-
         {/* Gerelateerd */}
         {relatedProducts.length > 0 && (
           <section className="mt-32 lg:mt-48">
@@ -551,67 +547,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       </AnimatePresence>,
       document.body)}
     </>
-  );
-}
-
-function ProductReviews({ category }: { category: string }) {
-  const reviews = getReviewsFor(category);
-  if (reviews.length === 0) return null;
-  const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
-  return (
-    <section className="mt-32 lg:mt-40 bg-paper">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-        <header className="mb-14 lg:mb-20 text-center">
-          <p className="eyebrow mb-4">Wat klanten zeggen</p>
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <StarRow rating={Math.round(avg) as 4 | 5} />
-            <span className="text-stone text-sm font-serif italic">
-              {avg.toFixed(1)} / 5
-            </span>
-          </div>
-          <h2 className="font-serif text-3xl lg:text-5xl text-ink leading-[1]">
-            Vertrouwd door <span className="italic">echte mensen</span>
-          </h2>
-        </header>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {reviews.map((r, i) => (
-            <ReviewCard key={`${r.name}-${i}`} review={r} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ReviewCard({ review }: { review: Review }) {
-  return (
-    <article className="bg-white border border-line p-8 lg:p-10 flex flex-col">
-      <StarRow rating={review.rating} />
-      <p className="font-serif italic text-ink text-lg lg:text-xl leading-relaxed mt-6 mb-8">
-        &ldquo;{review.quote}&rdquo;
-      </p>
-      <div className="mt-auto pt-6 border-t border-line">
-        <p className="text-sm text-ink">{review.name}</p>
-        <p className="text-[11px] uppercase tracking-[0.2em] text-stone mt-1">
-          {review.city}
-        </p>
-      </div>
-    </article>
-  );
-}
-
-function StarRow({ rating }: { rating: 4 | 5 }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`w-3.5 h-3.5 ${
-            i < rating ? "fill-accent text-accent" : "text-line"
-          }`}
-        />
-      ))}
-    </div>
   );
 }
 

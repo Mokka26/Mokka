@@ -5,7 +5,6 @@ import CollectionPreview from "@/components/CollectionPreview";
 import CategoriesGrid from "@/components/CategoriesGrid";
 import FeaturedStory from "@/components/FeaturedStory";
 import ShowroomSection from "@/components/ShowroomSection";
-import SocialProof from "@/components/SocialProof";
 import TrustBar from "@/components/TrustBar";
 import DarkNewsletterForm from "@/components/DarkNewsletterForm";
 import { prisma } from "@/lib/prisma";
@@ -100,9 +99,6 @@ export default async function HomePage() {
 
       {/* 05 — NIEUWE COLLECTIE  bg-paper */}
       <CollectionPreview products={featuredProducts} />
-
-      {/* 06 — SOCIAL PROOF      bg-white */}
-      <SocialProof />
 
       {/* 07 — ATELIER           bg-paper */}
       <ShowroomSection />
