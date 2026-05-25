@@ -67,9 +67,10 @@ const navItems: NavItem[] = [
     href: "/eettafels",
     subLinks: [
       {
-        heading: "Eettafels",
+        heading: "Tafels",
         links: [
           { label: "Alle eettafels", href: "/eettafels" },
+          { label: "Tafels", href: "/tafels" },
           { label: "Bijzettafels", href: "/bijzettafels" },
           { label: "Tafelbladen", href: "/tafel-accessoires" },
         ],
