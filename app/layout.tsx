@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(businessInfo.siteUrl),
   title: "Mokka Home Interior — Modern Wonen, Tijdloos Design",
   description:
-    "Ontdek zorgvuldig geselecteerde meubels, verlichting en decoratie voor het moderne interieur. Mokka Home Interior brengt ambachtelijk design met premium kwaliteit.",
+    "Ontdek zorgvuldig geselecteerde meubels, verlichting en decoratie voor het moderne interieur. Mokka Home Interior brengt ambachtelijk design met eerlijke materialen.",
   keywords: ["meubels", "woonaccessoires", "verlichting", "interieurdesign", "modern meubilair", "mokka home interior"],
   openGraph: {
     title: "Mokka Home Interior — Modern Wonen, Tijdloos Design",

@@ -185,23 +185,23 @@ export default function CheckoutPage() {
               <h3 className="font-serif text-2xl text-ink mt-3 mb-10">Contactgegevens</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                 <div>
-                  <label className="eyebrow block mb-3">Voornaam *</label>
-                  <input type="text" name="firstName" value={form.firstName} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("firstName")} aria-invalid={Boolean(errors.firstName && touched.firstName)} />
+                  <label htmlFor="co-firstName" className="eyebrow block mb-3">Voornaam *</label>
+                  <input type="text" id="co-firstName" name="firstName" value={form.firstName} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("firstName")} aria-invalid={Boolean(errors.firstName && touched.firstName)} />
                   {errors.firstName && touched.firstName && <p className="text-[11px] text-red-700 mt-1.5">{errors.firstName}</p>}
                 </div>
                 <div>
-                  <label className="eyebrow block mb-3">Achternaam *</label>
-                  <input type="text" name="lastName" value={form.lastName} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("lastName")} aria-invalid={Boolean(errors.lastName && touched.lastName)} />
+                  <label htmlFor="co-lastName" className="eyebrow block mb-3">Achternaam *</label>
+                  <input type="text" id="co-lastName" name="lastName" value={form.lastName} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("lastName")} aria-invalid={Boolean(errors.lastName && touched.lastName)} />
                   {errors.lastName && touched.lastName && <p className="text-[11px] text-red-700 mt-1.5">{errors.lastName}</p>}
                 </div>
                 <div>
-                  <label className="eyebrow block mb-3">E-mail *</label>
-                  <input type="email" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("email")} aria-invalid={Boolean(errors.email && touched.email)} />
+                  <label htmlFor="co-email" className="eyebrow block mb-3">E-mail *</label>
+                  <input type="email" id="co-email" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("email")} aria-invalid={Boolean(errors.email && touched.email)} />
                   {errors.email && touched.email && <p className="text-[11px] text-red-700 mt-1.5">{errors.email}</p>}
                 </div>
                 <div>
-                  <label className="eyebrow block mb-3">Telefoonnummer</label>
-                  <input type="tel" name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} className={fieldClass("phone")} aria-invalid={Boolean(errors.phone && touched.phone)} />
+                  <label htmlFor="co-phone" className="eyebrow block mb-3">Telefoonnummer</label>
+                  <input type="tel" id="co-phone" name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} className={fieldClass("phone")} aria-invalid={Boolean(errors.phone && touched.phone)} />
                   {errors.phone && touched.phone && <p className="text-[11px] text-red-700 mt-1.5">{errors.phone}</p>}
                 </div>
               </div>
@@ -214,24 +214,24 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                 <div className="sm:col-span-2 grid grid-cols-3 gap-x-8 gap-y-6">
                   <div className="col-span-2">
-                    <label className="eyebrow block mb-3">Straatnaam *</label>
-                    <input type="text" name="address" value={form.address} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("address")} aria-invalid={Boolean(errors.address && touched.address)} />
+                    <label htmlFor="co-address" className="eyebrow block mb-3">Straatnaam *</label>
+                    <input type="text" id="co-address" name="address" value={form.address} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("address")} aria-invalid={Boolean(errors.address && touched.address)} />
                     {errors.address && touched.address && <p className="text-[11px] text-red-700 mt-1.5">{errors.address}</p>}
                   </div>
                   <div>
-                    <label className="eyebrow block mb-3">Huisnr. *</label>
-                    <input type="text" name="houseNumber" value={form.houseNumber} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("houseNumber")} aria-invalid={Boolean(errors.houseNumber && touched.houseNumber)} />
+                    <label htmlFor="co-houseNumber" className="eyebrow block mb-3">Huisnr. *</label>
+                    <input type="text" id="co-houseNumber" name="houseNumber" value={form.houseNumber} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("houseNumber")} aria-invalid={Boolean(errors.houseNumber && touched.houseNumber)} />
                     {errors.houseNumber && touched.houseNumber && <p className="text-[11px] text-red-700 mt-1.5">{errors.houseNumber}</p>}
                   </div>
                 </div>
                 <div>
-                  <label className="eyebrow block mb-3">Postcode *</label>
-                  <input type="text" name="zipCode" value={form.zipCode} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("zipCode")} placeholder="1234 AB" aria-invalid={Boolean(errors.zipCode && touched.zipCode)} />
+                  <label htmlFor="co-zipCode" className="eyebrow block mb-3">Postcode *</label>
+                  <input type="text" id="co-zipCode" name="zipCode" value={form.zipCode} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("zipCode")} placeholder="1234 AB" aria-invalid={Boolean(errors.zipCode && touched.zipCode)} />
                   {errors.zipCode && touched.zipCode && <p className="text-[11px] text-red-700 mt-1.5">{errors.zipCode}</p>}
                 </div>
                 <div>
-                  <label className="eyebrow block mb-3">Stad *</label>
-                  <input type="text" name="city" value={form.city} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("city")} aria-invalid={Boolean(errors.city && touched.city)} />
+                  <label htmlFor="co-city" className="eyebrow block mb-3">Stad *</label>
+                  <input type="text" id="co-city" name="city" value={form.city} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("city")} aria-invalid={Boolean(errors.city && touched.city)} />
                   {errors.city && touched.city && <p className="text-[11px] text-red-700 mt-1.5">{errors.city}</p>}
                 </div>
               </div>

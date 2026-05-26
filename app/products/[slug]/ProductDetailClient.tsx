@@ -13,7 +13,8 @@ import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
-import { getUspsByKey } from "@/lib/shipping-info";
+import { getUspsByKey, shippingInfo } from "@/lib/shipping-info";
+import { formatPrice } from "@/components/ui/price";
 
 interface Product {
   id: string;
@@ -335,9 +336,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               <h1 className="display-md text-ink mb-5">
                 {product.name}
               </h1>
-              <p className="font-serif text-2xl lg:text-3xl text-accent font-light mb-8 tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
-                &euro;{product.price.toFixed(0)},-
-              </p>
+              <div className="mb-8">
+                <p className="font-serif text-2xl lg:text-3xl text-accent font-light tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
+                  {formatPrice(product.price)}
+                </p>
+                <p className="text-[13px] text-slate mt-1">{shippingInfo.vatLabelShort}</p>
+              </div>
 
               <div className="w-10 h-[1px] bg-line mb-8" />
 
@@ -431,8 +435,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-5 py-3">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
-              <p className="text-[10px] text-stone uppercase tracking-[0.2em] leading-none mb-1">Vanaf</p>
-              <p className="font-serif text-xl text-ink leading-none">&euro;{product.price.toFixed(0)}</p>
+              <p className="font-serif text-xl text-ink leading-none">{formatPrice(product.price)}</p>
+              <p className="text-[11px] text-slate leading-none mt-1">{shippingInfo.vatLabelShort}</p>
             </div>
             <button
               onClick={handleAddToCart}

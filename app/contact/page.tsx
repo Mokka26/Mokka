@@ -138,21 +138,21 @@ export default function ContactPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                 <div>
-                  <label className="eyebrow block mb-3">Naam *</label>
-                  <input type="text" name="name" value={form.name} onChange={handleChange} required className="input-field" />
+                  <label htmlFor="contact-name" className="eyebrow block mb-3">Naam *</label>
+                  <input id="contact-name" type="text" name="name" value={form.name} onChange={handleChange} required className="input-field" />
                 </div>
                 <div>
-                  <label className="eyebrow block mb-3">Telefoon</label>
-                  <input type="tel" name="phone" value={form.phone} onChange={handleChange} className="input-field" />
+                  <label htmlFor="contact-phone" className="eyebrow block mb-3">Telefoon</label>
+                  <input id="contact-phone" type="tel" name="phone" value={form.phone} onChange={handleChange} className="input-field" />
                 </div>
               </div>
               <div>
-                <label className="eyebrow block mb-3">E-mail *</label>
-                <input type="email" name="email" value={form.email} onChange={handleChange} required className="input-field" />
+                <label htmlFor="contact-email" className="eyebrow block mb-3">E-mail *</label>
+                <input id="contact-email" type="email" name="email" value={form.email} onChange={handleChange} required className="input-field" />
               </div>
               <div>
-                <label className="eyebrow block mb-3">Onderwerp *</label>
-                <select name="subject" value={form.subject} onChange={handleChange} required className="input-field">
+                <label htmlFor="contact-subject" className="eyebrow block mb-3">Onderwerp *</label>
+                <select id="contact-subject" name="subject" value={form.subject} onChange={handleChange} required className="input-field">
                   <option value="">Kies een onderwerp</option>
                   <option value="product">Vraag over een product</option>
                   <option value="bestelling">Vraag over een bestelling</option>
@@ -162,8 +162,8 @@ export default function ContactPage() {
                 </select>
               </div>
               <div>
-                <label className="eyebrow block mb-3">Bericht *</label>
-                <textarea name="message" value={form.message} onChange={handleChange} required rows={6} className="input-field resize-none" />
+                <label htmlFor="contact-message" className="eyebrow block mb-3">Bericht *</label>
+                <textarea id="contact-message" name="message" value={form.message} onChange={handleChange} required rows={6} className="input-field resize-none" />
               </div>
               <motion.button type="submit" className="btn-primary w-full" whileTap={{ scale: 0.98 }}>
                 Versturen

@@ -15,11 +15,11 @@ import { businessInfo } from "@/lib/business-info";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: `${businessInfo.name} — Premium designmeubels`,
+  title: `${businessInfo.name} — Meubels & interieur voor modern wonen`,
   description: `${businessInfo.tagline} Ontdek banken, eettafels, verlichting en meer in onze showroom in ${businessInfo.address.city} of online.`,
   alternates: { canonical: "/" },
   openGraph: {
-    title: `${businessInfo.name} — Premium designmeubels`,
+    title: `${businessInfo.name} — Meubels & interieur voor modern wonen`,
     description: businessInfo.tagline,
     type: "website",
     url: "/",

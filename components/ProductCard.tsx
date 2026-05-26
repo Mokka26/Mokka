@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { imageUrls, parseImages } from "@/lib/imageHelpers";
 import { productUrl } from "@/lib/categories";
+import { Price } from "@/components/ui/price";
 import { useInFrameParallax } from "@/hooks/useInFrameParallax";
 
 interface Product {
@@ -271,9 +272,12 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
               cards in een grid-rij hun prijs op gelijke hoogte hebben */}
           <div className="flex items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-line/60 mt-auto">
-            <p className="font-serif text-base sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]">
-              &euro; {product.price.toFixed(0)},-
-            </p>
+            <Price
+              value={product.price}
+              vat
+              className="font-serif text-base sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]"
+              vatClassName="text-[10px] text-slate leading-none mt-0.5"
+            />
             {!isOutOfStock ? (
               <span
                 className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone whitespace-nowrap"
