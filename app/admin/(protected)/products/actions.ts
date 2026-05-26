@@ -80,6 +80,7 @@ const fullUpdateSchema = z.object({
   colorGroup: z.string().max(80).nullable(),
   colorName: z.string().max(40).nullable(),
   colorHex: hexSchema,
+  source: z.string().max(60).nullable(),
 });
 
 export type FullUpdateState = {
@@ -134,6 +135,7 @@ export async function updateProductFull(
     colorGroup: trimOrNull(formData.get("colorGroup")),
     colorName: trimOrNull(formData.get("colorName")),
     colorHex: trimOrNull(formData.get("colorHex")),
+    source: trimOrNull(formData.get("source")),
   });
 
   if (!parsed.success) {
@@ -261,6 +263,7 @@ const createSchema = z.object({
   colorGroup: z.string().max(80).nullable().default(null),
   colorName: z.string().max(40).nullable().default(null),
   colorHex: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable().default(null),
+  source: z.string().max(60).nullable().default(null),
 });
 
 export type CreateProductState = {
@@ -302,6 +305,7 @@ export async function createProduct(
     colorGroup: trimOrNull(formData.get("colorGroup")),
     colorName: trimOrNull(formData.get("colorName")),
     colorHex: trimOrNull(formData.get("colorHex")),
+    source: trimOrNull(formData.get("source")),
   });
 
   if (!parsed.success) {

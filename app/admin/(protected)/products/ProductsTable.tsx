@@ -15,10 +15,18 @@ type Row = {
   category: string;
   featured: boolean;
   hidden: boolean;
+  source: string | null;
   images: string;
   updatedAt: Date;
   stock: number;
 };
+
+// Vaste kleur per bekende bron; onbekende bronnen krijgen een neutrale stijl.
+function sourceBadgeClass(source: string | null): string {
+  if (!source) return "bg-bone text-stone";
+  if (/rousseau/i.test(source)) return "bg-accent/10 text-accent border border-accent/30";
+  return "bg-ink/5 text-ink border border-line";
+}
 
 
 export default function ProductsTable({ products }: { products: Row[] }) {
@@ -38,6 +46,7 @@ export default function ProductsTable({ products }: { products: Row[] }) {
             <Th className="w-[60px]" />
             <Th>Naam</Th>
             <Th className="hidden md:table-cell">Categorie</Th>
+            <Th className="hidden lg:table-cell">Bron</Th>
             <Th className="text-right">Prijs</Th>
             <Th className="text-right w-[100px]">Voorraad</Th>
             <Th className="text-center w-[80px]">Featured</Th>
@@ -105,6 +114,15 @@ function ProductRow({ product }: { product: Row }) {
       </td>
       <td className="px-4 py-3 text-sm text-stone capitalize hidden md:table-cell">
         {product.category}
+      </td>
+      <td className="px-4 py-3 hidden lg:table-cell">
+        {product.source ? (
+          <span className={`inline-block px-2 py-1 text-[10px] uppercase tracking-[0.12em] rounded ${sourceBadgeClass(product.source)}`}>
+            {product.source}
+          </span>
+        ) : (
+          <span className="text-stone/50 text-xs">—</span>
+        )}
       </td>
       <td className="px-4 py-3 text-right">
         <PriceCell id={product.id} initial={product.price} />

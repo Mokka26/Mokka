@@ -33,6 +33,7 @@ export default async function AdminProductsPage({
       category: true,
       featured: true,
       hidden: true,
+      source: true,
       images: true,
       updatedAt: true,
       stock: true,

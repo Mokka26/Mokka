@@ -39,6 +39,13 @@ export default async function AdminProductEditPage({
     orderBy: { category: "asc" },
   });
 
+  const sourceRows = await prisma.product.findMany({
+    where: { source: { not: null }, deletedAt: null },
+    distinct: ["source"],
+    select: { source: true },
+    orderBy: { source: "asc" },
+  });
+
   const images = parseImages(product.images);
 
   return (
@@ -77,8 +84,10 @@ export default async function AdminProductEditPage({
           colorGroup: product.colorGroup,
           colorName: product.colorName,
           colorHex: product.colorHex,
+          source: product.source,
         }}
         categories={categories.map((c) => c.category)}
+        sources={sourceRows.map((s) => s.source!).filter(Boolean)}
       />
 
       <section className="mt-12 pt-10 border-t border-line">

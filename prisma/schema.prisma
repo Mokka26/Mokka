@@ -22,6 +22,7 @@ model Product {
   colorGroup   String?
   colorName    String?
   colorHex     String?
+  source       String?   // Herkomst/leverancier (bv. "Rousseau") — admin-tag
   hidden       Boolean  @default(false)
   deletedAt    DateTime?
   createdAt    DateTime @default(now())
@@ -32,6 +33,7 @@ model Product {
   @@index([colorGroup])
   @@index([hidden])
   @@index([deletedAt])
+  @@index([source])
 }
 
 model DeletedImage {

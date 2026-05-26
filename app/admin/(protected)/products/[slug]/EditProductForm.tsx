@@ -25,11 +25,13 @@ type Props = {
     colorGroup: string | null;
     colorName: string | null;
     colorHex: string | null;
+    source: string | null;
   };
   categories: string[];
+  sources: string[];
 };
 
-export default function EditProductForm({ product, categories }: Props) {
+export default function EditProductForm({ product, categories, sources }: Props) {
   const [state, action, pending] = useActionState(updateProductFull, initial);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -118,6 +120,22 @@ export default function EditProductForm({ product, categories }: Props) {
               maxLength={80}
               className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
             />
+          </Field>
+
+          <Field label="Bron / herkomst" error={state.fieldErrors?.source}>
+            <input
+              name="source"
+              defaultValue={product.source ?? ""}
+              list="source-suggestions"
+              placeholder="bijv. Rousseau"
+              maxLength={60}
+              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
+            />
+            <datalist id="source-suggestions">
+              {sources.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
           </Field>
 
           <label className="flex items-center gap-3 cursor-pointer select-none">
