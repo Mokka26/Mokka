@@ -12,6 +12,7 @@ import {
   getActiveSocials,
 } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
+import { PaymentIcon } from "@/components/PaymentIcons";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -157,13 +158,7 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-4">Betaalmethoden</p>
             <div className="flex flex-wrap items-center gap-2">
               {paymentMethods.map((method) => (
-                <div
-                  key={method.name}
-                  className="h-8 px-3 flex items-center justify-center text-[10px] font-semibold text-white rounded-sm"
-                  style={{ backgroundColor: method.brandColor }}
-                >
-                  {method.name}
-                </div>
+                <PaymentIcon key={method.name} name={method.name} />
               ))}
             </div>
           </div>
