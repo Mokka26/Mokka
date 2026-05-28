@@ -388,6 +388,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   : product.description}
               </p>
 
+              {/* Specificaties — uitklapbaar in de hero */}
+              <HeroSpecs specs={parseSpecs(product.specs)} />
+
               {/* USP's */}
               <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 pt-8 border-t border-line">
                 {usps.map((usp) => (
@@ -404,9 +407,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
         {/* Beschrijving — editoriale sectie */}
         <DescriptionSection product={product} />
-
-        {/* Specificaties — eigen sectie */}
-        <SpecificationsSection specs={parseSpecs(product.specs)} />
 
         {/* Gerelateerd */}
         {relatedProducts.length > 0 && (
@@ -681,34 +681,37 @@ function DescriptionSection({ product }: { product: Product }) {
   );
 }
 
-function SpecificationsSection({ specs }: { specs: Record<string, string> }) {
+function HeroSpecs({ specs }: { specs: Record<string, string> }) {
   const entries = Object.entries(specs);
   if (entries.length === 0) return null;
   return (
-    <section className="mt-24 lg:mt-32">
-      <div className="max-w-[1200px] mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="text-center mb-10 lg:mb-14">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-3">
-            Details
-          </p>
-          <h2 className="font-serif text-3xl lg:text-4xl text-ink leading-tight">
-            Specificaties
-          </h2>
-        </div>
-        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-0 border-t border-line">
-          {entries.map(([k, v]) => (
-            <div
-              key={k}
-              className="flex items-baseline justify-between gap-6 py-4 border-b border-line"
-            >
-              <dt className="text-[11px] uppercase tracking-[0.2em] text-stone shrink-0">
-                {k}
-              </dt>
-              <dd className="font-serif text-ink text-right">{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+    <details className="group border-t border-line mb-8">
+      <summary className="flex items-center justify-between gap-4 py-5 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+        <span className="text-[11px] uppercase tracking-[0.2em] text-ink font-medium">
+          Specificaties
+        </span>
+        <svg
+          className="w-4 h-4 text-stone shrink-0 transition-transform duration-300 group-open:rotate-180"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          aria-hidden
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <dl className="pb-5">
+        {entries.map(([k, v]) => (
+          <div
+            key={k}
+            className="flex items-baseline justify-between gap-6 py-2.5 border-t border-line/60 first:border-t-0"
+          >
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-stone shrink-0">{k}</dt>
+            <dd className="text-sm text-ink text-right">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   );
 }
