@@ -155,8 +155,8 @@ export default function Footer() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-8 border-b border-white/10">
           {/* Payment logos */}
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-4">Betaalmethoden</p>
-            <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-4">Veilig betalen met</p>
+            <div className="flex flex-wrap items-center gap-2.5">
               {paymentMethods.map((method) => (
                 <PaymentIcon key={method.name} name={method.name} />
               ))}

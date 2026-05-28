@@ -23,18 +23,18 @@ export function PaymentIcon({ name }: { name: string }) {
   const key = name.toLowerCase().replace(/[^a-z]/g, "");
   const file = FILES[key];
   return (
-    <span className="h-8 px-2.5 inline-flex items-center justify-center bg-white rounded-[5px]">
+    <span className="h-11 px-3.5 inline-flex items-center justify-center bg-white rounded-lg shadow-sm">
       {file ? (
         <Image
           src={`/payment/${file}.svg`}
           alt={name}
-          width={36}
-          height={24}
+          width={52}
+          height={34}
           unoptimized
-          className="h-5 w-auto block"
+          className="h-7 w-auto block"
         />
       ) : (
-        <span className="text-[11px] font-semibold text-ink">{name}</span>
+        <span className="text-xs font-semibold text-ink">{name}</span>
       )}
     </span>
   );
