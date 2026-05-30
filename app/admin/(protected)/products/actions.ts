@@ -68,6 +68,7 @@ const hexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullabl
 
 const fullUpdateSchema = z.object({
   id: z.string().min(1),
+  slug: z.string().min(2).max(120).regex(/^[a-z0-9-]+$/, "Alleen kleine letters, cijfers en streepjes"),
   name: z.string().min(2).max(200),
   description: z.string().min(1).max(5000),
   price: z.number().nonnegative().max(999999),
@@ -123,6 +124,7 @@ export async function updateProductFull(
 
   const parsed = fullUpdateSchema.safeParse({
     id: formData.get("id"),
+    slug: slugify(String(formData.get("slug") || "")),
     name: formData.get("name"),
     description: formData.get("description"),
     price: Number(formData.get("price")),
@@ -149,6 +151,18 @@ export async function updateProductFull(
 
   const { id, specs, ...rest } = parsed.data;
 
+  // Is de slug (URL) gewijzigd?
+  const existing = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
+  const slugChanged = Boolean(existing && existing.slug !== rest.slug);
+
+  // Slug-uniciteit: bij een gewijzigde slug mag geen ander product 'm al hebben.
+  if (slugChanged) {
+    const clash = await prisma.product.findUnique({ where: { slug: rest.slug }, select: { id: true } });
+    if (clash) {
+      return { fieldErrors: { slug: "Deze URL is al in gebruik door een ander product" } };
+    }
+  }
+
   let updated;
   try {
     updated = await prisma.product.update({
@@ -163,8 +177,12 @@ export async function updateProductFull(
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath(`/products/${updated.slug}`);
+  if (existing && existing.slug !== updated.slug) revalidatePath(`/products/${existing.slug}`);
   revalidatePath(`/${updated.category}`);
   revalidatePath(`/${updated.category}/${updated.slug}`);
+
+  // Slug gewijzigd → admin-bewerk-URL is verplaatst; redirect naar de nieuwe.
+  if (slugChanged) redirect(`/admin/products/${updated.slug}`);
   return { ok: true };
 }
 

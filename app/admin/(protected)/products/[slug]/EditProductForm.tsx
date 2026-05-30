@@ -31,9 +31,20 @@ type Props = {
   sources: string[];
 };
 
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 export default function EditProductForm({ product, categories, sources }: Props) {
   const [state, action, pending] = useActionState(updateProductFull, initial);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [name, setName] = useState(product.name);
+  const [slug, setSlug] = useState(product.slug);
 
   useEffect(() => {
     if (state.ok) setSavedAt(Date.now());
@@ -47,10 +58,36 @@ export default function EditProductForm({ product, categories, sources }: Props)
         <Field label="Naam" error={state.fieldErrors?.name}>
           <input
             name="name"
-            defaultValue={product.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
             className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
           />
+        </Field>
+
+        <Field label="URL (slug)" error={state.fieldErrors?.slug}>
+          <div className="flex items-center gap-2">
+            <input
+              name="slug"
+              value={slug}
+              onChange={(e) => setSlug(slugify(e.target.value))}
+              required
+              className="flex-1 px-3 py-2.5 bg-white border border-line text-ink text-sm font-mono focus:outline-none focus:border-accent"
+            />
+            <button
+              type="button"
+              onClick={() => setSlug(slugify(name))}
+              className="shrink-0 px-3 py-2.5 text-[11px] uppercase tracking-[0.15em] border border-line text-stone hover:text-ink hover:border-accent transition-colors"
+            >
+              Uit naam
+            </button>
+          </div>
+          <p className="text-[11px] text-stone mt-1.5">
+            Adres van de productpagina: <span className="font-mono text-ink">/{product.category}/{slug || "…"}</span>
+            {slug !== product.slug && (
+              <span className="text-amber-700"> — let op: oude link gaat niet meer werken</span>
+            )}
+          </p>
         </Field>
 
         <Field label="Beschrijving" error={state.fieldErrors?.description}>
