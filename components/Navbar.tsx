@@ -63,8 +63,8 @@ const navItems: NavItem[] = [
     },
   },
   {
-    label: "Eetkamer",
-    href: "/eettafels",
+    label: "Tafels",
+    href: "/tafels",
     subLinks: [
       {
         heading: "Tafels",
@@ -76,13 +76,6 @@ const navItems: NavItem[] = [
         heading: "Stoelen",
         links: [
           { label: "Eetkamerstoelen", href: "/stoelen" },
-        ],
-      },
-      {
-        heading: "Opbergen",
-        links: [
-          { label: "Dressoirs", href: "/dressoirs" },
-          { label: "Tv-meubels", href: "/tv-meubels" },
         ],
       },
     ],
