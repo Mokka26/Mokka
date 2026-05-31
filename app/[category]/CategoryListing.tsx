@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import type { Category } from "@/lib/categories";
+import { getCategory, type Category } from "@/lib/categories";
 
 type Product = {
   id: string;
@@ -51,6 +51,7 @@ export default function CategoryListing({ category, products }: Props) {
   const [maxFilter, setMaxFilter] = useState(maxPrice);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set());
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   // Lock body scroll wanneer mobile sheet open
@@ -94,6 +95,25 @@ export default function CategoryListing({ category, products }: Props) {
       return next;
     });
 
+  // Type-filter — alleen op umbrella-categorie (bv. Tafels): toon de onderliggende
+  // typen (Eettafels, Salontafels …) als filterbare chips.
+  const availableTypes = useMemo(() => {
+    if (!category.isUmbrella) return [] as Array<{ cat: string; label: string; count: number }>;
+    const counts = new Map<string, number>();
+    for (const p of products) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    return Array.from(counts.entries())
+      .map(([cat, count]) => ({ cat, label: getCategory(cat)?.label ?? cat, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [products, category.isUmbrella]);
+
+  const toggleType = (c: string) =>
+    setSelectedTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+
   // Paginatie — initial 24 cards, IntersectionObserver laadt batches van 24 bij
   // bereiken sentinel. Bij filter-wijziging reset naar 24.
   const PAGE_SIZE = 24;
@@ -103,6 +123,7 @@ export default function CategoryListing({ category, products }: Props) {
   const filtered = useMemo(() => {
     let arr = products.filter((p) => p.price <= maxFilter);
     if (inStockOnly) arr = arr.filter((p) => (p.stock ?? 0) > 0);
+    if (selectedTypes.size > 0) arr = arr.filter((p) => selectedTypes.has(p.category));
     if (selectedMaterials.size > 0) {
       arr = arr.filter((p) => {
         const mats = parseMaterials(p.specs);
@@ -119,13 +140,13 @@ export default function CategoryListing({ category, products }: Props) {
       default:
         return arr;
     }
-  }, [products, maxFilter, inStockOnly, selectedMaterials, sortBy]);
+  }, [products, maxFilter, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
 
   // Reset paginatie wanneer filter/sort verandert — anders blijft visibleCount
   // hoog terwijl filtered nu kleinere set is.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [maxFilter, inStockOnly, selectedMaterials, sortBy]);
+  }, [maxFilter, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
 
   // IntersectionObserver: sentinel komt in view → laad volgende batch
   useEffect(() => {
@@ -148,11 +169,13 @@ export default function CategoryListing({ category, products }: Props) {
   const activeFilterCount =
     (maxFilter < maxPrice ? 1 : 0) +
     (inStockOnly ? 1 : 0) +
+    selectedTypes.size +
     selectedMaterials.size;
 
   const resetFilters = () => {
     setMaxFilter(maxPrice);
     setInStockOnly(false);
+    setSelectedTypes(new Set());
     setSelectedMaterials(new Set());
   };
 
@@ -163,6 +186,9 @@ export default function CategoryListing({ category, products }: Props) {
       setMaxFilter={setMaxFilter}
       inStockOnly={inStockOnly}
       setInStockOnly={setInStockOnly}
+      availableTypes={availableTypes}
+      selectedTypes={selectedTypes}
+      toggleType={toggleType}
       availableMaterials={availableMaterials}
       selectedMaterials={selectedMaterials}
       toggleMaterial={toggleMaterial}
@@ -330,6 +356,9 @@ function FilterControls({
   setMaxFilter,
   inStockOnly,
   setInStockOnly,
+  availableTypes,
+  selectedTypes,
+  toggleType,
   availableMaterials,
   selectedMaterials,
   toggleMaterial,
@@ -341,6 +370,9 @@ function FilterControls({
   setMaxFilter: (n: number) => void;
   inStockOnly: boolean;
   setInStockOnly: (b: boolean) => void;
+  availableTypes: Array<{ cat: string; label: string; count: number }>;
+  selectedTypes: Set<string>;
+  toggleType: (c: string) => void;
   availableMaterials: Array<[string, number]>;
   selectedMaterials: Set<string>;
   toggleMaterial: (m: string) => void;
@@ -349,6 +381,32 @@ function FilterControls({
 }) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
+      {/* Type (alleen umbrella, bv. Tafels) */}
+      {availableTypes.length > 1 && (
+        <div className="lg:flex-shrink-0">
+          <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone mb-2">Type</p>
+          <div className="flex flex-wrap gap-2">
+            {availableTypes.map(({ cat, label, count }) => {
+              const active = selectedTypes.has(cat);
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => toggleType(cat)}
+                  className={`px-3 py-1.5 text-xs border transition-colors ${
+                    active
+                      ? "bg-ink text-white border-ink"
+                      : "bg-transparent text-ink border-line hover:border-ink"
+                  }`}
+                >
+                  {label} <span className="opacity-60 ml-0.5">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Prijs */}
       <div className="lg:min-w-[200px] lg:flex-1 lg:max-w-xs">
         <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone mb-2">

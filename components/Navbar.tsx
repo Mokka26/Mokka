@@ -36,9 +36,7 @@ const navItems: NavItem[] = [
       {
         heading: "Tafels",
         links: [
-          { label: "Salontafels", href: "/salontafels" },
-          { label: "Bijzettafels", href: "/bijzettafels" },
-          { label: "Tafel-accessoires", href: "/tafel-accessoires" },
+          { label: "Alle tafels", href: "/tafels" },
         ],
       },
       {
@@ -71,10 +69,7 @@ const navItems: NavItem[] = [
       {
         heading: "Tafels",
         links: [
-          { label: "Alle eettafels", href: "/eettafels" },
-          { label: "Tafels", href: "/tafels" },
-          { label: "Bijzettafels", href: "/bijzettafels" },
-          { label: "Tafelbladen", href: "/tafel-accessoires" },
+          { label: "Alle tafels", href: "/tafels" },
         ],
       },
       {

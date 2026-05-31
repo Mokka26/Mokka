@@ -94,9 +94,9 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   {
     slug: "tafels",
     label: "Tafels",
-    intro: "Om de tafel wordt geleefd. Van eiken eettafels tot marmeren salontafels.",
-    dbCategories: ["tafels"],
-    isUmbrella: false,
+    intro: "Om de tafel wordt geleefd. Eettafels, salontafels en bijzettafels — filter op type.",
+    dbCategories: ["tafels", "eettafels", "salontafels", "bijzettafels", "tafel-accessoires"],
+    isUmbrella: true,
     group: "Tafels",
   },
   {
