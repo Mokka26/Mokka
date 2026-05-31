@@ -35,8 +35,15 @@ async function fetchImages(slug: string): Promise<string[]> {
   const res = await fetch(`${BASE}/${slug}`, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
+  // Eigen foto's delen de timestamp van de hoofdfoto; gerelateerde producten
+  // hebben een ándere timestamp → filter daarop, anders mengen de foto's.
+  const mainTs = html.match(/uploads\/products\/(\d+)_main_/)?.[1];
+  if (!mainTs) return [];
   const set = new Set<string>();
-  const re = /https:\/\/1dunya\.com\.tr\/uploads\/products\/(?:gallery\/)?[^\s"'<>]+?\.(?:jpe?g|png|webp)/gi;
+  const re = new RegExp(
+    `https://1dunya\\.com\\.tr/uploads/products/(?:gallery/)?${mainTs}_(?:main|gallery)_[^\\s"'<>]+?\\.(?:jpe?g|png|webp)`,
+    "gi",
+  );
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) set.add(m[0]);
   // hoofdfoto (_main_) eerst, dan galerij
