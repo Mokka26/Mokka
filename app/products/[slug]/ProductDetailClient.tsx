@@ -77,14 +77,8 @@ const usps = getUspsByKey("shipping", "warranty", "return").map((u) => ({
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const parsed = parseImages(product.images);
   const images: string[] = parsed.map((i) => i.url);
-  // Adaptive aspect: source smaller dan 3:2 → c_pad met witte achtergrond
-  // (product volledig zichtbaar, geen crop); source ≥3:2 → c_fill smart-crop.
-  const CARD_AR = 3 / 2;
-  const isPortraitAt = (idx: number): boolean => {
-    const d = parsed[idx];
-    if (!d?.w || !d?.h) return false;
-    return d.w / d.h < CARD_AR;
-  };
+  // Vierkante weergave (1:1) + c_fill: vrijwel alle productfoto's zijn vierkant,
+  // dus ze vullen het frame exact — geen witte zijbalken, volledig product.
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -211,14 +205,14 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     {images.map((img, i) => (
                       <div
                         key={i}
-                        className="relative flex-[0_0_100%] aspect-[3/2] bg-white"
+                        className="relative flex-[0_0_100%] aspect-square bg-white"
                       >
                         <Image
                           src={cldOptimize(img, {
-                            ar: "3:2",
-                            w: 2200,
-                            mode: isPortraitAt(i) ? "pad" : "fill",
-                            upscale: !isPortraitAt(i),
+                            ar: "1:1",
+                            w: 1600,
+                            mode: "fill",
+                            upscale: true,
                             sourceW: sourceWAt(i),
                             dpr: "auto",
                             quality: "auto:good",
@@ -266,20 +260,20 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       key={i}
                       onClick={() => setSelectedImage(i)}
                       aria-label={`Toon foto ${i + 1}`}
-                      className={`relative w-[96px] h-[64px] flex-shrink-0 overflow-hidden bg-bone rounded-md transition-all duration-200 ${
+                      className={`relative w-[80px] h-[80px] flex-shrink-0 overflow-hidden bg-bone rounded-md transition-all duration-200 ${
                         selectedImage === i
                           ? "opacity-100 ring-1 ring-ink/40"
                           : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={cldOptimize(img, { ar: "3:2", w: 320, mode: isPortraitAt(i) ? "pad" : "fill", quality: "auto:good" })} alt="" fill loading="lazy" unoptimized className="object-cover" sizes="96px" />
+                      <Image src={cldOptimize(img, { ar: "1:1", w: 240, mode: "fill", quality: "auto:good" })} alt="" fill loading="lazy" unoptimized className="object-cover" sizes="80px" />
                     </button>
                   ))}
                 </div>
 
                 {/* Hoofd afbeelding met hover zoom */}
                 <div
-                  className="relative aspect-[3/2] flex-1 bg-white overflow-hidden cursor-zoom-in rounded-[10px]"
+                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in rounded-[10px]"
                   onMouseEnter={() => setZoomActive(true)}
                   onMouseLeave={() => setZoomActive(false)}
                   onMouseMove={handleZoomMove}
@@ -296,10 +290,10 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     >
                       <Image
                         src={cldOptimize(images[selectedImage], {
-                          ar: "3:2",
-                          w: 2400,
-                          mode: isPortraitAt(selectedImage) ? "pad" : "fill",
-                          upscale: !isPortraitAt(selectedImage),
+                          ar: "1:1",
+                          w: 1800,
+                          mode: "fill",
+                          upscale: true,
                           sourceW: sourceWAt(selectedImage),
                           dpr: "auto",
                           quality: "auto:good",
