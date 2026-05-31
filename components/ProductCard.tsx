@@ -63,22 +63,6 @@ function parseSpecs(specs?: string | null): ProductSpecs {
   }
 }
 
-// Categorieën die pad-modus krijgen: product volledig in beeld met witte
-// padding (geen crop). Voor verlichting én stoelen — losse studio-/productfoto's
-// op witte achtergrond die je niet wilt bijsnijden.
-const PAD_CATEGORIES = new Set<string>([
-  // verlichting
-  "verlichting",
-  "plafondlampen",
-  "vloerlampen",
-  "tafellampen",
-  "wandlampen",
-  // stoelen
-  "stoelen",
-  "eetkamerstoelen",
-  "fauteuils",
-]);
-
 type ColorVariant = {
   slug: string;
   colorName: string | null;
@@ -96,21 +80,16 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
-  // Pad-modus (c_pad + witte achtergrond → product volledig zichtbaar, "uitgezoomd")
-  // geldt voor verlichting én stoelen: losse studiofoto's op witte achtergrond
-  // die niet weggesneden mogen worden. Andere categorieën (banken, tafels, kasten …)
-  // gebruiken c_fill → de foto vult de tegel, geen witte randen, geen uitzoom.
+  // Vierkante kaart (1:1): het overgrote deel van de productfoto's is vierkant,
+  // dus c_fill op 1:1 vult de tegel exact — geen witte randen, geen uitzoom,
+  // volledig product. Afwijkende verhoudingen worden minimaal bijgesneden.
   const firstDim = parsed[0];
-  const CARD_AR = 3 / 2;
-  const sourceAR = firstDim?.w && firstDim?.h ? firstDim.w / firstDim.h : null;
-  const usePadCategory = PAD_CATEGORIES.has(product.category);
-  const usePad = usePadCategory && sourceAR !== null && sourceAR < CARD_AR;
   const first = firstRaw
     ? cldOptimize(firstRaw, {
-        ar: "3:2",
-        w: 1200,
-        mode: usePad ? "pad" : "fill",
-        upscale: !usePad,
+        ar: "1:1",
+        w: 1000,
+        mode: "fill",
+        upscale: true,
         sourceW: firstDim?.w,
         dpr: "auto",
         quality: "auto:good",
@@ -158,7 +137,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           ref={figureRef}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className="relative aspect-[3/2] overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]"
+          className="relative aspect-square overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]"
         >
           {first && (
             <Image
