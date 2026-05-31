@@ -30,7 +30,6 @@ const navItems: NavItem[] = [
           { label: "Alle banken", href: "/banken" },
           { label: "Hoekbanken", href: "/hoekbanken" },
           { label: "Bankstellen", href: "/bankstellen" },
-          { label: "Fauteuils", href: "/fauteuils" },
         ],
       },
       {
@@ -67,15 +66,27 @@ const navItems: NavItem[] = [
     href: "/tafels",
     subLinks: [
       {
-        heading: "Tafels",
+        heading: "Soorten tafels",
         links: [
           { label: "Alle tafels", href: "/tafels" },
+          { label: "Eettafels", href: "/eettafels" },
+          { label: "Salontafels", href: "/salontafels" },
+          { label: "Bijzettafels", href: "/bijzettafels" },
+          { label: "Tafel-accessoires", href: "/tafel-accessoires" },
         ],
       },
+    ],
+  },
+  {
+    label: "Stoelen",
+    href: "/stoelen",
+    subLinks: [
       {
-        heading: "Stoelen",
+        heading: "Soorten stoelen",
         links: [
-          { label: "Eetkamerstoelen", href: "/stoelen" },
+          { label: "Alle stoelen", href: "/stoelen" },
+          { label: "Eetkamerstoelen", href: "/eetkamerstoelen" },
+          { label: "Fauteuils", href: "/fauteuils" },
         ],
       },
     ],

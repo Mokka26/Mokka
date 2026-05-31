@@ -32,7 +32,8 @@ export type CategorySlug =
   | "bijzettafels"
   | "tv-meubels"
   | "tafel-accessoires"
-  | "stoelen"
+  | "stoelen"           // umbrella: eetkamerstoelen + fauteuils
+  | "eetkamerstoelen"
   | "spiegels"
   | "verlichting"      // umbrella: plafondlampen + vloerlampen + tafellampen + wandlampen
   | "plafondlampen"
@@ -87,7 +88,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     intro: "Losse fauteuils en armstoelen — een comfortabele zit naast de bank of als accent.",
     dbCategories: ["fauteuils"],
     isUmbrella: false,
-    group: "Banken",
+    group: "Stoelen",
   },
 
   // ─── Tafels ──────────────────────────────────────────────────
@@ -144,8 +145,16 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   {
     slug: "stoelen",
     label: "Stoelen",
-    intro: "Sculpturaal comfort. Stoelen die niet alleen zitten, maar een statement maken.",
-    dbCategories: ["stoelen"],
+    intro: "Sculpturaal comfort — eetkamerstoelen en fauteuils. Filter op type.",
+    dbCategories: ["stoelen", "eetkamerstoelen", "fauteuils"],
+    isUmbrella: true,
+    group: "Stoelen",
+  },
+  {
+    slug: "eetkamerstoelen",
+    label: "Eetkamerstoelen",
+    intro: "De stoel waar je aan tafel op zit — comfortabel, stevig en mooi van lijn.",
+    dbCategories: ["eetkamerstoelen"],
     isUmbrella: false,
     group: "Stoelen",
   },
