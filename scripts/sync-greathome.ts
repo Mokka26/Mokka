@@ -13,7 +13,7 @@ import { PrismaClient } from "@prisma/client"; const prisma = new PrismaClient()
 import fs from "fs";
 
 const APPLY = process.argv.includes("--apply");
-const MARKUP = 2.3;
+const MARKUP = Number(process.argv.find((a) => a.startsWith("--markup="))?.split("=")[1] ?? "2.1");
 const CATALOG = "C:/Users/konia/AppData/Local/Temp/gh_catalog.json";
 
 type GH = { code: string; desc: string; list: number; inStock: boolean };
@@ -35,7 +35,19 @@ function parseAfmeting(desc: string): string | null {
 async function main() {
   const gh: GH[] = JSON.parse(fs.readFileSync(CATALOG, "utf8"));
   const bySlug = new Map<string, GH>();
-  for (const g of gh) { const s = slugify(g.desc); if (!bySlug.has(s)) bySlug.set(s, g); }
+  // token-set-signatuur: woorden gesorteerd & ontdubbeld → vangt verschillen in
+  // woordvolgorde/dubbeling op (bv. "black/gold" vs "black"). Ambigue sigs (>1 item) overslaan.
+  const sig = (s: string) => [...new Set(slugify(s).split("-").filter(Boolean))].sort().join("-");
+  const bySig = new Map<string, GH | null>();
+  for (const g of gh) {
+    const s = slugify(g.desc); if (!bySlug.has(s)) bySlug.set(s, g);
+    const k = sig(g.desc);
+    bySig.set(k, bySig.has(k) ? null : g); // null = ambigu
+  }
+  const matchGH = (slug: string): GH | null => {
+    const exact = bySlug.get(slug); if (exact) return exact;
+    const bySigHit = bySig.get(sig(slug)); return bySigHit ?? null;
+  };
 
   const prods = await prisma.product.findMany({
     where: { deletedAt: null },
@@ -45,7 +57,7 @@ async function main() {
   let matched = 0, priceChg = 0, toHide = 0, dimFilled = 0, retag = 0;
   const ops: { id: string; data: Record<string, unknown> }[] = [];
   for (const pr of prods) {
-    const g = bySlug.get(pr.slug);
+    const g = matchGH(pr.slug);
     if (!g) continue;
     matched++;
     const data: Record<string, unknown> = {};
