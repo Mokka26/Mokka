@@ -239,6 +239,42 @@ export default function Navbar() {
                       }`}
                     />
                   </Link>
+
+                  {/* Compact dropdown — verankerd onder het item (geen volle breedte) */}
+                  {item.subLinks && (
+                    <AnimatePresence>
+                      {activeDropdown === item.label && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 6 }}
+                          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                          className="absolute left-0 top-full pt-3 z-50"
+                        >
+                          <div className="flex gap-8 bg-paper border border-line rounded-[12px] shadow-[0_20px_50px_-18px_rgba(20,17,13,0.22)] px-7 py-6">
+                            {item.subLinks.map((group) => (
+                              <div key={group.heading} className="min-w-[140px]">
+                                <p className="eyebrow mb-3 whitespace-nowrap">{group.heading}</p>
+                                <ul className="space-y-2.5">
+                                  {group.links.map((l) => (
+                                    <li key={l.label}>
+                                      <Link
+                                        href={l.href}
+                                        onClick={() => setActiveDropdown(null)}
+                                        className="text-sm text-slate hover:text-accent transition-colors duration-200 whitespace-nowrap"
+                                      >
+                                        {l.label}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  )}
                 </div>
               ))}
             </div>
@@ -270,74 +306,6 @@ export default function Navbar() {
             </div>
           </nav>
 
-          {/* Desktop mega menu dropdowns */}
-          <AnimatePresence>
-            {activeDropdown && (() => {
-              const item = navItems.find((n) => n.label === activeDropdown);
-              if (!item || !item.subLinks) return null;
-              return (
-                <motion.div
-                  initial={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
-                  animate={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
-                  exit={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
-                  transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute left-0 right-0 bg-paper border-t border-line shadow-[0_30px_60px_-20px_rgba(20,17,13,0.12)] hidden lg:block"
-                  onMouseLeave={() => setActiveDropdown(null)}
-                >
-                  <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 py-8">
-                    <div className="grid grid-cols-12 gap-10 items-start">
-                      {/* Sublink groups */}
-                      <div className={`${item.featured ? "col-span-8" : "col-span-12"} grid grid-cols-2 lg:grid-cols-4 gap-8`}>
-                        {item.subLinks.map((group) => (
-                          <div key={group.heading}>
-                            <p className="eyebrow mb-5">{group.heading}</p>
-                            <ul className="space-y-3">
-                              {group.links.map((l) => (
-                                <li key={l.label}>
-                                  <Link
-                                    href={l.href}
-                                    onClick={() => setActiveDropdown(null)}
-                                    className="text-sm text-slate hover:text-accent transition-colors duration-[280ms]"
-                                  >
-                                    {l.label}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Featured visual */}
-                      {item.featured && (
-                        <div className="col-span-4">
-                          <Link
-                            href={item.featured.href}
-                            onClick={() => setActiveDropdown(null)}
-                            className="group block"
-                          >
-                            <div className="relative aspect-[16/10] overflow-hidden bg-bone mb-3 rounded-[8px]">
-                              <Image
-                                src={item.featured.image}
-                                alt={item.featured.label}
-                                fill
-                                className="object-cover transition-transform duration-[1.2s] group-hover:scale-105"
-                                sizes="400px"
-                              />
-                            </div>
-                            <p className="eyebrow mb-1">Uitgelicht</p>
-                            <p className="font-serif text-xl text-ink group-hover:text-accent transition-colors duration-[280ms]">
-                              {item.featured.label}
-                            </p>
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })()}
-          </AnimatePresence>
         </div>
       </motion.header>
 
