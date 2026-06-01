@@ -33,25 +33,10 @@ const navItems: NavItem[] = [
         ],
       },
       {
-        heading: "Tafels",
+        heading: "Opbergen",
         links: [
-          { label: "Alle tafels", href: "/tafels" },
-        ],
-      },
-      {
-        heading: "Kasten & Opbergen",
-        links: [
-          { label: "Alle kasten", href: "/kasten" },
           { label: "Dressoirs", href: "/dressoirs" },
           { label: "TV-meubels", href: "/tv-meubels" },
-          { label: "Kapstokken", href: "/kapstokken" },
-        ],
-      },
-      {
-        heading: "Accessoires",
-        links: [
-          { label: "Verlichting", href: "/verlichting" },
-          { label: "Spiegels", href: "/spiegels" },
         ],
       },
     ],
