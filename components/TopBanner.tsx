@@ -1,26 +1,26 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { shippingInfo } from "@/lib/shipping-info";
 
+// Statische, slanke USP-balk (minimal luxe — geen bewegende tekst).
+// Toont een paar feitelijke trust-punten, gecentreerd, met fijne scheiding.
 export default function TopBanner() {
-  const messages = shippingInfo.marqueeMessages;
-
+  const items = [
+    `Gratis verzending vanaf €${shippingInfo.freeShippingThreshold}`,
+    "30 dagen bedenktijd",
+    "Persoonlijk advies in onze showroom",
+  ];
   return (
-    <div className="bg-ink text-white/80 border-b border-white/10 overflow-hidden">
-      <div className="relative flex items-center justify-center h-9">
-        <motion.div
-          className="flex items-center gap-12 whitespace-nowrap"
-          animate={{ x: [0, "-50%"] }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-        >
-          {[...messages, ...messages].map((msg, i) => (
-            <span key={i} className="flex items-center gap-6 flex-shrink-0">
-              <span className="w-1 h-1 rounded-full bg-accent" />
-              <span className="text-[11px] uppercase tracking-[0.3em]">{msg}</span>
+    <div className="bg-ink text-white/75 border-b border-white/10">
+      <div className="max-w-[1600px] mx-auto h-9 px-6 sm:px-10 lg:px-14 flex items-center justify-center gap-5 overflow-hidden">
+        {items.map((t, i) => (
+          <span key={t} className="flex items-center gap-5 whitespace-nowrap">
+            {i > 0 && <span className="hidden sm:inline w-1 h-1 rounded-full bg-accent/70" aria-hidden />}
+            <span
+              className={`text-[10px] uppercase tracking-[0.28em] ${i === 0 ? "" : "hidden sm:inline"}`}
+            >
+              {t}
             </span>
-          ))}
-        </motion.div>
+          </span>
+        ))}
       </div>
     </div>
   );

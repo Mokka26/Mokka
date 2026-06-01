@@ -178,7 +178,7 @@ export default function Navbar() {
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled ? "bg-paper/98 backdrop-blur-md border-b border-line" : "bg-paper/90 backdrop-blur-sm"
+          scrolled ? "bg-paper border-b border-line shadow-[0_1px_0_rgba(20,17,13,0.04)]" : "bg-paper border-b border-transparent"
         }`}
         initial={{ y: -80 }}
         animate={{ y: 0 }}
@@ -219,26 +219,25 @@ export default function Navbar() {
               {navItems.map((item) => (
                 <div
                   key={item.label}
-                  className="relative"
+                  className="relative group"
                   onMouseEnter={() => item.subLinks && setActiveDropdown(item.label)}
                 >
                   <Link
                     href={item.href}
-                    className={`relative flex items-center gap-1 px-4 py-2 text-xs uppercase tracking-[0.08em] font-medium transition-colors duration-[280ms] ${
-                      activeDropdown === item.label ? "text-accent" : "text-ink hover:text-accent"
+                    className={`relative flex items-center gap-1.5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] font-medium transition-colors duration-300 ${
+                      activeDropdown === item.label ? "text-accent" : "text-ink group-hover:text-accent"
                     }`}
-                    style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
                   >
-                    {/* SIGNATURE: vertical-line indicator op active nav-item */}
-                    <span
-                      className={`absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-[2px] bg-accent transition-opacity duration-[280ms] ${
-                        activeDropdown === item.label ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
                     {item.label}
                     {item.subLinks && (
-                      <ChevronDown className={`w-3 h-3 transition-transform duration-[280ms] ${activeDropdown === item.label ? "rotate-180" : ""}`} strokeWidth={1.5} />
+                      <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${activeDropdown === item.label ? "rotate-180" : ""}`} strokeWidth={1.5} />
                     )}
+                    {/* Fijne onderlijn — verschijnt bij hover/actief (minimal luxe) */}
+                    <span
+                      className={`pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-accent origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        activeDropdown === item.label ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      }`}
+                    />
                   </Link>
                 </div>
               ))}
@@ -285,8 +284,8 @@ export default function Navbar() {
                   className="absolute left-0 right-0 bg-paper border-t border-line shadow-[0_30px_60px_-20px_rgba(20,17,13,0.12)] hidden lg:block"
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 py-10">
-                    <div className="grid grid-cols-12 gap-8">
+                  <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 py-8">
+                    <div className="grid grid-cols-12 gap-10 items-start">
                       {/* Sublink groups */}
                       <div className={`${item.featured ? "col-span-8" : "col-span-12"} grid grid-cols-2 lg:grid-cols-4 gap-8`}>
                         {item.subLinks.map((group) => (
@@ -317,7 +316,7 @@ export default function Navbar() {
                             onClick={() => setActiveDropdown(null)}
                             className="group block"
                           >
-                            <div className="relative aspect-[4/3] overflow-hidden bg-bone mb-3">
+                            <div className="relative aspect-[16/10] overflow-hidden bg-bone mb-3 rounded-[8px]">
                               <Image
                                 src={item.featured.image}
                                 alt={item.featured.label}

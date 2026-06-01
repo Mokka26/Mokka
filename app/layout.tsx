@@ -11,7 +11,6 @@ import PageTransition from "@/components/PageTransition";
 import TouchHoverProvider from "@/components/TouchHoverProvider";
 import ToastProvider from "@/components/ToastProvider";
 import ScrollProgress from "@/components/ScrollProgress";
-import CustomCursor from "@/components/CustomCursor";
 import CookieBanner from "@/components/CookieBanner";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -103,7 +102,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TouchHoverProvider />
           <ToastProvider />
           <ScrollProgress />
-          <CustomCursor />
           <Navbar />
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
