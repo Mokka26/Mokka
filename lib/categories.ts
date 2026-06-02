@@ -26,6 +26,7 @@ export type CategorySlug =
   | "nachtkastjes"
   | "ladekasten"
   | "kapstokken"
+  | "schoenenkasten"
   | "tafels"
   | "eettafels"
   | "salontafels"
@@ -190,7 +191,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     slug: "kasten",
     label: "Alle kasten",
     intro: "Meer dan opbergruimte — kasten als architectuur die je interieur structureren.",
-    dbCategories: ["kasten", "kledingkasten", "dressoirs", "nachtkastjes", "ladekasten", "kapstokken"],
+    dbCategories: ["kasten", "kledingkasten", "dressoirs", "nachtkastjes", "ladekasten", "kapstokken", "schoenenkasten"],
     isUmbrella: true,
     group: "Opbergen",
   },
@@ -231,6 +232,14 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     label: "Kapstokken",
     intro: "Een warm welkom in de hal — kapstokken en garderobe-oplossingen.",
     dbCategories: ["kapstokken"],
+    isUmbrella: false,
+    group: "Opbergen",
+  },
+  {
+    slug: "schoenenkasten",
+    label: "Schoenenkasten",
+    intro: "Schoenen netjes uit het zicht — slanke kasten en lades voor in de hal.",
+    dbCategories: ["schoenenkasten"],
     isUmbrella: false,
     group: "Opbergen",
   },

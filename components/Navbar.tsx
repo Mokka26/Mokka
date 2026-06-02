@@ -96,6 +96,13 @@ const navItems: NavItem[] = [
           { label: "Ladekasten & Commodes", href: "/ladekasten" },
         ],
       },
+      {
+        heading: "Hal & entree",
+        links: [
+          { label: "Kapstokken", href: "/kapstokken" },
+          { label: "Schoenenkasten", href: "/schoenenkasten" },
+        ],
+      },
     ],
     featured: {
       image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&q=90",
