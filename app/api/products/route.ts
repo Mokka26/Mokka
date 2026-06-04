@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
   const sort = searchParams.get("sort") || "newest";
-  const q = searchParams.get("q");
+  // Begrens de zoekterm: een ongelimiteerde `contains`-scan op niet-geïndexeerde
+  // kolommen is een goedkope manier om de DB te belasten.
+  const q = searchParams.get("q")?.slice(0, 80) || null;
   const minPrice = parseFloat(searchParams.get("minPrice") || "0");
   const maxPrice = parseFloat(searchParams.get("maxPrice") || "99999");
 
@@ -55,9 +57,12 @@ export async function GET(request: NextRequest) {
   if (sort === "price-desc") orderBy = { price: "desc" };
   if (sort === "name") orderBy = { name: "asc" };
 
+  // Veiligheidsplafond: voorkomt dat één request de hele (groeiende) tabel
+  // ophaalt. Ruim boven het huidige assortiment.
   const products = await prisma.product.findMany({
     where,
     orderBy,
+    take: 1000,
   });
 
   return NextResponse.json(

@@ -44,14 +44,15 @@ export async function GET() {
     {
       ok: allOk,
       ts: new Date().toISOString(),
+      // Geen rauwe foutmeldingen in de publieke respons (lekken DB/driver-
+      // interne info aan anonieme bezoekers). Details staan in Sentry/logs.
       checks: {
-        db: { ok: db.ok, ms: db.ms, error: db.error },
-        products: { ok: productCount.ok, ms: productCount.ms, count: productCount.value, error: productCount.error },
+        db: { ok: db.ok, ms: db.ms },
+        products: { ok: productCount.ok, ms: productCount.ms, count: productCount.value },
         cloudinary: {
           ok: cloudinary.ok && cloudinary.value?.reachable === true,
           ms: cloudinary.ms,
           status: cloudinary.value?.status,
-          error: cloudinary.error,
         },
       },
       thresholds: {

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { safeInternalPath } from "@/lib/safePath";
 import LoginForm from "./LoginForm";
 
 export const metadata = {
@@ -14,7 +15,7 @@ export default async function AdminLoginPage({
 }) {
   const session = await auth();
   const params = await searchParams;
-  if (session?.user) redirect(params.from || "/admin");
+  if (session?.user) redirect(safeInternalPath(params.from));
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bone px-6">

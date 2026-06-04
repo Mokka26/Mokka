@@ -3,6 +3,7 @@
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import { z } from "zod";
+import { safeInternalPath } from "@/lib/safePath";
 
 const loginSchema = z.object({
   email: z.string().email("Ongeldig e-mailadres"),
@@ -36,7 +37,7 @@ export async function loginAction(
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: (formData.get("from") as string) || "/admin",
+      redirectTo: safeInternalPath(formData.get("from")),
     });
   } catch (err) {
     if (err instanceof AuthError) {
