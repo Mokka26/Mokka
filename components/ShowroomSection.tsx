@@ -29,6 +29,7 @@ export default function ShowroomSection() {
               muted
               loop
               playsInline
+              preload="none"
               className="absolute inset-0 w-full h-full object-cover"
             >
               <source src="/mokka.mp4" type="video/mp4" />

@@ -91,6 +91,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             zodat images direct van Cloudinary komen, niet via Next-proxy. */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* LCP-versneller: de hero-fallback toont deze Unsplash-foto als CSS
+            background-image (anders pas laat ontdekt). Preconnect + preload
+            halen 'm vroeg op zodat de Largest Contentful Paint niet wacht op
+            de Three.js-bundle. */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+        <link
+          rel="preload"
+          as="image"
+          href="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=1600&q=80&auto=format&fit=crop"
+          fetchPriority="high"
+        />
       </head>
       <body className="min-h-screen flex flex-col bg-paper">
         <script

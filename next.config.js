@@ -31,6 +31,10 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Trimt barrel-imports van zware libs (alleen gebruikte exports bundelen).
+  experimental: {
+    optimizePackageImports: ["framer-motion", "lucide-react"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
