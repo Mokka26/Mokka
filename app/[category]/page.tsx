@@ -72,6 +72,16 @@ export default async function CategoryPage({ params }: Props) {
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
 
+  // Umbrella-volgorde: zet bepaalde sub-typen vooraan (bv. banken → hoekbanken
+  // eerst). Stabiele sort → binnen elk type blijft featured/nieuwste-volgorde.
+  if (category.typeOrder) {
+    const rank = (c: string) => {
+      const i = category.typeOrder!.indexOf(c);
+      return i === -1 ? category.typeOrder!.length : i;
+    };
+    products.sort((a, b) => rank(a.category) - rank(b.category));
+  }
+
   // CollectionPage JSON-LD
   const collectionSchema = {
     "@context": "https://schema.org",

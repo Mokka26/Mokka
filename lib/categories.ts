@@ -55,6 +55,13 @@ export type Category = {
   isUmbrella: boolean;
   /** Hoort tot welke top-groep in FilterBar */
   group: "Banken" | "Tafels" | "Stoelen" | "Slapen" | "Opbergen" | "Sfeer";
+  /**
+   * Optioneel: gewenste display-volgorde van DB-sub-categorieën op een
+   * umbrella-pagina. Producten van een hier genoemde categorie komen eerst,
+   * in deze volgorde; niet-genoemde categorieën volgen daarna (in hun
+   * featured/nieuwste-volgorde). Bv. banken → hoekbanken vóór bankstellen.
+   */
+  typeOrder?: ReadonlyArray<string>;
 };
 
 export const CATEGORIES: ReadonlyArray<Category> = [
@@ -66,6 +73,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["banken", "hoekbanken", "bankstellen"],
     isUmbrella: true,
     group: "Banken",
+    typeOrder: ["hoekbanken", "bankstellen"],
   },
   {
     slug: "hoekbanken",
