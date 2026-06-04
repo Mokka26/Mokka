@@ -156,7 +156,7 @@ export default function Footer() {
           {/* Payment logos */}
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-4">Veilig betalen met</p>
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               {paymentMethods.map((method) => (
                 <PaymentIcon key={method.name} name={method.name} />
               ))}

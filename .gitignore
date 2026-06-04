@@ -48,9 +48,11 @@ temp_extract/
 *.zip
 public/products/
 public/wetransfer*/
-public/catalogus*.pdf
+public/*.pdf
 photos-todo/
 _import-*/
+# Dealer-bronbestanden (catalogi/PDF's) — nooit in repo of deploy
+_sources/
 
 # Lokale notes en credentials
 links.txt

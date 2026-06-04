@@ -1,0 +1,15 @@
+# Wordt NIET mee gedeployed naar Vercel.
+# Dealer-bronbestanden (zware PDF-catalogi) horen niet op de productie-CDN.
+_sources/
+public/*.pdf
+
+# Eenmalige scripts en lokale data-dumps (niet nodig in runtime)
+scripts/
+photos-todo/
+_import-*/
+
+# Docs en notities
+STRATEGIE.md
+plan.txt
+prompt.txt
+links.txt
