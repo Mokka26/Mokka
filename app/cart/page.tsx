@@ -6,6 +6,7 @@ import CartItem from "@/components/CartItem";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { formatPrice } from "@/components/ui/price";
 
 export default function CartPage() {
   const { items, totalPrice, totalItems } = useCart();
@@ -70,18 +71,18 @@ export default function CartPage() {
               <div className="space-y-5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate">Artikelen ({totalItems})</span>
-                  <span className="text-ink">&euro;{totalPrice.toFixed(2)}</span>
+                  <span className="text-ink">{formatPrice(totalPrice)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate">Verzending</span>
-                  <span className="text-ink">{shipping === 0 ? "Gratis" : `\u20AC${shipping.toFixed(2)}`}</span>
+                  <span className="text-ink">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
                 </div>
                 {shipping > 0 && (
                   <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.freeShippingCopyShort}</p>
                 )}
                 <div className="border-t border-line pt-5 flex justify-between items-baseline">
                   <span className="eyebrow">Totaal</span>
-                  <span className="font-serif text-2xl text-ink">&euro;{total.toFixed(2)}</span>
+                  <span className="font-serif text-2xl text-ink">{formatPrice(total)}</span>
                 </div>
                 <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.vatLabelLong}</p>
               </div>

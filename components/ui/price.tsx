@@ -37,6 +37,12 @@ export function Price({
   className?: string;
   vatClassName?: string;
 }) {
+  // Vangnet: een product zonder geldige prijs toont nooit "€ 0" met btw-label,
+  // maar "Prijs op aanvraag" (bv. dealer-import die nog geprijsd moet worden).
+  if (value <= 0) {
+    return <span className={className}>Prijs op aanvraag</span>;
+  }
+
   return (
     <span className="inline-flex flex-col">
       <span className={className}>{formatPrice(value)}</span>

@@ -10,7 +10,7 @@ import {
   isCategorySlug,
 } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
-import { firstImageUrl, parseImages } from "@/lib/imageHelpers";
+import { parseImages } from "@/lib/imageHelpers";
 import { shippingInfo } from "@/lib/shipping-info";
 import { jsonLdHtml } from "@/lib/jsonLd";
 
@@ -40,7 +40,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product niet gevonden" };
 
   const url = `/${categorySlug}/${product.slug}`;
-  const heroImage = firstImageUrl(product.images);
 
   return {
     title: `${product.name} — ${businessInfo.name}`,
@@ -51,7 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: product.description.slice(0, 160),
       type: "website",
       url,
-      images: heroImage ? [{ url: heroImage }] : undefined,
+      // Geen `images` hier: laat de gegenereerde opengraph-image.tsx (product-
+      // foto + prijs) de OG-kaart maken i.p.v. de rauwe Cloudinary-bron.
     },
   };
 }

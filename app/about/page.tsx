@@ -6,6 +6,7 @@ import SectionHeader from "@/components/SectionHeader";
 export const metadata: Metadata = {
   title: "Over Ons — Mokka Home Interior",
   description: "Leer meer over de missie van Mokka Home Interior: ambachtelijk design, eerlijke materialen en tijdloze kwaliteit.",
+  alternates: { canonical: "/about" },
 };
 
 const values = [

@@ -7,7 +7,8 @@ import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
-import { shippingInfo } from "@/lib/shipping-info";
+import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { formatPrice } from "@/components/ui/price";
 
 type FormFields = {
   firstName: string;
@@ -57,7 +58,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
 
-  const shipping = totalPrice >= 100 ? 0 : 9.95;
+  const shipping = isEligibleForFreeShipping(totalPrice) ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -262,7 +263,7 @@ export default function CheckoutPage() {
             </div>
 
             <motion.button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-50" whileTap={{ scale: 0.98 }}>
-              {submitting ? "Verwerken..." : `Bestelling Plaatsen — \u20AC${total.toFixed(2)}`}
+              {submitting ? "Verwerken..." : `Bestelling Plaatsen — ${formatPrice(total)}`}
             </motion.button>
           </form>
         </AnimatedSection>
@@ -289,7 +290,7 @@ export default function CheckoutPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-ink text-sm font-medium truncate">{item.product.name}</p>
                     <p className="text-stone text-[11px] uppercase tracking-[0.2em] mt-1">Aantal: {item.quantity}</p>
-                    <p className="text-accent text-sm font-medium mt-1">&euro;{(item.product.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-accent text-sm font-medium mt-1">{formatPrice(item.product.price * item.quantity)}</p>
                   </div>
                 </div>
               ))}
@@ -297,15 +298,15 @@ export default function CheckoutPage() {
             <div className="border-t border-line pt-5 space-y-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate">Subtotaal</span>
-                <span className="text-ink">&euro;{totalPrice.toFixed(2)}</span>
+                <span className="text-ink">{formatPrice(totalPrice)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate">Verzending</span>
-                <span className="text-ink">{shipping === 0 ? "Gratis" : `\u20AC${shipping.toFixed(2)}`}</span>
+                <span className="text-ink">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
               </div>
               <div className="border-t border-line pt-5 flex justify-between items-baseline">
                 <span className="eyebrow">Totaal</span>
-                <span className="font-serif text-2xl text-ink">&euro;{total.toFixed(2)}</span>
+                <span className="font-serif text-2xl text-ink">{formatPrice(total)}</span>
               </div>
               <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.vatLabelLong}</p>
             </div>
