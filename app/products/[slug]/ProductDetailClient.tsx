@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
 import { getUspsByKey, shippingInfo } from "@/lib/shipping-info";
+import { getCategory } from "@/lib/categories";
 import { formatPrice } from "@/components/ui/price";
 
 interface Product {
@@ -92,6 +93,10 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const { addToCart } = useCart();
+
+  // Categorie-regel onder de prijs (bv. banken → "In diverse uitvoeringen
+  // en kleuren."). Bron: lib/categories.ts.
+  const categorySubtitle = getCategory(product.category)?.cardSubtitle ?? null;
 
   // Mobile swipe carousel
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: "start" });
@@ -330,6 +335,10 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               <h1 className="display-md text-ink mb-5">
                 {product.name}
               </h1>
+              {categorySubtitle && (
+                <p className="text-sm text-slate mb-5 -mt-2">{categorySubtitle}</p>
+              )}
+
               <div className="mb-8">
                 <p className="font-serif text-2xl lg:text-3xl text-accent font-light tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
                   {formatPrice(product.price)}

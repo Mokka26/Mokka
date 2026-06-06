@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { imageUrls, parseImages } from "@/lib/imageHelpers";
-import { productUrl } from "@/lib/categories";
+import { getCategory, productUrl } from "@/lib/categories";
 import { Price } from "@/components/ui/price";
 import { useInFrameParallax } from "@/hooks/useInFrameParallax";
 
@@ -111,6 +111,10 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const s = parseSpecs(product.specs);
   const title = product.name;
 
+  // Korte categorie-regel onder de titel (bv. banken → "In diverse
+  // uitvoeringen en kleuren."). Komt uit lib/categories.ts.
+  const cardSubtitle = getCategory(product.category)?.cardSubtitle ?? null;
+
   // Eyebrow toont serie/collectie alleen als die niet al in de naam zit.
   // Voorkomt "Mirage" eyebrow + "Mirage Bankstel Brons" titel = dubbele naam.
   const eyebrow =
@@ -181,9 +185,16 @@ export default function ProductCard({ product, variants, priority = false }: Pro
 
           {/* Hoofdnaam — volledige productnaam (incl. kleur).
               Mobile: kleiner + line-clamp-2 voor consistente kaart-hoogte */}
-          <h3 className="font-serif text-base sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-2 line-clamp-2 sm:line-clamp-none">
+          <h3 className="font-serif text-base sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-1.5 line-clamp-2 sm:line-clamp-none">
             <span className="card-name">{title}</span>
           </h3>
+
+          {/* Categorie-regel — bv. "In diverse uitvoeringen en kleuren." */}
+          {cardSubtitle && (
+            <p className="text-[12px] sm:text-[13px] text-stone leading-snug mb-2">
+              {cardSubtitle}
+            </p>
+          )}
 
           {/* SIGNATURE: hairline-marker */}
           <div className="w-4 h-px bg-[var(--color-accent-light)] mb-2 sm:mb-3" />

@@ -62,6 +62,12 @@ export type Category = {
    * featured/nieuwste-volgorde). Bv. banken → hoekbanken vóór bankstellen.
    */
   typeOrder?: ReadonlyArray<string>;
+  /**
+   * Optioneel: korte regel onder de productnaam op de kaart + PDP. Bv.
+   * banken → "In diverse uitvoeringen en kleuren.". Per categorie gezet
+   * zodat de tekst op één plek staat (geen hardcode in componenten).
+   */
+  cardSubtitle?: string;
 };
 
 export const CATEGORIES: ReadonlyArray<Category> = [
@@ -74,6 +80,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     isUmbrella: true,
     group: "Banken",
     typeOrder: ["hoekbanken", "bankstellen"],
+    cardSubtitle: "In diverse uitvoeringen en kleuren.",
   },
   {
     slug: "hoekbanken",
@@ -82,6 +89,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["hoekbanken"],
     isUmbrella: false,
     group: "Banken",
+    cardSubtitle: "In diverse uitvoeringen en kleuren.",
   },
   {
     slug: "bankstellen",
@@ -90,6 +98,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["bankstellen"],
     isUmbrella: false,
     group: "Banken",
+    cardSubtitle: "In diverse uitvoeringen en kleuren.",
   },
   {
     slug: "fauteuils",
@@ -98,6 +107,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["fauteuils"],
     isUmbrella: false,
     group: "Stoelen",
+    cardSubtitle: "In diverse kleuren.",
   },
 
   // ─── Tafels ──────────────────────────────────────────────────
@@ -158,6 +168,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["stoelen", "eetkamerstoelen", "fauteuils"],
     isUmbrella: true,
     group: "Stoelen",
+    cardSubtitle: "In diverse kleuren.",
   },
   {
     slug: "eetkamerstoelen",
@@ -166,6 +177,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["eetkamerstoelen"],
     isUmbrella: false,
     group: "Stoelen",
+    cardSubtitle: "In diverse kleuren.",
   },
 
   // ─── Slapen ──────────────────────────────────────────────────
@@ -176,6 +188,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["bedden"],
     isUmbrella: false,
     group: "Slapen",
+    cardSubtitle: "In diverse maten.",
   },
   {
     slug: "matrassen",
