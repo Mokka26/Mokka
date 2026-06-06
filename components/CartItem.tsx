@@ -22,17 +22,20 @@ export default function CartItem({ item }: Props) {
         </div>
         <div>
           <h4 className="text-ink text-sm font-medium">{item.product.name}</h4>
-          <p className="text-stone text-xs capitalize mt-1">{item.product.category}</p>
-          <button onClick={() => removeFromCart(item.productId)} className="text-[10px] text-stone hover:text-error transition-colors mt-2 uppercase tracking-wider">
+          <p className="text-stone text-xs capitalize mt-1">
+            {item.product.category}
+            {item.variantLabel && <span className="text-ink"> · Maat {item.variantLabel}</span>}
+          </p>
+          <button onClick={() => removeFromCart(item.lineKey)} className="text-[10px] text-stone hover:text-error transition-colors mt-2 uppercase tracking-wider">
             Verwijderen
           </button>
         </div>
       </div>
       <div className="col-span-4 md:col-span-2 flex items-center justify-center">
         <div className="flex items-center border border-line">
-          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">-</button>
+          <button onClick={() => updateQuantity(item.lineKey, item.quantity - 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">-</button>
           <span className="px-3 py-2 text-xs text-ink min-w-[2rem] text-center">{item.quantity}</span>
-          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">+</button>
+          <button onClick={() => updateQuantity(item.lineKey, item.quantity + 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">+</button>
         </div>
       </div>
       <div className="col-span-4 md:col-span-2 text-right text-stone text-sm font-light">&euro;{item.product.price.toFixed(2)}</div>

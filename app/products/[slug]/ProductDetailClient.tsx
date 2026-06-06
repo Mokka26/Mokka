@@ -26,12 +26,28 @@ interface Product {
   category: string;
   images: string;
   specs?: string | null;
+  sizeVariants?: string | null;
   featured: boolean;
   stock?: number;
   deliveryTime?: string | null;
   colorGroup?: string | null;
   colorName?: string | null;
   colorHex?: string | null;
+}
+
+type SizeVariant = { label: string; price: number };
+
+function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((v) => v && typeof v.label === "string" && typeof v.price === "number")
+      .map((v) => ({ label: String(v.label), price: Number(v.price) }));
+  } catch {
+    return [];
+  }
 }
 
 interface ColorVariant {
@@ -81,6 +97,14 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   // Vierkante weergave (1:1) + c_fill: vrijwel alle productfoto's zijn vierkant,
   // dus ze vullen het frame exact — geen witte zijbalken, volledig product.
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
+
+  // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is
+  // standaard geselecteerd. Geen varianten → normale enkele prijs.
+  const sizeVariants = parseSizeVariants(product.sizeVariants);
+  const [selectedSize, setSelectedSize] = useState(0);
+  const activeVariant = sizeVariants[selectedSize] ?? null;
+  const activePrice = activeVariant ? activeVariant.price : product.price;
+
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -153,11 +177,17 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   };
 
   const handleAddToCart = () => {
+    // Bij maat-varianten: regel-prijs = maatprijs, en de maat als variant-label.
+    const linePrice = activePrice;
+    const variantLabel = activeVariant?.label ?? null;
     for (let i = 0; i < quantity; i++) {
-      addToCart({ id: product.id, slug: product.slug, name: product.name, price: product.price, images: product.images, category: product.category });
+      addToCart(
+        { id: product.id, slug: product.slug, name: product.name, price: linePrice, images: product.images, category: product.category },
+        variantLabel,
+      );
     }
     toast.success(`${product.name} toegevoegd aan winkelwagen`, {
-      description: `Aantal: ${quantity}`,
+      description: variantLabel ? `Maat ${variantLabel} · Aantal: ${quantity}` : `Aantal: ${quantity}`,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -341,10 +371,36 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
               <div className="mb-8">
                 <p className="font-serif text-2xl lg:text-3xl text-accent font-light tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
-                  {formatPrice(product.price)}
+                  {formatPrice(activePrice)}
                 </p>
                 <p className="text-[13px] text-slate mt-1">{shippingInfo.vatLabelShort}</p>
               </div>
+
+              {sizeVariants.length > 0 && (
+                <div className="mb-8">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Kies je maat</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sizeVariants.map((v, i) => {
+                      const active = i === selectedSize;
+                      return (
+                        <button
+                          key={v.label}
+                          type="button"
+                          onClick={() => setSelectedSize(i)}
+                          aria-pressed={active}
+                          className={`px-4 py-2.5 text-sm border rounded-[8px] transition-colors min-h-[44px] ${
+                            active
+                              ? "bg-ink text-white border-ink"
+                              : "bg-transparent text-ink border-line hover:border-ink"
+                          }`}
+                        >
+                          {v.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="w-10 h-[1px] bg-line mb-8" />
 
@@ -438,8 +494,10 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-5 py-3">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
-              <p className="font-serif text-xl text-ink leading-none">{formatPrice(product.price)}</p>
-              <p className="text-[11px] text-slate leading-none mt-1">{shippingInfo.vatLabelShort}</p>
+              <p className="font-serif text-xl text-ink leading-none">{formatPrice(activePrice)}</p>
+              <p className="text-[11px] text-slate leading-none mt-1">
+                {activeVariant ? `Maat ${activeVariant.label}` : shippingInfo.vatLabelShort}
+              </p>
             </div>
             <button
               onClick={handleAddToCart}

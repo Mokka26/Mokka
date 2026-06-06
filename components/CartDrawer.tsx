@@ -106,7 +106,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                     {items.map((item) => {
                       const thumb = firstImageUrl(item.product.images);
                       return (
-                        <li key={item.productId} className="flex gap-4">
+                        <li key={item.lineKey} className="flex gap-4">
                           {/* Afbeelding */}
                           <Link
                             href={productUrl(item.product)}
@@ -127,9 +127,12 @@ export default function CartDrawer({ open, onClose }: Props) {
                           {/* Info */}
                           <div className="flex-1 min-w-0 flex flex-col">
                             <p className="eyebrow mb-1 truncate">{item.product.category}</p>
-                            <h4 className="font-serif text-base text-ink leading-tight mb-2 truncate">
+                            <h4 className="font-serif text-base text-ink leading-tight mb-1 truncate">
                               {item.product.name}
                             </h4>
+                            {item.variantLabel && (
+                              <p className="text-[11px] text-stone mb-1">Maat {item.variantLabel}</p>
+                            )}
                             <p className="font-serif text-sm text-ink mb-auto">
                               &euro;{item.product.price.toFixed(2)}
                             </p>
@@ -138,7 +141,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                             <div className="flex items-center justify-between mt-3">
                               <div className="flex items-center border border-line">
                                 <button
-                                  onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                                  onClick={() => updateQuantity(item.lineKey, item.quantity - 1)}
                                   className="w-7 h-7 flex items-center justify-center text-stone hover:text-ink transition-colors text-sm"
                                   aria-label="Minder"
                                 >
@@ -148,7 +151,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                                   {item.quantity}
                                 </span>
                                 <button
-                                  onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                                  onClick={() => updateQuantity(item.lineKey, item.quantity + 1)}
                                   className="w-7 h-7 flex items-center justify-center text-stone hover:text-ink transition-colors text-sm"
                                   aria-label="Meer"
                                 >
@@ -156,7 +159,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                                 </button>
                               </div>
                               <button
-                                onClick={() => removeFromCart(item.productId)}
+                                onClick={() => removeFromCart(item.lineKey)}
                                 className="text-[10px] text-stone hover:text-error transition-colors uppercase tracking-wider"
                               >
                                 Verwijderen

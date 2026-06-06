@@ -25,9 +25,18 @@ export interface CartProduct {
 }
 
 export interface CartItemType {
+  /** Unieke regel-sleutel: productId, of productId::maat bij maat-varianten. */
+  lineKey: string;
   productId: string;
+  /** Gekozen maat (bv. "140 × 200"); null bij producten zonder maatkeuze. */
+  variantLabel: string | null;
   quantity: number;
   product: CartProduct;
+}
+
+/** Regel-sleutel: zonder maat = productId; met maat = productId::maat. */
+export function makeLineKey(productId: string, variantLabel?: string | null): string {
+  return variantLabel ? `${productId}::${variantLabel}` : productId;
 }
 
 const CART_KEY = "mokka_cart";
@@ -69,29 +78,32 @@ function persist(next: CartItemType[]) {
 
 // ─── Public actions (module-level → stabiele refs) ───
 
-export function addToCart(product: CartProduct) {
-  const existing = items.find((i) => i.productId === product.id);
+export function addToCart(product: CartProduct, variantLabel?: string | null) {
+  // product.price moet al de regel-prijs zijn (bij maat-varianten = maatprijs).
+  const lineKey = makeLineKey(product.id, variantLabel);
+  const existing = items.find((i) => i.lineKey === lineKey);
   if (existing) {
     persist(
-      items.map((i) =>
-        i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
-      ),
+      items.map((i) => (i.lineKey === lineKey ? { ...i, quantity: i.quantity + 1 } : i)),
     );
   } else {
-    persist([...items, { productId: product.id, quantity: 1, product }]);
+    persist([
+      ...items,
+      { lineKey, productId: product.id, variantLabel: variantLabel ?? null, quantity: 1, product },
+    ]);
   }
 }
 
-export function removeFromCart(productId: string) {
-  persist(items.filter((i) => i.productId !== productId));
+export function removeFromCart(lineKey: string) {
+  persist(items.filter((i) => i.lineKey !== lineKey));
 }
 
-export function updateQuantity(productId: string, quantity: number) {
+export function updateQuantity(lineKey: string, quantity: number) {
   if (quantity <= 0) {
-    removeFromCart(productId);
+    removeFromCart(lineKey);
     return;
   }
-  persist(items.map((i) => (i.productId === productId ? { ...i, quantity } : i)));
+  persist(items.map((i) => (i.lineKey === lineKey ? { ...i, quantity } : i)));
 }
 
 export function clearCart() {
@@ -108,6 +120,18 @@ export function clearCart() {
 
 let hydrated = false;
 
+// Oudere opgeslagen winkelwagens hebben nog geen lineKey/variantLabel — vul aan.
+function normalize(arr: unknown): CartItemType[] {
+  if (!Array.isArray(arr)) return EMPTY;
+  return arr
+    .filter((i): i is CartItemType => !!i && typeof i.productId === "string")
+    .map((i) => ({
+      ...i,
+      variantLabel: i.variantLabel ?? null,
+      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null),
+    }));
+}
+
 function hydrate() {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
@@ -116,7 +140,7 @@ function hydrate() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        items = parsed;
+        items = normalize(parsed);
         emit();
       }
     }
@@ -137,7 +161,7 @@ function hydrate() {
     try {
       const parsed = JSON.parse(e.newValue);
       if (Array.isArray(parsed)) {
-        items = parsed;
+        items = normalize(parsed);
         emit();
       }
     } catch {

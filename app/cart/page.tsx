@@ -58,7 +58,7 @@ export default function CartPage() {
               <div className="col-span-2 eyebrow text-right">Totaal</div>
             </div>
             {items.map((item, i) => (
-              <motion.div key={item.productId} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <motion.div key={item.lineKey} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <CartItem item={item} />
               </motion.div>
             ))}

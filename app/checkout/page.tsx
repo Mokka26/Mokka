@@ -275,7 +275,7 @@ export default function CheckoutPage() {
             <h3 className="font-serif text-2xl text-ink mt-3 mb-8">Jouw Bestelling</h3>
             <div className="space-y-5 mb-8">
               {items.map((item) => (
-                <div key={item.productId} className="flex gap-4">
+                <div key={item.lineKey} className="flex gap-4">
                   <div className="relative w-20 h-20 bg-bone flex-shrink-0 overflow-hidden">
                     {firstImageUrl(item.product.images) && (
                       <Image
@@ -289,6 +289,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-ink text-sm font-medium truncate">{item.product.name}</p>
+                    {item.variantLabel && (
+                      <p className="text-stone text-[11px] mt-0.5">Maat {item.variantLabel}</p>
+                    )}
                     <p className="text-stone text-[11px] uppercase tracking-[0.2em] mt-1">Aantal: {item.quantity}</p>
                     <p className="text-accent text-sm font-medium mt-1">{formatPrice(item.product.price * item.quantity)}</p>
                   </div>
