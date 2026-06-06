@@ -16,6 +16,10 @@ model Product {
   category     String
   images       String   @db.Text
   specs        String?  @db.Text
+  // Maat-varianten met eigen prijs (JSON-array), bv. bedden:
+  // [{"label":"140 × 200","price":599},{"label":"160 × 200","price":699}]
+  // Leeg/null = product met één vaste prijs (price-veld).
+  sizeVariants String?  @db.Text
   featured     Boolean  @default(false)
   stock        Int      @default(10)
   deliveryTime String?

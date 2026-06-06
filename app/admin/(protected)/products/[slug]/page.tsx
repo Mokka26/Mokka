@@ -24,6 +24,19 @@ function parseSpecs(raw: string | null): Record<string, string> {
   }
 }
 
+function parseSizeVariants(raw: string | null): { label: string; price: number }[] {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((v) => v && typeof v.label === "string" && typeof v.price === "number")
+      .map((v) => ({ label: v.label, price: v.price }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function AdminProductEditPage({
   params,
 }: {
@@ -79,6 +92,7 @@ export default async function AdminProductEditPage({
           featured: product.featured,
           hidden: product.hidden,
           specs: parseSpecs(product.specs),
+          sizeVariants: parseSizeVariants(product.sizeVariants),
           stock: product.stock,
           deliveryTime: product.deliveryTime,
           colorGroup: product.colorGroup,

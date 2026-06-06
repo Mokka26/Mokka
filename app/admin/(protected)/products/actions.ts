@@ -64,6 +64,29 @@ const specsRecordSchema = z
   .record(z.string().min(1).max(50), z.string().min(1).max(200))
   .refine((r) => Object.keys(r).length <= 20, { message: "Max 20 specs" });
 
+// Maat-varianten (bv. bedden): label + eigen prijs. Leeg → null (één prijs).
+const sizeVariantsSchema = z
+  .array(z.object({ label: z.string().min(1).max(40), price: z.number().nonnegative().max(999999) }))
+  .max(12)
+  .nullable();
+
+function parseSizeVariants(raw: FormDataEntryValue | null): { label: string; price: number }[] | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return null;
+    const out: { label: string; price: number }[] = [];
+    for (const it of arr) {
+      const label = typeof it?.label === "string" ? it.label.trim() : "";
+      const price = typeof it?.price === "number" ? it.price : Number(it?.price);
+      if (label && Number.isFinite(price) && price >= 0) out.push({ label, price });
+    }
+    return out.length > 0 ? out : null;
+  } catch {
+    return null;
+  }
+}
+
 const hexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable();
 
 const fullUpdateSchema = z.object({
@@ -76,6 +99,7 @@ const fullUpdateSchema = z.object({
   featured: z.boolean(),
   hidden: z.boolean(),
   specs: specsRecordSchema.nullable(),
+  sizeVariants: sizeVariantsSchema,
   stock: z.number().int().nonnegative().max(99999),
   deliveryTime: z.string().max(80).nullable(),
   colorGroup: z.string().max(80).nullable(),
@@ -132,6 +156,7 @@ export async function updateProductFull(
     featured: formData.get("featured") === "on",
     hidden: formData.get("hidden") === "on",
     specs: specsParsed,
+    sizeVariants: parseSizeVariants(formData.get("sizeVariants")),
     stock: Number(formData.get("stock") ?? 0),
     deliveryTime: trimOrNull(formData.get("deliveryTime")),
     colorGroup: trimOrNull(formData.get("colorGroup")),
@@ -149,7 +174,7 @@ export async function updateProductFull(
     return { fieldErrors };
   }
 
-  const { id, specs, ...rest } = parsed.data;
+  const { id, specs, sizeVariants, ...rest } = parsed.data;
 
   // Is de slug (URL) gewijzigd?
   const existing = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
@@ -167,7 +192,11 @@ export async function updateProductFull(
   try {
     updated = await prisma.product.update({
       where: { id },
-      data: { ...rest, specs: specs ? JSON.stringify(specs) : null },
+      data: {
+        ...rest,
+        specs: specs ? JSON.stringify(specs) : null,
+        sizeVariants: sizeVariants ? JSON.stringify(sizeVariants) : null,
+      },
     });
   } catch {
     return { error: "Update mislukt" };
@@ -276,6 +305,7 @@ const createSchema = z.object({
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   images: z.array(productImageSchema).default([]),
+  sizeVariants: sizeVariantsSchema.default(null),
   stock: z.number().int().nonnegative().max(99999).default(10),
   deliveryTime: z.string().max(80).nullable().default(null),
   colorGroup: z.string().max(80).nullable().default(null),
@@ -318,6 +348,7 @@ export async function createProduct(
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     images,
+    sizeVariants: parseSizeVariants(formData.get("sizeVariants")),
     stock: Number(formData.get("stock") ?? 10),
     deliveryTime: trimOrNull(formData.get("deliveryTime")),
     colorGroup: trimOrNull(formData.get("colorGroup")),
@@ -340,9 +371,13 @@ export async function createProduct(
     return { fieldErrors: { slug: "Slug bestaat al, kies een andere" } };
   }
 
-  const { images: imageList, ...rest } = parsed.data;
+  const { images: imageList, sizeVariants, ...rest } = parsed.data;
   const created = await prisma.product.create({
-    data: { ...rest, images: JSON.stringify(imageList) },
+    data: {
+      ...rest,
+      images: JSON.stringify(imageList),
+      sizeVariants: sizeVariants ? JSON.stringify(sizeVariants) : null,
+    },
   });
 
   revalidatePath("/admin");

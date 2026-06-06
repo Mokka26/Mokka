@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import SpecsEditor from "@/components/admin/SpecsEditor";
+import SizePriceEditor, { type SizeVariant } from "@/components/admin/SizePriceEditor";
 import { updateProductFull, type FullUpdateState } from "../actions";
 import { dbCategoryToRouteSlug } from "@/lib/categories";
 
@@ -20,6 +21,7 @@ type Props = {
     featured: boolean;
     hidden: boolean;
     specs: Record<string, string>;
+    sizeVariants: SizeVariant[];
     stock: number;
     deliveryTime: string | null;
     colorGroup: string | null;
@@ -108,6 +110,17 @@ export default function EditProductForm({ product, categories, sources }: Props)
             Verschijnt als tabel op de productpagina onder de beschrijving.
           </p>
           <SpecsEditor name="specs" initial={product.specs} />
+        </div>
+
+        <div>
+          <label className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+            Maten &amp; prijzen
+          </label>
+          <p className="text-[11px] text-stone mb-3">
+            Voor bv. bedden: maten met een eigen prijs. De klant kiest de maat op
+            de productpagina. Leeg laten = één vaste prijs.
+          </p>
+          <SizePriceEditor name="sizeVariants" initial={product.sizeVariants} />
         </div>
       </div>
 
