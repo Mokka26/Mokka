@@ -240,7 +240,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                     {images.map((img, i) => (
                       <div
                         key={i}
-                        className="relative flex-[0_0_100%] aspect-square bg-white"
+                        className="flex-[0_0_100%] bg-white"
                       >
                         <Image
                           src={cldOptimize(img, {
@@ -253,11 +253,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                             quality: "auto:good",
                           })}
                           alt={`${product.name} — ${i + 1}`}
-                          fill
+                          width={1600}
+                          height={1600}
                           priority={i === 0}
                           unoptimized
-                          className="object-cover"
-                          sizes="(max-width: 640px) 92vw, 88vw"
+                          className="w-full h-auto object-cover"
                         />
                       </div>
                     ))}
