@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getMollie, toMollieAmount } from "@/lib/mollie";
@@ -33,8 +34,16 @@ const checkoutSchema = z.object({
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
 
-function baseUrl(): string {
-  return (process.env.NEXT_PUBLIC_BASE_URL || businessInfo.siteUrl).replace(/\/$/, "");
+async function baseUrl(): Promise<string> {
+  // Voorkeur: expliciete env-var (stabiel, canoniek). Anders leiden we het
+  // domein af uit het request → lokaal = http://localhost:3000, productie =
+  // je echte domein. Zo werkt afrekenen lokaal én live zonder extra config.
+  const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  if (env) return env;
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+  return host ? `${proto}://${host}` : businessInfo.siteUrl.replace(/\/$/, "");
 }
 
 export async function createCheckout(input: unknown): Promise<CheckoutResult> {
@@ -77,7 +86,7 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   // Mollie-betaling. Webhook alleen meegeven als de basis publiek (https,
   // geen localhost) is — Mollie weigert anders. Lokaal valt het terug op de
   // statuscontrole op de retourpagina.
-  const base = baseUrl();
+  const base = await baseUrl();
   const webhookOk = base.startsWith("https://") && !base.includes("localhost") && !base.includes("127.0.0.1");
   try {
     const payment = await getMollie().payments.create({
