@@ -59,6 +59,7 @@ export default async function CategoryPage({ params }: Props) {
       slug: true,
       name: true,
       price: true,
+      listPrice: true,
       category: true,
       images: true,
       featured: true,

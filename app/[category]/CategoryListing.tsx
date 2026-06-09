@@ -11,6 +11,7 @@ type Product = {
   slug: string;
   name: string;
   price: number;
+  listPrice: number | null;
   category: string;
   images: string;
   featured: boolean;

@@ -23,6 +23,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  listPrice?: number | null;
   category: string;
   images: string;
   specs?: string | null;
@@ -35,7 +36,7 @@ interface Product {
   colorHex?: string | null;
 }
 
-type SizeVariant = { label: string; price: number };
+type SizeVariant = { label: string; price: number; listPrice?: number };
 
 function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
   if (!raw) return [];
@@ -44,7 +45,11 @@ function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((v) => v && typeof v.label === "string" && typeof v.price === "number")
-      .map((v) => ({ label: String(v.label), price: Number(v.price) }));
+      .map((v) => ({
+        label: String(v.label),
+        price: Number(v.price),
+        ...(typeof v.listPrice === "number" ? { listPrice: Number(v.listPrice) } : {}),
+      }));
   } catch {
     return [];
   }
@@ -104,6 +109,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const [selectedSize, setSelectedSize] = useState(0);
   const activeVariant = sizeVariants[selectedSize] ?? null;
   const activePrice = activeVariant ? activeVariant.price : product.price;
+  const activeListPrice = activeVariant ? activeVariant.listPrice ?? null : product.listPrice ?? null;
+  const hasDiscount = activeListPrice != null && activeListPrice > activePrice;
 
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -370,9 +377,16 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               )}
 
               <div className="mb-8">
-                <p className="font-serif text-2xl lg:text-3xl text-accent font-light tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
-                  {formatPrice(activePrice)}
-                </p>
+                <div className="flex items-baseline gap-3">
+                  {hasDiscount && (
+                    <span className="font-serif text-lg lg:text-xl text-stone/70 font-light line-through tabular-nums">
+                      {formatPrice(activeListPrice)}
+                    </span>
+                  )}
+                  <p className="font-serif text-2xl lg:text-3xl text-accent font-light tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
+                    {formatPrice(activePrice)}
+                  </p>
+                </div>
                 <p className="text-[13px] text-slate mt-1">{shippingInfo.vatLabelShort}</p>
               </div>
 
@@ -494,7 +508,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-5 py-3">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
-              <p className="font-serif text-xl text-ink leading-none">{formatPrice(activePrice)}</p>
+              <p className="font-serif text-xl text-ink leading-none">
+                {hasDiscount && (
+                  <span className="text-sm text-stone/70 line-through mr-2">{formatPrice(activeListPrice)}</span>
+                )}
+                {formatPrice(activePrice)}
+              </p>
               <p className="text-[11px] text-slate leading-none mt-1">
                 {activeVariant ? `Maat ${activeVariant.label}` : shippingInfo.vatLabelShort}
               </p>

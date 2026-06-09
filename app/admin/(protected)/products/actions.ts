@@ -64,27 +64,48 @@ const specsRecordSchema = z
   .record(z.string().min(1).max(50), z.string().min(1).max(200))
   .refine((r) => Object.keys(r).length <= 20, { message: "Max 20 specs" });
 
-// Maat-varianten (bv. bedden): label + eigen prijs. Leeg → null (één prijs).
+// Maat-varianten (bv. bedden): label + verkoopprijs + optionele adviesprijs.
+// Leeg → null (product heeft één prijs).
 const sizeVariantsSchema = z
-  .array(z.object({ label: z.string().min(1).max(40), price: z.number().nonnegative().max(999999) }))
+  .array(
+    z.object({
+      label: z.string().min(1).max(40),
+      price: z.number().nonnegative().max(999999),
+      listPrice: z.number().nonnegative().max(999999).optional(),
+    }),
+  )
   .max(12)
   .nullable();
 
-function parseSizeVariants(raw: FormDataEntryValue | null): { label: string; price: number }[] | null {
+type ParsedSizeVariant = { label: string; price: number; listPrice?: number };
+
+function parseSizeVariants(raw: FormDataEntryValue | null): ParsedSizeVariant[] | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
   try {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return null;
-    const out: { label: string; price: number }[] = [];
+    const out: ParsedSizeVariant[] = [];
     for (const it of arr) {
       const label = typeof it?.label === "string" ? it.label.trim() : "";
       const price = typeof it?.price === "number" ? it.price : Number(it?.price);
-      if (label && Number.isFinite(price) && price >= 0) out.push({ label, price });
+      if (!label || !Number.isFinite(price) || price < 0) continue;
+      const lpRaw = typeof it?.listPrice === "number" ? it.listPrice : Number(it?.listPrice);
+      const variant: ParsedSizeVariant = { label, price };
+      // Adviesprijs alleen bewaren als die hoger is dan de verkoopprijs.
+      if (Number.isFinite(lpRaw) && lpRaw > price) variant.listPrice = lpRaw;
+      out.push(variant);
     }
     return out.length > 0 ? out : null;
   } catch {
     return null;
   }
+}
+
+// Adviesprijs op productniveau: leeg of ≤ verkoopprijs → null (geen korting).
+function parseListPrice(raw: FormDataEntryValue | null, price: number): number | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > price ? n : null;
 }
 
 const hexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable();
@@ -95,6 +116,7 @@ const fullUpdateSchema = z.object({
   name: z.string().min(2).max(200),
   description: z.string().min(1).max(5000),
   price: z.number().nonnegative().max(999999),
+  listPrice: z.number().nonnegative().max(999999).nullable(),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   hidden: z.boolean(),
@@ -152,6 +174,7 @@ export async function updateProductFull(
     name: formData.get("name"),
     description: formData.get("description"),
     price: Number(formData.get("price")),
+    listPrice: parseListPrice(formData.get("listPrice"), Number(formData.get("price"))),
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     hidden: formData.get("hidden") === "on",
@@ -302,6 +325,7 @@ const createSchema = z.object({
   slug: z.string().min(2).max(120).regex(/^[a-z0-9-]+$/, "Alleen kleine letters, cijfers en streepjes"),
   description: z.string().min(1).max(5000),
   price: z.number().nonnegative().max(999999),
+  listPrice: z.number().nonnegative().max(999999).nullable().default(null),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   images: z.array(productImageSchema).default([]),
@@ -345,6 +369,7 @@ export async function createProduct(
     slug: slugify(String(formData.get("slug") || formData.get("name") || "")),
     description: formData.get("description"),
     price: Number(formData.get("price")),
+    listPrice: parseListPrice(formData.get("listPrice"), Number(formData.get("price"))),
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     images,

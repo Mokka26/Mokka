@@ -27,11 +27,14 @@ export function formatPrice(value: number): string {
 
 export function Price({
   value,
+  listPrice = null,
   vat = false,
   className = "",
   vatClassName = "",
 }: {
   value: number;
+  /** Adviesprijs; indien > value toont de component korting (doorgestreept). */
+  listPrice?: number | null;
   /** Toon "incl. btw"-label onder/naast de prijs */
   vat?: boolean;
   className?: string;
@@ -43,9 +46,18 @@ export function Price({
     return <span className={className}>Prijs op aanvraag</span>;
   }
 
+  const hasDiscount = listPrice != null && listPrice > value;
+
   return (
     <span className="inline-flex flex-col">
-      <span className={className}>{formatPrice(value)}</span>
+      <span className="inline-flex items-baseline gap-2">
+        {hasDiscount && (
+          <span className="text-stone/70 font-normal line-through text-[0.78em] tabular-nums">
+            {formatPrice(listPrice)}
+          </span>
+        )}
+        <span className={className}>{formatPrice(value)}</span>
+      </span>
       {vat && (
         <span className={vatClassName || "text-[11px] text-slate leading-none mt-0.5"}>
           {shippingInfo.vatLabelShort}

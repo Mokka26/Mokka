@@ -17,6 +17,7 @@ type Props = {
     name: string;
     description: string;
     price: number;
+    listPrice: number | null;
     category: string;
     featured: boolean;
     hidden: boolean;
@@ -126,7 +127,7 @@ export default function EditProductForm({ product, categories, sources }: Props)
 
       <aside className="space-y-6">
         <div className="bg-white border border-line p-5 space-y-5">
-          <Field label="Prijs (€)" error={state.fieldErrors?.price}>
+          <Field label="Verkoopprijs (€)" error={state.fieldErrors?.price}>
             <input
               name="price"
               type="number"
@@ -136,6 +137,22 @@ export default function EditProductForm({ product, categories, sources }: Props)
               required
               className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
             />
+          </Field>
+
+          <Field label="Adviesprijs (€) — optioneel" error={state.fieldErrors?.listPrice}>
+            <input
+              name="listPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={product.listPrice != null ? product.listPrice.toFixed(2) : ""}
+              placeholder="Hoger dan verkoopprijs = korting"
+              className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
+            />
+            <p className="text-[11px] text-stone mt-1.5">
+              Vul een hogere prijs in dan de verkoopprijs om een doorgestreepte
+              korting te tonen. Leeg = geen korting.
+            </p>
           </Field>
 
           <Field label="Categorie" error={state.fieldErrors?.category}>

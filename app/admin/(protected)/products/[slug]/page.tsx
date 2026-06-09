@@ -24,14 +24,18 @@ function parseSpecs(raw: string | null): Record<string, string> {
   }
 }
 
-function parseSizeVariants(raw: string | null): { label: string; price: number }[] {
+function parseSizeVariants(raw: string | null): { label: string; price: number; listPrice?: number }[] {
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((v) => v && typeof v.label === "string" && typeof v.price === "number")
-      .map((v) => ({ label: v.label, price: v.price }));
+      .map((v) => ({
+        label: v.label,
+        price: v.price,
+        ...(typeof v.listPrice === "number" ? { listPrice: v.listPrice } : {}),
+      }));
   } catch {
     return [];
   }
@@ -88,6 +92,7 @@ export default async function AdminProductEditPage({
           name: product.name,
           description: product.description,
           price: product.price,
+          listPrice: product.listPrice,
           category: product.category,
           featured: product.featured,
           hidden: product.hidden,

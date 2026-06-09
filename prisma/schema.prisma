@@ -12,7 +12,8 @@ model Product {
   slug         String   @unique
   name         String
   description  String   @db.Text
-  price        Float
+  price        Float    // verkoopprijs (wat de klant betaalt)
+  listPrice    Float?   // adviesprijs; indien > price → korting (doorgestreept)
   category     String
   images       String   @db.Text
   specs        String?  @db.Text

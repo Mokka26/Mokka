@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-export type SizeVariant = { label: string; price: number };
-type Row = { id: string; label: string; price: string };
+export type SizeVariant = { label: string; price: number; listPrice?: number };
+type Row = { id: string; label: string; price: string; listPrice: string };
 
 // Snelknoppen voor de meest voorkomende bedmaten (breedte × 200).
 const PRESETS = ["90 × 200", "140 × 200", "160 × 200", "180 × 200"];
@@ -14,7 +14,12 @@ function rowsToVariants(rows: Row[]): SizeVariant[] {
   for (const r of rows) {
     const label = r.label.trim();
     const price = Number(r.price);
-    if (label && Number.isFinite(price) && price >= 0) out.push({ label, price });
+    if (!label || !Number.isFinite(price) || price < 0) continue;
+    const lp = Number(r.listPrice);
+    const variant: SizeVariant = { label, price };
+    // Adviesprijs alleen meenemen als die hoger is dan de verkoopprijs.
+    if (r.listPrice.trim() && Number.isFinite(lp) && lp > price) variant.listPrice = lp;
+    out.push(variant);
   }
   return out;
 }
@@ -27,13 +32,18 @@ export default function SizePriceEditor({
   initial: SizeVariant[];
 }) {
   const [rows, setRows] = useState<Row[]>(() =>
-    initial.map((v, i) => ({ id: `${i}-${v.label}`, label: v.label, price: String(v.price) })),
+    initial.map((v, i) => ({
+      id: `${i}-${v.label}`,
+      label: v.label,
+      price: String(v.price),
+      listPrice: v.listPrice != null ? String(v.listPrice) : "",
+    })),
   );
 
   const addRow = (preset?: string) =>
     setRows((rs) => [
       ...rs,
-      { id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, label: preset ?? "", price: "" },
+      { id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, label: preset ?? "", price: "", listPrice: "" },
     ]);
 
   const updateRow = (id: string, patch: Partial<Row>) =>
@@ -52,7 +62,8 @@ export default function SizePriceEditor({
         <div className="space-y-2 mb-3">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone">
             <span className="w-44">Maat</span>
-            <span className="flex-1">Prijs (€, incl. btw)</span>
+            <span className="flex-1">Verkoopprijs (€)</span>
+            <span className="flex-1">Adviesprijs (€, optioneel)</span>
             <span className="w-9" />
           </div>
           {rows.map((row) => (
@@ -71,6 +82,15 @@ export default function SizePriceEditor({
                 onChange={(e) => updateRow(row.id, { price: e.target.value })}
                 placeholder="bijv. 599"
                 className="flex-1 px-3 py-2 bg-white border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-accent"
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={row.listPrice}
+                onChange={(e) => updateRow(row.id, { listPrice: e.target.value })}
+                placeholder="bijv. 699"
+                className="flex-1 px-3 py-2 bg-white border border-line text-stone text-sm tabular-nums focus:outline-none focus:border-accent"
               />
               <button
                 type="button"

@@ -13,6 +13,7 @@ interface Product {
   slug: string;
   name: string;
   price: number;
+  listPrice?: number | null;
   category: string;
   images: string;
   featured?: boolean;
@@ -277,6 +278,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           <div className="flex items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-line/60 mt-auto">
             <Price
               value={product.price}
+              listPrice={product.listPrice}
               vat
               className="font-serif text-base sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]"
               vatClassName="text-[10px] text-slate leading-none mt-0.5"
