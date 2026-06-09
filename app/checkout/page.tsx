@@ -4,11 +4,13 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { formatPrice } from "@/components/ui/price";
+import { createCheckout } from "./actions";
 
 type FormFields = {
   firstName: string;
@@ -50,10 +52,9 @@ function validateAll(form: FormFields): Partial<Record<FieldName, string>> {
 }
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice } = useCart();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [form, setForm] = useState<FormFields>({ firstName: "", lastName: "", email: "", phone: "", address: "", houseNumber: "", city: "", zipCode: "" });
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
@@ -93,38 +94,28 @@ export default function CheckoutPage() {
       return;
     }
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    clearCart();
-    setSuccess(true);
+    const result = await createCheckout({
+      customer: {
+        firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,
+        address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
+      },
+      items: items.map((i) => ({
+        productId: i.productId,
+        variantLabel: i.variantLabel,
+        quantity: i.quantity,
+      })),
+    });
+    if (result.ok) {
+      // Door naar de beveiligde Mollie-betaalpagina.
+      window.location.href = result.url;
+      return;
+    }
     setSubmitting(false);
+    toast.error("Betaling starten mislukt", { description: result.error });
   };
 
   const fieldClass = (name: FieldName) =>
     `input-field ${errors[name] && touched[name] ? "border-red-700 focus:border-red-700" : ""}`;
-
-  if (success) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white border border-line p-12 sm:p-20 text-center max-w-2xl w-full"
-        >
-          <div className="w-16 h-16 border border-line rounded-full flex items-center justify-center mx-auto mb-10">
-            <svg className="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p className="eyebrow mb-6">Bedankt</p>
-          <h1 className="display-md text-ink mb-6">Bestelling Bevestigd!</h1>
-          <p className="body-lg text-slate mb-2">Bedankt voor je bestelling, {form.firstName}.</p>
-          <p className="text-stone text-sm mb-12">Je ontvangt een bevestiging per e-mail.</p>
-          <button onClick={() => router.push("/")} className="btn-primary">Terug naar Home</button>
-        </motion.div>
-      </div>
-    );
-  }
 
   if (items.length === 0) {
     return (

@@ -17,7 +17,7 @@ import {
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Producten", icon: Package },
-  { href: "/admin/orders", label: "Bestellingen", icon: ShoppingBag, disabled: true },
+  { href: "/admin/orders", label: "Bestellingen", icon: ShoppingBag },
   { href: "/admin/trash", label: "Prullenbak", icon: Trash2 },
   { href: "/admin/settings", label: "Instellingen", icon: Settings },
 ];
@@ -95,19 +95,6 @@ export default function AdminSidebar(props: Props) {
                 ? pathname === item.href
                 : pathname?.startsWith(item.href);
               const Icon = item.icon;
-              if (item.disabled) {
-                return (
-                  <li key={item.href}>
-                    <span className="flex items-center gap-3 px-4 py-2.5 text-[13px] tracking-wide text-white/30 cursor-not-allowed">
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                      <span className="ml-auto text-[9px] uppercase tracking-[0.2em] text-white/30">
-                        soon
-                      </span>
-                    </span>
-                  </li>
-                );
-              }
               return (
                 <li key={item.href}>
                   <Link

@@ -59,7 +59,9 @@ model Order {
   id         String      @id @default(cuid())
   orderNumber String     @unique
   total      Float
-  status     String      @default("pending")
+  shipping   Float       @default(0)
+  status     String      @default("open") // open | paid | failed | canceled | expired
+  molliePaymentId String?
   firstName  String
   lastName   String
   email      String
@@ -71,16 +73,20 @@ model Order {
   items      OrderItem[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
+  @@index([status])
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Float
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id           String  @id @default(cuid())
+  orderId      String
+  productId    String
+  productName  String  @default("") // snapshot — overleeft prijs/naam-wijziging
+  variantLabel String?              // gekozen maat, bv. "140 × 200"
+  quantity     Int
+  price        Float
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model AdminUser {
