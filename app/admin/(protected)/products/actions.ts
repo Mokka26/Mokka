@@ -66,18 +66,20 @@ const specsRecordSchema = z
 
 // Maat-varianten (bv. bedden): label + verkoopprijs + optionele adviesprijs.
 // Leeg → null (product heeft één prijs).
+// label is verplicht; price/listPrice zijn optionele overrides. Een maat
+// zonder price gebruikt de product-verkoopprijs (en advies de product-advies).
 const sizeVariantsSchema = z
   .array(
     z.object({
       label: z.string().min(1).max(40),
-      price: z.number().nonnegative().max(999999),
+      price: z.number().nonnegative().max(999999).optional(),
       listPrice: z.number().nonnegative().max(999999).optional(),
     }),
   )
   .max(12)
   .nullable();
 
-type ParsedSizeVariant = { label: string; price: number; listPrice?: number };
+type ParsedSizeVariant = { label: string; price?: number; listPrice?: number };
 
 function parseSizeVariants(raw: FormDataEntryValue | null): ParsedSizeVariant[] | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
@@ -87,12 +89,13 @@ function parseSizeVariants(raw: FormDataEntryValue | null): ParsedSizeVariant[] 
     const out: ParsedSizeVariant[] = [];
     for (const it of arr) {
       const label = typeof it?.label === "string" ? it.label.trim() : "";
+      if (!label) continue;
+      const variant: ParsedSizeVariant = { label };
       const price = typeof it?.price === "number" ? it.price : Number(it?.price);
-      if (!label || !Number.isFinite(price) || price < 0) continue;
-      const lpRaw = typeof it?.listPrice === "number" ? it.listPrice : Number(it?.listPrice);
-      const variant: ParsedSizeVariant = { label, price };
-      // Adviesprijs alleen bewaren als die hoger is dan de verkoopprijs.
-      if (Number.isFinite(lpRaw) && lpRaw > price) variant.listPrice = lpRaw;
+      if (Number.isFinite(price) && price > 0) variant.price = price;
+      const lp = typeof it?.listPrice === "number" ? it.listPrice : Number(it?.listPrice);
+      // Adviesprijs alleen als die hoger is dan de (eventuele) maat-verkoopprijs.
+      if (Number.isFinite(lp) && lp > (variant.price ?? 0)) variant.listPrice = lp;
       out.push(variant);
     }
     return out.length > 0 ? out : null;

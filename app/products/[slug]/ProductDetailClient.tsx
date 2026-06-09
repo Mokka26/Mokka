@@ -36,7 +36,7 @@ interface Product {
   colorHex?: string | null;
 }
 
-type SizeVariant = { label: string; price: number; listPrice?: number };
+type SizeVariant = { label: string; price?: number; listPrice?: number };
 
 function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
   if (!raw) return [];
@@ -44,10 +44,10 @@ function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
     return arr
-      .filter((v) => v && typeof v.label === "string" && typeof v.price === "number")
+      .filter((v) => v && typeof v.label === "string")
       .map((v) => ({
         label: String(v.label),
-        price: Number(v.price),
+        ...(typeof v.price === "number" ? { price: Number(v.price) } : {}),
         ...(typeof v.listPrice === "number" ? { listPrice: Number(v.listPrice) } : {}),
       }));
   } catch {
@@ -108,8 +108,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const sizeVariants = parseSizeVariants(product.sizeVariants);
   const [selectedSize, setSelectedSize] = useState(0);
   const activeVariant = sizeVariants[selectedSize] ?? null;
-  const activePrice = activeVariant ? activeVariant.price : product.price;
-  const activeListPrice = activeVariant ? activeVariant.listPrice ?? null : product.listPrice ?? null;
+  // Maat-prijs is een optionele override; leeg → product-verkoopprijs/advies.
+  const activePrice = activeVariant?.price ?? product.price;
+  const activeListPrice = activeVariant?.listPrice ?? product.listPrice ?? null;
   const hasDiscount = activeListPrice != null && activeListPrice > activePrice;
 
   const [added, setAdded] = useState(false);

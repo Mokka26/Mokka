@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-export type SizeVariant = { label: string; price: number; listPrice?: number };
+export type SizeVariant = { label: string; price?: number; listPrice?: number };
 type Row = { id: string; label: string; price: string; listPrice: string };
 
 // Snelknoppen voor de meest voorkomende bedmaten (breedte × 200).
@@ -13,12 +13,16 @@ function rowsToVariants(rows: Row[]): SizeVariant[] {
   const out: SizeVariant[] = [];
   for (const r of rows) {
     const label = r.label.trim();
+    if (!label) continue;
+    const variant: SizeVariant = { label };
+    // Prijs is optioneel: leeg = gebruik de product-verkoopprijs.
     const price = Number(r.price);
-    if (!label || !Number.isFinite(price) || price < 0) continue;
+    if (r.price.trim() && Number.isFinite(price) && price > 0) variant.price = price;
+    // Adviesprijs per maat alleen zinvol als er een maat-prijs is die lager is.
     const lp = Number(r.listPrice);
-    const variant: SizeVariant = { label, price };
-    // Adviesprijs alleen meenemen als die hoger is dan de verkoopprijs.
-    if (r.listPrice.trim() && Number.isFinite(lp) && lp > price) variant.listPrice = lp;
+    if (variant.price != null && r.listPrice.trim() && Number.isFinite(lp) && lp > variant.price) {
+      variant.listPrice = lp;
+    }
     out.push(variant);
   }
   return out;
@@ -35,7 +39,7 @@ export default function SizePriceEditor({
     initial.map((v, i) => ({
       id: `${i}-${v.label}`,
       label: v.label,
-      price: String(v.price),
+      price: v.price != null ? String(v.price) : "",
       listPrice: v.listPrice != null ? String(v.listPrice) : "",
     })),
   );
@@ -62,7 +66,7 @@ export default function SizePriceEditor({
         <div className="space-y-2 mb-3">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone">
             <span className="w-44">Maat</span>
-            <span className="flex-1">Verkoopprijs (€)</span>
+            <span className="flex-1">Verkoopprijs (€, leeg = productprijs)</span>
             <span className="flex-1">Adviesprijs (€, optioneel)</span>
             <span className="w-9" />
           </div>
@@ -80,7 +84,7 @@ export default function SizePriceEditor({
                 step="0.01"
                 value={row.price}
                 onChange={(e) => updateRow(row.id, { price: e.target.value })}
-                placeholder="bijv. 599"
+                placeholder="= productprijs"
                 className="flex-1 px-3 py-2 bg-white border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-accent"
               />
               <input
@@ -128,8 +132,8 @@ export default function SizePriceEditor({
 
       <p className="text-[12px] text-stone mt-3">
         {rows.length === 0
-          ? "Geen maten — dit product heeft één vaste prijs (het prijsveld hierboven)."
-          : "De laagste maatprijs hoeft niet gelijk te zijn aan het prijsveld; op de kaart toont de categorie de vaste basisprijs."}
+          ? "Geen maten — dit product heeft één prijs (de Verkoopprijs hierboven)."
+          : "Laat de prijs leeg om de Verkoopprijs/Adviesprijs van het product te gebruiken. Vul alleen een maat-prijs in als die maat een andere prijs heeft."}
       </p>
     </div>
   );
