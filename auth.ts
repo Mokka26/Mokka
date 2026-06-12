@@ -12,6 +12,9 @@ const credentialsSchema = z.object({
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  // Expliciet: accepteer zowel de v5-naam (AUTH_SECRET) als de v4-naam
+  // (NEXTAUTH_SECRET), zodat de juiste env-var altijd gevonden wordt.
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       credentials: {
