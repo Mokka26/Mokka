@@ -92,12 +92,10 @@ export function cldOptimize(
     } else if (mode === "fill") {
       parts.push("c_fill", "g_auto", `ar_${options.ar}`);
     } else {
-      // c_pad met b_auto: product volledig zichtbaar (geen crop), en de
-      // opvulling matcht de achtergrondkleur van de foto. Bij vierkante
-      // foto's is er geen opvulling; bij liggende/lifestyle-foto's krijg je
-      // randen in de kamerkleur i.p.v. lelijke witte balken → consistente
-      // kaarten over alle bronnen heen.
-      parts.push("c_pad", "b_auto", `ar_${options.ar}`);
+      // c_pad met WITTE achtergrond: product volledig zichtbaar, geen crop.
+      // b_white i.p.v. b_auto voorkomt gekleurde randen — product-foto's staan
+      // op witte achtergrond, dus padding is naadloos onzichtbaar.
+      parts.push("c_pad", "b_white", `ar_${options.ar}`);
     }
   }
   if (options.w) parts.push(`w_${options.w}`);
