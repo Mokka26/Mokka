@@ -81,22 +81,16 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
-  // Vierkante kaart (1:1): het overgrote deel van de productfoto's is vierkant,
-  // dus c_fill op 1:1 vult de tegel exact — geen witte randen, geen uitzoom,
-  // volledig product. Afwijkende verhoudingen worden minimaal bijgesneden.
-  //
-  // Uitzondering — brede liggende foto's (hoekbanken) op witte achtergrond:
-  // c_fill zou de armleuningen wegsnijden. Daar gebruiken we 'pad' (c_pad,
-  // b_white) zodat de hele bank zichtbaar is; de witruimte valt naadloos samen
-  // met de eigen witte fotostudio-achtergrond.
-  const CONTAIN_CATEGORIES = new Set(["hoekbanken"]);
-  const cardMode = CONTAIN_CATEGORIES.has(product.category) ? "pad" : "fill";
+  // Vierkante kaart (1:1) met c_fill + g_auto: élke kaart vult de tegel exact
+  // (geen witruimte), ongeacht de bronverhouding. Vierkante foto's passen
+  // precies; liggende/staande foto's worden rond het onderwerp bijgesneden.
+  // Eén uniforme regel voor álle categorieën → alle kaarten even groot.
   const firstDim = parsed[0];
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: "1:1",
         w: 1000,
-        mode: cardMode,
+        mode: "fill",
         upscale: true,
         sourceW: firstDim?.w,
         dpr: "auto",
