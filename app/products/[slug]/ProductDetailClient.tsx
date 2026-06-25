@@ -763,7 +763,11 @@ function DescriptionSection({ product }: { product: Product }) {
 }
 
 function HeroSpecs({ specs }: { specs: Record<string, string> }) {
-  const entries = Object.entries(specs);
+  // Levertijd niet in de spec-lijst tonen — die staat al in het levertijd-blok
+  // (StockDeliveryInfo). Voorkomt dat de levertijd dubbel op de pagina staat.
+  const entries = Object.entries(specs).filter(
+    ([k]) => !/^\s*(levertijd|levering|leverdatum|levertermijn)\s*$/i.test(k),
+  );
   if (entries.length === 0) return null;
   return (
     <details className="group border-t border-line mb-8">
