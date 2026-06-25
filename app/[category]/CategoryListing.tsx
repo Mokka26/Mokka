@@ -143,6 +143,19 @@ export default function CategoryListing({ category, products }: Props) {
     }
   }, [products, maxFilter, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
 
+  // Kleurgroepen samenvouwen: per colorGroup één kaart (de op-voorraad-
+  // representant, anders de eerste). De swatches op die kaart wijzen naar de
+  // andere kleuren. Producten zonder colorGroup blijven los.
+  const collapsed = useMemo(() => {
+    const rep = new Map<string, Product>();
+    for (const p of filtered) {
+      if (!p.colorGroup) continue;
+      const cur = rep.get(p.colorGroup);
+      if (!cur || ((p.stock ?? 0) > 0 && (cur.stock ?? 0) === 0)) rep.set(p.colorGroup, p);
+    }
+    return filtered.filter((p) => !p.colorGroup || rep.get(p.colorGroup) === p);
+  }, [filtered]);
+
   // Reset paginatie wanneer filter/sort verandert — anders blijft visibleCount
   // hoog terwijl filtered nu kleinere set is.
   useEffect(() => {
@@ -152,20 +165,20 @@ export default function CategoryListing({ category, products }: Props) {
   // IntersectionObserver: sentinel komt in view → laad volgende batch
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el || visibleCount >= filtered.length) return;
+    if (!el || visibleCount >= collapsed.length) return;
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length));
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, collapsed.length));
         }
       },
       { rootMargin: "400px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [visibleCount, filtered.length]);
+  }, [visibleCount, collapsed.length]);
 
-  const visible = filtered.slice(0, visibleCount);
+  const visible = collapsed.slice(0, visibleCount);
 
   const activeFilterCount =
     (maxFilter < maxPrice ? 1 : 0) +
@@ -218,7 +231,7 @@ export default function CategoryListing({ category, products }: Props) {
         {/* Resultaten + sort (mobile + desktop) */}
         <div className="flex items-center justify-between mb-8 px-2">
           <p className="text-[11px] uppercase tracking-[0.2em] text-stone">
-            {filtered.length} van {products.length} producten
+            {collapsed.length} van {products.length} producten
           </p>
           <label className="flex items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-stone">
             <span className="hidden sm:inline">Sorteer</span>
@@ -236,7 +249,7 @@ export default function CategoryListing({ category, products }: Props) {
         </div>
 
         {/* Product grid */}
-        {filtered.length === 0 ? (
+        {collapsed.length === 0 ? (
           <div className="text-center py-32">
             <p className="font-serif text-2xl text-ink mb-4">
               {products.length === 0 ? "Nog geen producten" : "Geen resultaten"}
@@ -268,13 +281,13 @@ export default function CategoryListing({ category, products }: Props) {
               />
             ))}
           </div>
-          {visibleCount < filtered.length && (
+          {visibleCount < collapsed.length && (
             <div
               ref={sentinelRef}
               aria-hidden
               className="h-12 mt-12 flex items-center justify-center text-[10px] uppercase tracking-[0.2em] text-stone"
             >
-              {visible.length} van {filtered.length} geladen…
+              {visible.length} van {collapsed.length} geladen…
             </div>
           )}
           </>
@@ -339,7 +352,7 @@ export default function CategoryListing({ category, products }: Props) {
                   onClick={() => setMobileSheetOpen(false)}
                   className="w-full bg-ink text-white px-6 py-3.5 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors"
                 >
-                  Toon {filtered.length} resultaten
+                  Toon {collapsed.length} resultaten
                 </button>
               </div>
             </motion.div>

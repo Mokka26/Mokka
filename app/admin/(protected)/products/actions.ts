@@ -46,6 +46,16 @@ export async function updateProductInline(
 
   try {
     await prisma.product.update({ where: { id }, data });
+    // Prijswijziging werkt door op alle kleuren van hetzelfde model.
+    if (data.price !== undefined) {
+      const prod = await prisma.product.findUnique({ where: { id }, select: { colorGroup: true } });
+      if (prod?.colorGroup) {
+        await prisma.product.updateMany({
+          where: { colorGroup: prod.colorGroup, deletedAt: null },
+          data: { price: data.price },
+        });
+      }
+    }
   } catch {
     return { ok: false, error: "Update mislukt" };
   }
@@ -226,6 +236,14 @@ export async function updateProductFull(
     });
   } catch {
     return { error: "Update mislukt" };
+  }
+
+  // Prijs én adviesprijs werken door op alle kleuren van hetzelfde model.
+  if (updated.colorGroup) {
+    await prisma.product.updateMany({
+      where: { colorGroup: updated.colorGroup, deletedAt: null },
+      data: { price: rest.price, listPrice: rest.listPrice },
+    });
   }
 
   revalidatePath("/admin");
