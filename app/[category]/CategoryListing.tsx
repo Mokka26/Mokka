@@ -277,6 +277,7 @@ export default function CategoryListing({ category, products }: Props) {
                 key={p.id}
                 product={p}
                 priority={i < 4}
+                wide={p.category === "hoekbanken" || p.category === "bankstellen"}
                 variants={p.colorGroup ? variantsByGroup.get(p.colorGroup) : undefined}
               />
             ))}

@@ -75,9 +75,12 @@ interface Props {
   variants?: ColorVariant[];
   /** Eerste card op een listing → priority + eager loading voor LCP */
   priority?: boolean;
+  /** Liggende 4:3-tegel i.p.v. vierkant — voor banken (liggende foto's vullen
+      dan zonder bijsnede én zonder randen). Alleen op de categorie-listing. */
+  wide?: boolean;
 }
 
-export default function ProductCard({ product, variants, priority = false }: Props) {
+export default function ProductCard({ product, variants, priority = false, wide = false }: Props) {
   const parsed = parseImages(product.images);
   const urls = imageUrls(product.images);
   const firstRaw = urls[0] ?? "";
@@ -89,18 +92,16 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   // c_fill zou de armleuningen wegsnijden. Daar gebruiken we 'pad' (c_pad,
   // b_white) zodat de hele bank zichtbaar is; de witruimte valt naadloos samen
   // met de eigen witte fotostudio-achtergrond.
-  // Tafels én banken hebben liggende lifestyle-foto's naast vierkante studio-
-  // foto's. 'contain' (c_pad + b_auto) toont altijd het hele meubel; vierkante
-  // foto's vullen exact, liggende krijgen een rand in de achtergrondkleur van
-  // de foto (geen wit). De rest (bedden, stoelen, …) vult met 'fill'.
-  const CONTAIN_CATEGORIES = new Set([
-    "eettafels", "salontafels", "bijzettafels", "hoekbanken", "bankstellen",
-  ]);
-  const cardMode = CONTAIN_CATEGORIES.has(product.category) ? "contain" : "fill";
+  // Banken (wide): liggende 4:3-tegel + 'fill' → hele bank, geen randen, geen
+  // bijsnede die telt (de scènes hebben ruim marge). Tafels: 'contain' (c_pad +
+  // b_auto) toont de hele tafel met rand in de achtergrondkleur. Rest: 'fill'.
+  const TABLE_CATEGORIES = new Set(["eettafels", "salontafels", "bijzettafels"]);
+  const cardMode = wide ? "fill" : TABLE_CATEGORIES.has(product.category) ? "contain" : "fill";
+  const tileAr = wide ? "4:3" : "1:1";
   const firstDim = parsed[0];
   const first = firstRaw
     ? cldOptimize(firstRaw, {
-        ar: "1:1",
+        ar: tileAr,
         w: 1000,
         mode: cardMode,
         upscale: true,
@@ -155,7 +156,7 @@ export default function ProductCard({ product, variants, priority = false }: Pro
           ref={figureRef}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className="relative aspect-square overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]"
+          className={`relative ${wide ? "aspect-[4/3]" : "aspect-square"} overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]`}
         >
           {first && (
             <Image
