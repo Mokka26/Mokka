@@ -54,7 +54,7 @@ export function cldOptimize(
   options: {
     ar?: string;
     w?: number;
-    mode?: "pad" | "fill" | "thumb";
+    mode?: "pad" | "fill" | "thumb" | "contain";
     upscale?: boolean;
     /** Source-pixel-breedte uit DB; gebruikt om e_upscale veilig te kiezen. */
     sourceW?: number;
@@ -91,6 +91,11 @@ export function cldOptimize(
       parts.push("c_thumb", "g_auto", `ar_${options.ar}`);
     } else if (mode === "fill") {
       parts.push("c_fill", "g_auto", `ar_${options.ar}`);
+    } else if (mode === "contain") {
+      // c_pad + b_auto: hele foto in beeld (geen crop/zoom), opvulling in de
+      // achtergrondkleur van de foto i.p.v. wit. Voor liggende lifestyle-foto's
+      // (bv. Rousseau-tafels) die anders te ver inzoomen.
+      parts.push("c_pad", "b_auto", `ar_${options.ar}`);
     } else {
       // c_pad met WITTE achtergrond: product volledig zichtbaar, geen crop.
       // b_white i.p.v. b_auto voorkomt gekleurde randen — product-foto's staan

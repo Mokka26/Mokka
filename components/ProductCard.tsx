@@ -89,8 +89,16 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   // c_fill zou de armleuningen wegsnijden. Daar gebruiken we 'pad' (c_pad,
   // b_white) zodat de hele bank zichtbaar is; de witruimte valt naadloos samen
   // met de eigen witte fotostudio-achtergrond.
+  // Tafels hebben veelal liggende lifestyle-foto's → 'contain' (c_pad + b_auto)
+  // zodat de hele tafel in beeld blijft i.p.v. ingezoomd. Hoekbanken: 'pad'
+  // (witte studio-achtergrond). De rest vult de tegel met 'fill'.
+  const TABLE_CATEGORIES = new Set(["eettafels", "salontafels", "bijzettafels"]);
   const CONTAIN_CATEGORIES = new Set(["hoekbanken"]);
-  const cardMode = CONTAIN_CATEGORIES.has(product.category) ? "pad" : "fill";
+  const cardMode = TABLE_CATEGORIES.has(product.category)
+    ? "contain"
+    : CONTAIN_CATEGORIES.has(product.category)
+      ? "pad"
+      : "fill";
   const firstDim = parsed[0];
   const first = firstRaw
     ? cldOptimize(firstRaw, {
