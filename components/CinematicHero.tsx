@@ -10,10 +10,10 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-// Hero-achtergrond: Vanilla Loop Boxspring (close-up bouclé + "Vanilla Dream").
+// Hero-achtergrond: hoofdfoto Vanilla Loop Boxspring (kamer-shot, bed centraal).
 // 16:9 bijgesneden zodat de vierkante productfoto het brede vlak vult zonder
 // uitrekken; dekt de 3D-textuur, de WebGL-fallback en de reduced-motion fallback.
-const SCENE_IMAGE = "https://res.cloudinary.com/diaksxzey/image/upload/c_fill,g_center,ar_16:9,w_2400,f_auto,q_auto:good/mokka/bedden/vanilla-loop/01_sq.jpg";
+const SCENE_IMAGE = "https://res.cloudinary.com/diaksxzey/image/upload/c_fill,g_center,ar_16:9,w_2400,f_auto,q_auto:good/mokka/bedden/vanilla-loop/03_sq.jpg";
 
 interface ProgressRef { current: number }
 
