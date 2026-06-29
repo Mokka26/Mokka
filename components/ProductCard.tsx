@@ -89,11 +89,14 @@ export default function ProductCard({ product, variants, priority = false }: Pro
   // c_fill zou de armleuningen wegsnijden. Daar gebruiken we 'pad' (c_pad,
   // b_white) zodat de hele bank zichtbaar is; de witruimte valt naadloos samen
   // met de eigen witte fotostudio-achtergrond.
-  // Tafels hebben veelal liggende lifestyle-foto's → 'contain' (c_pad + b_auto)
-  // zodat de hele tafel in beeld blijft i.p.v. ingezoomd. De rest (banken,
-  // bedden, stoelen, …) vult de tegel met 'fill' — geen witruimte.
-  const TABLE_CATEGORIES = new Set(["eettafels", "salontafels", "bijzettafels"]);
-  const cardMode = TABLE_CATEGORIES.has(product.category) ? "contain" : "fill";
+  // Tafels én banken hebben liggende lifestyle-foto's naast vierkante studio-
+  // foto's. 'contain' (c_pad + b_auto) toont altijd het hele meubel; vierkante
+  // foto's vullen exact, liggende krijgen een rand in de achtergrondkleur van
+  // de foto (geen wit). De rest (bedden, stoelen, …) vult met 'fill'.
+  const CONTAIN_CATEGORIES = new Set([
+    "eettafels", "salontafels", "bijzettafels", "hoekbanken", "bankstellen",
+  ]);
+  const cardMode = CONTAIN_CATEGORIES.has(product.category) ? "contain" : "fill";
   const firstDim = parsed[0];
   const first = firstRaw
     ? cldOptimize(firstRaw, {
