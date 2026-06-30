@@ -18,7 +18,9 @@ type Props = {
     description: string;
     price: number;
     listPrice: number | null;
+    nachtkastMode: string | null;
     nachtkastPrice: number | null;
+    nachtkastPrice2: number | null;
     category: string;
     featured: boolean;
     hidden: boolean;
@@ -156,22 +158,49 @@ export default function EditProductForm({ product, categories, sources }: Props)
             </p>
           </Field>
 
-          <Field label="Nachtkast-prijs per stuk (€) — bedden" error={state.fieldErrors?.nachtkastPrice}>
-            <input
-              name="nachtkastPrice"
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={product.nachtkastPrice != null ? product.nachtkastPrice.toFixed(2) : ""}
-              placeholder="Bijv. 220,00"
-              className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
-            />
+          <Field label="Nachtkast (bedden)" error={state.fieldErrors?.nachtkastMode}>
+            <select
+              name="nachtkastMode"
+              defaultValue={product.nachtkastMode ?? "none"}
+              className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm focus:outline-none focus:border-accent"
+            >
+              <option value="none">Geen nachtkast</option>
+              <option value="included">Inbegrepen (hoort erbij)</option>
+              <option value="optional">Apart bij te bestellen</option>
+            </select>
             <p className="text-[11px] text-stone mt-1.5">
-              Toont op de bedpagina een keuze voor 0/1/2 nachtkasten tegen deze
-              prijs per stuk. <strong>Leeg = geen nachtkast-optie</strong> (voor
-              bedden zonder nachtkast).
+              <strong>Inbegrepen</strong> → toont &quot;inclusief nachtkast&quot;, geen
+              meerprijs. <strong>Apart</strong> → keuze 0/1/2 met onderstaande prijzen.
             </p>
           </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Prijs 1 nachtkast (€)" error={state.fieldErrors?.nachtkastPrice}>
+              <input
+                name="nachtkastPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={product.nachtkastPrice != null ? product.nachtkastPrice.toFixed(2) : ""}
+                placeholder="Bijv. 220,00"
+                className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
+              />
+            </Field>
+            <Field label="Prijs 2 nachtkasten (€)" error={state.fieldErrors?.nachtkastPrice2}>
+              <input
+                name="nachtkastPrice2"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={product.nachtkastPrice2 != null ? product.nachtkastPrice2.toFixed(2) : ""}
+                placeholder="Bijv. 400,00"
+                className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
+              />
+            </Field>
+          </div>
+          <p className="text-[11px] text-stone mb-2">
+            Alleen gebruikt bij &quot;Apart bij te bestellen&quot;. Leeg bij 2 = automatisch 2× de prijs van 1.
+          </p>
 
           <Field label="Categorie" error={state.fieldErrors?.category}>
             <select

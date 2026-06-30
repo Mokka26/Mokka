@@ -28,7 +28,9 @@ interface Product {
   images: string;
   specs?: string | null;
   sizeVariants?: string | null;
+  nachtkastMode?: string | null;
   nachtkastPrice?: number | null;
+  nachtkastPrice2?: number | null;
   featured: boolean;
   stock?: number;
   deliveryTime?: string | null;
@@ -105,6 +107,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     { icon: USP_ICONS.shipping, label: getUspsByKey("shipping")[0]?.title ?? "Gratis verzending" },
     { icon: USP_ICONS.warranty, label: `${warrantyYearsFor(product.category)} jaar garantie` },
     ...(isBed ? [{ icon: USP_ICONS.matras, label: "Inclusief matras" }] : []),
+    ...(product.nachtkastMode === "included" ? [{ icon: USP_ICONS.matras, label: "Inclusief nachtkast" }] : []),
   ];
 
   // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is
@@ -117,13 +120,17 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const activeListPrice = activeVariant?.listPrice ?? product.listPrice ?? null;
   const hasDiscount = activeListPrice != null && activeListPrice > activePrice;
 
-  // Nachtkast-optie (bedden): klant kiest 0/1/2 × nachtkastPrice. Alleen tonen
-  // als het bed een nachtkast-prijs heeft (per bed aan/uit in de admin).
-  const nachtkastUnit = product.nachtkastPrice ?? 0;
-  const hasNachtkast = nachtkastUnit > 0;
+  // Nachtkast-optie (bedden), modus per bed in de admin:
+  //  - "included": nachtkast hoort erbij → "inclusief nachtkast" (geen meerprijs)
+  //  - "optional": klant kiest 0/1/2 → toeslag (1 = prijs1, 2 = prijs2)
+  //  - anders: geen nachtkast.
+  const nkPrice1 = product.nachtkastPrice ?? 0;
+  const nkPrice2 = product.nachtkastPrice2 ?? nkPrice1 * 2;
+  const isNkOptional = product.nachtkastMode === "optional" && nkPrice1 > 0;
+  const nkAddon = (n: number) => (n === 1 ? nkPrice1 : n === 2 ? nkPrice2 : 0);
   const [nachtkast, setNachtkast] = useState(0);
-  // Regel-prijs = maatprijs + gekozen nachtkasten.
-  const lineUnitPrice = activePrice + nachtkast * nachtkastUnit;
+  // Regel-prijs = maatprijs + gekozen nachtkasten (alleen bij "optional").
+  const lineUnitPrice = activePrice + (isNkOptional ? nkAddon(nachtkast) : 0);
 
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -431,7 +438,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 </div>
               )}
 
-              {hasNachtkast && (
+              {isNkOptional && (
                 <div className="mb-8">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Nachtkast erbij?</p>
                   <div className="flex flex-wrap gap-2">
@@ -449,15 +456,14 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                               : "bg-transparent text-ink border-line hover:border-ink"
                           }`}
                         >
-                          {n === 0 ? "Geen" : `${n} nachtkast${n > 1 ? "en" : ""} (+${formatPrice(n * nachtkastUnit)})`}
+                          {n === 0 ? "Geen" : `${n} nachtkast${n > 1 ? "en" : ""} (+${formatPrice(nkAddon(n))})`}
                         </button>
                       );
                     })}
                   </div>
-                  <p className="text-[11px] text-stone mt-2">
-                    {formatPrice(nachtkastUnit)} per stuk · max. 2
-                    {nachtkast > 0 ? ` · totaal ${formatPrice(lineUnitPrice)}` : ""}
-                  </p>
+                  {nachtkast > 0 && (
+                    <p className="text-[11px] text-stone mt-2">Totaal: {formatPrice(lineUnitPrice)}</p>
+                  )}
                 </div>
               )}
 

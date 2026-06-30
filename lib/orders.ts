@@ -47,7 +47,7 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
   const ids = [...new Set(items.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, hidden: false, deletedAt: null },
-    select: { id: true, name: true, price: true, sizeVariants: true, nachtkastPrice: true },
+    select: { id: true, name: true, price: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -59,11 +59,14 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     const label = item.variantLabel?.trim() || null;
     const sizePrice = variantPrice(p.sizeVariants, label, p.price);
     if (!(sizePrice > 0)) throw new Error(`Geen geldige prijs voor ${p.name}`);
-    // Nachtkast-toeslag — alleen als het bed een nachtkast-prijs heeft; prijs
-    // komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
-    const nkUnit = p.nachtkastPrice ?? 0;
-    const nk = nkUnit > 0 ? Math.max(0, Math.min(2, Math.floor(item.nachtkast ?? 0))) : 0;
-    const price = sizePrice + nk * nkUnit;
+    // Nachtkast-toeslag — alleen bij modus "optional" (apart bij te bestellen);
+    // prijs komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
+    // "included" en "none" geven geen toeslag.
+    const nk = p.nachtkastMode === "optional" ? Math.max(0, Math.min(2, Math.floor(item.nachtkast ?? 0))) : 0;
+    const addon = nk === 1 ? (p.nachtkastPrice ?? 0)
+      : nk === 2 ? (p.nachtkastPrice2 ?? (p.nachtkastPrice ?? 0) * 2)
+      : 0;
+    const price = sizePrice + addon;
     const fullLabel = nk > 0 ? `${label ?? ""}${label ? " · " : ""}${nk} nachtkast${nk > 1 ? "en" : ""}`.trim() : label;
     lines.push({ productId: p.id, productName: p.name, variantLabel: fullLabel, quantity: qty, price });
   }

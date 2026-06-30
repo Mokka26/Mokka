@@ -21,9 +21,13 @@ model Product {
   // [{"label":"140 × 200","price":599},{"label":"160 × 200","price":699}]
   // Leeg/null = product met één vaste prijs (price-veld).
   sizeVariants String?  @db.Text
-  // Nachtkast-optie (bedden): prijs per stuk; klant kiest 0/1/2. null/0 = geen
-  // optie (bed zonder nachtkast). Per bed in/uit te schakelen in de admin.
-  nachtkastPrice Float?
+  // Nachtkast-optie (bedden), per bed in te stellen in de admin:
+  //   nachtkastMode: "included" (inbegrepen), "optional" (apart bij te
+  //   bestellen) of null/"none" (geen nachtkast).
+  //   nachtkastPrice  = prijs voor 1 nachtkast, nachtkastPrice2 = prijs voor 2.
+  nachtkastMode   String?
+  nachtkastPrice  Float?
+  nachtkastPrice2 Float?
   featured     Boolean  @default(false)
   stock        Int      @default(10)
   deliveryTime String?
