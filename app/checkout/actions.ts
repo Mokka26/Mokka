@@ -24,7 +24,8 @@ const checkoutSchema = z.object({
     .array(
       z.object({
         productId: z.string().min(1),
-        variantLabel: z.string().max(40).nullable().optional(),
+        variantLabel: z.string().max(60).nullable().optional(),
+        nachtkast: z.number().int().min(0).max(2).optional(),
         quantity: z.number().int().min(1).max(99),
       }),
     )

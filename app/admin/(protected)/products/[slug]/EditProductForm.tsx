@@ -18,6 +18,7 @@ type Props = {
     description: string;
     price: number;
     listPrice: number | null;
+    nachtkastPrice: number | null;
     category: string;
     featured: boolean;
     hidden: boolean;
@@ -152,6 +153,23 @@ export default function EditProductForm({ product, categories, sources }: Props)
             <p className="text-[11px] text-stone mt-1.5">
               Vul een hogere prijs in dan de verkoopprijs om een doorgestreepte
               korting te tonen. Leeg = geen korting.
+            </p>
+          </Field>
+
+          <Field label="Nachtkast-prijs per stuk (€) — bedden" error={state.fieldErrors?.nachtkastPrice}>
+            <input
+              name="nachtkastPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={product.nachtkastPrice != null ? product.nachtkastPrice.toFixed(2) : ""}
+              placeholder="Bijv. 220,00"
+              className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
+            />
+            <p className="text-[11px] text-stone mt-1.5">
+              Toont op de bedpagina een keuze voor 0/1/2 nachtkasten tegen deze
+              prijs per stuk. <strong>Leeg = geen nachtkast-optie</strong> (voor
+              bedden zonder nachtkast).
             </p>
           </Field>
 

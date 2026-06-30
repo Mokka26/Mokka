@@ -4,6 +4,7 @@ import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 export type CheckoutLineInput = {
   productId: string;
   variantLabel?: string | null;
+  nachtkast?: number;
   quantity: number;
 };
 
@@ -46,7 +47,7 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
   const ids = [...new Set(items.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, hidden: false, deletedAt: null },
-    select: { id: true, name: true, price: true, sizeVariants: true },
+    select: { id: true, name: true, price: true, sizeVariants: true, nachtkastPrice: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -56,9 +57,15 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     if (!p) throw new Error("Product niet (meer) beschikbaar");
     const qty = Math.max(1, Math.min(99, Math.floor(item.quantity)));
     const label = item.variantLabel?.trim() || null;
-    const price = variantPrice(p.sizeVariants, label, p.price);
-    if (!(price > 0)) throw new Error(`Geen geldige prijs voor ${p.name}`);
-    lines.push({ productId: p.id, productName: p.name, variantLabel: label, quantity: qty, price });
+    const sizePrice = variantPrice(p.sizeVariants, label, p.price);
+    if (!(sizePrice > 0)) throw new Error(`Geen geldige prijs voor ${p.name}`);
+    // Nachtkast-toeslag — alleen als het bed een nachtkast-prijs heeft; prijs
+    // komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
+    const nkUnit = p.nachtkastPrice ?? 0;
+    const nk = nkUnit > 0 ? Math.max(0, Math.min(2, Math.floor(item.nachtkast ?? 0))) : 0;
+    const price = sizePrice + nk * nkUnit;
+    const fullLabel = nk > 0 ? `${label ?? ""}${label ? " · " : ""}${nk} nachtkast${nk > 1 ? "en" : ""}`.trim() : label;
+    lines.push({ productId: p.id, productName: p.name, variantLabel: fullLabel, quantity: qty, price });
   }
 
   const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);

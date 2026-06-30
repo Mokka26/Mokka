@@ -25,18 +25,22 @@ export interface CartProduct {
 }
 
 export interface CartItemType {
-  /** Unieke regel-sleutel: productId, of productId::maat bij maat-varianten. */
+  /** Unieke regel-sleutel: productId(::maat)(::nkN) — maat + nachtkast-keuze. */
   lineKey: string;
   productId: string;
   /** Gekozen maat (bv. "140 × 200"); null bij producten zonder maatkeuze. */
   variantLabel: string | null;
+  /** Aantal nachtkasten erbij (0/1/2); 0 = geen. */
+  nachtkast: number;
   quantity: number;
   product: CartProduct;
 }
 
-/** Regel-sleutel: zonder maat = productId; met maat = productId::maat. */
-export function makeLineKey(productId: string, variantLabel?: string | null): string {
-  return variantLabel ? `${productId}::${variantLabel}` : productId;
+/** Regel-sleutel: productId, + ::maat bij maat, + ::nkN bij nachtkasten. */
+export function makeLineKey(productId: string, variantLabel?: string | null, nachtkast = 0): string {
+  let key = variantLabel ? `${productId}::${variantLabel}` : productId;
+  if (nachtkast > 0) key += `::nk${nachtkast}`;
+  return key;
 }
 
 const CART_KEY = "mokka_cart";
@@ -78,9 +82,9 @@ function persist(next: CartItemType[]) {
 
 // ─── Public actions (module-level → stabiele refs) ───
 
-export function addToCart(product: CartProduct, variantLabel?: string | null) {
-  // product.price moet al de regel-prijs zijn (bij maat-varianten = maatprijs).
-  const lineKey = makeLineKey(product.id, variantLabel);
+export function addToCart(product: CartProduct, variantLabel?: string | null, nachtkast = 0) {
+  // product.price moet al de regel-prijs zijn (maatprijs + evt. nachtkasten).
+  const lineKey = makeLineKey(product.id, variantLabel, nachtkast);
   const existing = items.find((i) => i.lineKey === lineKey);
   if (existing) {
     persist(
@@ -89,7 +93,7 @@ export function addToCart(product: CartProduct, variantLabel?: string | null) {
   } else {
     persist([
       ...items,
-      { lineKey, productId: product.id, variantLabel: variantLabel ?? null, quantity: 1, product },
+      { lineKey, productId: product.id, variantLabel: variantLabel ?? null, nachtkast, quantity: 1, product },
     ]);
   }
 }
@@ -128,7 +132,8 @@ function normalize(arr: unknown): CartItemType[] {
     .map((i) => ({
       ...i,
       variantLabel: i.variantLabel ?? null,
-      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null),
+      nachtkast: typeof i.nachtkast === "number" ? i.nachtkast : 0,
+      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null, i.nachtkast ?? 0),
     }));
 }
 

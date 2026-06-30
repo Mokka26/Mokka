@@ -110,6 +110,7 @@ async function main() {
       images: JSON.stringify([img]),
       specs: JSON.stringify(specs),
       sizeVariants: sizeVariantsJson(m.sizes),
+      nachtkastPrice: 220, // optie 0/1/2 nachtkasten op de bedpagina
       source: "Twenty Bedding",
       hidden: !priced,
       stock: 10,

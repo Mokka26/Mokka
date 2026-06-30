@@ -28,6 +28,7 @@ interface Product {
   images: string;
   specs?: string | null;
   sizeVariants?: string | null;
+  nachtkastPrice?: number | null;
   featured: boolean;
   stock?: number;
   deliveryTime?: string | null;
@@ -116,6 +117,14 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const activeListPrice = activeVariant?.listPrice ?? product.listPrice ?? null;
   const hasDiscount = activeListPrice != null && activeListPrice > activePrice;
 
+  // Nachtkast-optie (bedden): klant kiest 0/1/2 × nachtkastPrice. Alleen tonen
+  // als het bed een nachtkast-prijs heeft (per bed aan/uit in de admin).
+  const nachtkastUnit = product.nachtkastPrice ?? 0;
+  const hasNachtkast = nachtkastUnit > 0;
+  const [nachtkast, setNachtkast] = useState(0);
+  // Regel-prijs = maatprijs + gekozen nachtkasten.
+  const lineUnitPrice = activePrice + nachtkast * nachtkastUnit;
+
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -188,17 +197,19 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   };
 
   const handleAddToCart = () => {
-    // Bij maat-varianten: regel-prijs = maatprijs, en de maat als variant-label.
-    const linePrice = activePrice;
+    // Regel-prijs = maatprijs + nachtkasten; de maat als variant-label.
+    const linePrice = lineUnitPrice;
     const variantLabel = activeVariant?.label ?? null;
     for (let i = 0; i < quantity; i++) {
       addToCart(
         { id: product.id, slug: product.slug, name: product.name, price: linePrice, images: product.images, category: product.category },
         variantLabel,
+        nachtkast,
       );
     }
+    const nkText = nachtkast > 0 ? ` · ${nachtkast} nachtkast${nachtkast > 1 ? "en" : ""}` : "";
     toast.success(`${product.name} toegevoegd aan winkelwagen`, {
-      description: variantLabel ? `Maat ${variantLabel} · Aantal: ${quantity}` : `Aantal: ${quantity}`,
+      description: `${variantLabel ? `Maat ${variantLabel}` : `Aantal: ${quantity}`}${nkText}`,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -417,6 +428,36 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       );
                     })}
                   </div>
+                </div>
+              )}
+
+              {hasNachtkast && (
+                <div className="mb-8">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Nachtkast erbij?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[0, 1, 2].map((n) => {
+                      const active = n === nachtkast;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setNachtkast(n)}
+                          aria-pressed={active}
+                          className={`px-4 py-2.5 text-sm border rounded-[8px] transition-colors min-h-[44px] ${
+                            active
+                              ? "bg-ink text-white border-ink"
+                              : "bg-transparent text-ink border-line hover:border-ink"
+                          }`}
+                        >
+                          {n === 0 ? "Geen" : `${n} nachtkast${n > 1 ? "en" : ""} (+${formatPrice(n * nachtkastUnit)})`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-stone mt-2">
+                    {formatPrice(nachtkastUnit)} per stuk · max. 2
+                    {nachtkast > 0 ? ` · totaal ${formatPrice(lineUnitPrice)}` : ""}
+                  </p>
                 </div>
               )}
 

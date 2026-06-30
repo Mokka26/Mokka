@@ -121,6 +121,13 @@ function parseListPrice(raw: FormDataEntryValue | null, price: number): number |
   return Number.isFinite(n) && n > price ? n : null;
 }
 
+// Optionele prijs (bv. nachtkast): leeg/ongeldig/0 → null (optie uit).
+function parseOptionalPrice(raw: FormDataEntryValue | null): number | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const n = Number(raw.replace(",", "."));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 const hexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable();
 
 const fullUpdateSchema = z.object({
@@ -130,6 +137,7 @@ const fullUpdateSchema = z.object({
   description: z.string().min(1).max(5000),
   price: z.number().nonnegative().max(999999),
   listPrice: z.number().nonnegative().max(999999).nullable(),
+  nachtkastPrice: z.number().nonnegative().max(999999).nullable(),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   hidden: z.boolean(),
@@ -188,6 +196,7 @@ export async function updateProductFull(
     description: formData.get("description"),
     price: Number(formData.get("price")),
     listPrice: parseListPrice(formData.get("listPrice"), Number(formData.get("price"))),
+    nachtkastPrice: parseOptionalPrice(formData.get("nachtkastPrice")),
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     hidden: formData.get("hidden") === "on",
@@ -242,7 +251,7 @@ export async function updateProductFull(
   if (updated.colorGroup) {
     await prisma.product.updateMany({
       where: { colorGroup: updated.colorGroup, deletedAt: null },
-      data: { price: rest.price, listPrice: rest.listPrice },
+      data: { price: rest.price, listPrice: rest.listPrice, nachtkastPrice: rest.nachtkastPrice },
     });
   }
 

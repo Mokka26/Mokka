@@ -93,6 +93,7 @@ export default async function AdminProductEditPage({
           description: product.description,
           price: product.price,
           listPrice: product.listPrice,
+          nachtkastPrice: product.nachtkastPrice,
           category: product.category,
           featured: product.featured,
           hidden: product.hidden,
