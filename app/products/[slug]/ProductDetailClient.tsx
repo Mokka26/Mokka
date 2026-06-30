@@ -13,7 +13,7 @@ import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
-import { getUspsByKey, shippingInfo } from "@/lib/shipping-info";
+import { getUspsByKey, shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
 import { getCategory } from "@/lib/categories";
 import { formatPrice } from "@/components/ui/price";
 
@@ -87,14 +87,8 @@ interface Props {
 const USP_ICONS: Record<string, string> = {
   shipping: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
   warranty: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-  return: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
+  matras: "M3 12V8a2 2 0 012-2h14a2 2 0 012 2v4m-18 0h18m-18 0v4m18-4v4M3 14h18",
 };
-
-const usps = getUspsByKey("shipping", "warranty", "return").map((u) => ({
-  icon: USP_ICONS[u.key] ?? "",
-  label: u.title,
-  sub: u.description,
-}));
 
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
   const parsed = parseImages(product.images);
@@ -102,6 +96,15 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   // Vierkante weergave (1:1) + c_fill: vrijwel alle productfoto's zijn vierkant,
   // dus ze vullen het frame exact — geen witte zijbalken, volledig product.
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
+
+  // USP's onder de hero — garantie per categorie (banken 1j, rest 2j),
+  // en "Inclusief matras" op bedden.
+  const isBed = product.category === "bedden";
+  const usps = [
+    { icon: USP_ICONS.shipping, label: getUspsByKey("shipping")[0]?.title ?? "Gratis verzending" },
+    { icon: USP_ICONS.warranty, label: `${warrantyYearsFor(product.category)} jaar garantie` },
+    ...(isBed ? [{ icon: USP_ICONS.matras, label: "Inclusief matras" }] : []),
+  ];
 
   // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is
   // standaard geselecteerd. Geen varianten → normale enkele prijs.

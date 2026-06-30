@@ -8,7 +8,7 @@
  */
 
 type Usp = {
-  key: "shipping" | "return" | "payment" | "advice" | "warranty" | "assembly";
+  key: "shipping" | "payment" | "advice" | "warranty" | "assembly";
   title: string;
   description: string;
 };
@@ -35,18 +35,15 @@ export const shippingInfo = {
     custom: "6-8 weken",
   },
 
-  // ─── Retour ───────────────────────────────────────────────────
-  // 30 dagen = UI-belofte (wettelijk minimum NL = 14).
-  returnWindowDays: 30,
-  returnCopyShort: "30 dagen retour",
-  returnCopyLong: "Niet tevreden? Retour zonder gedoe binnen 30 dagen.",
-  returnFree: true,
-  returnCondition: "ongebruikt en in originele verpakking",
-
   // ─── Garantie ─────────────────────────────────────────────────
+  // Default-garantie in jaren; per categorie te overschrijven (zie
+  // warrantyByCategory + warrantyYearsFor()).
   warrantyYears: 2,
-  warrantyCopyShort: "2 jaar garantie",
-  warrantyCopyLong: "Op alle producten — fabrieks- en materiaalfouten.",
+  warrantyByCategory: {
+    banken: 1, hoekbanken: 1, bankstellen: 1,
+  } as Record<string, number>,
+  warrantyCopyShort: "Garantie",
+  warrantyCopyLong: "Op fabrieks- en materiaalfouten.",
 
   // ─── BTW ──────────────────────────────────────────────────────
   vatRatePercent: 21,
@@ -66,14 +63,9 @@ export const shippingInfo = {
       description: "Bij bestellingen boven €100 binnen Nederland en België.",
     },
     {
-      key: "return",
-      title: "30 dagen retour",
-      description: "Niet tevreden? Retour zonder gedoe binnen 30 dagen.",
-    },
-    {
       key: "warranty",
-      title: "2 jaar garantie",
-      description: "Op alle producten — fabrieks- en materiaalfouten.",
+      title: "Garantie",
+      description: "Op fabrieks- en materiaalfouten.",
     },
     {
       key: "payment",
@@ -95,7 +87,6 @@ export const shippingInfo = {
   // Korte marquee-messages voor TopBanner (max ~40 tekens elk)
   marqueeMessages: [
     "Gratis verzending vanaf €100",
-    "30 dagen bedenktijd op elk product",
     "Persoonlijk advies in onze showroom",
     "Nieuwe voorjaarscollectie — nu online",
   ] as ReadonlyArray<string>,
@@ -104,7 +95,7 @@ export const shippingInfo = {
   footerUsps: [
     { title: "Gratis verzending", sub: "Vanaf €100 in NL" },
     { title: "Montageservice", sub: "Op afspraak mogelijk" },
-    { title: "30 dagen retour", sub: "Geen vragen gesteld" },
+    { title: "Garantie", sub: "Op fabrieks- en materiaalfouten" },
     { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
   ] as ReadonlyArray<{ title: string; sub: string }>,
 } as const;
@@ -126,4 +117,9 @@ export function isEligibleForFreeShipping(
 
 export function getUspsByKey(...keys: Usp["key"][]): Usp[] {
   return shippingInfo.usps.filter((u) => keys.includes(u.key));
+}
+
+/** Garantie in jaren voor een categorie (banken 1, rest default). */
+export function warrantyYearsFor(category: string): number {
+  return shippingInfo.warrantyByCategory[category] ?? shippingInfo.warrantyYears;
 }

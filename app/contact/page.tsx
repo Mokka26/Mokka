@@ -156,7 +156,6 @@ export default function ContactPage() {
                   <option value="">Kies een onderwerp</option>
                   <option value="product">Vraag over een product</option>
                   <option value="bestelling">Vraag over een bestelling</option>
-                  <option value="retour">Retour of ruil</option>
                   <option value="advies">Interieuradvies</option>
                   <option value="anders">Anders</option>
                 </select>
