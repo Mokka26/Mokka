@@ -28,6 +28,7 @@ export default function CartItem({ item }: Props) {
             {item.nachtkast > 0 && (
               <span className="text-ink"> · {item.nachtkast} nachtkast{item.nachtkast > 1 ? "en" : ""}</span>
             )}
+            {item.voetbank > 0 && <span className="text-ink"> · voetbank</span>}
           </p>
           <button onClick={() => removeFromCart(item.lineKey)} className="text-[10px] text-stone hover:text-error transition-colors mt-2 uppercase tracking-wider">
             Verwijderen

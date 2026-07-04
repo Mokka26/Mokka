@@ -28,6 +28,10 @@ model Product {
   nachtkastMode   String?
   nachtkastPrice  Float?
   nachtkastPrice2 Float?
+  // Voetbank-optie (bedden), zelfde standen als nachtkast: "included",
+  // "optional" (0/1 tegen voetbankPrice) of null/"none".
+  voetbankMode    String?
+  voetbankPrice   Float?
   featured     Boolean  @default(false)
   stock        Int      @default(10)
   deliveryTime String?

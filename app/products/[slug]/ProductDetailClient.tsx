@@ -31,6 +31,8 @@ interface Product {
   nachtkastMode?: string | null;
   nachtkastPrice?: number | null;
   nachtkastPrice2?: number | null;
+  voetbankMode?: string | null;
+  voetbankPrice?: number | null;
   featured: boolean;
   stock?: number;
   deliveryTime?: string | null;
@@ -108,6 +110,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     { icon: USP_ICONS.warranty, label: `${warrantyYearsFor(product.category)} jaar garantie` },
     ...(isBed ? [{ icon: USP_ICONS.matras, label: "Inclusief matras" }] : []),
     ...(product.nachtkastMode === "included" ? [{ icon: USP_ICONS.matras, label: "Inclusief nachtkast" }] : []),
+    ...(product.voetbankMode === "included" ? [{ icon: USP_ICONS.matras, label: "Inclusief voetbank" }] : []),
   ];
 
   // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is
@@ -129,8 +132,16 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const isNkOptional = product.nachtkastMode === "optional" && nkPrice1 > 0;
   const nkAddon = (n: number) => (n === 1 ? nkPrice1 : n === 2 ? nkPrice2 : 0);
   const [nachtkast, setNachtkast] = useState(0);
-  // Regel-prijs = maatprijs + gekozen nachtkasten (alleen bij "optional").
-  const lineUnitPrice = activePrice + (isNkOptional ? nkAddon(nachtkast) : 0);
+
+  // Voetbank-optie (bedden), zelfde standen als nachtkast; 0/1 tegen voetbankPrice.
+  const vbPrice = product.voetbankPrice ?? 0;
+  const isVbOptional = product.voetbankMode === "optional" && vbPrice > 0;
+  const [voetbank, setVoetbank] = useState(0);
+
+  // Regel-prijs = maatprijs + gekozen nachtkasten + voetbank (alleen bij "optional").
+  const lineUnitPrice = activePrice
+    + (isNkOptional ? nkAddon(nachtkast) : 0)
+    + (isVbOptional ? voetbank * vbPrice : 0);
 
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -212,11 +223,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         { id: product.id, slug: product.slug, name: product.name, price: linePrice, images: product.images, category: product.category },
         variantLabel,
         nachtkast,
+        voetbank,
       );
     }
     const nkText = nachtkast > 0 ? ` · ${nachtkast} nachtkast${nachtkast > 1 ? "en" : ""}` : "";
+    const vbText = voetbank > 0 ? " · voetbank" : "";
     toast.success(`${product.name} toegevoegd aan winkelwagen`, {
-      description: `${variantLabel ? `Maat ${variantLabel}` : `Aantal: ${quantity}`}${nkText}`,
+      description: `${variantLabel ? `Maat ${variantLabel}` : `Aantal: ${quantity}`}${nkText}${vbText}`,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -464,6 +477,32 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   {nachtkast > 0 && (
                     <p className="text-[11px] text-stone mt-2">Totaal: {formatPrice(lineUnitPrice)}</p>
                   )}
+                </div>
+              )}
+
+              {isVbOptional && (
+                <div className="mb-8">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Voetbank erbij?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[0, 1].map((n) => {
+                      const active = n === voetbank;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setVoetbank(n)}
+                          aria-pressed={active}
+                          className={`px-4 py-2.5 text-sm border rounded-[8px] transition-colors min-h-[44px] ${
+                            active
+                              ? "bg-ink text-white border-ink"
+                              : "bg-transparent text-ink border-line hover:border-ink"
+                          }`}
+                        >
+                          {n === 0 ? "Geen" : `Voetbank (+${formatPrice(vbPrice)})`}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 

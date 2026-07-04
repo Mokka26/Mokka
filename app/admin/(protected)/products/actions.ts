@@ -146,6 +146,8 @@ const fullUpdateSchema = z.object({
   nachtkastMode: z.union([z.literal("included"), z.literal("optional")]).nullable(),
   nachtkastPrice: z.number().nonnegative().max(999999).nullable(),
   nachtkastPrice2: z.number().nonnegative().max(999999).nullable(),
+  voetbankMode: z.union([z.literal("included"), z.literal("optional")]).nullable(),
+  voetbankPrice: z.number().nonnegative().max(999999).nullable(),
   category: z.string().min(1).max(50),
   featured: z.boolean(),
   hidden: z.boolean(),
@@ -207,6 +209,8 @@ export async function updateProductFull(
     nachtkastMode: parseNachtkastMode(formData.get("nachtkastMode")),
     nachtkastPrice: parseOptionalPrice(formData.get("nachtkastPrice")),
     nachtkastPrice2: parseOptionalPrice(formData.get("nachtkastPrice2")),
+    voetbankMode: parseNachtkastMode(formData.get("voetbankMode")),
+    voetbankPrice: parseOptionalPrice(formData.get("voetbankPrice")),
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     hidden: formData.get("hidden") === "on",
@@ -264,6 +268,7 @@ export async function updateProductFull(
       data: {
         price: rest.price, listPrice: rest.listPrice,
         nachtkastMode: rest.nachtkastMode, nachtkastPrice: rest.nachtkastPrice, nachtkastPrice2: rest.nachtkastPrice2,
+        voetbankMode: rest.voetbankMode, voetbankPrice: rest.voetbankPrice,
       },
     });
   }

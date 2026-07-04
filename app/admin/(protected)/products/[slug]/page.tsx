@@ -96,6 +96,8 @@ export default async function AdminProductEditPage({
           nachtkastMode: product.nachtkastMode,
           nachtkastPrice: product.nachtkastPrice,
           nachtkastPrice2: product.nachtkastPrice2,
+          voetbankMode: product.voetbankMode,
+          voetbankPrice: product.voetbankPrice,
           category: product.category,
           featured: product.featured,
           hidden: product.hidden,

@@ -32,14 +32,17 @@ export interface CartItemType {
   variantLabel: string | null;
   /** Aantal nachtkasten erbij (0/1/2); 0 = geen. */
   nachtkast: number;
+  /** Voetbank erbij (0/1); 0 = geen. */
+  voetbank: number;
   quantity: number;
   product: CartProduct;
 }
 
-/** Regel-sleutel: productId, + ::maat bij maat, + ::nkN bij nachtkasten. */
-export function makeLineKey(productId: string, variantLabel?: string | null, nachtkast = 0): string {
+/** Regel-sleutel: productId, + ::maat, + ::nkN (nachtkast), + ::vbN (voetbank). */
+export function makeLineKey(productId: string, variantLabel?: string | null, nachtkast = 0, voetbank = 0): string {
   let key = variantLabel ? `${productId}::${variantLabel}` : productId;
   if (nachtkast > 0) key += `::nk${nachtkast}`;
+  if (voetbank > 0) key += `::vb${voetbank}`;
   return key;
 }
 
@@ -82,9 +85,9 @@ function persist(next: CartItemType[]) {
 
 // ─── Public actions (module-level → stabiele refs) ───
 
-export function addToCart(product: CartProduct, variantLabel?: string | null, nachtkast = 0) {
-  // product.price moet al de regel-prijs zijn (maatprijs + evt. nachtkasten).
-  const lineKey = makeLineKey(product.id, variantLabel, nachtkast);
+export function addToCart(product: CartProduct, variantLabel?: string | null, nachtkast = 0, voetbank = 0) {
+  // product.price moet al de regel-prijs zijn (maatprijs + nachtkast + voetbank).
+  const lineKey = makeLineKey(product.id, variantLabel, nachtkast, voetbank);
   const existing = items.find((i) => i.lineKey === lineKey);
   if (existing) {
     persist(
@@ -93,7 +96,7 @@ export function addToCart(product: CartProduct, variantLabel?: string | null, na
   } else {
     persist([
       ...items,
-      { lineKey, productId: product.id, variantLabel: variantLabel ?? null, nachtkast, quantity: 1, product },
+      { lineKey, productId: product.id, variantLabel: variantLabel ?? null, nachtkast, voetbank, quantity: 1, product },
     ]);
   }
 }
@@ -133,7 +136,8 @@ function normalize(arr: unknown): CartItemType[] {
       ...i,
       variantLabel: i.variantLabel ?? null,
       nachtkast: typeof i.nachtkast === "number" ? i.nachtkast : 0,
-      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null, i.nachtkast ?? 0),
+      voetbank: typeof i.voetbank === "number" ? i.voetbank : 0,
+      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null, i.nachtkast ?? 0, i.voetbank ?? 0),
     }));
 }
 

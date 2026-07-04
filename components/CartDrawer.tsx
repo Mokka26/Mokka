@@ -136,6 +136,9 @@ export default function CartDrawer({ open, onClose }: Props) {
                             {item.nachtkast > 0 && (
                               <p className="text-[11px] text-stone mb-1">{item.nachtkast} nachtkast{item.nachtkast > 1 ? "en" : ""}</p>
                             )}
+                            {item.voetbank > 0 && (
+                              <p className="text-[11px] text-stone mb-1">Voetbank</p>
+                            )}
                             <p className="font-serif text-sm text-ink mb-auto">
                               &euro;{item.product.price.toFixed(2)}
                             </p>

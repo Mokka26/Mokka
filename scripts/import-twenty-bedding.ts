@@ -112,6 +112,8 @@ async function main() {
       sizeVariants: sizeVariantsJson(m.sizes),
       // Nachtkast apart bij te bestellen: 1 = €220, 2 = €400 (per bed te wijzigen).
       nachtkastMode: "optional", nachtkastPrice: 220, nachtkastPrice2: 400,
+      // Voetbank apart bij te bestellen: €350.
+      voetbankMode: "optional", voetbankPrice: 350,
       source: "Twenty Bedding",
       hidden: !priced,
       stock: 10,

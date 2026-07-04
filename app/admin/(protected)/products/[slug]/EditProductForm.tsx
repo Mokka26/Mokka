@@ -21,6 +21,8 @@ type Props = {
     nachtkastMode: string | null;
     nachtkastPrice: number | null;
     nachtkastPrice2: number | null;
+    voetbankMode: string | null;
+    voetbankPrice: number | null;
     category: string;
     featured: boolean;
     hidden: boolean;
@@ -201,6 +203,34 @@ export default function EditProductForm({ product, categories, sources }: Props)
           <p className="text-[11px] text-stone mb-2">
             Alleen gebruikt bij &quot;Apart bij te bestellen&quot;. Leeg bij 2 = automatisch 2× de prijs van 1.
           </p>
+
+          <Field label="Voetbank (bedden)" error={state.fieldErrors?.voetbankMode}>
+            <select
+              name="voetbankMode"
+              defaultValue={product.voetbankMode ?? "none"}
+              className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm focus:outline-none focus:border-accent"
+            >
+              <option value="none">Geen voetbank</option>
+              <option value="included">Inbegrepen (hoort erbij)</option>
+              <option value="optional">Apart bij te bestellen</option>
+            </select>
+            <p className="text-[11px] text-stone mt-1.5">
+              <strong>Inbegrepen</strong> → toont &quot;inclusief voetbank&quot;. <strong>Apart</strong> → keuze
+              wel/geen voetbank tegen onderstaande prijs.
+            </p>
+          </Field>
+
+          <Field label="Prijs voetbank (€)" error={state.fieldErrors?.voetbankPrice}>
+            <input
+              name="voetbankPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={product.voetbankPrice != null ? product.voetbankPrice.toFixed(2) : ""}
+              placeholder="Bijv. 350,00"
+              className="w-full px-3 py-2.5 bg-white border border-line text-stone text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
+            />
+          </Field>
 
           <Field label="Categorie" error={state.fieldErrors?.category}>
             <select

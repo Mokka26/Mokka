@@ -5,6 +5,7 @@ export type CheckoutLineInput = {
   productId: string;
   variantLabel?: string | null;
   nachtkast?: number;
+  voetbank?: number;
   quantity: number;
 };
 
@@ -47,7 +48,7 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
   const ids = [...new Set(items.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, hidden: false, deletedAt: null },
-    select: { id: true, name: true, price: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true },
+    select: { id: true, name: true, price: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -63,11 +64,18 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     // prijs komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
     // "included" en "none" geven geen toeslag.
     const nk = p.nachtkastMode === "optional" ? Math.max(0, Math.min(2, Math.floor(item.nachtkast ?? 0))) : 0;
-    const addon = nk === 1 ? (p.nachtkastPrice ?? 0)
+    const nkAddon = nk === 1 ? (p.nachtkastPrice ?? 0)
       : nk === 2 ? (p.nachtkastPrice2 ?? (p.nachtkastPrice ?? 0) * 2)
       : 0;
-    const price = sizePrice + addon;
-    const fullLabel = nk > 0 ? `${label ?? ""}${label ? " · " : ""}${nk} nachtkast${nk > 1 ? "en" : ""}`.trim() : label;
+    // Voetbank-toeslag — alleen bij modus "optional", 0/1.
+    const vb = p.voetbankMode === "optional" ? Math.max(0, Math.min(1, Math.floor(item.voetbank ?? 0))) : 0;
+    const vbAddon = vb * (p.voetbankPrice ?? 0);
+    const price = sizePrice + nkAddon + vbAddon;
+    const extras = [
+      nk > 0 ? `${nk} nachtkast${nk > 1 ? "en" : ""}` : "",
+      vb > 0 ? "voetbank" : "",
+    ].filter(Boolean).join(" · ");
+    const fullLabel = extras ? `${label ?? ""}${label ? " · " : ""}${extras}`.trim() : label;
     lines.push({ productId: p.id, productName: p.name, variantLabel: fullLabel, quantity: qty, price });
   }
 

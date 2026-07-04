@@ -103,6 +103,7 @@ export default function CheckoutPage() {
         productId: i.productId,
         variantLabel: i.variantLabel,
         nachtkast: i.nachtkast,
+        voetbank: i.voetbank,
         quantity: i.quantity,
       })),
     });
@@ -286,6 +287,9 @@ export default function CheckoutPage() {
                     )}
                     {item.nachtkast > 0 && (
                       <p className="text-stone text-[11px] mt-0.5">{item.nachtkast} nachtkast{item.nachtkast > 1 ? "en" : ""}</p>
+                    )}
+                    {item.voetbank > 0 && (
+                      <p className="text-stone text-[11px] mt-0.5">Voetbank</p>
                     )}
                     <p className="text-stone text-[11px] uppercase tracking-[0.2em] mt-1">Aantal: {item.quantity}</p>
                     <p className="text-accent text-sm font-medium mt-1">{formatPrice(item.product.price * item.quantity)}</p>
