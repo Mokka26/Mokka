@@ -47,21 +47,22 @@ export default async function AdminProductEditPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
+  // De 3 reads zijn onafhankelijk → parallel (scheelt ~2 Neon-round-trips).
+  const [product, categories, sourceRows] = await Promise.all([
+    prisma.product.findUnique({ where: { slug } }),
+    prisma.product.findMany({
+      distinct: ["category"],
+      select: { category: true },
+      orderBy: { category: "asc" },
+    }),
+    prisma.product.findMany({
+      where: { source: { not: null }, deletedAt: null },
+      distinct: ["source"],
+      select: { source: true },
+      orderBy: { source: "asc" },
+    }),
+  ]);
   if (!product) notFound();
-
-  const categories = await prisma.product.findMany({
-    distinct: ["category"],
-    select: { category: true },
-    orderBy: { category: "asc" },
-  });
-
-  const sourceRows = await prisma.product.findMany({
-    where: { source: { not: null }, deletedAt: null },
-    distinct: ["source"],
-    select: { source: true },
-    orderBy: { source: "asc" },
-  });
 
   const images = parseImages(product.images);
 

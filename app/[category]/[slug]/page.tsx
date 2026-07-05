@@ -34,12 +34,13 @@ export const revalidate = 3600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: categorySlug, slug } = await params;
-  const product = await prisma.product.findFirst({
-    where: { slug, hidden: false, deletedAt: null },
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    select: { name: true, description: true, hidden: true, deletedAt: true },
   });
-  if (!product) return { title: "Product niet gevonden" };
+  if (!product || product.hidden || product.deletedAt) return { title: "Product niet gevonden" };
 
-  const url = `/${categorySlug}/${product.slug}`;
+  const url = `/${categorySlug}/${slug}`;
 
   return {
     title: `${product.name} — ${businessInfo.name}`,
@@ -92,6 +93,12 @@ export default async function ProductPageInCategory({ params }: Props) {
         deletedAt: null,
       },
       take: 4,
+      // Kaart-velden (+ description voor het gedeelde Product-type; slechts 4 rijen).
+      select: {
+        id: true, slug: true, name: true, price: true, listPrice: true, description: true,
+        category: true, images: true, featured: true, stock: true, createdAt: true,
+        colorGroup: true, colorName: true, colorHex: true, specs: true,
+      },
     }),
     product.colorGroup
       ? prisma.product.findMany({

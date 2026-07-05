@@ -276,7 +276,7 @@ export default function CategoryListing({ category, products }: Props) {
               <ProductCard
                 key={p.id}
                 product={p}
-                priority={i < 4}
+                priority={i < 2}
                 wide={p.category === "hoekbanken" || p.category === "bankstellen" || p.category === "slaapkamers"}
                 variants={p.colorGroup ? variantsByGroup.get(p.colorGroup) : undefined}
               />
