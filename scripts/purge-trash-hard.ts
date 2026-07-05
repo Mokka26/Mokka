@@ -67,9 +67,23 @@ async function main() {
   // 2) DB hard-delete
   const del = await prisma.product.deleteMany({ where: { deletedAt: { not: null } } });
 
+  // 3) Verwijderde losse foto's (deletedImage-tabel) — ook onderdeel van de
+  //    prullenbak ("Foto's"-tab). publicId staat in de tabel; assets die een
+  //    live product óók gebruikt worden overgeslagen.
+  const di = await prisma.deletedImage.findMany({ select: { id: true, publicId: true } });
+  const diToDelete = di.filter((d) => d.publicId && !liveIds.has(d.publicId));
+  let diCld = 0;
+  for (const batch of chunk([...new Set(diToDelete.map((d) => d.publicId))], 100)) {
+    try {
+      const res = await cloudinary.api.delete_resources(batch, { invalidate: true, resource_type: "image" });
+      diCld += Object.keys(res.deleted as Record<string, string>).length;
+    } catch (e) { console.error(`  ✗ deletedImage batch: ${e instanceof Error ? e.message : e}`); }
+  }
+  const diDel = await prisma.deletedImage.deleteMany({});
+
   console.log(`\n✅ Klaar.`);
-  console.log(`   Cloudinary: ${cldDeleted} verwijderd, ${cldFailed} mislukt.`);
-  console.log(`   DB: ${del.count} producten definitief verwijderd.`);
+  console.log(`   Producten — Cloudinary: ${cldDeleted} verwijderd, ${cldFailed} mislukt; DB: ${del.count} producten weg.`);
+  console.log(`   Losse foto's — Cloudinary: ${diCld} verwijderd; DB: ${diDel.count} deletedImage-rijen weg.`);
   await prisma.$disconnect();
 }
 main().catch((e) => { console.error(e); process.exit(1); });

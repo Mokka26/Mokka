@@ -24,8 +24,12 @@ export default async function TrashPage() {
         price: true,
       },
     }),
+    // Cap op de meest recente 200 — anders rendert de Foto's-tab honderden/
+    // duizenden <Image>'s in één keer (crasht de pagina). Oudere items worden
+    // sowieso automatisch permanent verwijderd na de retentieperiode.
     prisma.deletedImage.findMany({
       orderBy: { deletedAt: "desc" },
+      take: 200,
       select: {
         id: true,
         productSlug: true,
@@ -47,14 +51,16 @@ export default async function TrashPage() {
     autoPurgeAt: new Date(p.deletedAt!.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000),
   }));
 
-  const imageItems = images.map((i) => ({
-    id: i.id,
-    productSlug: i.productSlug,
-    productId: i.productId,
-    url: i.url,
-    deletedAt: i.deletedAt,
-    autoPurgeAt: new Date(i.deletedAt.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000),
-  }));
+  const imageItems = images
+    .filter((i) => i.url && i.url.trim()) // lege src laat Next <Image> crashen
+    .map((i) => ({
+      id: i.id,
+      productSlug: i.productSlug,
+      productId: i.productId,
+      url: i.url,
+      deletedAt: i.deletedAt,
+      autoPurgeAt: new Date(i.deletedAt.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000),
+    }));
 
   // Items die op punt staan verwijderd te worden
   const expiringSoon = [...productItems, ...imageItems].filter(
