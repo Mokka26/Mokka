@@ -52,6 +52,14 @@ model Product {
   @@index([source])
 }
 
+// Simpele DB-backed rate-limiter (werkt over serverless-instances heen).
+// key = bv. "login:<ip>" of "checkout:<ip>"; teller per tijdvenster tot resetAt.
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}
+
 model DeletedImage {
   id          String   @id @default(cuid())
   productId   String?

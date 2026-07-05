@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getMollie, toMollieAmount } from "@/lib/mollie";
 import { computeOrder, generateOrderNumber, type CheckoutLineInput } from "@/lib/orders";
 import { businessInfo } from "@/lib/business-info";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(60),
@@ -60,6 +61,11 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Ongeldige gegevens" };
   }
+  // Anti-flooding: elke call maakt een Order + live Mollie-betaling. Max 15
+  // checkouts per 10 min per IP.
+  const rl = await rateLimit(`checkout:ip:${await clientIp()}`, 15, 10 * 60 * 1000);
+  if (!rl.ok) return { ok: false, error: "Te veel pogingen. Wacht even en probeer opnieuw." };
+
   const { customer, items, expectedTotal } = parsed.data;
 
   // Totaal SERVER-SIDE herberekenen uit de database.
