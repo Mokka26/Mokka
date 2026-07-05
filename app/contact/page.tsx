@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
+import { submitContact } from "./actions";
 import {
   businessInfo,
   getMapsUrl,
@@ -20,12 +21,27 @@ const contactInfo = [
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); setSubmitted(true); };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSending(true);
+    const r = await submitContact({
+      name: form.name,
+      email: form.email,
+      subject: form.subject || undefined,
+      message: form.message,
+    });
+    setSending(false);
+    if (r.ok) setSubmitted(true);
+    else setError(r.error ?? "Er ging iets mis.");
+  };
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
@@ -164,8 +180,11 @@ export default function ContactPage() {
                 <label htmlFor="contact-message" className="eyebrow block mb-3">Bericht *</label>
                 <textarea id="contact-message" name="message" value={form.message} onChange={handleChange} required rows={6} className="input-field resize-none" />
               </div>
-              <motion.button type="submit" className="btn-primary w-full" whileTap={{ scale: 0.98 }}>
-                Versturen
+              {error && (
+                <p className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-[8px]" role="alert">{error}</p>
+              )}
+              <motion.button type="submit" disabled={sending} className="btn-primary w-full disabled:opacity-60" whileTap={{ scale: 0.98 }}>
+                {sending ? "Versturen…" : "Versturen"}
               </motion.button>
             </form>
           )}

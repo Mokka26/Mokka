@@ -52,6 +52,25 @@ model Product {
   @@index([source])
 }
 
+// Contactformulier-inzendingen (worden in de admin/DB bewaard; later te
+// koppelen aan een e-mailprovider).
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Nieuwsbrief-inschrijvingen.
+model NewsletterSubscriber {
+  email     String   @id
+  createdAt DateTime @default(now())
+}
+
 // Simpele DB-backed rate-limiter (werkt over serverless-instances heen).
 // key = bv. "login:<ip>" of "checkout:<ip>"; teller per tijdvenster tot resetAt.
 model RateLimit {
