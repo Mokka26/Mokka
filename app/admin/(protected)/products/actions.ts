@@ -265,11 +265,10 @@ export async function updateProductFull(
   if (updated.colorGroup) {
     await prisma.product.updateMany({
       where: { colorGroup: updated.colorGroup, deletedAt: null },
-      data: {
-        price: rest.price, listPrice: rest.listPrice,
-        nachtkastMode: rest.nachtkastMode, nachtkastPrice: rest.nachtkastPrice, nachtkastPrice2: rest.nachtkastPrice2,
-        voetbankMode: rest.voetbankMode, voetbankPrice: rest.voetbankPrice,
-      },
+      // Alleen prijs + adviesprijs werken door op de kleurgroep (bewuste keuze).
+      // Nachtkast/voetbank zijn per-bed-configuratie en worden NIET meegetrokken
+      // — anders overschrijft één kleur de opties van de andere.
+      data: { price: rest.price, listPrice: rest.listPrice },
     });
   }
 

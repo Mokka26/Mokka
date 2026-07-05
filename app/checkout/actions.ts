@@ -20,6 +20,9 @@ const customerSchema = z.object({
 
 const checkoutSchema = z.object({
   customer: customerSchema,
+  // Het bedrag dat de klant op het scherm zag — puur ter controle. De server
+  // rekent zelf het echte totaal uit en weigert bij een verschil.
+  expectedTotal: z.number().nonnegative().optional(),
   items: z
     .array(
       z.object({
@@ -42,9 +45,13 @@ async function baseUrl(): Promise<string> {
   // je echte domein. Zo werkt afrekenen lokaal én live zonder extra config.
   const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
   if (env) return env;
+  // In productie NOOIT de (vervalsbare) x-forwarded-host / Host-header gebruiken
+  // voor betaal-redirect/webhook — anders kan een gespoofte Host de betaling
+  // omleiden. Val terug op de canonieke site-URL (constante).
+  if (process.env.NODE_ENV === "production") return businessInfo.siteUrl.replace(/\/$/, "");
   const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+  const host = h.get("host");
+  const proto = host?.includes("localhost") ? "http" : "https";
   return host ? `${proto}://${host}` : businessInfo.siteUrl.replace(/\/$/, "");
 }
 
@@ -53,7 +60,7 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Ongeldige gegevens" };
   }
-  const { customer, items } = parsed.data;
+  const { customer, items, expectedTotal } = parsed.data;
 
   // Totaal SERVER-SIDE herberekenen uit de database.
   let computed;
@@ -63,6 +70,19 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
     return { ok: false, error: e instanceof Error ? e.message : "Kon bestelling niet berekenen" };
   }
   if (!(computed.total > 0)) return { ok: false, error: "Ongeldig bestelbedrag" };
+
+  // Getoond bedrag = af te rekenen bedrag. Wijkt het server-totaal af van wat de
+  // klant op het scherm zag (prijs gewijzigd sinds toevoegen), dan niet stil
+  // doorbelasten maar weigeren zodat de klant het nieuwe bedrag kan bevestigen.
+  if (
+    typeof expectedTotal === "number" &&
+    Math.round(expectedTotal * 100) !== Math.round(computed.subtotal * 100)
+  ) {
+    return {
+      ok: false,
+      error: "De prijs van een product is gewijzigd. Ververs je winkelwagen en controleer het nieuwe totaal.",
+    };
+  }
 
   // Order + regels opslaan (status open tot Mollie de betaling bevestigt).
   const orderNumber = generateOrderNumber(Date.now());

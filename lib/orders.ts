@@ -26,15 +26,21 @@ export type ComputedOrder = {
 
 type SizeVariant = { label: string; price?: number };
 
-function variantPrice(sizeVariants: string | null, label: string | null, fallback: number): number {
-  if (!label || !sizeVariants) return fallback;
-  try {
-    const arr = JSON.parse(sizeVariants) as SizeVariant[];
-    const match = Array.isArray(arr) ? arr.find((v) => v.label === label) : null;
-    return match && typeof match.price === "number" && match.price > 0 ? match.price : fallback;
-  } catch {
-    return fallback;
-  }
+/**
+ * Prijs voor de gekozen maat. Geeft `null` als het product maat-varianten heeft
+ * maar het meegestuurde label op géén enkele variant matcht (bv. maat hernoemd
+ * of verwijderd in de admin) — dan mag NIET stilletjes op de basisprijs worden
+ * teruggevallen; de checkout hoort te weigeren.
+ */
+function variantPrice(sizeVariants: string | null, label: string | null, fallback: number): number | null {
+  if (!sizeVariants) return fallback;
+  let arr: SizeVariant[];
+  try { arr = JSON.parse(sizeVariants) as SizeVariant[]; } catch { return fallback; }
+  if (!Array.isArray(arr) || arr.length === 0) return fallback;
+  if (!label) return fallback; // varianten aanwezig maar geen maat gekozen → basisprijs
+  const match = arr.find((v) => v.label === label);
+  if (!match) return null; // maat bestaat niet (meer) → fout
+  return typeof match.price === "number" && match.price > 0 ? match.price : fallback;
 }
 
 /**
@@ -48,7 +54,7 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
   const ids = [...new Set(items.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, hidden: false, deletedAt: null },
-    select: { id: true, name: true, price: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true },
+    select: { id: true, name: true, price: true, stock: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -57,8 +63,12 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     const p = byId.get(item.productId);
     if (!p) throw new Error("Product niet (meer) beschikbaar");
     const qty = Math.max(1, Math.min(99, Math.floor(item.quantity)));
+    // Voorraadcheck — voorkomt overselling (order + betaling voor niet-leverbaar).
+    if (p.stock <= 0) throw new Error(`${p.name} is uitverkocht`);
+    if (qty > p.stock) throw new Error(`${p.name}: nog ${p.stock} op voorraad`);
     const label = item.variantLabel?.trim() || null;
     const sizePrice = variantPrice(p.sizeVariants, label, p.price);
+    if (sizePrice === null) throw new Error(`De gekozen maat voor ${p.name} is niet meer beschikbaar`);
     if (!(sizePrice > 0)) throw new Error(`Geen geldige prijs voor ${p.name}`);
     // Nachtkast-toeslag — alleen bij modus "optional" (apart bij te bestellen);
     // prijs komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.

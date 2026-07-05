@@ -34,15 +34,26 @@ export async function syncOrderByPaymentId(paymentId: string): Promise<OrderStat
   const next = mapStatus(payment.status);
   if (order.status === next) return next;
 
-  // Eenmalig voorraad afboeken bij eerste overgang naar betaald.
-  if (next === "paid" && order.status !== "paid") {
-    await prisma.$transaction(
-      order.items.map((it) =>
-        prisma.product.update({ where: { id: it.productId }, data: { stock: { decrement: it.quantity } } }),
-      ),
-    );
+  // Overgang naar 'paid' atomair claimen: webhook én retourpagina roepen dit
+  // vaak tegelijk aan. Alleen de invocatie waarvan de conditionele update
+  // daadwerkelijk flipt (count===1) boekt de voorraad af — nooit dubbel.
+  if (next === "paid") {
+    const claim = await prisma.order.updateMany({
+      where: { id: order.id, status: { not: "paid" } },
+      data: { status: "paid" },
+    });
+    if (claim.count === 1) {
+      await prisma.$transaction(
+        order.items.map((it) =>
+          prisma.product.update({ where: { id: it.productId }, data: { stock: { decrement: it.quantity } } }),
+        ),
+      );
+    }
+    return "paid";
   }
 
+  // Niet-betaalde overgangen (failed/canceled/expired) hebben geen eenmalig
+  // neveneffect → een simpele set is idempotent genoeg.
   await prisma.order.update({ where: { id: order.id }, data: { status: next } });
   return next;
 }

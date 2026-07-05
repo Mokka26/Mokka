@@ -57,12 +57,17 @@ export async function GET(request: NextRequest) {
   if (sort === "price-desc") orderBy = { price: "desc" };
   if (sort === "name") orderBy = { name: "asc" };
 
-  // Veiligheidsplafond: voorkomt dat één request de hele (groeiende) tabel
-  // ophaalt. Ruim boven het huidige assortiment.
+  // Expliciete select: alleen klant-velden. NOOIT interne kolommen als `source`
+  // (groothandel-/dropship-leverancier) publiek teruggeven.
   const products = await prisma.product.findMany({
     where,
     orderBy,
     take: 1000,
+    select: {
+      id: true, slug: true, name: true, price: true, listPrice: true,
+      category: true, images: true, featured: true, stock: true, createdAt: true,
+      colorGroup: true, colorName: true, colorHex: true, specs: true,
+    },
   });
 
   return NextResponse.json(

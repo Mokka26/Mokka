@@ -17,6 +17,12 @@ export async function POST(req: NextRequest) {
 
   const products = await prisma.product.findMany({
     where: { slug: { in: slugs }, hidden: false, deletedAt: null },
+    // Alleen klant-velden — geen interne `source` e.d. (zie /api/products).
+    select: {
+      id: true, slug: true, name: true, price: true, listPrice: true,
+      category: true, images: true, featured: true, stock: true, createdAt: true,
+      colorGroup: true, colorName: true, colorHex: true, specs: true,
+    },
   });
 
   // Behoud de volgorde van de input slugs (chronologisch — meest recent eerst)

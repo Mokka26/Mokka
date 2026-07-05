@@ -99,6 +99,7 @@ export default function CheckoutPage() {
         firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,
         address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
       },
+      expectedTotal: totalPrice,
       items: items.map((i) => ({
         productId: i.productId,
         variantLabel: i.variantLabel,
