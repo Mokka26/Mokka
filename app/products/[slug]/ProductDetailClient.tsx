@@ -93,6 +93,7 @@ const USP_ICONS: Record<string, string> = {
   shipping: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
   warranty: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
   matras: "M3 12V8a2 2 0 012-2h14a2 2 0 012 2v4m-18 0h18m-18 0v4m18-4v4M3 14h18",
+  return: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
 };
 
 export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
@@ -107,6 +108,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const isBed = product.category === "bedden";
   const usps = [
     { icon: USP_ICONS.shipping, label: getUspsByKey("shipping")[0]?.title ?? "Gratis verzending" },
+    { icon: USP_ICONS.return, label: "14 dagen retour" },
     { icon: USP_ICONS.warranty, label: `${warrantyYearsFor(product.category)} jaar garantie` },
     ...(isBed ? [{ icon: USP_ICONS.matras, label: "Inclusief matras" }] : []),
     ...(product.nachtkastMode === "included" ? [{ icon: USP_ICONS.matras, label: "Inclusief nachtkast" }] : []),

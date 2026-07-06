@@ -107,6 +107,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li><span className="hover:text-white cursor-pointer transition-colors">Bezorging</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Montage</span></li>
+              <li><Link href={legal.returnPolicyUrl} className="hover:text-white transition-colors">Retour &amp; ruil</Link></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Garantie</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Veelgestelde vragen</span></li>
             </ul>

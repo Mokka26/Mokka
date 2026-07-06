@@ -5,8 +5,8 @@ import { shippingInfo } from "@/lib/shipping-info";
 export default function TopBanner() {
   const items = [
     `Gratis verzending vanaf €${shippingInfo.freeShippingThreshold}`,
+    "14 dagen wettelijke bedenktijd",
     "Persoonlijk advies in onze showroom",
-    "Veilig betalen met iDEAL & creditcard",
   ];
   return (
     <div className="bg-ink text-white/75 border-b border-white/10">

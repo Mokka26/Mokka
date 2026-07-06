@@ -8,7 +8,7 @@
  */
 
 type Usp = {
-  key: "shipping" | "payment" | "advice" | "warranty" | "assembly";
+  key: "shipping" | "return" | "payment" | "advice" | "warranty" | "assembly";
   title: string;
   description: string;
 };
@@ -45,6 +45,14 @@ export const shippingInfo = {
   warrantyCopyShort: "Garantie",
   warrantyCopyLong: "Op fabrieks- en materiaalfouten.",
 
+  // ─── Retour ───────────────────────────────────────────────────
+  // Wettelijk herroepingsrecht (14 dagen). Voorwaarde: product ongebruikt en in
+  // de originele, ongeopende verpakking (anders niet als nieuw verkoopbaar).
+  returnWindowDays: 14,
+  returnCopyShort: "14 dagen retour",
+  returnCopyLong: "14 dagen bedenktijd — mits ongebruikt en in originele verpakking.",
+  returnCondition: "ongebruikt en in de originele, ongeopende verpakking",
+
   // ─── BTW ──────────────────────────────────────────────────────
   vatRatePercent: 21,
   vatLabelShort: "incl. btw",
@@ -61,6 +69,11 @@ export const shippingInfo = {
       key: "shipping",
       title: "Gratis verzending",
       description: "Bij bestellingen boven €100 binnen Nederland en België.",
+    },
+    {
+      key: "return",
+      title: "14 dagen retour",
+      description: "Wettelijke bedenktijd — mits ongebruikt en in de originele verpakking.",
     },
     {
       key: "warranty",
@@ -87,6 +100,7 @@ export const shippingInfo = {
   // Korte marquee-messages voor TopBanner (max ~40 tekens elk)
   marqueeMessages: [
     "Gratis verzending vanaf €100",
+    "14 dagen wettelijke bedenktijd",
     "Persoonlijk advies in onze showroom",
     "Nieuwe voorjaarscollectie — nu online",
   ] as ReadonlyArray<string>,
@@ -94,7 +108,7 @@ export const shippingInfo = {
   // Footer USP-balk (4 items, korte sub-tekst)
   footerUsps: [
     { title: "Gratis verzending", sub: "Vanaf €100 in NL" },
-    { title: "Montageservice", sub: "Op afspraak mogelijk" },
+    { title: "14 dagen retour", sub: "Originele verpakking" },
     { title: "Garantie", sub: "Op fabrieks- en materiaalfouten" },
     { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
   ] as ReadonlyArray<{ title: string; sub: string }>,

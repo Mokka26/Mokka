@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/LegalPage";
 import { businessInfo, getFullAddress } from "@/lib/business-info";
 
@@ -48,13 +49,25 @@ export default function VoorwaardenPage() {
           dan informeren we je tijdig en heb je het recht de overeenkomst kosteloos te ontbinden.
         </p>
       </LegalSection>
-      <LegalSection heading="6. Conformiteit en garantie">
+      <LegalSection heading="6. Herroepingsrecht">
+        <p>
+          Je hebt 14 dagen bedenktijd om de overeenkomst zonder opgave van reden te ontbinden.
+          Retourneren kan mits het product ongebruikt is en in de originele, ongeopende verpakking
+          zit. Op maat gemaakte of speciaal bestelde artikelen zijn wettelijk uitgesloten van het
+          herroepingsrecht. De volledige procedure en voorwaarden lees je op de pagina{" "}
+          <Link href="/retourneren" className="text-accent underline underline-offset-2">
+            Retourneren
+          </Link>
+          .
+        </p>
+      </LegalSection>
+      <LegalSection heading="7. Conformiteit en garantie">
         <p>
           Onze producten voldoen aan de overeenkomst en aan de wettelijke eisen. Je hebt de
           wettelijke garantie: een product moet doen wat je er redelijkerwijs van mag verwachten.
         </p>
       </LegalSection>
-      <LegalSection heading="7. Klachten">
+      <LegalSection heading="8. Klachten">
         <p>
           Heb je een klacht? Neem contact op via {businessInfo.contact.email}. We reageren binnen
           14 dagen. Komen we er samen niet uit, dan kun je je wenden tot de Europese

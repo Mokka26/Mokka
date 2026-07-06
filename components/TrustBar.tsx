@@ -1,17 +1,17 @@
 "use client";
 
-import { Truck, ShieldCheck, CreditCard, MessageCircle } from "lucide-react";
+import { Truck, RotateCcw, ShieldCheck, CreditCard } from "lucide-react";
 import { getUspsByKey } from "@/lib/shipping-info";
 
 const ICONS = {
   shipping: Truck,
+  return: RotateCcw,
   warranty: ShieldCheck,
   payment: CreditCard,
-  advice: MessageCircle,
 } as const;
 
 export default function TrustBar() {
-  const items = getUspsByKey("shipping", "warranty", "payment", "advice");
+  const items = getUspsByKey("shipping", "return", "warranty", "payment");
 
   return (
     <section className="py-16 lg:py-20 bg-bone border-y border-line">

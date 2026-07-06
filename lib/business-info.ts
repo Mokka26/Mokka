@@ -92,6 +92,7 @@ export const businessInfo = {
     privacyPolicyUrl: "/privacy",
     termsUrl: "/algemene-voorwaarden",
     cookiePolicyUrl: "/cookies",
+    returnPolicyUrl: "/retourneren",
   },
 } as const;
 
