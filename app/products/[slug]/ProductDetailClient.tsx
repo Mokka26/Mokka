@@ -414,7 +414,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               <div className="mb-8">
                 <div className="flex items-baseline gap-3">
                   {hasDiscount && (
-                    <span className="font-serif text-lg lg:text-xl text-stone/70 font-light line-through tabular-nums">
+                    <span className="font-serif text-lg lg:text-xl text-stone font-light line-through tabular-nums">
                       {formatPrice(activeListPrice)}
                     </span>
                   )}
@@ -547,7 +547,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </div>
 
               {/* Korte intro paragraaf (eerste deel beschrijving) */}
-              <p className="text-sm lg:text-base text-slate leading-relaxed mb-8">
+              <p className="text-base text-slate leading-relaxed mb-8">
                 {product.description.length > 220
                   ? product.description.slice(0, 220).trim() + "…"
                   : product.description}
@@ -602,7 +602,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             <div className="flex-shrink-0">
               <p className="font-serif text-xl text-ink leading-none">
                 {hasDiscount && (
-                  <span className="text-sm text-stone/70 line-through mr-2">{formatPrice(activeListPrice)}</span>
+                  <span className="text-sm text-stone line-through mr-2">{formatPrice(activeListPrice)}</span>
                 )}
                 {formatPrice(activePrice)}
               </p>

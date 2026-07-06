@@ -305,20 +305,24 @@ h1, h2, h3, h4, h5, h6 {
   background-color: transparent;
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 0.9375rem;
+  /* 1rem (16px) — voorkomt iOS-zoom en voldoet aan de mobiele minimum-tekstgrootte. */
+  font-size: 1rem;
   font-weight: 400;
   letter-spacing: -0.005em;
-  transition: border-color var(--dur-quick) var(--ease-out-strong);
+  transition: border-color var(--dur-quick) var(--ease-out-strong), box-shadow var(--dur-quick) var(--ease-out-strong);
 
   &::placeholder {
     color: var(--color-stone);
-    opacity: 0.55;
+    opacity: 0.7;
   }
 
-  &:focus {
+  /* Duidelijke focus-indicator: dikkere accent-onderrand + zachte ring
+     (focus-visible i.p.v. focus zodat muisklikken geen ring krijgen). */
+  &:focus-visible {
     outline: none;
     border-bottom: 2px solid var(--color-accent);
     padding-bottom: calc(0.625rem - 1px);
+    box-shadow: 0 2px 0 0 var(--color-accent);
   }
 }
 

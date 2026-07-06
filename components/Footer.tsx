@@ -76,8 +76,9 @@ export default function Footer() {
             <form onSubmit={(e) => e.preventDefault()} className="flex border-b border-white/20 focus-within:border-white/60 transition-colors">
               <input
                 type="email"
+                aria-label="E-mailadres voor de nieuwsbrief"
                 placeholder="jouw@email.nl"
-                className="flex-1 bg-transparent py-3 text-white placeholder-white/30 text-sm focus:outline-none"
+                className="flex-1 bg-transparent py-3 text-white placeholder-white/60 text-base focus:outline-none"
               />
               <button type="submit" className="text-white/80 hover:text-white text-xs uppercase tracking-[0.25em] px-2 transition-colors">
                 Aanmelden

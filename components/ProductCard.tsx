@@ -300,7 +300,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
               </span>
             ) : (
               <span
-                className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone/60 whitespace-nowrap"
+                className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone whitespace-nowrap"
                 aria-label="Uitverkocht"
               >
                 <span className="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-stone/40" aria-hidden />

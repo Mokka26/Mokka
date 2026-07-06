@@ -52,7 +52,7 @@ export function Price({
     <span className="inline-flex flex-col">
       <span className="inline-flex items-baseline gap-2">
         {hasDiscount && (
-          <span className="text-stone/70 font-normal line-through text-[0.78em] tabular-nums">
+          <span className="text-stone font-normal line-through text-[0.78em] tabular-nums">
             {formatPrice(listPrice)}
           </span>
         )}

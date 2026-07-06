@@ -418,8 +418,9 @@ export default function Navbar() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Wat zoek je?"
+                    aria-label="Zoek in de webshop"
                     autoFocus
-                    className="w-full text-2xl sm:text-4xl lg:text-5xl font-serif py-6 pl-12 sm:pl-16 bg-transparent border-0 border-b border-line focus:outline-none focus:border-ink transition-colors placeholder-stone/50"
+                    className="w-full text-2xl sm:text-4xl lg:text-5xl font-serif py-6 pl-12 sm:pl-16 bg-transparent border-0 border-b border-line focus:outline-none focus:border-ink transition-colors placeholder-stone"
                   />
                 </div>
                 <div className="mt-8 flex flex-wrap gap-3">
