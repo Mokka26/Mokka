@@ -36,6 +36,7 @@ export type CategorySlug =
   | "tafel-accessoires"
   | "stoelen"           // umbrella: eetkamerstoelen + fauteuils
   | "eetkamerstoelen"
+  | "poefs"
   | "spiegels"
   | "verlichting"      // umbrella: plafondlampen + vloerlampen + tafellampen + wandlampen
   | "plafondlampen"
@@ -106,6 +107,15 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     label: "Fauteuils",
     intro: "Losse fauteuils en armstoelen — een comfortabele zit naast de bank of als accent.",
     dbCategories: ["fauteuils"],
+    isUmbrella: false,
+    group: "Stoelen",
+    cardSubtitle: "In diverse kleuren.",
+  },
+  {
+    slug: "poefs",
+    label: "Poefs",
+    intro: "Poefs en zithockers — een zachte extra zit of voetensteun, in diverse kleuren en stoffen.",
+    dbCategories: ["poefs"],
     isUmbrella: false,
     group: "Stoelen",
     cardSubtitle: "In diverse kleuren.",

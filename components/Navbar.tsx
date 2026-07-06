@@ -72,6 +72,7 @@ const navItems: NavItem[] = [
           { label: "Alle stoelen", href: "/stoelen" },
           { label: "Eetkamerstoelen", href: "/eetkamerstoelen" },
           { label: "Fauteuils", href: "/fauteuils" },
+          { label: "Poefs", href: "/poefs" },
         ],
       },
     ],
