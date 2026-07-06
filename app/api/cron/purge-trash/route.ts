@@ -101,3 +101,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, ...result });
 }
+
+// Vercel-cron roept endpoints via GET aan → dezelfde (beveiligde) handler.
+export const GET = POST;

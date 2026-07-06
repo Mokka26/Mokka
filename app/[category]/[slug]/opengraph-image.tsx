@@ -95,17 +95,19 @@ export default async function ProductOpengraphImage({
           </div>
         </div>
 
-        {/* Rechter helft: product image */}
+        {/* Rechter helft: product image. Satori (next/og) rendert een remote
+            background-image niet betrouwbaar → gebruik een echt <img>. */}
         {optimized && (
-          <div
-            style={{
-              width: "50%",
-              display: "flex",
-              backgroundImage: `url(${optimized})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
+          <div style={{ width: "50%", display: "flex" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={optimized}
+              alt=""
+              width={600}
+              height={630}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
         )}
       </div>
     ),

@@ -23,14 +23,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return { title: "Categorie niet gevonden" };
 
   const url = `/${category.slug}`;
-  const title = `${category.label} — ${businessInfo.name}`;
+  const title = `${category.label} kopen | ${businessInfo.name} — meubels & interieur`;
+  const description = (
+    `${category.intro} Bekijk de ${category.label.toLowerCase()} van ${businessInfo.name} — incl. btw, snelle levering en veilig betalen.`
+  ).slice(0, 160);
   return {
     title,
-    description: category.intro.slice(0, 160),
+    description,
     alternates: { canonical: url },
     openGraph: {
       title,
-      description: category.intro,
+      description,
       type: "website",
       url,
     },

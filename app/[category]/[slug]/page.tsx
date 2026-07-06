@@ -41,14 +41,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product || product.hidden || product.deletedAt) return { title: "Product niet gevonden" };
 
   const url = `/${categorySlug}/${slug}`;
+  const catLabel = getCategory(categorySlug)?.label ?? "";
+  const title = `${product.name} kopen${catLabel ? ` — ${catLabel}` : ""} | ${businessInfo.name}`;
+  const base = product.description.replace(/\s+/g, " ").trim();
+  const description = (
+    base.length >= 120 ? base : `${base ? base + " " : ""}${product.name} online bestellen bij ${businessInfo.name} — snelle levering, veilig betalen.`
+  ).slice(0, 160);
 
   return {
-    title: `${product.name} — ${businessInfo.name}`,
-    description: product.description.slice(0, 160),
+    title,
+    description,
     alternates: { canonical: url },
     openGraph: {
       title: product.name,
-      description: product.description.slice(0, 160),
+      description,
       type: "website",
       url,
       // Geen `images` hier: laat de gegenereerde opengraph-image.tsx (product-

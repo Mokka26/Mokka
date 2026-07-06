@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
 import { getUspsByKey, shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
-import { getCategory } from "@/lib/categories";
+import { getCategory, productUrl } from "@/lib/categories";
 import { formatPrice } from "@/components/ui/price";
 
 interface Product {
@@ -474,9 +474,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                       );
                     })}
                   </div>
-                  {nachtkast > 0 && (
-                    <p className="text-[11px] text-stone mt-2">Totaal: {formatPrice(lineUnitPrice)}</p>
-                  )}
                 </div>
               )}
 
@@ -506,11 +503,16 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 </div>
               )}
 
+              {((isNkOptional && nachtkast > 0) || (isVbOptional && voetbank > 0)) && (
+                <p className="text-sm text-ink mb-8">Totaal met opties: <span className="font-medium">{formatPrice(lineUnitPrice)}</span></p>
+              )}
+
               <div className="w-10 h-[1px] bg-line mb-8" />
 
               <ColorVariantPicker
                 currentSlug={product.slug}
                 currentColorName={product.colorName ?? null}
+                category={product.category}
                 variants={colorVariants}
               />
 
@@ -727,10 +729,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 function ColorVariantPicker({
   currentSlug,
   currentColorName,
+  category,
   variants,
 }: {
   currentSlug: string;
   currentColorName: string | null;
+  category: string;
   variants: ColorVariant[];
 }) {
   if (!variants || variants.length <= 1) return null;
@@ -749,7 +753,7 @@ function ColorVariantPicker({
           return (
             <Link
               key={v.id}
-              href={`/products/${v.slug}`}
+              href={productUrl({ category, slug: v.slug })}
               aria-label={v.colorName ?? "Variant"}
               title={v.colorName ?? ""}
               className={`relative w-10 h-10 border-2 transition-all ${
