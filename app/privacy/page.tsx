@@ -36,6 +36,35 @@ export default function PrivacyPage() {
           fiscale bewaarplicht) na te komen.
         </p>
       </LegalSection>
+      <LegalSection heading="Delen met derden">
+        <p>
+          We verkopen je gegevens nooit. We delen ze alleen met partijen die nodig zijn om je
+          bestelling uit te voeren: onze betaaldienstverlener (voor de afhandeling van je betaling),
+          de bezorgpartner (voor de levering) en onze IT-dienstverleners voor hosting, het tonen van
+          afbeeldingen en het bewaken van de werking en veiligheid van de website. Met deze partijen
+          zijn verwerkersafspraken gemaakt en zij mogen je gegevens alleen voor dat doel gebruiken.
+        </p>
+      </LegalSection>
+      <LegalSection heading="Nieuwsbrief">
+        <p>
+          Meld je je aan voor de nieuwsbrief, dan gebruiken we je e-mailadres alleen daarvoor. In
+          iedere nieuwsbrief staat een afmeldlink; afmelden kan op elk moment.
+        </p>
+      </LegalSection>
+      <LegalSection heading="Beveiliging">
+        <p>
+          Je gegevens worden via een versleutelde verbinding (HTTPS) verstuurd. We nemen passende
+          technische en organisatorische maatregelen om je gegevens te beschermen tegen verlies of
+          onrechtmatig gebruik.
+        </p>
+      </LegalSection>
+      <LegalSection heading="Cookies">
+        <p>
+          Voor de werking en het meten van de website gebruiken we cookies. Lees hier meer over in
+          ons{" "}
+          <a href="/cookies" className="text-accent underline underline-offset-2">cookiebeleid</a>.
+        </p>
+      </LegalSection>
       <LegalSection heading="Bewaartermijn">
         <p>
           We bewaren je gegevens niet langer dan nodig. Bestel- en factuurgegevens bewaren we
