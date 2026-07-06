@@ -86,6 +86,7 @@ const navItems: NavItem[] = [
           { label: "Alle bedden", href: "/bedden" },
           { label: "Matrassen", href: "/matrassen" },
           { label: "Complete slaapkamers", href: "/slaapkamers" },
+          { label: "Jeugdkamers", href: "/jeugdkamers" },
         ],
       },
       {
