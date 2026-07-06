@@ -277,7 +277,7 @@ export default function CategoryListing({ category, products }: Props) {
                 key={p.id}
                 product={p}
                 priority={i < 2}
-                wide={p.category === "hoekbanken" || p.category === "bankstellen" || p.category === "slaapkamers"}
+                wide={p.category === "hoekbanken" || p.category === "bankstellen" || p.category === "slaapkamers" || p.category === "jeugdkamers"}
                 variants={p.colorGroup ? variantsByGroup.get(p.colorGroup) : undefined}
               />
             ))}

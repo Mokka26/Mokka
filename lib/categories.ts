@@ -20,6 +20,7 @@ export type CategorySlug =
   | "bedden"
   | "matrassen"
   | "slaapkamers"
+  | "jeugdkamers"
   | "kasten"           // umbrella: kledingkasten + dressoirs + nachtkastjes + ladekasten + kapstokken
   | "kledingkasten"
   | "dressoirs"
@@ -203,6 +204,14 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     label: "Slaapkamers",
     intro: "Rust begint hier. Zachte materialen en warme tinten voor de persoonlijkste ruimte.",
     dbCategories: ["slaapkamers"],
+    isUmbrella: false,
+    group: "Slapen",
+  },
+  {
+    slug: "jeugdkamers",
+    label: "Jeugdkamers",
+    intro: "Complete kamers voor kinderen en tieners — bed, kast en bureau in één stijl.",
+    dbCategories: ["jeugdkamers"],
     isUmbrella: false,
     group: "Slapen",
   },
