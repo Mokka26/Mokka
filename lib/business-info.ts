@@ -43,13 +43,12 @@ export const businessInfo = {
     countryName: "Nederland",
   },
 
-  // TODO: bevestig met klant — placeholders nu null zodat templates ze hiden
-  kvk: null as string | null,
-  btw: null as string | null, // formaat: NL123456789B01
+  kvk: "96896280" as string | null,
+  btw: "NL867821759B01" as string | null, // formaat: NL123456789B01
 
   contact: {
-    phone: null as string | null, // TODO: echt nummer
-    phoneFormatted: null as string | null, // display-versie bv "070 - 123 45 67"
+    phone: "+31705147798" as string | null, // E.164 — voor tel:-link + schema
+    phoneFormatted: "070 - 514 77 98" as string | null, // display-versie
     email: "hallo@mokkahome.nl",
     supportEmail: null as string | null, // TODO: bevestig of apart support-adres
   },
