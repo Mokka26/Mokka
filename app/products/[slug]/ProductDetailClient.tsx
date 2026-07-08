@@ -103,12 +103,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   // dus ze vullen het frame exact — geen witte zijbalken, volledig product.
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
 
-  // Vaste 3 USP's op elke productpagina (garantie per categorie: banken 1j, rest
-  // 2j). "Inclusief matras/nachtkast" hoort in de specificaties, niet als benefit.
+  // USP's op de productpagina: verzending, retour + garantie per categorie
+  // (standaard 1j, bedden 2j, slaapkamers geen → dan geen garantie-USP).
+  const warrantyY = warrantyYearsFor(product.category);
   const usps = [
     { icon: USP_ICONS.shipping, label: getUspsByKey("shipping")[0]?.title ?? "Gratis verzending" },
     { icon: USP_ICONS.return, label: "14 dagen retour" },
-    { icon: USP_ICONS.warranty, label: `${warrantyYearsFor(product.category)} jaar garantie` },
+    ...(warrantyY > 0 ? [{ icon: USP_ICONS.warranty, label: `${warrantyY} jaar garantie` }] : []),
   ];
 
   // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is
@@ -367,7 +368,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         src={cldOptimize(images[selectedImage], {
                           ar: "1:1",
                           w: 1800,
-                          mode: "fill",
+                          mode: "contain",
                           upscale: true,
                           sourceW: sourceWAt(selectedImage),
                           dpr: "auto",
@@ -377,7 +378,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         fill
                         priority
                         unoptimized
-                        className="object-cover transition-transform duration-200 ease-out will-change-transform"
+                        className="object-contain transition-transform duration-200 ease-out will-change-transform"
                         style={
                           zoomActive
                             ? { transform: "scale(1.8)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }

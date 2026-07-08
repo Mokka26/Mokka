@@ -38,9 +38,11 @@ export const shippingInfo = {
   // ─── Garantie ─────────────────────────────────────────────────
   // Default-garantie in jaren; per categorie te overschrijven (zie
   // warrantyByCategory + warrantyYearsFor()).
-  warrantyYears: 2,
+  // Standaard 1 jaar; bedden 2 jaar; slaapkamers geen garantie (0 = niet tonen).
+  warrantyYears: 1,
   warrantyByCategory: {
-    banken: 1, hoekbanken: 1, bankstellen: 1,
+    bedden: 2,
+    slaapkamers: 0,
   } as Record<string, number>,
   warrantyCopyShort: "Garantie",
   warrantyCopyLong: "Op fabrieks- en materiaalfouten.",

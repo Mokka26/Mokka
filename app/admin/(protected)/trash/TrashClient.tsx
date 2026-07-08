@@ -9,7 +9,9 @@ import {
   permanentlyDeleteProduct,
   restoreImage,
   permanentlyDeleteImage,
+  emptyTrash,
 } from "./actions";
+import { Trash2 } from "lucide-react";
 
 type ProductItem = {
   id: string;
@@ -43,8 +45,20 @@ export default function TrashClient({
 }) {
   const [tab, setTab] = useState<Tab>(products.length > 0 ? "products" : "images");
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmEmpty, setConfirmEmpty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const totalItems = products.length + images.length;
+
+  const handleEmptyTrash = () => {
+    setError(null);
+    startTransition(async () => {
+      const r = await emptyTrash();
+      if (!r.ok) setError(r.error);
+      else setConfirmEmpty(false);
+    });
+  };
 
   const handleRestoreProduct = (id: string) => {
     setError(null);
@@ -108,7 +122,28 @@ export default function TrashClient({
           <ImageIcon className="w-3.5 h-3.5" />
           Foto&apos;s <span className="opacity-60 tabular-nums">({images.length})</span>
         </button>
+        {totalItems > 0 && (
+          <button
+            type="button"
+            onClick={() => setConfirmEmpty(true)}
+            disabled={pending}
+            className="ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-red-700 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Prullenbak leegmaken
+          </button>
+        )}
       </div>
+
+      {confirmEmpty && (
+        <ConfirmModal
+          title="Hele prullenbak leegmaken?"
+          body={`Alle ${products.length} producten en ${images.length} losse foto's worden definitief verwijderd — óók van Cloudinary. Dit kan niet ongedaan gemaakt worden. Foto's die nog door een actief product worden gebruikt blijven behouden.`}
+          onCancel={() => setConfirmEmpty(false)}
+          onConfirm={handleEmptyTrash}
+          pending={pending}
+        />
+      )}
 
       {error && (
         <div className="mb-4 flex items-start gap-2 px-3 py-2 bg-red-50 border border-red-200 text-[12px] text-red-700">

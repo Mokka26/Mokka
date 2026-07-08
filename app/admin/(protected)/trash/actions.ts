@@ -133,6 +133,52 @@ export async function restoreImage(input: z.infer<typeof idSchema>): Promise<Res
   return { ok: true };
 }
 
+// ─── Hele prullenbak leegmaken (producten + losse foto's) ────────────
+type EmptyResult = { ok: true; products: number; images: number } | { ok: false; error: string };
+
+export async function emptyTrash(): Promise<EmptyResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Niet ingelogd" };
+
+  try {
+    // Public-ids die nog door een NIET-verwijderd product gebruikt worden →
+    // nooit slopen (gedeelde assets).
+    const live = await prisma.product.findMany({ where: { deletedAt: null }, select: { images: true } });
+    const liveIds = new Set<string>();
+    for (const p of live) {
+      try {
+        for (const it of JSON.parse(p.images) as (string | { url: string })[]) {
+          const pid = extractPublicId(typeof it === "string" ? it : it.url);
+          if (pid) liveIds.add(pid);
+        }
+      } catch { /* corrupt json overslaan */ }
+    }
+
+    const destroy = async (pid: string | null) => {
+      if (!pid || liveIds.has(pid)) return;
+      try { await cloudinary.uploader.destroy(pid, { invalidate: true }); } catch { /* niet kritiek */ }
+    };
+
+    // 1) Verwijderde producten + hun foto's
+    const trashed = await prisma.product.findMany({ where: { deletedAt: { not: null } }, select: { images: true } });
+    for (const p of trashed) {
+      try { for (const it of JSON.parse(p.images) as (string | { url: string })[]) await destroy(extractPublicId(typeof it === "string" ? it : it.url)); } catch { /* */ }
+    }
+    const delProducts = await prisma.product.deleteMany({ where: { deletedAt: { not: null } } });
+
+    // 2) Losse verwijderde foto's (deletedImage-tabel)
+    const dImgs = await prisma.deletedImage.findMany({ select: { publicId: true } });
+    for (const d of dImgs) await destroy(d.publicId);
+    const delImages = await prisma.deletedImage.deleteMany({});
+
+    revalidatePath("/admin/trash");
+    revalidatePath("/admin/products");
+    return { ok: true, products: delProducts.count, images: delImages.count };
+  } catch {
+    return { ok: false, error: "Legen mislukt" };
+  }
+}
+
 // ─── Image: permanent delete (Cloudinary destroy) ────────────────────
 export async function permanentlyDeleteImage(
   input: z.infer<typeof idSchema>,
