@@ -297,7 +297,7 @@ const productImageSchema = z.object({
 
 const imagesUpdateSchema = z.object({
   id: z.string().min(1),
-  images: z.array(productImageSchema).max(20),
+  images: z.array(productImageSchema).max(100),
 });
 
 export async function updateProductImages(
