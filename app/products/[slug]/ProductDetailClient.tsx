@@ -103,16 +103,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   // dus ze vullen het frame exact — geen witte zijbalken, volledig product.
   const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
 
-  // USP's onder de hero — garantie per categorie (banken 1j, rest 2j),
-  // en "Inclusief matras" op bedden.
-  const isBed = product.category === "bedden";
+  // Vaste 3 USP's op elke productpagina (garantie per categorie: banken 1j, rest
+  // 2j). "Inclusief matras/nachtkast" hoort in de specificaties, niet als benefit.
   const usps = [
     { icon: USP_ICONS.shipping, label: getUspsByKey("shipping")[0]?.title ?? "Gratis verzending" },
     { icon: USP_ICONS.return, label: "14 dagen retour" },
     { icon: USP_ICONS.warranty, label: `${warrantyYearsFor(product.category)} jaar garantie` },
-    ...(isBed ? [{ icon: USP_ICONS.matras, label: "Inclusief matras" }] : []),
-    ...(product.nachtkastMode === "included" ? [{ icon: USP_ICONS.matras, label: "Inclusief nachtkast" }] : []),
-    ...(product.voetbankMode === "included" ? [{ icon: USP_ICONS.matras, label: "Inclusief voetbank" }] : []),
   ];
 
   // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is

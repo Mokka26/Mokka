@@ -33,7 +33,6 @@ export type CategorySlug =
   | "salontafels"
   | "bijzettafels"
   | "tv-meubels"
-  | "tafel-accessoires"
   | "stoelen"           // umbrella: eetkamerstoelen + fauteuils
   | "eetkamerstoelen"
   | "poefs"
@@ -126,7 +125,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     slug: "tafels",
     label: "Tafels",
     intro: "Om de tafel wordt geleefd. Eettafels, salontafels en bijzettafels — filter op type.",
-    dbCategories: ["tafels", "eettafels", "salontafels", "bijzettafels", "tafel-accessoires"],
+    dbCategories: ["tafels", "eettafels", "salontafels", "bijzettafels"],
     isUmbrella: true,
     group: "Tafels",
   },
@@ -159,14 +158,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     label: "TV-meubels",
     intro: "Strakke lijnen voor het hart van je entertainmentruimte.",
     dbCategories: ["tv-meubels"],
-    isUmbrella: false,
-    group: "Tafels",
-  },
-  {
-    slug: "tafel-accessoires",
-    label: "Tafel-accessoires",
-    intro: "Losse tafelbladen en onderdelen — marmer, sinter stone, glas.",
-    dbCategories: ["tafel-accessoires"],
     isUmbrella: false,
     group: "Tafels",
   },

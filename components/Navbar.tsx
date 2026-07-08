@@ -57,7 +57,6 @@ const navItems: NavItem[] = [
           { label: "Eettafels", href: "/eettafels" },
           { label: "Salontafels", href: "/salontafels" },
           { label: "Bijzettafels", href: "/bijzettafels" },
-          { label: "Tafel-accessoires", href: "/tafel-accessoires" },
         ],
       },
     ],
@@ -134,9 +133,8 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  { label: "Lookbook", href: "/lookbook" },
   { label: "Aanbiedingen", href: "/products?sort=price-asc" },
-  { label: "Atelier", href: "/about" },
+  { label: "Over ons", href: "/about" },
 ];
 
 export default function Navbar() {

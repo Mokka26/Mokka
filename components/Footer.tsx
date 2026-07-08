@@ -114,7 +114,7 @@ export default function Footer() {
           </div>
 
           <div className="col-span-1 lg:col-span-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-5">Atelier</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-5">Over ons</p>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/about" className="hover:text-white transition-colors">Ons verhaal</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
