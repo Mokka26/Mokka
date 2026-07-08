@@ -368,7 +368,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         src={cldOptimize(images[selectedImage], {
                           ar: "1:1",
                           w: 1800,
-                          mode: "contain",
+                          mode: "fill",
                           upscale: true,
                           sourceW: sourceWAt(selectedImage),
                           dpr: "auto",
@@ -378,7 +378,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         fill
                         priority
                         unoptimized
-                        className="object-contain transition-transform duration-200 ease-out will-change-transform"
+                        className="object-cover transition-transform duration-200 ease-out will-change-transform"
                         style={
                           zoomActive
                             ? { transform: "scale(1.8)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
