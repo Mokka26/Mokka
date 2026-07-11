@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createMollieClient, Locale, type MollieClient } from "@mollie/api-client";
 
 // Mollie-client (server-only). Leest MOLLIE_API_KEY (test_… of live_…).
@@ -24,12 +25,12 @@ export type CheckoutMethod = { id: string; description: string; image: string | 
  * de aanroeper op een vaste lijst kan terugvallen.
  */
 export async function listEnabledMethods(
-  amountValue: number,
+  amountValue?: number,
   billingCountry = "NL",
 ): Promise<CheckoutMethod[] | null> {
   try {
     const methods = await getMollie().methods.list({
-      amount: toMollieAmount(amountValue),
+      ...(amountValue && amountValue > 0 ? { amount: toMollieAmount(amountValue) } : {}),
       billingCountry,
       includeWallets: "applepay",
       locale: Locale.nl_NL,
@@ -43,3 +44,14 @@ export async function listEnabledMethods(
     return null;
   }
 }
+
+/**
+ * Alle ingeschakelde methoden (zonder bedrag-filter) voor de footer-trustbalk.
+ * Gecached (6 uur) zodat niet elke pagina-render Mollie aanroept; valt op []
+ * terug bij een fout, dan toont de footer de vaste iconen.
+ */
+export const getFooterMethods = unstable_cache(
+  async (): Promise<CheckoutMethod[]> => (await listEnabledMethods()) ?? [],
+  ["footer-payment-methods"],
+  { revalidate: 21600 },
+);

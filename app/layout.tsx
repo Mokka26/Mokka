@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { businessInfo, getActiveSocials } from "@/lib/business-info";
 import { jsonLdHtml } from "@/lib/jsonLd";
 import Footer from "@/components/Footer";
+import { getFooterMethods } from "@/lib/mollie";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
 import TouchHoverProvider from "@/components/TouchHoverProvider";
@@ -81,7 +82,8 @@ function buildOrganizationSchema() {
   return schema;
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const footerMethods = await getFooterMethods();
   const organizationSchema = buildOrganizationSchema();
   return (
     <html lang="nl" data-scroll-behavior="smooth" className={`${sourceSerif.variable} ${geist.variable}`}>
@@ -117,7 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
           </main>
-          <Footer />
+          <Footer mollieMethods={footerMethods} />
           <CookieBanner />
         </CartProvider>
         <SpeedInsights />

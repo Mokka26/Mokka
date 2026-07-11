@@ -13,8 +13,9 @@ import {
 } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { PaymentIcon } from "@/components/PaymentIcons";
+import type { CheckoutMethod } from "@/lib/mollie";
 
-export default function Footer() {
+export default function Footer({ mollieMethods = [] }: { mollieMethods?: CheckoutMethod[] }) {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
 
@@ -157,11 +158,28 @@ export default function Footer() {
           {/* Payment logos */}
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-4">Veilig betalen met</p>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              {paymentMethods.map((method) => (
-                <PaymentIcon key={method.name} name={method.name} />
-              ))}
-            </div>
+            {mollieMethods.length > 0 ? (
+              // Live uit Mollie — dezelfde methoden als op de checkout, kleuriconen
+              // op witte chips zodat ze leesbaar zijn op de donkere footer.
+              <div className="flex flex-wrap items-center gap-2">
+                {mollieMethods.map((m) =>
+                  m.image ? (
+                    <span key={m.id} className="bg-white rounded-md h-8 px-2 inline-flex items-center" title={m.description}>
+                      <Image src={m.image} alt={m.description} width={40} height={24} unoptimized className="h-5 w-auto" />
+                    </span>
+                  ) : (
+                    <span key={m.id} className="text-xs font-semibold text-white/85">{m.description}</span>
+                  ),
+                )}
+              </div>
+            ) : (
+              // Fallback (bv. zonder Mollie-key): vaste witte wordmarks.
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                {paymentMethods.map((method) => (
+                  <PaymentIcon key={method.name} name={method.name} />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Social — alleen renderen als er actieve URLs zijn */}
