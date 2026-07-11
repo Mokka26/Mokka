@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -10,7 +10,8 @@ import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { formatPrice } from "@/components/ui/price";
-import { createCheckout } from "./actions";
+import { createCheckout, getPaymentMethods } from "./actions";
+import type { CheckoutMethod } from "@/lib/mollie";
 
 type FormFields = {
   firstName: string;
@@ -62,6 +63,21 @@ export default function CheckoutPage() {
   const shipping = isEligibleForFreeShipping(totalPrice) ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
 
+  const [methods, setMethods] = useState<CheckoutMethod[]>([]);
+  const [selectedMethod, setSelectedMethod] = useState<string>("");
+
+  // Haal de in Mollie ingeschakelde betaalmethoden op voor dit bedrag.
+  useEffect(() => {
+    if (!(total > 0)) return;
+    let active = true;
+    getPaymentMethods(total).then((m) => {
+      if (!active) return;
+      setMethods(m);
+      setSelectedMethod((cur) => (cur && m.some((x) => x.id === cur) ? cur : m[0]?.id ?? ""));
+    });
+    return () => { active = false; };
+  }, [total]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const name = e.target.name as FieldName;
     const value = e.target.value;
@@ -100,6 +116,7 @@ export default function CheckoutPage() {
         address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
       },
       expectedTotal: totalPrice,
+      ...(selectedMethod ? { method: selectedMethod } : {}),
       items: items.map((i) => ({
         productId: i.productId,
         variantLabel: i.variantLabel,
@@ -232,26 +249,38 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Betaalmethode (demo) */}
+            {/* Betaalmethode — live uit Mollie (/v2/methods) */}
             <div className="bg-white border border-line p-8 lg:p-12">
               <span className="eyebrow">03</span>
               <h3 className="font-serif text-2xl text-ink mt-3 mb-10">Betaalmethode</h3>
-              <div className="space-y-4">
-                <label className="flex items-center gap-4 p-5 border border-ink cursor-pointer transition-colors">
-                  <input type="radio" name="payment" defaultChecked className="accent-accent" />
-                  <span className="text-ink text-sm font-medium">iDEAL</span>
-                  <span className="text-stone text-xs ml-auto uppercase tracking-[0.2em]">Direct via je bank</span>
-                </label>
-                <label className="flex items-center gap-4 p-5 border border-line cursor-pointer hover:border-stone transition-colors">
-                  <input type="radio" name="payment" className="accent-accent" />
-                  <span className="text-ink text-sm font-medium">Creditcard</span>
-                  <span className="text-stone text-xs ml-auto uppercase tracking-[0.2em]">Visa, Mastercard</span>
-                </label>
-                <label className="flex items-center gap-4 p-5 border border-line cursor-pointer hover:border-stone transition-colors">
-                  <input type="radio" name="payment" className="accent-accent" />
-                  <span className="text-ink text-sm font-medium">Bancontact</span>
-                  <span className="text-stone text-xs ml-auto uppercase tracking-[0.2em]">Voor Belgische klanten</span>
-                </label>
+              <div className="space-y-3">
+                {methods.length === 0 && (
+                  <p className="text-sm text-stone" aria-live="polite">Betaalmethoden laden…</p>
+                )}
+                {methods.map((m) => {
+                  const active = selectedMethod === m.id;
+                  return (
+                    <label
+                      key={m.id}
+                      className={`flex items-center gap-4 p-5 border cursor-pointer transition-colors ${active ? "border-ink" : "border-line hover:border-stone"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment"
+                        value={m.id}
+                        checked={active}
+                        onChange={() => setSelectedMethod(m.id)}
+                        className="accent-accent"
+                      />
+                      {m.image ? (
+                        <Image src={m.image} alt="" width={40} height={26} unoptimized className="h-6 w-auto" />
+                      ) : (
+                        <span className="w-10" aria-hidden />
+                      )}
+                      <span className="text-ink text-sm font-medium">{m.description}</span>
+                    </label>
+                  );
+                })}
               </div>
               <p className="text-[11px] text-stone uppercase tracking-[0.2em] mt-6">Je wordt doorgestuurd naar een beveiligde betaalomgeving.</p>
             </div>

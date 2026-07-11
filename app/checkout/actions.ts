@@ -3,7 +3,8 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getMollie, toMollieAmount } from "@/lib/mollie";
+import { PaymentLineType, type PaymentMethod } from "@mollie/api-client";
+import { getMollie, toMollieAmount, listEnabledMethods, type CheckoutMethod } from "@/lib/mollie";
 import { computeOrder, generateOrderNumber, type CheckoutLineInput } from "@/lib/orders";
 import { businessInfo } from "@/lib/business-info";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
@@ -24,6 +25,9 @@ const checkoutSchema = z.object({
   // Het bedrag dat de klant op het scherm zag — puur ter controle. De server
   // rekent zelf het echte totaal uit en weigert bij een verschil.
   expectedTotal: z.number().nonnegative().optional(),
+  // Gekozen betaalmethode (Mollie method-id, bv. "ideal", "klarna"). Komt uit
+  // getPaymentMethods(); Mollie valideert 'm alsnog bij het aanmaken.
+  method: z.string().trim().regex(/^[a-z0-9_]+$/i).max(40).optional(),
   items: z
     .array(
       z.object({
@@ -39,6 +43,27 @@ const checkoutSchema = z.object({
 });
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
+
+// Betaalmethoden die "achteraf betalen" zijn — deze eisen orderregels +
+// factuuradres bij het aanmaken van de betaling.
+const PAY_LATER = new Set(["klarna", "in3", "riverty", "billie", "klarnapaylater", "klarnapaynow", "klarnasliceit"]);
+
+/**
+ * Geeft de betaalmethoden voor het huidige winkelwagenbedrag. Client rendert
+ * deze als keuze. Valt terug op een vaste basislijst als Mollie onbereikbaar is
+ * (bv. lokaal zonder API-key) zodat de checkout-UI altijd werkt.
+ */
+export async function getPaymentMethods(amountValue: number): Promise<CheckoutMethod[]> {
+  const amt = typeof amountValue === "number" && amountValue > 0 ? amountValue : 0;
+  if (!amt) return [];
+  const methods = await listEnabledMethods(amt, "NL");
+  if (methods && methods.length) return methods;
+  return [
+    { id: "ideal", description: "iDEAL", image: null },
+    { id: "creditcard", description: "Creditcard", image: null },
+    { id: "bancontact", description: "Bancontact", image: null },
+  ];
+}
 
 async function baseUrl(): Promise<string> {
   // Voorkeur: expliciete env-var (stabiel, canoniek). Anders leiden we het
@@ -66,7 +91,7 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   const rl = await rateLimit(`checkout:ip:${await clientIp()}`, 15, 10 * 60 * 1000);
   if (!rl.ok) return { ok: false, error: "Te veel pogingen. Wacht even en probeer opnieuw." };
 
-  const { customer, items, expectedTotal } = parsed.data;
+  const { customer, items, expectedTotal, method } = parsed.data;
 
   // Totaal SERVER-SIDE herberekenen uit de database.
   let computed;
@@ -116,6 +141,52 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   // statuscontrole op de retourpagina.
   const base = await baseUrl();
   const webhookOk = base.startsWith("https://") && !base.includes("localhost") && !base.includes("127.0.0.1");
+
+  // Achteraf-betalen (Klarna/in3) vereist orderregels + factuuradres. Alleen dán
+  // meesturen — houdt de iDEAL/creditcard-flow simpel en robuust.
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const useLines = !!method && PAY_LATER.has(method);
+  const lines = useLines
+    ? [
+        ...computed.lines.map((l) => {
+          const tot = round2(l.price * l.quantity);
+          return {
+            type: PaymentLineType.physical,
+            description: l.variantLabel ? `${l.productName} — ${l.variantLabel}` : l.productName,
+            quantity: l.quantity,
+            unitPrice: toMollieAmount(l.price),
+            totalAmount: toMollieAmount(tot),
+            vatRate: "21.00",
+            vatAmount: toMollieAmount(round2((tot * 21) / 121)),
+          };
+        }),
+        ...(computed.shipping > 0
+          ? [
+              {
+                type: PaymentLineType.shipping_fee,
+                description: "Verzendkosten",
+                quantity: 1,
+                unitPrice: toMollieAmount(computed.shipping),
+                totalAmount: toMollieAmount(computed.shipping),
+                vatRate: "21.00",
+                vatAmount: toMollieAmount(round2((computed.shipping * 21) / 121)),
+              },
+            ]
+          : []),
+      ]
+    : undefined;
+  const billingAddress = useLines
+    ? {
+        givenName: customer.firstName,
+        familyName: customer.lastName,
+        email: customer.email,
+        streetAndNumber: `${customer.address} ${customer.houseNumber}`.trim(),
+        postalCode: customer.zipCode.toUpperCase().replace(/\s+/g, " ").trim(),
+        city: customer.city,
+        country: "NL",
+      }
+    : undefined;
+
   try {
     const payment = await getMollie().payments.create({
       amount: toMollieAmount(computed.total),
@@ -123,6 +194,9 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
       redirectUrl: `${base}/checkout/afgerond?order=${orderNumber}`,
       ...(webhookOk ? { webhookUrl: `${base}/api/webhooks/mollie` } : {}),
       metadata: { orderId: order.id, orderNumber },
+      ...(method ? { method: method as PaymentMethod } : {}),
+      ...(lines ? { lines } : {}),
+      ...(billingAddress ? { billingAddress, shippingAddress: billingAddress } : {}),
     });
     await prisma.order.update({ where: { id: order.id }, data: { molliePaymentId: payment.id } });
     const url = payment.getCheckoutUrl();

@@ -8,7 +8,7 @@ const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.mollie.com",
   "font-src 'self' data:",
   "connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.sentry.io https://*.ingest.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
   "media-src 'self' https://res.cloudinary.com",
@@ -42,6 +42,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
+      // Officiële Mollie betaalmethode-iconen op de checkout.
+      { protocol: "https", hostname: "www.mollie.com" },
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [75, 95],
