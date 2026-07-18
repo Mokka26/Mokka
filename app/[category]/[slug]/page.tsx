@@ -18,18 +18,16 @@ interface Props {
   params: Promise<{ category: string; slug: string }>;
 }
 
-// Pre-render alle (category, slug)-paren bij build voor SSG
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({
-    where: { hidden: false, deletedAt: null },
-    select: { slug: true, category: true },
-  });
-  return products.map((p) => ({
-    category: dbCategoryToRouteSlug(p.category),
-    slug: p.slug,
-  }));
+// Productpagina's worden ON-DEMAND gegenereerd en daarna gecached (ISR) — niet
+// alle ~1200 vooraf bij de build. Die build-burst (1 DB-query per product)
+// overbelast serverless Neon en laat de build vallen. Met een lege lijst +
+// dynamicParams (standaard true) rendert elk onbekend pad op de eerste hit en
+// blijft 1 uur gecached (revalidate). De sitemap zorgt dat Google ze vindt.
+export function generateStaticParams() {
+  return [];
 }
 
+export const dynamicParams = true;
 export const revalidate = 3600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
