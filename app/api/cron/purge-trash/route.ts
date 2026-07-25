@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
 
   // ─── Producten in prullenbak >RETENTION_DAYS ───
   const expiredProducts = await prisma.product.findMany({
-    where: { deletedAt: { lt: cutoff, not: null } },
+    // Producten mét bestelgeschiedenis nooit hard-verwijderen (orderregels
+    // beschermd via onDelete: Restrict) — ze blijven soft-deleted.
+    where: { deletedAt: { lt: cutoff, not: null }, orderItems: { none: {} } },
     select: { id: true, slug: true, images: true },
   });
 

@@ -50,6 +50,11 @@ export async function permanentlyDeleteProduct(
   if (!product.deletedAt) {
     return { ok: false, error: "Product staat niet in prullenbak (verwijder eerst)" };
   }
+  // Bestelgeschiedenis beschermen (onDelete: Restrict) — niet hard-verwijderen.
+  const orderCount = await prisma.orderItem.count({ where: { productId: product.id } });
+  if (orderCount > 0) {
+    return { ok: false, error: "Product heeft bestelgeschiedenis en kan niet definitief verwijderd worden. Het blijft in de prullenbak." };
+  }
 
   // Destroy Cloudinary assets
   try {
@@ -160,11 +165,14 @@ export async function emptyTrash(): Promise<EmptyResult> {
     };
 
     // 1) Verwijderde producten + hun foto's
-    const trashed = await prisma.product.findMany({ where: { deletedAt: { not: null } }, select: { images: true } });
+    // Producten mét bestelgeschiedenis niet verwijderen (onDelete: Restrict
+    // beschermt de orderregels) — ze blijven soft-deleted.
+    const purgeWhere = { deletedAt: { not: null }, orderItems: { none: {} } } as const;
+    const trashed = await prisma.product.findMany({ where: purgeWhere, select: { images: true } });
     for (const p of trashed) {
       try { for (const it of JSON.parse(p.images) as (string | { url: string })[]) await destroy(extractPublicId(typeof it === "string" ? it : it.url)); } catch { /* */ }
     }
-    const delProducts = await prisma.product.deleteMany({ where: { deletedAt: { not: null } } });
+    const delProducts = await prisma.product.deleteMany({ where: purgeWhere });
 
     // 2) Losse verwijderde foto's (deletedImage-tabel)
     const dImgs = await prisma.deletedImage.findMany({ select: { publicId: true } });

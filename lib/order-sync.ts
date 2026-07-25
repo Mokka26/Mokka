@@ -6,6 +6,11 @@ export type OrderStatus = "open" | "paid" | "failed" | "canceled" | "expired";
 function mapStatus(mollieStatus: string): OrderStatus {
   switch (mollieStatus) {
     case "paid":
+    // Achteraf-betalen (Klarna, in3, Riverty) bevestigt eerst als 'authorized':
+    // de betaling is gegarandeerd aan de merchant (Mollie/aanbieder int later
+    // bij de klant) en wordt automatisch gecaptured. Voor onze order = verkocht,
+    // dus behandelen als betaald → winkelwagen legen + voorraad afboeken.
+    case "authorized":
       return "paid";
     case "failed":
       return "failed";
@@ -14,7 +19,7 @@ function mapStatus(mollieStatus: string): OrderStatus {
     case "expired":
       return "expired";
     default:
-      return "open"; // open | pending | authorized
+      return "open"; // open | pending
   }
 }
 

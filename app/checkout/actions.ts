@@ -187,8 +187,9 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
       }
     : undefined;
 
+  let payment;
   try {
-    const payment = await getMollie().payments.create({
+    payment = await getMollie().payments.create({
       amount: toMollieAmount(computed.total),
       description: `Mokka Home — ${orderNumber}`,
       redirectUrl: `${base}/checkout/afgerond?order=${orderNumber}`,
@@ -198,12 +199,18 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
       ...(lines ? { lines } : {}),
       ...(billingAddress ? { billingAddress, shippingAddress: billingAddress } : {}),
     });
-    await prisma.order.update({ where: { id: order.id }, data: { molliePaymentId: payment.id } });
-    const url = payment.getCheckoutUrl();
-    if (!url) return { ok: false, error: "Geen betaal-URL ontvangen van Mollie" };
-    return { ok: true, url };
   } catch (e) {
+    // Alléén een mislukte Mollie-aanmaak betekent "betaling mislukt".
     await prisma.order.update({ where: { id: order.id }, data: { status: "failed" } }).catch(() => {});
     return { ok: false, error: e instanceof Error ? e.message : "Betaling starten mislukt" };
   }
+
+  // De betaling bestaat nu bij Mollie. Het payment-id opslaan is best-effort:
+  // mislukt dit door een DB-hik, dan de order NIET als 'failed' markeren — de
+  // webhook synct alsnog via metadata.orderId. Anders zou een geldige betaling
+  // ten onrechte als mislukt tonen.
+  await prisma.order.update({ where: { id: order.id }, data: { molliePaymentId: payment.id } }).catch(() => {});
+  const url = payment.getCheckoutUrl();
+  if (!url) return { ok: false, error: "Geen betaal-URL ontvangen van Mollie" };
+  return { ok: true, url };
 }

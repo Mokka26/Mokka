@@ -36,10 +36,20 @@ export async function rateLimit(
   }
 }
 
-/** Beste-gok client-IP uit de request-headers (achter Vercel/proxy). */
+/** Client-IP uit de request-headers (achter Vercel/proxy). */
 export async function clientIp(): Promise<string> {
   const h = await headers();
+  // x-real-ip zet Vercel op het echte connectie-IP; dit is NIET client-spoofbaar
+  // (i.t.t. de meest-linkse x-forwarded-for-waarde, die de client zelf kan zetten
+  // om per request een eigen rate-limit-bucket te krijgen).
+  const real = h.get("x-real-ip")?.trim();
+  if (real) return real;
+  // Fallback: neem de LAATSTE x-forwarded-for-entry — toegevoegd door de
+  // dichtstbijzijnde trusted proxy, niet door de client.
   const fwd = h.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return h.get("x-real-ip") ?? "unknown";
+  if (fwd) {
+    const parts = fwd.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  return "unknown";
 }
