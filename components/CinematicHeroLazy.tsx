@@ -9,6 +9,7 @@
 // app/page.tsx Server Component is.
 
 import dynamic from "next/dynamic";
+import { HERO_IMAGE } from "@/lib/hero-image";
 
 function HeroFallback() {
   return (
@@ -17,14 +18,11 @@ function HeroFallback() {
       aria-label="Hero — laden..."
     >
       <div className="sticky top-0 h-screen overflow-hidden bg-bone">
-        {/* Statische bg-image vult de viewport boven de vouw — voorkomt
-            lege ruimte tijdens Three.js client-bundle download */}
+        {/* Zelfde foto als de Three.js-scene (identieke URL) → één download,
+            geen zichtbare beeldwissel wanneer de 3D-hero de fallback vervangt. */}
         <div
           className="absolute inset-0 bg-cover bg-center opacity-90"
-          style={{
-            backgroundImage:
-              'url("https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=1600&q=80&auto=format&fit=crop")',
-          }}
+          style={{ backgroundImage: `url("${HERO_IMAGE}")` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-ink/15 to-ink/20" />
       </div>

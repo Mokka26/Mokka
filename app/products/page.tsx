@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 import { isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { prisma } from "@/lib/prisma";
+import { firstImageOnly } from "@/lib/imageHelpers";
 import ProductsContent from "./ProductsContent";
 
 export const revalidate = 3600;
@@ -14,8 +15,8 @@ export const revalidate = 3600;
 // query daarom 1u (zelfde venster als de ISR-categoriepagina's) zodat 'ie
 // hooguit 1×/uur draait i.p.v. per bezoek.
 const getAllProducts = unstable_cache(
-  async () =>
-    prisma.product.findMany({
+  async () => {
+    const products = await prisma.product.findMany({
       where: { hidden: false, deletedAt: null },
       orderBy: { createdAt: "desc" },
       select: {
@@ -23,7 +24,11 @@ const getAllProducts = unstable_cache(
         images: true, featured: true, stock: true, createdAt: true,
         colorGroup: true, colorName: true, colorHex: true, specs: true,
       },
-    }),
+    });
+    // Payload-trim: kaart toont alleen foto 1 — rest van de images-JSON is
+    // ballast in de flight-payload (grootste HTML van de site, −80%).
+    return products.map((p) => ({ ...p, images: firstImageOnly(p.images) }));
+  },
   ["all-products"],
   { revalidate: 3600 },
 );

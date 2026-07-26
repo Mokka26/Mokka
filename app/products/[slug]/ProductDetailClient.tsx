@@ -11,7 +11,7 @@ import ProductCard from "@/components/ProductCard";
 import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
-import { cldOptimize } from "@/lib/cloudinary-url";
+import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
 import { getUspsByKey, shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
 import { getCategory, productUrl } from "@/lib/categories";
@@ -290,14 +290,17 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                             mode: "fill",
                             upscale: true,
                             sourceW: sourceWAt(i),
-                            dpr: "auto",
                             quality: "auto:good",
                           })}
                           alt={`${product.name} — ${i + 1}`}
                           width={1600}
                           height={1600}
                           priority={i === 0}
-                          unoptimized
+                          // Alleen slide 1 eager (LCP); de rest pas bij swipen —
+                          // anders downloadt mobiel direct 2-4 MB aan foto's.
+                          loading={i === 0 ? "eager" : "lazy"}
+                          loader={cloudinaryLoader}
+                          sizes="100vw"
                           className="w-full h-auto object-cover"
                         />
                       </div>
@@ -371,13 +374,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                           mode: "fill",
                           upscale: true,
                           sourceW: sourceWAt(selectedImage),
-                          dpr: "auto",
                           quality: "auto:good",
                         })}
                         alt={product.name}
                         fill
                         priority
-                        unoptimized
+                        loader={cloudinaryLoader}
                         className="object-cover transition-transform duration-200 ease-out will-change-transform"
                         style={
                           zoomActive

@@ -48,6 +48,16 @@ export function firstImageUrl(raw: string | null | undefined): string | null {
 }
 
 /**
+ * Trimt een images-JSON tot alléén de eerste foto (zelfde opslagformaat).
+ * Voor listing-payloads: ProductCard toont alleen foto 1, dus de overige
+ * 10-70 URL's per product mee-serialiseren is pure payload-ballast.
+ */
+export function firstImageOnly(raw: string): string {
+  const arr = parseImages(raw);
+  return JSON.stringify(arr.length > 0 ? [arr[0]] : []);
+}
+
+/**
  * Aspect ratio voor CSS aspect-ratio property. Default 1 als dims onbekend.
  */
 export function imageAspect(img: ProductImage | undefined, fallback = 1): number {

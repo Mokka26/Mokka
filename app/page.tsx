@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { preload } from "react-dom";
 import CinematicHero from "@/components/CinematicHeroLazy";
+import { HERO_IMAGE } from "@/lib/hero-image";
 import PromoBanners from "@/components/PromoBanners";
 import CollectionPreview from "@/components/CollectionPreview";
 import CategoriesGrid from "@/components/CategoriesGrid";
@@ -78,6 +80,10 @@ async function getSpotlightProduct() {
 }
 
 export default async function HomePage() {
+  // LCP: de hero-foto vroeg laten ophalen — alléén op de homepage (voorheen
+  // preloadde de root layout dit op elke route).
+  preload(HERO_IMAGE, { as: "image", fetchPriority: "high" });
+
   const [featuredProducts, spotlightProduct] = await Promise.all([
     getFeaturedProducts(),
     getSpotlightProduct(),

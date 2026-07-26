@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, dbCategoryToRouteSlug, getCategory, isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
+import { firstImageOnly } from "@/lib/imageHelpers";
 import { jsonLdHtml } from "@/lib/jsonLd";
 import CategoryListing from "./CategoryListing";
 
@@ -85,6 +86,10 @@ export default async function CategoryPage({ params }: Props) {
     };
     products.sort((a, b) => rank(a.category) - rank(b.category));
   }
+
+  // Payload-trim: de kaart toont alleen foto 1 — de overige 10-70 URL's per
+  // product in de flight-payload serialiseren is ballast (−50-70% HTML).
+  for (const p of products) p.images = firstImageOnly(p.images);
 
   // CollectionPage JSON-LD
   const collectionSchema = {

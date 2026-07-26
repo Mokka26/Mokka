@@ -13,7 +13,7 @@ import { ArrowRight } from "lucide-react";
 // Hero-achtergrond: hoofdfoto Vanilla Loop Boxspring (kamer-shot, bed centraal).
 // 16:9 bijgesneden zodat de vierkante productfoto het brede vlak vult zonder
 // uitrekken; dekt de 3D-textuur, de WebGL-fallback en de reduced-motion fallback.
-const SCENE_IMAGE = "https://res.cloudinary.com/diaksxzey/image/upload/c_fill,g_center,ar_16:9,w_2400,f_auto,q_auto:good/mokka/bedden/vanilla-loop/03_sq.jpg";
+import { HERO_IMAGE as SCENE_IMAGE } from "@/lib/hero-image";
 
 interface ProgressRef { current: number }
 

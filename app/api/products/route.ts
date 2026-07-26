@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { firstImageOnly } from "@/lib/imageHelpers";
 
 // Public listing-endpoint: korte cache OK (admin-mutaties zijn niet
 // kritiek-real-time). s-maxage=60 = CDN cached 60s, stale-while-revalidate
@@ -41,9 +42,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (q) {
+    // insensitive: Postgres 'contains' is standaard hoofdlettergevoelig —
+    // "vanilla" zou "Vanilla Loop" anders niet vinden.
     where.OR = [
-      { name: { contains: q } },
-      { description: { contains: q } },
+      { name: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
     ];
   }
 
@@ -59,7 +62,7 @@ export async function GET(request: NextRequest) {
 
   // Expliciete select: alleen klant-velden. NOOIT interne kolommen als `source`
   // (groothandel-/dropship-leverancier) publiek teruggeven.
-  const products = await prisma.product.findMany({
+  const rows = await prisma.product.findMany({
     where,
     orderBy,
     take: 1000,
@@ -69,6 +72,9 @@ export async function GET(request: NextRequest) {
       colorGroup: true, colorName: true, colorHex: true, specs: true,
     },
   });
+  // Payload-trim: de listing-kaart toont alleen foto 1 — bij take:1000 scheelt
+  // het weglaten van de overige image-URL's ~80% response-grootte.
+  const products = rows.map((p) => ({ ...p, images: firstImageOnly(p.images) }));
 
   return NextResponse.json(
     { products },
