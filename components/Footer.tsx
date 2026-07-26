@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { subscribeNewsletter } from "@/app/newsletter/actions";
 import {
   businessInfo,
   getEmailLink,
@@ -24,6 +26,18 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
   const socials = getActiveSocials();
   const hoursLines = getOpeningHoursCompact();
   const { address, foundingYear, foundingCity, kvk, btw, legalName, name, tagline, paymentMethods, legal } = businessInfo;
+
+  const [nlEmail, setNlEmail] = useState("");
+  const [nlStatus, setNlStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [nlMsg, setNlMsg] = useState("");
+
+  async function handleNewsletter(e: React.FormEvent) {
+    e.preventDefault();
+    setNlStatus("sending");
+    const r = await subscribeNewsletter(nlEmail);
+    if (r.ok) { setNlStatus("done"); setNlMsg("Bedankt — je bent aangemeld."); setNlEmail(""); }
+    else { setNlStatus("error"); setNlMsg(r.error ?? "Er ging iets mis."); }
+  }
 
   return (
     <footer className="bg-ink text-white/75">
@@ -74,17 +88,25 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
             <p className="text-sm text-white/70 mb-5">
               Nieuwe collecties en inspiratie. Maximaal 2x per maand.
             </p>
-            <form onSubmit={(e) => e.preventDefault()} className="flex border-b border-white/20 focus-within:border-white/60 transition-colors">
-              <input
-                type="email"
-                aria-label="E-mailadres voor de nieuwsbrief"
-                placeholder="jouw@email.nl"
-                className="flex-1 bg-transparent py-3 text-white placeholder-white/60 text-base focus:outline-none"
-              />
-              <button type="submit" className="text-white/80 hover:text-white text-xs uppercase tracking-[0.25em] px-2 transition-colors">
-                Aanmelden
-              </button>
-            </form>
+            {nlStatus === "done" ? (
+              <p className="text-white/80 text-sm py-3" role="status">{nlMsg}</p>
+            ) : (
+              <form onSubmit={handleNewsletter} className="flex border-b border-white/20 focus-within:border-white/60 transition-colors">
+                <input
+                  type="email"
+                  required
+                  value={nlEmail}
+                  onChange={(e) => setNlEmail(e.target.value)}
+                  aria-label="E-mailadres voor de nieuwsbrief"
+                  placeholder="jouw@email.nl"
+                  className="flex-1 bg-transparent py-3 text-white placeholder-white/60 text-base focus:outline-none"
+                />
+                <button type="submit" disabled={nlStatus === "sending"} className="text-white/80 hover:text-white text-xs uppercase tracking-[0.25em] px-2 transition-colors disabled:opacity-60">
+                  {nlStatus === "sending" ? "Bezig…" : "Aanmelden"}
+                </button>
+              </form>
+            )}
+            {nlStatus === "error" && <p className="text-red-300 text-xs mt-2" role="alert">{nlMsg}</p>}
           </div>
         </div>
 
@@ -106,11 +128,10 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
           <div className="col-span-1 lg:col-span-3">
             <p className="text-xs uppercase tracking-[0.3em] text-white/65 mb-5">Service</p>
             <ul className="space-y-2.5 text-sm">
-              <li><span className="hover:text-white cursor-pointer transition-colors">Bezorging</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Montage</span></li>
               <li><Link href={legal.returnPolicyUrl} className="hover:text-white transition-colors">Retour &amp; ruil</Link></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Garantie</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Veelgestelde vragen</span></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Bezorging &amp; montage</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Vragen? Neem contact op</Link></li>
+              <li><Link href={legal.termsUrl} className="hover:text-white transition-colors">Voorwaarden</Link></li>
             </ul>
           </div>
 
@@ -119,8 +140,8 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/about" className="hover:text-white transition-colors">Ons verhaal</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Journal</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Partners</span></li>
+              <li><Link href={legal.privacyPolicyUrl} className="hover:text-white transition-colors">Privacybeleid</Link></li>
+              <li><Link href={legal.cookiePolicyUrl} className="hover:text-white transition-colors">Cookies</Link></li>
             </ul>
           </div>
 

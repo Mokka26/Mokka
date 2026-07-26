@@ -32,7 +32,10 @@ const PHONE_RE = /^[+\d\s()-]{7,20}$/;
 function validateField(name: FieldName, value: string): string | undefined {
   const v = value.trim();
   if (name === "phone") {
-    if (v && !PHONE_RE.test(v)) return "Ongeldig telefoonnummer";
+    // Server eist telefoon (min. 6) — voor bezorging van grote meubels; client
+    // dus ook verplicht, anders faalt de checkout pas op de laatste stap.
+    if (!v) return "Vereist";
+    if (!PHONE_RE.test(v)) return "Ongeldig telefoonnummer";
     return undefined;
   }
   if (!v) return "Vereist";
@@ -212,8 +215,9 @@ export default function CheckoutPage() {
                   {errors.email && touched.email && <p className="text-[11px] text-red-700 mt-1.5">{errors.email}</p>}
                 </div>
                 <div>
-                  <label htmlFor="co-phone" className="eyebrow block mb-3">Telefoonnummer</label>
-                  <input type="tel" id="co-phone" name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} className={fieldClass("phone")} aria-invalid={Boolean(errors.phone && touched.phone)} />
+                  <label htmlFor="co-phone" className="eyebrow block mb-3">Telefoonnummer *</label>
+                  <input type="tel" id="co-phone" name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("phone")} aria-invalid={Boolean(errors.phone && touched.phone)} aria-describedby={errors.phone && touched.phone ? "co-phone-err" : undefined} />
+                  {errors.phone && touched.phone && <p id="co-phone-err" className="text-[11px] text-red-700 mt-1.5">{errors.phone}</p>}
                   {errors.phone && touched.phone && <p className="text-[11px] text-red-700 mt-1.5">{errors.phone}</p>}
                 </div>
               </div>
