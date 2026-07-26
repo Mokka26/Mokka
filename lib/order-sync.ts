@@ -39,6 +39,11 @@ export async function syncOrderByPaymentId(paymentId: string): Promise<OrderStat
   const next = mapStatus(payment.status);
   if (order.status === next) return next;
 
+  // Eenmaal betaald = betaald: nooit terug-downgraden (bv. een authorized
+  // Klarna-betaling die later canceled meldt). Voorraad is al afgeboekt;
+  // terugdraaien vergt handmatige opvolging, geen stille status-flip.
+  if (order.status === "paid") return "paid";
+
   // Overgang naar 'paid' atomair claimen: webhook én retourpagina roepen dit
   // vaak tegelijk aan. Alleen de invocatie waarvan de conditionele update
   // daadwerkelijk flipt (count===1) boekt de voorraad af — nooit dubbel.
@@ -48,11 +53,18 @@ export async function syncOrderByPaymentId(paymentId: string): Promise<OrderStat
       data: { status: "paid" },
     });
     if (claim.count === 1) {
-      await prisma.$transaction(
-        order.items.map((it) =>
-          prisma.product.update({ where: { id: it.productId }, data: { stock: { decrement: it.quantity } } }),
-        ),
-      );
+      // Afboeken met ondergrens: alleen decrement als er genoeg voorraad is,
+      // anders klemmen op 0 — nooit negatief. (Race op het laatste stuk: de
+      // order is dan al betaald; voorraad 0 signaleert de opvolging.)
+      for (const it of order.items) {
+        const dec = await prisma.product.updateMany({
+          where: { id: it.productId, stock: { gte: it.quantity } },
+          data: { stock: { decrement: it.quantity } },
+        });
+        if (dec.count === 0) {
+          await prisma.product.updateMany({ where: { id: it.productId }, data: { stock: 0 } }).catch(() => {});
+        }
+      }
     }
     return "paid";
   }

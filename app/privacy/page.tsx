@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/LegalPage";
 import { businessInfo, getFullAddress } from "@/lib/business-info";
 
@@ -62,7 +63,7 @@ export default function PrivacyPage() {
         <p>
           Voor de werking en het meten van de website gebruiken we cookies. Lees hier meer over in
           ons{" "}
-          <a href="/cookies" className="text-accent underline underline-offset-2">cookiebeleid</a>.
+          <Link href="/cookies" className="text-accent underline underline-offset-2">cookiebeleid</Link>.
         </p>
       </LegalSection>
       <LegalSection heading="Bewaartermijn">

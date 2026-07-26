@@ -19,7 +19,7 @@ const getAllProducts = unstable_cache(
       where: { hidden: false, deletedAt: null },
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, slug: true, name: true, price: true, category: true,
+        id: true, slug: true, name: true, price: true, listPrice: true, category: true,
         images: true, featured: true, stock: true, createdAt: true,
         colorGroup: true, colorName: true, colorHex: true, specs: true,
       },

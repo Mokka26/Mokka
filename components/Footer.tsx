@@ -19,6 +19,13 @@ import type { CheckoutMethod } from "@/lib/mollie";
 
 export default function Footer({ mollieMethods = [] }: { mollieMethods?: CheckoutMethod[] }) {
   const pathname = usePathname();
+
+  // Hooks MOETEN vóór elke conditionele return (Rules of Hooks) — anders crasht
+  // client-navigatie shop → /admin met "Rendered fewer hooks than expected".
+  const [nlEmail, setNlEmail] = useState("");
+  const [nlStatus, setNlStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [nlMsg, setNlMsg] = useState("");
+
   if (pathname?.startsWith("/admin")) return null;
 
   const phoneLink = getPhoneLink();
@@ -26,10 +33,6 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
   const socials = getActiveSocials();
   const hoursLines = getOpeningHoursCompact();
   const { address, foundingYear, foundingCity, kvk, btw, legalName, name, tagline, paymentMethods, legal } = businessInfo;
-
-  const [nlEmail, setNlEmail] = useState("");
-  const [nlStatus, setNlStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [nlMsg, setNlMsg] = useState("");
 
   async function handleNewsletter(e: React.FormEvent) {
     e.preventDefault();

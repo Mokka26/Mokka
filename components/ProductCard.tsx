@@ -113,7 +113,9 @@ export default function ProductCard({ product, variants, priority = false, wide 
       })
     : "";
 
-  const isOutOfStock = product.stock === 0;
+  // <= 0 (niet === 0): een race kon voorheen negatieve voorraad geven; die moet
+  // als uitverkocht tonen. Ontbrekende stock (niet geselecteerd) = op voorraad.
+  const isOutOfStock = (product.stock ?? 1) <= 0;
   const { ref: figureRef, onMouseMove, onMouseLeave } = useInFrameParallax<HTMLElement>({ maxOffset: 10 });
 
   // Titel = volledige productnaam (incl. kleur indien aanwezig). User-voorkeur:

@@ -525,7 +525,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 <div className="flex items-center border border-line rounded-[10px] overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={(product.stock ?? 0) === 0}
+                    disabled={(product.stock ?? 0) <= 0}
                     className="px-5 py-4 text-stone hover:text-accent transition-colors duration-[280ms] text-sm disabled:opacity-40"
                   >−</button>
                   <span className="px-4 py-4 text-ink text-sm min-w-[3rem] text-center tabular-nums">{quantity}</span>
@@ -537,11 +537,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 </div>
                 <motion.button
                   onClick={handleAddToCart}
-                  disabled={(product.stock ?? 0) === 0}
+                  disabled={(product.stock ?? 0) <= 0}
                   className={`btn-primary flex-1 text-center ${added ? "!bg-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed`}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {(product.stock ?? 0) === 0 ? "Uitverkocht" : added ? "Toegevoegd!" : "In Winkelwagen"}
+                  {(product.stock ?? 0) <= 0 ? "Uitverkocht" : added ? "Toegevoegd!" : "In Winkelwagen"}
                 </motion.button>
               </div>
 

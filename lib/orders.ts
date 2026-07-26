@@ -89,6 +89,16 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     lines.push({ productId: p.id, productName: p.name, variantLabel: fullLabel, quantity: qty, price });
   }
 
+  // Voorraad ook per PRODUCT aggregeren: hetzelfde bed in twee maten/opties zijn
+  // aparte regels — samen mogen ze de voorraad niet overschrijden (de per-regel
+  // check hierboven ziet dat niet).
+  const perProduct = new Map<string, number>();
+  for (const l of lines) perProduct.set(l.productId, (perProduct.get(l.productId) ?? 0) + l.quantity);
+  for (const [pid, totalQty] of perProduct) {
+    const p = byId.get(pid)!;
+    if (totalQty > p.stock) throw new Error(`${p.name}: nog ${p.stock} op voorraad`);
+  }
+
   const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
   const shipping = isEligibleForFreeShipping(subtotal) ? 0 : shippingInfo.rates.standard;
   const total = subtotal + shipping;

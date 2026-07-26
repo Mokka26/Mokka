@@ -43,9 +43,13 @@ export function cldUrl(
  */
 export function cloudinaryLoader({ src, width }: { src: string; width: number }): string {
   if (!src.includes("res.cloudinary.com")) return src;
+  // e_upscale is alleen gegarandeerd geldig voor de basis-breedte waarvoor
+  // cldOptimize 'm koos (factor 1.0–1.5×). Bij andere srcSet-breedtes kan de
+  // factor buiten Cloudinary's limieten vallen → 400 Bad Request. Strippen.
+  let out = src.replace(/e_upscale,/, "").replace(/([/,])e_upscale(?=[/,])/, "$1");
   // Vervang de eerste w_<n> in de transform; voeg 'm toe als die ontbreekt.
-  if (/(^|[/,])w_\d+/.test(src)) return src.replace(/(^|[/,])w_\d+/, `$1w_${width}`);
-  return src.replace("/upload/", `/upload/w_${width}/`);
+  if (/(^|[/,])w_\d+/.test(out)) return out.replace(/(^|[/,])w_\d+/, `$1w_${width}`);
+  return out.replace("/upload/", `/upload/w_${width}/`);
 }
 
 /**

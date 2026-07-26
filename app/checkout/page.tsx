@@ -218,7 +218,6 @@ export default function CheckoutPage() {
                   <label htmlFor="co-phone" className="eyebrow block mb-3">Telefoonnummer *</label>
                   <input type="tel" id="co-phone" name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("phone")} aria-invalid={Boolean(errors.phone && touched.phone)} aria-describedby={errors.phone && touched.phone ? "co-phone-err" : undefined} />
                   {errors.phone && touched.phone && <p id="co-phone-err" className="text-[11px] text-red-700 mt-1.5">{errors.phone}</p>}
-                  {errors.phone && touched.phone && <p className="text-[11px] text-red-700 mt-1.5">{errors.phone}</p>}
                 </div>
               </div>
             </div>
