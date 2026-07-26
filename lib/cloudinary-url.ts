@@ -35,6 +35,20 @@ export function cldUrl(
 }
 
 /**
+ * next/image-loader voor Cloudinary. `src` is een door cldOptimize opgebouwde URL
+ * met een `w_<n>` in de transform; deze loader vervangt die breedte door de door
+ * next/image gevraagde srcSet-breedte. Zo genereert next/image een echte srcSet
+ * (juiste beeldgrootte per device i.p.v. overal w_1000) terwijl Cloudinary het
+ * resizen doet — geen Vercel-optimizer-kosten, geen dubbele bewerking.
+ */
+export function cloudinaryLoader({ src, width }: { src: string; width: number }): string {
+  if (!src.includes("res.cloudinary.com")) return src;
+  // Vervang de eerste w_<n> in de transform; voeg 'm toe als die ontbreekt.
+  if (/(^|[/,])w_\d+/.test(src)) return src.replace(/(^|[/,])w_\d+/, `$1w_${width}`);
+  return src.replace("/upload/", `/upload/w_${width}/`);
+}
+
+/**
  * Voeg transformaties toe aan een bestaande Cloudinary URL.
  * Niet-Cloudinary URLs worden ongewijzigd teruggegeven.
  *

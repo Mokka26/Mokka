@@ -213,9 +213,20 @@ export default function Navbar() {
                   key={item.label}
                   className="relative group"
                   onMouseEnter={() => item.subLinks && setActiveDropdown(item.label)}
+                  onMouseLeave={() => item.subLinks && setActiveDropdown(null)}
+                  // Toetsenbord: open het submenu wanneer het item (of een link
+                  // erin) focus krijgt, en sluit zodra de focus de groep verlaat.
+                  onFocus={() => item.subLinks && setActiveDropdown(item.label)}
+                  onBlur={(e) => {
+                    if (item.subLinks && !e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                      setActiveDropdown(null);
+                    }
+                  }}
                 >
                   <Link
                     href={item.href}
+                    aria-haspopup={item.subLinks ? "true" : undefined}
+                    aria-expanded={item.subLinks ? activeDropdown === item.label : undefined}
                     className={`relative flex items-center gap-1.5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] font-medium transition-colors duration-300 ${
                       activeDropdown === item.label ? "text-accent" : "text-ink group-hover:text-accent"
                     }`}

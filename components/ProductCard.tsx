@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { cldOptimize } from "@/lib/cloudinary-url";
+import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
 import { imageUrls, parseImages } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
 import { Price } from "@/components/ui/price";
@@ -99,6 +99,9 @@ export default function ProductCard({ product, variants, priority = false, wide 
   const cardMode = wide ? "fill" : TABLE_CATEGORIES.has(product.category) ? "contain" : "fill";
   const tileAr = wide ? "4:3" : "1:1";
   const firstDim = parsed[0];
+  // w:1000 is de basis; de cloudinaryLoader overschrijft 'm per srcSet-breedte,
+  // zodat mobiel niet onnodig een 1000px-foto laadt. Geen dpr hier — next/image's
+  // deviceSizes dekken de retina-varianten al via de srcSet.
   const first = firstRaw
     ? cldOptimize(firstRaw, {
         ar: tileAr,
@@ -106,7 +109,6 @@ export default function ProductCard({ product, variants, priority = false, wide 
         mode: cardMode,
         upscale: true,
         sourceW: firstDim?.w,
-        dpr: "auto",
         quality: "auto:good",
       })
     : "";
@@ -163,9 +165,9 @@ export default function ProductCard({ product, variants, priority = false, wide 
               src={first}
               alt={product.name}
               fill
+              loader={cloudinaryLoader}
               loading={priority ? "eager" : "lazy"}
               priority={priority}
-              unoptimized
               className="object-cover"
               style={{
                 transform: "translate(var(--parallax-x, 0px), var(--parallax-y, 0px)) scale(1.06)",
