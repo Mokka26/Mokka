@@ -1,12 +1,32 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { permanentRedirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { prisma } from "@/lib/prisma";
 import ProductsContent from "./ProductsContent";
 
 export const revalidate = 3600;
+
+// De ?category=-redirect maakt deze route per-request dynamisch, waardoor de
+// volledige-catalogus-query anders bij ELKE bezoeker Neon zou raken. Cache de
+// query daarom 1u (zelfde venster als de ISR-categoriepagina's) zodat 'ie
+// hooguit 1×/uur draait i.p.v. per bezoek.
+const getAllProducts = unstable_cache(
+  async () =>
+    prisma.product.findMany({
+      where: { hidden: false, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true, slug: true, name: true, price: true, category: true,
+        images: true, featured: true, stock: true, createdAt: true,
+        colorGroup: true, colorName: true, colorHex: true, specs: true,
+      },
+    }),
+  ["all-products"],
+  { revalidate: 3600 },
+);
 
 export const metadata: Metadata = {
   title: `Alle producten — ${businessInfo.name}`,
@@ -40,17 +60,9 @@ export default async function ProductsPage({ searchParams }: Props) {
     }
   }
 
-  // Server-side ophalen → producten staan in de SSR-HTML (SEO + LCP),
-  // geen client-fetch + spinner bij eerste load. Filters blijven client-side.
-  const initialProducts = await prisma.product.findMany({
-    where: { hidden: false, deletedAt: null },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true, slug: true, name: true, price: true, category: true,
-      images: true, featured: true, stock: true, createdAt: true,
-      colorGroup: true, colorName: true, colorHex: true, specs: true,
-    },
-  });
+  // Server-side ophalen (gecached, zie getAllProducts) → producten staan in de
+  // SSR-HTML (SEO + LCP), geen client-fetch bij eerste load. Filters client-side.
+  const initialProducts = await getAllProducts();
 
   return (
     <Suspense fallback={
