@@ -170,6 +170,7 @@ export default function CinematicHero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: [0.25, 0.4, 0.25, 1] }}
               className="max-w-2xl text-white"
+              style={{ textShadow: "0 2px 24px rgba(20,17,13,0.5), 0 1px 3px rgba(20,17,13,0.4)" }}
             >
               <p className="text-[11px] uppercase tracking-[0.3em] text-white/70 mb-5">
                 Mokka — Voorjaar 2026
@@ -242,7 +243,13 @@ export default function CinematicHero() {
           ref={overlayRef}
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
-          <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 w-full text-center text-white">
+          <div
+            className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 w-full text-center text-white"
+            // Zachte tekstschaduw i.p.v. een donkere overlay: de foto blijft
+            // licht, maar witte én accent-tekst blijven leesbaar op de lichte
+            // delen van de foto.
+            style={{ textShadow: "0 2px 24px rgba(20,17,13,0.5), 0 1px 3px rgba(20,17,13,0.4)" }}
+          >
             {/* Stage 1 — opening (0-40%). CTA direct zichtbaar boven de fold
                 (conventie: value prop + CTA zonder te hoeven scrollen). */}
             <div
