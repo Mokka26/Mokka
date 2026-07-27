@@ -3,9 +3,11 @@ import Link from "next/link";
 /**
  * Gedeelde layout voor juridische pagina's (privacy, voorwaarden, cookies,
  * retour). Consistente, leesbare typografie (body ≥16px, line-height 1.65)
- * voor de brede doelgroep. De `concept`-melding maakt expliciet dat de tekst
- * vóór definitieve livegang juridisch gecontroleerd moet worden.
+ * voor de brede doelgroep.
  */
+
+// Bijwerken wanneer een juridische tekst inhoudelijk wijzigt.
+const LAST_UPDATED = "juli 2026";
 export function LegalPage({
   title,
   intro,
@@ -22,13 +24,7 @@ export function LegalPage({
         <h1 className="font-serif text-4xl lg:text-5xl text-ink leading-[1.1] mb-6">{title}</h1>
         {intro && <p className="text-lg text-slate leading-[1.7] mb-8">{intro}</p>}
 
-        <div
-          role="note"
-          className="border border-line bg-white px-5 py-4 mb-12 text-[15px] leading-[1.6] text-slate"
-        >
-          Dit is een conceptversie. De definitieve juridische tekst wordt vóór de
-          officiële livegang door een jurist gecontroleerd en aangevuld.
-        </div>
+        <p className="mb-12 text-[15px] text-slate">Laatst bijgewerkt: {LAST_UPDATED}</p>
 
         <div className="space-y-10 text-ink">{children}</div>
 
