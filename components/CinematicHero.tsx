@@ -76,7 +76,7 @@ function Scene({ progressRef }: { progressRef: ProgressRef }) {
         <meshBasicMaterial
           color="#1c1c1c"
           transparent
-          opacity={0.06}
+          opacity={0.03}
           depthWrite={false}
         />
       </mesh>
@@ -162,7 +162,7 @@ export default function CinematicHero() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${SCENE_IMAGE})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-ink/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/15 via-ink/5 to-transparent" />
         <div className="relative z-10 h-full flex items-end pb-20 lg:pb-32">
           <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 w-full">
             <motion.div
@@ -235,7 +235,7 @@ export default function CinematicHero() {
 
         {/* Gradient-overlay voor leesbaarheid tekst — licht gehouden zodat de
             foto niet "zwart" oogt */}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-ink/10 to-ink/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/15 via-ink/5 to-transparent pointer-events-none" />
 
         {/* HTML overlay — text die fade-in/out doet per stage */}
         <div

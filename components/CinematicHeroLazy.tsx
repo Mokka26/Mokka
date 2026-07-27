@@ -26,7 +26,7 @@ function HeroFallback() {
           className="absolute inset-0 bg-cover bg-center opacity-90"
           style={{ backgroundImage: `url("${HERO_IMAGE}")` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-ink/10 to-ink/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/15 via-ink/5 to-transparent" />
       </div>
     </section>
   );
