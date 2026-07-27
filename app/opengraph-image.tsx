@@ -57,7 +57,7 @@ export default async function HomeOpengraphImage() {
           }}
         >
           <span>{businessInfo.address.city} · {businessInfo.foundingYear}</span>
-          <span style={{ color: "#B96B4C" }}>mokkahome.nl</span>
+          <span style={{ color: "#B96B4C" }}>mokkahomeinteriors.nl</span>
         </div>
       </div>
     ),

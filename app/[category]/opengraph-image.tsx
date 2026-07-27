@@ -75,7 +75,7 @@ export default async function CategoryOpengraphImage({
             textTransform: "uppercase",
           }}
         >
-          mokkahome.nl/{cat.slug}
+          mokkahomeinteriors.nl/{cat.slug}
         </div>
       </div>
     ),

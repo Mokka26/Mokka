@@ -90,7 +90,7 @@ export default async function ProductOpengraphImage({
                 textTransform: "uppercase",
               }}
             >
-              mokkahome.nl/{params.category}
+              mokkahomeinteriors.nl/{params.category}
             </div>
           </div>
         </div>
