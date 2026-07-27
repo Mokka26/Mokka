@@ -21,11 +21,11 @@ export const shippingInfo = {
   freeShippingCopyShort: "Gratis verzending vanaf €100",
   freeShippingCopyLong: "Bij bestellingen boven €100 binnen Nederland en België.",
 
-  // Verzendtarieven onder threshold — TODO: bevestig met klant
+  // Verzendbeleid (bevestigd door klant, 2026-07): één vlak tarief onder de
+  // gratis-verzendgrens; boven €100 altijd gratis — óók grote meubels. Geen
+  // aparte toeslag per formaat.
   rates: {
-    standard: 4.95,    // kleine items
-    large: 29.95,      // grote items (banken, kasten)
-    xlarge: 49.95,     // extra grote items (eettafels >2m)
+    standard: 4.95,
   },
 
   // Levertijden per stock-status — TODO: bevestig per categorie
