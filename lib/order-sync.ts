@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getMollie } from "@/lib/mollie";
+import { sendOrderConfirmation } from "@/lib/email";
 
 export type OrderStatus = "open" | "paid" | "failed" | "canceled" | "expired";
 
@@ -65,6 +66,10 @@ export async function syncOrderByPaymentId(paymentId: string): Promise<OrderStat
           await prisma.product.updateMany({ where: { id: it.productId }, data: { stock: 0 } }).catch(() => {});
         }
       }
+      // Bevestiging naar de klant + interne kopie naar info@ — precies één keer
+      // (alleen de invocatie die de paid-flip claimde komt hier). Best-effort:
+      // mail-falen mag de webhook/afgerond-pagina nooit breken.
+      await sendOrderConfirmation(order).catch(() => {});
     }
     return "paid";
   }

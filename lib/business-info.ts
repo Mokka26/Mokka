@@ -49,8 +49,12 @@ export const businessInfo = {
   contact: {
     phone: "+31705147798" as string | null, // E.164 — voor tel:-link + schema
     phoneFormatted: "070 - 514 77 98" as string | null, // display-versie
-    email: "hallo@mokkahome.nl",
-    supportEmail: null as string | null, // TODO: bevestig of apart support-adres
+    // Publiek contactadres (site, footer, schema)
+    email: "contact@mokkahomeinteriors.nl",
+    // Intern adres: ontvangt formulier-inzendingen en verstuurt bevestigingen
+    // (SMTP-afzender). Zie lib/email.ts.
+    infoEmail: "info@mokkahomeinteriors.nl",
+    supportEmail: null as string | null,
   },
 
   foundingYear: 2024,
