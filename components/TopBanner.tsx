@@ -6,7 +6,7 @@ export default function TopBanner() {
   const items = [
     `Gratis verzending vanaf €${shippingInfo.freeShippingThreshold}`,
     "Persoonlijk advies in onze showroom",
-    "Veilig betalen met iDEAL & creditcard",
+    "Veilig betalen met iDEAL",
   ];
   return (
     <div className="bg-ink text-white/75 border-b border-white/10">
