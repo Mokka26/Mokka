@@ -69,13 +69,14 @@ function Scene({ progressRef }: { progressRef: ProgressRef }) {
           toneMapped={false}
         />
       </mesh>
-      {/* Subtiele vignette via een tweede plane */}
+      {/* Subtiele vignette via een tweede plane — laag gehouden (0.06) zodat
+          de foto licht blijft */}
       <mesh position={[0, 0, 0.5]}>
         <planeGeometry args={[finalWidth * 1.2, finalHeight * 1.2]} />
         <meshBasicMaterial
           color="#1c1c1c"
           transparent
-          opacity={0.15}
+          opacity={0.06}
           depthWrite={false}
         />
       </mesh>
@@ -161,7 +162,7 @@ export default function CinematicHero() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${SCENE_IMAGE})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-ink/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-ink/5 to-transparent" />
         <div className="relative z-10 h-full flex items-end pb-20 lg:pb-32">
           <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 w-full">
             <motion.div
@@ -194,7 +195,9 @@ export default function CinematicHero() {
   return (
     <section
       ref={containerRef}
-      className="relative h-[280vh] bg-bone"
+      // 220vh (was 280): kortere scroll-afstand → stage 2/3 (en de CTA's daar)
+      // komen sneller in beeld.
+      className="relative h-[220vh] bg-bone"
       aria-label="Mokka Voorjaar collectie cinematic hero"
     >
       {/* Sticky viewport — blijft staan tijdens scroll */}
@@ -230,8 +233,9 @@ export default function CinematicHero() {
           )}
         </div>
 
-        {/* Gradient-overlay voor leesbaarheid tekst */}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-ink/15 to-ink/20 pointer-events-none" />
+        {/* Gradient-overlay voor leesbaarheid tekst — licht gehouden zodat de
+            foto niet "zwart" oogt */}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-ink/10 to-ink/10 pointer-events-none" />
 
         {/* HTML overlay — text die fade-in/out doet per stage */}
         <div
@@ -239,10 +243,11 @@ export default function CinematicHero() {
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
           <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 w-full text-center text-white">
-            {/* Stage 1 — opening (0-40%) */}
+            {/* Stage 1 — opening (0-40%). CTA direct zichtbaar boven de fold
+                (conventie: value prop + CTA zonder te hoeven scrollen). */}
             <div
               data-stage="1"
-              className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 sm:px-10 lg:px-14"
+              className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 sm:px-10 lg:px-14 pointer-events-auto"
               style={{ opacity: 1 }}
             >
               <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-white/75 mb-6">
@@ -254,6 +259,15 @@ export default function CinematicHero() {
               <p className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-accent">
                 Eerlijke materialen.
               </p>
+              <div className="mt-9 flex items-center justify-center">
+                <Link
+                  href="/products"
+                  className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.22em] hover:bg-accent hover:text-white transition-colors"
+                >
+                  Bekijk de collectie
+                  <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                </Link>
+              </div>
             </div>
 
             {/* Stage 2 — diepte (40-75%) */}

@@ -14,7 +14,9 @@ import { HERO_IMAGE } from "@/lib/hero-image";
 function HeroFallback() {
   return (
     <section
-      className="relative h-[280vh] bg-bone"
+      // Hoogte + overlay identiek aan CinematicHero, anders verspringt de
+      // pagina zodra de 3D-hero de fallback vervangt.
+      className="relative h-[220vh] bg-bone"
       aria-label="Hero — laden..."
     >
       <div className="sticky top-0 h-screen overflow-hidden bg-bone">
@@ -24,7 +26,7 @@ function HeroFallback() {
           className="absolute inset-0 bg-cover bg-center opacity-90"
           style={{ backgroundImage: `url("${HERO_IMAGE}")` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-ink/15 to-ink/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-ink/10 to-ink/10" />
       </div>
     </section>
   );
