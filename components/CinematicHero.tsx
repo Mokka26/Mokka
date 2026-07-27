@@ -263,7 +263,7 @@ export default function CinematicHero() {
               <p className="font-serif text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] mb-2">
                 Stille kracht.
               </p>
-              <p className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-accent">
+              <p className="font-serif italic text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1] text-white">
                 Eerlijke materialen.
               </p>
               <div className="mt-9 flex items-center justify-center">
@@ -288,7 +288,7 @@ export default function CinematicHero() {
               </p>
               <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl leading-[1.1] max-w-3xl mx-auto">
                 Gemaakt voor het moderne thuis — handgemaakt,
-                <span className="italic text-accent"> tijdloos</span>.
+                <span className="italic"> tijdloos</span>.
               </h2>
             </div>
 
