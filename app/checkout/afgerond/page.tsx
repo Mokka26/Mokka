@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { syncOrderByNumber } from "@/lib/order-sync";
+import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/components/ui/price";
 import ClearCart from "./ClearCart";
+import { PurchaseConversion } from "./PurchaseConversion";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -34,9 +36,26 @@ export default async function CheckoutDonePage({
     tone: "bad" as const,
   };
 
+  // Google Ads new_customer-parameter: eerste betaalde bestelling op dit
+  // e-mailadres = nieuwe klant. Best-effort — bij een DB-hapering liever geen
+  // conversie-detail dan een kapotte bedankpagina.
+  const priorPaidOrders =
+    order && status === "paid"
+      ? await prisma.order
+          .count({ where: { email: order.email, status: "paid", orderNumber: { not: order.orderNumber } } })
+          .catch(() => 0)
+      : 0;
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
       {copy.tone === "ok" && <ClearCart />}
+      {order && status === "paid" && (
+        <PurchaseConversion
+          orderNumber={order.orderNumber}
+          value={order.total}
+          newCustomer={priorPaidOrders === 0}
+        />
+      )}
       <div className="bg-white border border-line p-12 sm:p-20 text-center max-w-2xl w-full">
         <div className="w-16 h-16 border border-line rounded-full flex items-center justify-center mx-auto mb-10">
           {copy.tone === "ok" ? (
