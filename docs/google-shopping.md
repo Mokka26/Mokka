@@ -88,3 +88,24 @@ vergelijking met concurrenten; alleen feitelijke USP's uit `lib/shipping-info.ts
 - Conversies: `PurchaseConversion` op `/checkout/afgerond`, alleen na
   cookie-akkoord (zie `components/GoogleAdsTag.tsx`).
 - Rapportage via Windsor.ai (connectors `google_ads` en `google_merchant`).
+
+## 5. Aangemaakt op 2026-09-12 (via Windsor.ai)
+
+Campagne "alles" (24094411861):
+
+- 15 uitsluitingswoorden op campagneniveau (tuin, loungeset, tweedehands,
+  marktplaats, ikea, gratis, hoes, stof, reparatie, huren, occasion, outlet,
+  vacature, "bankstel stofferen", "bank reinigen").
+- Vijf advertentiegroepen, elk 9 phrase-zoekwoorden + 1 responsive search ad
+  (11 koppen, 4 beschrijvingen), **gepauzeerd** aangemaakt:
+
+| Groep | Ad group id | Landingspagina |
+|---|---|---|
+| Bedden | 203985992070 | /bedden |
+| Eettafels | 203022162471 | /eettafels |
+| Eetkamerstoelen | 208574524788 | /eetkamerstoelen |
+| Verlichting | 203214282914 | /verlichting |
+| Kasten | 203179279627 | /kasten |
+
+Nog open: biedplafond "Maximaliseer klikken" staat op € 0,20 (te laag, campagne
+"Beperkt door biedstrategie"). Handmatig verhogen naar € 1,00 in Google Ads.
