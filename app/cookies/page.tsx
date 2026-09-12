@@ -27,9 +27,18 @@ export default function CookiesPage() {
           verbeteren. Deze worden pas geplaatst nadat je ze via de cookiemelding hebt geaccepteerd.
         </p>
       </LegalSection>
+      <LegalSection heading="Marketingcookies (Google Ads)">
+        <p>
+          Met jouw toestemming plaatst Google Ads een cookie waarmee we kunnen zien of een bezoek of
+          bestelling het gevolg is van een advertentie. Zo weten we of onze advertenties zinvol zijn.
+          Het script van Google laadt pas nadat je de cookiemelding hebt geaccepteerd; weiger je, dan
+          wordt er niets van Google geladen.
+        </p>
+      </LegalSection>
       <LegalSection heading="Je keuze beheren">
         <p>
-          Bij je eerste bezoek vragen we via de cookiemelding of je analytische cookies accepteert.
+          Bij je eerste bezoek vragen we via de cookiemelding of je analytische en marketingcookies
+          accepteert.
           Je kunt weigeren zonder dat de website minder goed werkt. Je kunt cookies ook op elk
           moment verwijderen via je browserinstellingen.
         </p>

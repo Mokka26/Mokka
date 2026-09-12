@@ -13,6 +13,7 @@ import TouchHoverProvider from "@/components/TouchHoverProvider";
 import ToastProvider from "@/components/ToastProvider";
 import ScrollProgress from "@/components/ScrollProgress";
 import CookieBanner from "@/components/CookieBanner";
+import { GoogleAdsTag } from "@/components/GoogleAdsTag";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Lenis (~30kB) is nooit kritiek voor first paint — laad client-side
@@ -115,6 +116,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CookieBanner />
         </CartProvider>
         <SpeedInsights />
+        {/* Google Ads — client-side, alleen na cookie-akkoord (zie component). */}
+        <GoogleAdsTag />
       </body>
     </html>
   );

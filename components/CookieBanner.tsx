@@ -53,9 +53,9 @@ export default function CookieBanner() {
               <div className="lg:col-span-8">
                 <p className="eyebrow mb-2">Cookies</p>
                 <p id="cookie-banner-text" className="text-sm text-slate leading-relaxed">
-                  We gebruiken functionele cookies voor de werking van de site (winkelwagen, login)
-                  en analytische cookies om de webshop te verbeteren. Externe scripts (Cloudinary,
-                  Sentry) laden pas na akkoord.{" "}
+                  We gebruiken functionele cookies voor de werking van de site (winkelwagen, login),
+                  analytische cookies om de webshop te verbeteren en marketingcookies (Google Ads) om
+                  te meten of onze advertenties werken. Die laatste twee laden pas na akkoord.{" "}
                   <Link
                     href={businessInfo.legal.cookiePolicyUrl}
                     className="underline hover:text-ink transition-colors"

@@ -45,6 +45,11 @@ export default function PrivacyPage() {
           afbeeldingen en het bewaken van de werking en veiligheid van de website. Met deze partijen
           zijn verwerkersafspraken gemaakt en zij mogen je gegevens alleen voor dat doel gebruiken.
         </p>
+        <p>
+          Alleen als je marketingcookies accepteert, meet Google Ads of een bezoek of bestelling
+          voortkomt uit een advertentie. Google kan die gegevens buiten de EU verwerken; dit gebeurt
+          op basis van de standaardcontractbepalingen van de EU.
+        </p>
       </LegalSection>
       <LegalSection heading="Nieuwsbrief">
         <p>
