@@ -146,11 +146,15 @@ function parseDetail(html: string, skuHint: string | null): Detail {
   return { name, attrs, images, description };
 }
 
-function dims(a: Record<string, string>): string | null {
-  const n = (k: string) => { const v = a[k]; const d = v ? parseFloat(v) : NaN; return Number.isFinite(d) ? Math.round(d) : null; };
+function dims(a: Record<string, string>, name = ""): string | null {
+  // 0 of negatief = niet ingevuld bij de bron (bv. Brix Xavier set: "Breedte 0").
+  const n = (k: string) => { const v = a[k]; const d = v ? parseFloat(v) : NaN; return Number.isFinite(d) && d > 0 ? Math.round(d) : null; };
   // LivingFurn zet bij langwerpige tafels soms de korte zijde als "Breedte"
   // (B 110 × D 300). Wij tonen altijd lengte als B en de korte zijde als D.
   let b = n("Artikel A - Breedte"), d = n("Artikel A - Diepte"), h = n("Artikel A - Hoogte");
+  // Typo bij de bron: "Breedte 24" terwijl de naam "240 cm" zegt (Kala Oval Spider).
+  const inName = Number(/(\d{2,3})\s*cm/i.exec(name)?.[1] ?? NaN);
+  if (b && Number.isFinite(inName) && b * 10 === inName) b = inName;
   // Invoerfout bij de bron (tafel "130 hoog, 76 diep"): hoogte en diepte verwisseld.
   if (d && h && h > 90 && d <= 80) [d, h] = [h, d];
   if (b && d && d > b) [b, d] = [d, b];
@@ -198,7 +202,7 @@ async function main() {
       const kleur = kleurRaw && !/^(geen|n\/?a|-)$/i.test(kleurRaw) ? kleurRaw : null;
       built.push({ card, d, slug, cat: src.cat, serie: serieOf(name), width, kleur });
       const price = card.price != null ? `€${card.price}` : "€?";
-      console.log(`  ${d.images.length ? " " : "⚠"} ${(d.attrs.SKU ?? card.sku ?? "?").padEnd(7)} ${price.padEnd(7)} ${String(d.images.length).padStart(2)}f ${(dims(d.attrs) ?? "—").padEnd(24)} ${(kleur ?? "—").padEnd(10)} ${(card.collection ?? "—").slice(0, 10).padEnd(10)} ${name.slice(0, 40).padEnd(40)} descr:${d.description.length}`);
+      console.log(`  ${d.images.length ? " " : "⚠"} ${(d.attrs.SKU ?? card.sku ?? "?").padEnd(7)} ${price.padEnd(7)} ${String(d.images.length).padStart(2)}f ${(dims(d.attrs, name) ?? "—").padEnd(24)} ${(kleur ?? "—").padEnd(10)} ${(card.collection ?? "—").slice(0, 10).padEnd(10)} ${name.slice(0, 40).padEnd(40)} descr:${d.description.length}`);
       await sleep(300);
     }
   }
@@ -230,7 +234,7 @@ async function main() {
     const a = b.d.attrs;
     const specs: Record<string, string> = {};
     if (b.serie) specs.Serie = b.serie;
-    const af = dims(a); if (af) specs.Afmetingen = af;
+    const af = dims(a, b.d.name || b.card.name); if (af) specs.Afmetingen = af;
     if (a["Materiaalsoort(en)"]) specs.Materiaal = a["Materiaalsoort(en)"];
     if (a.Kleur) specs.Kleur = a.Kleur;
     if (a.Vorm) specs.Vorm = a.Vorm;
