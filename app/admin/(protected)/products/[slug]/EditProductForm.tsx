@@ -363,13 +363,23 @@ export default function EditProductForm({ product, categories, sources }: Props)
           )}
         </div>
 
-        <Link
-          href={`/${dbCategoryToRouteSlug(product.category)}/${product.slug}`}
-          target="_blank"
-          className="block text-center text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent pt-2"
-        >
-          Bekijk live →
-        </Link>
+        {product.hidden ? (
+          <Link
+            href={`/admin/preview/${product.slug}`}
+            target="_blank"
+            className="block text-center text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent pt-2"
+          >
+            Voorbeeld bekijken (verborgen) →
+          </Link>
+        ) : (
+          <Link
+            href={`/${dbCategoryToRouteSlug(product.category)}/${product.slug}`}
+            target="_blank"
+            className="block text-center text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent pt-2"
+          >
+            Bekijk live →
+          </Link>
+        )}
       </aside>
     </form>
   );
