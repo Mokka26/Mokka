@@ -37,6 +37,9 @@ const SOURCES: { path: string; cat: string }[] = [
   { path: "tafels/eetkamertafels", cat: "eettafels" },
   { path: "tafels/salontafels", cat: "salontafels" },
   { path: "tafels/bijzettafels", cat: "bijzettafels" },
+  // Wandtafels/consoles: LivingFurn heeft geen aparte console-categorie; wij
+  // hebben geen eigen categorie voor wandtafels → bijzettafels (zoals Rousseau).
+  { path: "tafels/wandtafels", cat: "bijzettafels" },
 ];
 
 // Kleurcode (LivingFurn) → swatch. Onbekend = geen swatch (null).
