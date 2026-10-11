@@ -24,6 +24,13 @@ const COLORS = [
   "Roze", "Goud", "Zilver", "Brons",
 ];
 
+// Rousseau-steenkleuren zonder kleurwoord in de naam → kleurnaam zoals Rousseau die zelf omschrijft.
+const COLOR_ALIASES: Record<string, string> = { pandora: "Goudbruin" };
+function findAlias(name: string): string | null {
+  const n = name.toLowerCase();
+  for (const [term, color] of Object.entries(COLOR_ALIASES)) if (n.includes(term)) return color;
+  return null;
+}
 function findFirst(name: string, list: string[]): string | null {
   const n = name.toLowerCase();
   for (const term of list) if (n.includes(term.toLowerCase())) return term;
@@ -43,7 +50,7 @@ async function main() {
     try { specs = JSON.parse(pr.specs || "{}"); } catch {}
     let changed = false;
     if (!specs.Materiaal) { const m = findFirst(pr.name, MATERIALS); if (m) { specs.Materiaal = m; matFilled++; changed = true; } }
-    if (!specs.Kleur) { const c = findFirst(pr.name, COLORS); if (c) { specs.Kleur = c; colFilled++; changed = true; } }
+    if (!specs.Kleur) { const c = findFirst(pr.name, COLORS) ?? findAlias(pr.name); if (c) { specs.Kleur = c; colFilled++; changed = true; } }
     if (changed) {
       both++;
       if (sample.length < 18) sample.push(`  ${pr.name.slice(0, 46).padEnd(46)} → ${specs.Materiaal ?? "—"} / ${specs.Kleur ?? "—"}`);

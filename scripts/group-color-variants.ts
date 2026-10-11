@@ -23,6 +23,8 @@ const HEX: Record<string, string> = {
   "goud": "#C8A96A", "zilver": "#BFC1C2", "brons": "#7A5A3A", "wit": "#F5F5F0", "eik": "#B89B6E",
   "walnoot": "#5A4632", "cement": "#A8A39B", "steen": "#B5B0A8", "marmer": "#E6E3DE", "decor": "#B0976E",
   "sonoma": "#C9A876", "crimson": "#8E3B36",
+  // Rousseau "Pandora goudbruin" (gesinterde steen) → Kleur "Goudbruin" via backfill-rousseau-specs.
+  "goudbruin": "#8A6A3F",
 };
 const COLORS = Object.keys(HEX).sort((a, b) => b.length - a.length);
 const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
