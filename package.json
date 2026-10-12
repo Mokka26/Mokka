@@ -16,7 +16,8 @@
     "db:push": "prisma db push",
     "seed": "npx tsx prisma/seed.ts",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --maxWorkers=2"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

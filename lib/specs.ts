@@ -370,7 +370,8 @@ const MATERIAL_WORDS: ReadonlyArray<[RegExp, string]> = [
   [/\b(metaal|metalen|metal)\b/i, "Metaal"],
   [/\b(staal|stalen|steel)\b/i, "Staal"],
   [/\b(velvet|fluweel|fluwelen|velours)\b/i, "Fluweel"],
-  [/\b(bouclé|boucle)\b/i, "Bouclé"],
+  // \b kent geen "é", dus Unicode-letterklassen als woordgrens.
+  [/(?<!\p{L})(bouclé|boucle)(?!\p{L})/iu, "Bouclé"],
   [/\b(leer|leder|leren|leather)\b/i, "Leer"],
   [/\b(stof|stoffen|fabric)\b/i, "Stof"],
   [/\b(rotan|rattan)\b/i, "Rotan"],
@@ -455,7 +456,10 @@ export function findProductCode(name: string): string | null {
 export function stripProductCode(name: string): string {
   return name
     .replace(PRODUCT_CODE, " ")
+    // Lege haakjes én een losse haak die overblijft nadat de code (met zijn
+    // openingshaak als scheidingsteken) is weggehaald: "Tafel )" → "Tafel".
     .replace(/\(\s*\)/g, " ")
+    .replace(/(^|\s)[()](?=\s|$)/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

@@ -128,7 +128,8 @@ export function parseTransitDays(text: string | null | undefined): { min: number
   if (!text) return null;
   const m = text.match(/(\d+)\s*(?:-|–|—|tot)\s*(\d+)\s*(werkdag|dag|we(?:e)?k)/i);
   if (!m) return null;
-  const factor = /^we/i.test(m[3]) ? 5 : 1;
+  // "weken"/"week" → ×5 werkdagen; "werkdagen" begint ook met "we", dus op "week" matchen.
+  const factor = /^wee?k/i.test(m[3]) ? 5 : 1;
   const a = Number(m[1]) * factor;
   const b = Number(m[2]) * factor;
   if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return null;

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Geen deploy, geen secrets: de Vercel-integratie bouwt en deployt zelf.
+# Deze workflow bewaakt alleen de quality gates uit CLAUDE.md §12 (1–3):
+# typecheck, lint en tests. Prisma Client wordt gegenereerd zonder database;
+# de tests mocken @/lib/prisma en raken nooit Postgres of Mollie.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck · lint · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: "true"
+      # Dummy: `prisma generate` leest het schema, niet de database.
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install (npm ci)
+        run: npm ci
+
+      - name: Prisma Client genereren (zonder database)
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests (jest --ci --coverage)
+        run: npm run test:ci
+
+      - name: Coverage-rapport bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          retention-days: 14
+          if-no-files-found: ignore

@@ -6,9 +6,13 @@
 //     weggegooid), geen session replay. Dat scheelt ~25 kB gzip aan code én
 //     alle performance-spans/requests naar Sentry.
 //
-// Zelfde sleutel + event als components/CookieBanner.tsx en GoogleAdsTag.tsx.
+// Zelfde sleutel + event als components/CookieBanner.tsx en Analytics.tsx.
 const CONSENT_KEY = "mokka_cookie_consent_v1";
 const CONSENT_EVENT = "cookieConsentChanged";
+
+// Next.js verwacht deze export voor navigatie-tracing. Tracing staat bewust
+// uit (zie afspraak 2), dus een no-op; voorkomt de Sentry-waarschuwing.
+export function onRouterTransitionStart(): void {}
 
 let initialised = false;
 
