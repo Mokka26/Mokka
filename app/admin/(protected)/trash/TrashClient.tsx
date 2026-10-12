@@ -127,7 +127,7 @@ export default function TrashClient({
             type="button"
             onClick={() => setConfirmEmpty(true)}
             disabled={pending}
-            className="ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-red-700 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+            className="ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Prullenbak leegmaken
@@ -146,7 +146,7 @@ export default function TrashClient({
       )}
 
       {error && (
-        <div className="mb-4 flex items-start gap-2 px-3 py-2 bg-red-50 border border-red-200 text-[12px] text-red-700">
+        <div className="mb-4 flex items-start gap-2 px-3 py-2 bg-error/10 border border-error/30 text-[12px] text-error">
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>{error}</span>
           <button onClick={() => setError(null)} className="ml-auto">×</button>
@@ -185,7 +185,7 @@ export default function TrashClient({
                       <p className="text-[11px] uppercase tracking-[0.2em] text-stone mt-0.5">
                         {p.category} · €{p.price.toFixed(0)}
                       </p>
-                      <p className={`text-[11px] mt-1 ${isExpiring ? "text-red-700" : "text-stone"}`}>
+                      <p className={`text-[11px] mt-1 ${isExpiring ? "text-error" : "text-stone"}`}>
                         Verwijderd {formatDate(p.deletedAt)} · Permanent over {daysLeft} dagen
                       </p>
                     </div>
@@ -203,7 +203,7 @@ export default function TrashClient({
                         type="button"
                         onClick={() => setConfirmId(p.id)}
                         disabled={pending}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-red-700 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
                       >
                         <X className="w-3 h-3" />
                         Permanent
@@ -251,7 +251,7 @@ export default function TrashClient({
                     </div>
                     <div className="p-2.5">
                       <p className="text-[11px] text-stone truncate">{img.productSlug}</p>
-                      <p className={`text-[10px] mt-0.5 ${isExpiring ? "text-red-700" : "text-stone/70"}`}>
+                      <p className={`text-[10px] mt-0.5 ${isExpiring ? "text-error" : "text-stone"}`}>
                         Over {daysLeft}d permanent weg
                       </p>
                       <div className="flex items-center gap-1.5 mt-2">
@@ -269,7 +269,7 @@ export default function TrashClient({
                           type="button"
                           onClick={() => setConfirmId(img.id)}
                           disabled={pending}
-                          className="inline-flex items-center justify-center px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-red-700 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+                          className="inline-flex items-center justify-center px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
                           title="Permanent verwijderen"
                         >
                           <X className="w-2.5 h-2.5" />
@@ -341,7 +341,7 @@ function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="flex-1 px-6 py-3 text-[11px] uppercase tracking-[0.25em] bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+            className="flex-1 px-6 py-3 text-[11px] uppercase tracking-[0.25em] bg-error text-white hover:opacity-90 disabled:opacity-50"
           >
             {pending ? "Verwijderen…" : "Definitief weg"}
           </button>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import ImageManager from "@/components/admin/ImageManager";
-import type { ProductImage } from "@/lib/imageHelpers";
+import type { AdminImage } from "../../_lib/images";
 import { createProduct, type CreateProductState } from "../actions";
 
 const initial: CreateProductState = {};
@@ -16,23 +16,30 @@ function slugify(input: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+const inputCls =
+  "w-full min-h-11 px-3 py-2.5 border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+
 export default function NewProductForm({ categories }: { categories: string[] }) {
   const [state, action, pending] = useActionState(createProduct, initial);
+  const base = useId();
+  const fid = (name: string) => `${base}-${name}`;
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [category, setCategory] = useState(categories[0] ?? "banken");
-  const [images, setImages] = useState<ProductImage[]>([]);
+  const [category, setCategory] = useState(categories[0] ?? "");
+  const [images, setImages] = useState<AdminImage[]>([]);
 
   const effectiveSlug = slug || slugify(name);
+  const err = state.fieldErrors ?? {};
 
   return (
-    <form action={action} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <form action={action} noValidate className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <input type="hidden" name="images" value={JSON.stringify(images)} />
 
       <div className="lg:col-span-2 space-y-6">
-        <Field label="Naam" error={state.fieldErrors?.name}>
+        <Field id={fid("name")} label="Naam" error={err.name}>
           <input
+            id={fid("name")}
             name="name"
             value={name}
             onChange={(e) => {
@@ -40,12 +47,24 @@ export default function NewProductForm({ categories }: { categories: string[] })
               if (!slugTouched) setSlug("");
             }}
             required
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
+            maxLength={200}
+            aria-invalid={!!err.name}
+            className={`${inputCls} bg-white`}
           />
         </Field>
 
-        <Field label="Slug (URL)" error={state.fieldErrors?.slug}>
+        <Field
+          id={fid("slug")}
+          label="URL (slug)"
+          error={err.slug}
+          help={
+            <>
+              Wordt: <span className="font-mono text-ink">/{category || "…"}/{effectiveSlug || "…"}</span>
+            </>
+          }
+        >
           <input
+            id={fid("slug")}
             name="slug"
             value={effectiveSlug}
             onChange={(e) => {
@@ -53,42 +72,58 @@ export default function NewProductForm({ categories }: { categories: string[] })
               setSlugTouched(true);
             }}
             required
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm font-mono focus:outline-none focus:border-accent"
+            maxLength={120}
+            aria-invalid={!!err.slug}
+            className={`${inputCls} bg-white font-mono`}
           />
-          <p className="text-[11px] text-stone mt-1.5">
-            Wordt: <span className="font-mono">/products/{effectiveSlug || "…"}</span>
-          </p>
         </Field>
 
-        <Field label="Beschrijving" error={state.fieldErrors?.description}>
+        <Field id={fid("description")} label="Beschrijving" error={err.description}>
           <textarea
+            id={fid("description")}
             name="description"
             required
             rows={10}
-            className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm leading-relaxed focus:outline-none focus:border-accent font-serif"
+            maxLength={5000}
+            aria-invalid={!!err.description}
+            className={`${inputCls} bg-white leading-relaxed font-serif`}
           />
         </Field>
       </div>
 
       <aside className="space-y-6">
         <div className="bg-white border border-line p-5 space-y-5">
-          <Field label="Prijs (€)" error={state.fieldErrors?.price}>
+          <Field id={fid("price")} label="Verkoopprijs incl. btw" error={err.price} help="In euro's; komma of punt mag: 599,50.">
             <input
+              id={fid("price")}
               name="price"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               required
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm font-serif tabular-nums focus:outline-none focus:border-accent"
+              aria-invalid={!!err.price}
+              className={`${inputCls} bg-bone font-serif tabular-nums`}
             />
           </Field>
 
-          <Field label="Categorie" error={state.fieldErrors?.category}>
+          <Field id={fid("listPrice")} label="Adviesprijs (optioneel)" error={err.listPrice} help="Hoger dan de verkoopprijs = doorgestreepte korting.">
+            <input
+              id={fid("listPrice")}
+              name="listPrice"
+              type="text"
+              inputMode="decimal"
+              aria-invalid={!!err.listPrice}
+              className={`${inputCls} bg-white font-serif tabular-nums`}
+            />
+          </Field>
+
+          <Field id={fid("category")} label="Categorie" error={err.category}>
             <select
+              id={fid("category")}
               name="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm capitalize focus:outline-none focus:border-accent"
+              aria-invalid={!!err.category}
+              className={`${inputCls} bg-bone capitalize`}
             >
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -96,39 +131,53 @@ export default function NewProductForm({ categories }: { categories: string[] })
             </select>
           </Field>
 
-          <Field label="Voorraad" error={state.fieldErrors?.stock}>
+          <Field id={fid("stock")} label="Voorraad (aantal)" error={err.stock} help="Aantal stuks dat direct leverbaar is.">
             <input
+              id={fid("stock")}
               name="stock"
-              type="number"
-              min="0"
-              step="1"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               defaultValue={10}
               required
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm tabular-nums focus:outline-none focus:border-accent"
+              aria-invalid={!!err.stock}
+              className={`${inputCls} bg-bone tabular-nums`}
             />
           </Field>
 
-          <Field label="Levertijd" error={state.fieldErrors?.deliveryTime}>
+          <Field id={fid("deliveryTime")} label="Levertijd" error={err.deliveryTime}>
             <input
+              id={fid("deliveryTime")}
               name="deliveryTime"
               placeholder="Bijv. 1-3 werkdagen"
               maxLength={80}
-              className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent"
+              className={`${inputCls} bg-bone`}
             />
           </Field>
 
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <input
-              name="featured"
-              type="checkbox"
-              className="w-4 h-4 accent-accent"
-            />
-            <span className="text-sm text-ink">Featured op homepage</span>
-          </label>
+          <div className="flex items-center gap-3">
+            <input id={fid("featured")} name="featured" type="checkbox" className="w-5 h-5 accent-accent" />
+            <label htmlFor={fid("featured")} className="text-base text-ink cursor-pointer select-none">
+              Uitgelicht op de homepage
+            </label>
+          </div>
+
+          <div className="pt-4 border-t border-line">
+            <div className="flex items-start gap-3">
+              <input id={fid("hidden")} name="hidden" type="checkbox" defaultChecked className="w-5 h-5 mt-0.5 accent-accent" />
+              <label htmlFor={fid("hidden")} className="text-base text-ink cursor-pointer select-none">
+                Verborgen aanmaken (aanbevolen)
+                <span className="block text-sm text-stone mt-0.5">
+                  Controleer eerst prijs, foto&rsquo;s en tekst; publiceer daarna via het bewerkscherm.
+                </span>
+              </label>
+            </div>
+            {err.hidden && <p className="text-sm text-error mt-2">{err.hidden}</p>}
+          </div>
         </div>
 
         {state.error && (
-          <p className="text-[12px] text-red-700 bg-red-50 border border-red-200 px-3 py-2">
+          <p role="alert" className="text-sm text-error bg-error/10 border border-error/30 px-3 py-2">
             {state.error}
           </p>
         )}
@@ -136,7 +185,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
         <button
           type="submit"
           disabled={pending}
-          className="w-full bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
+          className="w-full min-h-11 bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
         >
           {pending ? "Aanmaken…" : "Product aanmaken"}
         </button>
@@ -144,20 +193,16 @@ export default function NewProductForm({ categories }: { categories: string[] })
 
       <section className="lg:col-span-3 mt-6 pt-8 border-t border-line">
         <header className="mb-5">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-1.5">
-            Afbeeldingen (optioneel)
-          </p>
-          <h2 className="font-serif text-xl text-ink leading-none">
-            Voeg foto&rsquo;s toe
-          </h2>
-          <p className="text-[12px] text-stone mt-2">
-            Vul eerst de naam en categorie in zodat foto&rsquo;s in de juiste map worden opgeslagen.
-            Foto&rsquo;s worden meegestuurd bij &lsquo;Product aanmaken&rsquo;.
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-1.5">Afbeeldingen (optioneel)</p>
+          <h2 className="font-serif text-xl text-ink leading-none">Voeg foto&rsquo;s toe</h2>
+          <p className="text-base text-stone mt-2">
+            Vul eerst de naam en categorie in zodat foto&rsquo;s in de juiste map worden opgeslagen. Foto&rsquo;s
+            worden meegestuurd bij &lsquo;Product aanmaken&rsquo;.
           </p>
         </header>
 
         <ImageManager
-          category={category}
+          category={category || "ongesorteerd"}
           slug={effectiveSlug || "ongesorteerd"}
           initialImages={images}
           onChange={setImages}
@@ -169,21 +214,26 @@ export default function NewProductForm({ categories }: { categories: string[] })
 }
 
 function Field({
+  id,
   label,
   error,
+  help,
   children,
 }: {
+  id: string;
   label: string;
   error?: string;
+  help?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+      <label htmlFor={id} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
         {label}
       </label>
       {children}
-      {error && <p className="text-[11px] text-red-700 mt-1.5">{error}</p>}
+      {error && <p className="text-sm text-error mt-1.5">{error}</p>}
+      {help && <p className="text-sm text-stone mt-1.5">{help}</p>}
     </div>
   );
 }

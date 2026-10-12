@@ -109,7 +109,8 @@ export async function changePassword(
   try {
     await prisma.adminUser.update({
       where: { id: userId },
-      data: { passwordHash: newHash },
+      // passwordChangedAt maakt bestaande sessies (JWT) ongeldig; zie auth.ts.
+      data: { passwordHash: newHash, passwordChangedAt: new Date() },
     });
   } catch {
     return { error: "Opslaan mislukt" };

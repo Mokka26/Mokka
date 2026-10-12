@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export const metadata = {
@@ -7,28 +8,32 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function ProtectedAdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+/** Tijdstip n dagen geleden (buiten de component: geen impure call in render). */
+function daysAgo(n: number): Date {
+  return new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+}
+
+export default async function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/admin/login");
+
+  // Badge: contactberichten van de laatste 7 dagen.
+  const since = daysAgo(7);
+  const recentMessages = await prisma.contactMessage.count({ where: { createdAt: { gte: since } } });
 
   return (
     <div className="min-h-screen bg-bone">
       <AdminSidebar
         userName={session.user.name ?? "Admin"}
         userEmail={session.user.email ?? ""}
+        messagesBadge={recentMessages}
         signOutAction={async () => {
           "use server";
           await signOut({ redirectTo: "/admin/login" });
         }}
       />
       <main className="lg:ml-64">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 py-10 lg:py-14">
-          {children}
-        </div>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 py-8 lg:py-14">{children}</div>
       </main>
     </div>
   );

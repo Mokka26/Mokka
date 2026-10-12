@@ -2,41 +2,60 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
 import { extractPublicId } from "@/lib/cloudinary-helpers";
+import { parseImages } from "@/lib/imageHelpers";
+import { revalidateAllProducts, revalidateProduct } from "@/lib/revalidate";
+import { logAdminError } from "../_lib/log";
+import { parseAdminImages } from "../_lib/images";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-// ─── Product: restore from trash ─────────────────────────────────────
 const idSchema = z.object({ id: z.string().min(1) });
 
+function isNotFound(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
+}
+
+/** Cloudinary-asset weggooien; een fout is niet blokkerend maar wordt wél gelogd. */
+async function destroyAsset(publicId: string, context: string): Promise<void> {
+  try {
+    await cloudinary.uploader.destroy(publicId, { invalidate: true });
+  } catch (e) {
+    logAdminError(`${context}:cloudinary.destroy`, e, { publicId });
+  }
+}
+
+// ─── Product: herstellen uit prullenbak ──────────────────────────────
 export async function restoreProduct(input: z.infer<typeof idSchema>): Promise<Result> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Niet ingelogd" };
   const parsed = idSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Ongeldige invoer" };
 
+  let product: { slug: string; category: string };
   try {
-    await prisma.product.update({
+    product = await prisma.product.update({
       where: { id: parsed.data.id },
       data: { deletedAt: null },
+      select: { slug: true, category: true },
     });
-  } catch {
-    return { ok: false, error: "Herstellen mislukt" };
+  } catch (e) {
+    if (isNotFound(e)) return { ok: false, error: "Product niet gevonden" };
+    logAdminError("restoreProduct", e, { id: parsed.data.id });
+    return { ok: false, error: "Herstellen mislukt. Probeer het opnieuw." };
   }
 
-  revalidatePath("/admin/products");
+  revalidateProduct(product);
   revalidatePath("/admin/trash");
-  revalidatePath("/products");
   return { ok: true };
 }
 
-// ─── Product: permanent delete + Cloudinary cleanup ──────────────────
-export async function permanentlyDeleteProduct(
-  input: z.infer<typeof idSchema>,
-): Promise<Result> {
+// ─── Product: definitief verwijderen + Cloudinary opruimen ───────────
+export async function permanentlyDeleteProduct(input: z.infer<typeof idSchema>): Promise<Result> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Niet ingelogd" };
   const parsed = idSchema.safeParse(input);
@@ -48,37 +67,27 @@ export async function permanentlyDeleteProduct(
   });
   if (!product) return { ok: false, error: "Product niet gevonden" };
   if (!product.deletedAt) {
-    return { ok: false, error: "Product staat niet in prullenbak (verwijder eerst)" };
+    return { ok: false, error: "Product staat niet in de prullenbak (verwijder het eerst)" };
   }
-  // Bestelgeschiedenis beschermen (onDelete: Restrict) — niet hard-verwijderen.
+  // Bestelgeschiedenis beschermen (onDelete: Restrict) — niet hard verwijderen.
   const orderCount = await prisma.orderItem.count({ where: { productId: product.id } });
   if (orderCount > 0) {
-    return { ok: false, error: "Product heeft bestelgeschiedenis en kan niet definitief verwijderd worden. Het blijft in de prullenbak." };
+    return {
+      ok: false,
+      error: "Product heeft bestelgeschiedenis en kan niet definitief verwijderd worden. Het blijft in de prullenbak.",
+    };
   }
 
-  // Destroy Cloudinary assets
-  try {
-    const raw = JSON.parse(product.images);
-    if (Array.isArray(raw)) {
-      const publicIds = raw
-        .map((item) => extractPublicId(typeof item === "string" ? item : item.url))
-        .filter((pid): pid is string => !!pid);
-      for (const pid of publicIds) {
-        try {
-          await cloudinary.uploader.destroy(pid, { invalidate: true });
-        } catch {
-          // niet kritiek; product wordt sowieso verwijderd
-        }
-      }
-    }
-  } catch {
-    // images JSON corrupt — sla over, doorga met DB-delete
+  for (const img of parseImages(product.images)) {
+    const pid = extractPublicId(img.url);
+    if (pid) await destroyAsset(pid, "permanentlyDeleteProduct");
   }
 
   try {
-    await prisma.product.delete({ where: { id: parsed.data.id } });
-  } catch {
-    return { ok: false, error: "DB-delete mislukt" };
+    await prisma.product.delete({ where: { id: product.id } });
+  } catch (e) {
+    logAdminError("permanentlyDeleteProduct", e, { id: product.id });
+    return { ok: false, error: "Definitief verwijderen mislukt. Probeer het opnieuw." };
   }
 
   revalidatePath("/admin/products");
@@ -86,7 +95,7 @@ export async function permanentlyDeleteProduct(
   return { ok: true };
 }
 
-// ─── Image: restore ─────────────────────────────────────────────────
+// ─── Foto: herstellen ────────────────────────────────────────────────
 export async function restoreImage(input: z.infer<typeof idSchema>): Promise<Result> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Niet ingelogd" };
@@ -103,38 +112,31 @@ export async function restoreImage(input: z.infer<typeof idSchema>): Promise<Res
   });
   if (!product) return { ok: false, error: "Product niet meer aanwezig" };
 
-  let imgs: { url: string; w?: number; h?: number }[] = [];
-  try {
-    const raw = JSON.parse(product.images);
-    if (Array.isArray(raw)) {
-      imgs = raw.map((item) =>
-        typeof item === "string" ? { url: item } : { url: item.url, w: item.w, h: item.h },
-      );
+  const imgs = parseAdminImages(product.images);
+  if (imgs.some((i) => i.url === di.url)) {
+    // Al aanwezig (bv. dubbel geklikt) → alleen de prullenbak-rij opruimen.
+    try {
+      await prisma.deletedImage.delete({ where: { id: di.id } });
+    } catch (e) {
+      logAdminError("restoreImage:cleanup", e, { id: di.id });
     }
-  } catch {
-    imgs = [];
+    revalidatePath("/admin/trash");
+    return { ok: true };
   }
-
-  // Voeg terug toe (achteraan)
   imgs.push({ url: di.url, w: di.w ?? undefined, h: di.h ?? undefined });
 
   try {
     await prisma.$transaction([
-      prisma.product.update({
-        where: { id: product.id },
-        data: { images: JSON.stringify(imgs) },
-      }),
+      prisma.product.update({ where: { id: product.id }, data: { images: JSON.stringify(imgs) } }),
       prisma.deletedImage.delete({ where: { id: di.id } }),
     ]);
-  } catch {
-    return { ok: false, error: "Herstellen mislukt" };
+  } catch (e) {
+    logAdminError("restoreImage", e, { id: di.id, productId: product.id });
+    return { ok: false, error: "Herstellen mislukt. Probeer het opnieuw." };
   }
 
-  revalidatePath("/admin/products");
+  revalidateProduct(product);
   revalidatePath("/admin/trash");
-  revalidatePath(`/products/${product.slug}`);
-  revalidatePath(`/${product.category}`);
-  revalidatePath(`/${product.category}/${product.slug}`);
   return { ok: true };
 }
 
@@ -147,50 +149,46 @@ export async function emptyTrash(): Promise<EmptyResult> {
 
   try {
     // Public-ids die nog door een NIET-verwijderd product gebruikt worden →
-    // nooit slopen (gedeelde assets).
+    // nooit weggooien (gedeelde assets).
     const live = await prisma.product.findMany({ where: { deletedAt: null }, select: { images: true } });
     const liveIds = new Set<string>();
     for (const p of live) {
-      try {
-        for (const it of JSON.parse(p.images) as (string | { url: string })[]) {
-          const pid = extractPublicId(typeof it === "string" ? it : it.url);
-          if (pid) liveIds.add(pid);
-        }
-      } catch { /* corrupt json overslaan */ }
+      for (const img of parseImages(p.images)) {
+        const pid = extractPublicId(img.url);
+        if (pid) liveIds.add(pid);
+      }
     }
 
     const destroy = async (pid: string | null) => {
       if (!pid || liveIds.has(pid)) return;
-      try { await cloudinary.uploader.destroy(pid, { invalidate: true }); } catch { /* niet kritiek */ }
+      await destroyAsset(pid, "emptyTrash");
     };
 
-    // 1) Verwijderde producten + hun foto's
-    // Producten mét bestelgeschiedenis niet verwijderen (onDelete: Restrict
-    // beschermt de orderregels) — ze blijven soft-deleted.
+    // 1) Verwijderde producten + hun foto's. Producten mét bestelgeschiedenis
+    //    blijven soft-deleted (onDelete: Restrict beschermt de orderregels).
     const purgeWhere = { deletedAt: { not: null }, orderItems: { none: {} } } as const;
     const trashed = await prisma.product.findMany({ where: purgeWhere, select: { images: true } });
     for (const p of trashed) {
-      try { for (const it of JSON.parse(p.images) as (string | { url: string })[]) await destroy(extractPublicId(typeof it === "string" ? it : it.url)); } catch { /* */ }
+      for (const img of parseImages(p.images)) await destroy(extractPublicId(img.url));
     }
     const delProducts = await prisma.product.deleteMany({ where: purgeWhere });
 
-    // 2) Losse verwijderde foto's (deletedImage-tabel)
+    // 2) Losse verwijderde foto's (DeletedImage-tabel)
     const dImgs = await prisma.deletedImage.findMany({ select: { publicId: true } });
     for (const d of dImgs) await destroy(d.publicId);
     const delImages = await prisma.deletedImage.deleteMany({});
 
     revalidatePath("/admin/trash");
-    revalidatePath("/admin/products");
+    revalidateAllProducts();
     return { ok: true, products: delProducts.count, images: delImages.count };
-  } catch {
-    return { ok: false, error: "Legen mislukt" };
+  } catch (e) {
+    logAdminError("emptyTrash", e);
+    return { ok: false, error: "Legen mislukt. Probeer het opnieuw." };
   }
 }
 
-// ─── Image: permanent delete (Cloudinary destroy) ────────────────────
-export async function permanentlyDeleteImage(
-  input: z.infer<typeof idSchema>,
-): Promise<Result> {
+// ─── Foto: definitief verwijderen (Cloudinary destroy) ───────────────
+export async function permanentlyDeleteImage(input: z.infer<typeof idSchema>): Promise<Result> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Niet ingelogd" };
   const parsed = idSchema.safeParse(input);
@@ -199,16 +197,13 @@ export async function permanentlyDeleteImage(
   const di = await prisma.deletedImage.findUnique({ where: { id: parsed.data.id } });
   if (!di) return { ok: false, error: "Niet gevonden" };
 
-  try {
-    await cloudinary.uploader.destroy(di.publicId, { invalidate: true });
-  } catch {
-    // Cloudinary kan al weg zijn; doorga
-  }
+  await destroyAsset(di.publicId, "permanentlyDeleteImage");
 
   try {
     await prisma.deletedImage.delete({ where: { id: di.id } });
-  } catch {
-    return { ok: false, error: "DB-delete mislukt" };
+  } catch (e) {
+    logAdminError("permanentlyDeleteImage", e, { id: di.id });
+    return { ok: false, error: "Verwijderen mislukt. Probeer het opnieuw." };
   }
 
   revalidatePath("/admin/trash");

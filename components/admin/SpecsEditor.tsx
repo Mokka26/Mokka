@@ -74,7 +74,7 @@ export default function SpecsEditor({
               <button
                 type="button"
                 onClick={() => removeRow(row.id)}
-                className="px-3 text-stone hover:text-red-700 hover:bg-bone transition-colors"
+                className="px-3 text-stone hover:text-error hover:bg-bone transition-colors"
                 aria-label="Verwijder spec"
               >
                 <Trash2 className="w-4 h-4" />

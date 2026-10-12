@@ -7,8 +7,16 @@ export const dynamic = "force-dynamic";
 
 const RETENTION_DAYS = 30;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Buiten de component: geen impure `Date.now()` in render. */
+function nowMs(): number {
+  return Date.now();
+}
+
 export default async function TrashPage() {
-  const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const now = nowMs();
+  const cutoff = new Date(now - RETENTION_DAYS * DAY_MS);
 
   const [products, images] = await Promise.all([
     prisma.product.findMany({
@@ -64,7 +72,7 @@ export default async function TrashPage() {
 
   // Items die op punt staan verwijderd te worden
   const expiringSoon = [...productItems, ...imageItems].filter(
-    (i) => i.autoPurgeAt.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000,
+    (i) => i.autoPurgeAt.getTime() - now < 3 * DAY_MS,
   ).length;
 
   return (
@@ -78,7 +86,7 @@ export default async function TrashPage() {
         <p className="text-sm text-stone mt-3">
           Items worden automatisch permanent verwijderd na {RETENTION_DAYS} dagen.
           {expiringSoon > 0 && (
-            <span className="ml-2 text-red-700">
+            <span className="ml-2 text-error">
               · {expiringSoon} item{expiringSoon === 1 ? "" : "s"} binnenkort permanent weg
             </span>
           )}

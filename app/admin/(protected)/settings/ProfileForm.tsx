@@ -31,7 +31,7 @@ export default function ProfileForm({
           disabled
           className="w-full px-3 py-2.5 bg-bone border border-line text-stone text-sm cursor-not-allowed"
         />
-        <p className="text-[11px] text-stone/70 mt-1.5">E-mail kan niet worden gewijzigd.</p>
+        <p className="text-[11px] text-stone mt-1.5">E-mail kan niet worden gewijzigd.</p>
       </div>
 
       <div>
@@ -47,12 +47,12 @@ export default function ProfileForm({
           className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
         />
         {state.fieldErrors?.name && (
-          <p className="text-[11px] text-red-700 mt-1.5">{state.fieldErrors.name}</p>
+          <p className="text-[11px] text-error mt-1.5">{state.fieldErrors.name}</p>
         )}
       </div>
 
       {state.error && (
-        <p className="text-[12px] text-red-700 bg-red-50 border border-red-200 px-3 py-2">
+        <p className="text-[12px] text-error bg-error/10 border border-error/30 px-3 py-2">
           {state.error}
         </p>
       )}

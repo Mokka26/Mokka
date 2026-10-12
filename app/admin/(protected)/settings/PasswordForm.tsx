@@ -40,7 +40,7 @@ export default function PasswordForm() {
       />
 
       {state.error && (
-        <p className="text-[12px] text-red-700 bg-red-50 border border-red-200 px-3 py-2">
+        <p className="text-[12px] text-error bg-error/10 border border-error/30 px-3 py-2">
           {state.error}
         </p>
       )}
@@ -91,7 +91,7 @@ function PasswordField({
         required
         className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
       />
-      {error && <p className="text-[11px] text-red-700 mt-1.5">{error}</p>}
+      {error && <p className="text-[11px] text-error mt-1.5">{error}</p>}
     </div>
   );
 }

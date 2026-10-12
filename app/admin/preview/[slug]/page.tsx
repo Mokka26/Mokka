@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
-import { dbCategoryToRouteSlug } from "@/lib/categories";
+import { productUrl } from "@/lib/categories";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -53,7 +53,7 @@ export default async function AdminProductPreview({ params }: Props) {
       : Promise.resolve([]),
   ]);
 
-  const liveUrl = `/${dbCategoryToRouteSlug(product.category)}/${product.slug}`;
+  const liveUrl = productUrl(product);
   const linkClass =
     "underline underline-offset-4 hover:text-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light";
 
@@ -80,11 +80,14 @@ export default async function AdminProductPreview({ params }: Props) {
           </nav>
         </div>
       </div>
-      <ProductDetailClient
-        product={product}
-        relatedProducts={relatedProducts}
-        colorVariants={colorVariants}
-      />
+      {/* De publieke PDP rendert hier de kruimels; in het voorbeeld alleen ruimte. */}
+      <div className="pt-24 lg:pt-32">
+        <ProductDetailClient
+          product={product}
+          relatedProducts={relatedProducts}
+          colorVariants={colorVariants}
+        />
+      </div>
     </>
   );
 }
