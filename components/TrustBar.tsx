@@ -1,40 +1,36 @@
-"use client";
-
-import { Truck, RotateCcw, ShieldCheck, CreditCard } from "lucide-react";
+import { Truck, RotateCcw, ShieldCheck, CreditCard, type LucideIcon } from "lucide-react";
 import { getUspsByKey } from "@/lib/shipping-info";
 
-const ICONS = {
+const ICONS: Record<string, LucideIcon> = {
   shipping: Truck,
   return: RotateCcw,
   warranty: ShieldCheck,
   payment: CreditCard,
-} as const;
+};
 
+// Server component. USP-teksten komen uitsluitend uit lib/shipping-info.
+// Direct onder de hero: de trust signals staan boven de fold mee.
 export default function TrustBar() {
   const items = getUspsByKey("shipping", "return", "warranty", "payment");
 
   return (
-    <section className="py-16 lg:py-20 bg-bone border-y border-line">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-          {items.map((item) => {
-            const Icon = ICONS[item.key as keyof typeof ICONS] ?? Truck;
-            return (
-              <div key={item.key} className="flex flex-col items-center text-center">
-                <div className="w-10 h-10 mb-4 flex items-center justify-center text-accent">
-                  <Icon className="w-7 h-7" strokeWidth={1.25} />
-                </div>
-                <h4 className="text-[11px] uppercase tracking-[0.2em] text-ink mb-2">
-                  {item.title}
-                </h4>
-                <p className="text-xs text-stone leading-relaxed max-w-[200px]">
-                  {item.description}
-                </p>
+    <section className="py-8 lg:py-10 bg-bone border-b border-line" aria-label="Onze service">
+      <ul className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+        {items.map((item) => {
+          const Icon = ICONS[item.key] ?? Truck;
+          return (
+            <li key={item.key} className="flex items-start gap-4">
+              <span className="w-11 h-11 shrink-0 rounded-full bg-white text-accent-dark flex items-center justify-center" aria-hidden>
+                <Icon className="w-5 h-5" strokeWidth={1.5} />
+              </span>
+              <div>
+                <p className="text-base font-medium text-ink leading-snug">{item.title}</p>
+                <p className="text-sm text-slate leading-[1.6] mt-0.5">{item.description}</p>
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

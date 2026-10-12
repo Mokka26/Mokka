@@ -1,117 +1,107 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { ArrowUpRight, MapPin, Phone, Clock } from "lucide-react";
 import {
   businessInfo,
   getMapsUrl,
   getOpeningHoursCompact,
   getPhoneLink,
 } from "@/lib/business-info";
+import ShowroomVideo from "@/components/ShowroomVideo";
 
+// Server component; alleen de video (pauzeknop) is client-side. Alle
+// adres-, openingstijd- en telefoongegevens komen uit lib/business-info.
 export default function ShowroomSection() {
   const phoneLink = getPhoneLink();
   const hours = getOpeningHoursCompact();
-  return (
-    <section className="relative py-32 lg:py-48 bg-paper overflow-hidden">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-          {/* Video — echt winkel beeld */}
-          <motion.div
-            className="lg:col-span-7 relative aspect-[4/3] overflow-hidden bg-bone rounded-[10px]"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }}
-          >
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="none"
-              className="absolute inset-0 w-full h-full object-cover"
-            >
-              <source src="/mokka.mp4" type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-ink/10 pointer-events-none" />
-          </motion.div>
+  const { city, street, postalCode } = businessInfo.address;
 
-          {/* Tekst */}
-          <motion.div
-            className="lg:col-span-5"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <p className="eyebrow mb-6">Bezoek Ons Atelier</p>
-            <h2 className="display-md text-ink mb-6">
-              2000m² <span className="italic">woonplezier</span>
+  return (
+    <section className="py-20 lg:py-32 bg-paper" aria-labelledby="showroom-heading">
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+          <div className="lg:col-span-7">
+            <ShowroomVideo
+              src="/mokka.mp4"
+              poster="/mokka-poster.jpg"
+              label={`Sfeerbeelden van de showroom van ${businessInfo.name} in ${city}`}
+            />
+          </div>
+
+          <div className="lg:col-span-5">
+            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-dark mb-4">
+              Showroom
+            </p>
+            <h2 id="showroom-heading" className="display-md text-ink mb-6">
+              Kom langs in onze showroom in {city}
             </h2>
             <p className="body-lg mb-8 max-w-md">
-              Ervaar onze collectie in het echt. In onze showroom vind je alle
-              stukken om te zien, voelen en uitproberen. Ons team staat klaar
-              voor persoonlijk advies.
+              Online kijken is handig, maar een bank moet je voelen. In onze
+              showroom zie je de collectie in het echt, zit je proef en krijg
+              je advies van ons team, ook over maten en stoffen.
             </p>
 
-            <div className="space-y-4 mb-10 border-t border-line pt-8">
+            <dl className="space-y-4 mb-10 border-t border-line pt-8">
               <div className="flex items-start gap-4">
-                <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Adres</span>
-                <a
-                  href={getMapsUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-ink hover:text-accent transition-colors group inline-flex items-start gap-2"
-                >
-                  <span>
-                    {businessInfo.address.street}
+                <dt className="flex items-center gap-2 text-sm text-stone w-24 shrink-0 pt-0.5">
+                  <MapPin className="w-4 h-4" strokeWidth={1.5} aria-hidden />
+                  Adres
+                </dt>
+                <dd className="text-base text-ink">
+                  <a
+                    href={getMapsUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-accent-dark transition-colors"
+                  >
+                    {street}
                     <br />
-                    {businessInfo.address.postalCode} {businessInfo.address.city}
-                  </span>
-                  <svg className="w-3.5 h-3.5 mt-1 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                  </svg>
-                </a>
+                    {postalCode} {city}
+                  </a>
+                </dd>
               </div>
               <div className="flex items-start gap-4">
-                <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Open</span>
-                <p className="text-ink">
-                  {hours.map((line, i) => (
-                    <span key={line}>
-                      {line.replace(/–/g, "—")}
-                      {i < hours.length - 1 && <br />}
+                <dt className="flex items-center gap-2 text-sm text-stone w-24 shrink-0 pt-0.5">
+                  <Clock className="w-4 h-4" strokeWidth={1.5} aria-hidden />
+                  Open
+                </dt>
+                <dd className="text-base text-ink">
+                  {hours.map((line) => (
+                    <span key={line} className="block">
+                      {line}
                     </span>
                   ))}
-                </p>
+                </dd>
               </div>
               {phoneLink && businessInfo.contact.phoneFormatted && (
                 <div className="flex items-start gap-4">
-                  <span className="text-stone text-[11px] uppercase tracking-[0.25em] w-20 flex-shrink-0 pt-1">Bel</span>
-                  <a href={phoneLink} className="text-ink hover:text-accent transition-colors">
-                    {businessInfo.contact.phoneFormatted}
-                  </a>
+                  <dt className="flex items-center gap-2 text-sm text-stone w-24 shrink-0 pt-0.5">
+                    <Phone className="w-4 h-4" strokeWidth={1.5} aria-hidden />
+                    Bel
+                  </dt>
+                  <dd className="text-base text-ink">
+                    <a href={phoneLink} className="hover:text-accent-dark transition-colors">
+                      {businessInfo.contact.phoneFormatted}
+                    </a>
+                  </dd>
                 </div>
               )}
-            </div>
+            </dl>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-8">
+              <Link href="/contact" className="btn-primary text-sm">
+                Plan een bezoek
+              </Link>
               <a
                 href={getMapsUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-link"
+                className="btn-link text-sm"
               >
                 Routebeschrijving
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                </svg>
+                <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />
               </a>
-              <Link href="/contact" className="text-[11px] uppercase tracking-[0.25em] text-stone hover:text-ink transition-colors pb-1">
-                Plan een bezoek
-              </Link>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

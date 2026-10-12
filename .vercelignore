@@ -2,6 +2,8 @@
 # Dealer-bronbestanden (zware PDF-catalogi) horen niet op de productie-CDN.
 _sources/
 public/*.pdf
+# Dealer-fotozips (~9 GB) staan in .gitignore maar lokaal wél in public/
+public/*.zip
 
 # Eenmalige scripts en lokale data-dumps (niet nodig in runtime)
 scripts/

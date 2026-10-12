@@ -1,9 +1,10 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
 // Content-Security-Policy — alleen in productie (dev/Turbopack heeft losse
-// eval/HMR-websockets nodig). 'unsafe-eval' is bewust toegestaan: three.js,
-// gsap en de Sentry-SDK gebruiken het, en dit overrult tegelijk de strengere
-// Vercel-platform-default die anders 'eval' blokkeert.
+// eval/HMR-websockets nodig). 'unsafe-eval' staat nog aan omdat dit de
+// strengere Vercel-platform-default overrult; three.js/gsap (de oorspronkelijke
+// reden) zijn verwijderd — kandidaat om te schrappen na een test met de
+// Sentry-SDK.
 // Google Ads (gtag.js, components/GoogleAdsTag.tsx): het script komt van
 // googletagmanager.com; conversie-pings gaan als image/fetch naar google.com,
 // googleadservices.com en doubleclick.net; de conversion-linker zet een
@@ -58,8 +59,10 @@ const nextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [75, 95],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920, 2400, 3200],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 768],
+    // Bewust compact: elke breedte is een extra Cloudinary-transformatie per
+    // foto. 5 + 4 maten dekken 375px-mobiel t/m 2x-retina-desktop.
+    deviceSizes: [640, 828, 1080, 1440, 1920],
+    imageSizes: [96, 128, 256, 384],
     minimumCacheTTL: 31536000,
   },
 };

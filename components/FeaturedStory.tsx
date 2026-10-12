@@ -1,12 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { firstImageUrl } from "@/lib/imageHelpers";
-import { useReveal } from "@/hooks/useReveal";
-import { useClipReveal } from "@/hooks/useClipReveal";
-import { productUrl } from "@/lib/categories";
+import { getCategory, productUrl } from "@/lib/categories";
+import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
+import { shippingInfo } from "@/lib/shipping-info";
+import { Price } from "@/components/ui/price";
 
 interface Product {
   id: string;
@@ -14,99 +13,108 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  listPrice?: number | null;
   category: string;
   images: string;
+  stock: number;
+  deliveryTime: string | null;
 }
 
-export default function FeaturedStory({ product }: { product: Product | null }) {
-  const textReveal = useReveal<HTMLDivElement>({ distance: 30 });
-  const imageReveal = useClipReveal<HTMLDivElement>({ from: "bottom", duration: 1100, delay: 120 });
+function deliveryLabel(product: Product): string {
+  if (product.deliveryTime) return product.deliveryTime;
+  return product.stock > 0
+    ? shippingInfo.deliveryTime.inStock
+    : shippingInfo.deliveryTime.backorder;
+}
 
+// Server component. Beeld via cloudinaryLoader (echte srcSet), levertijd uit
+// het product of uit lib/shipping-info — nooit hardcoded.
+export default function FeaturedStory({ product }: { product: Product | null }) {
   if (!product) return null;
 
   const mainImage = firstImageUrl(product.images);
   if (!mainImage) return null;
 
-  return (
-    <section className="py-28 lg:py-44 bg-ink text-white overflow-hidden">
-      {/* Edge-bleed grid — image flush naar right viewport edge op desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,1100px)] lg:gap-20 items-center max-w-[100vw]">
-        {/* LINKS — Tekst/verhaal, contained binnen 1600px max */}
-        <div className="px-6 sm:px-10 lg:pl-[max(56px,calc((100vw-1600px)/2+56px))] lg:pr-0 order-2 lg:order-1">
-          <div
-            ref={textReveal.ref}
-            style={textReveal.style}
-            className="max-w-[560px]"
-          >
-            <p className="text-[10px] uppercase tracking-[0.14em] font-medium text-accent-light mb-6">
-              — In de spotlight
-            </p>
+  // 4:3 met c_pad/b_auto: de bank blijft volledig in beeld (geen portrait-crop
+  // van een liggende bronfoto).
+  const src = cldOptimize(mainImage, { ar: "4:3", w: 1400, mode: "contain" });
+  const href = productUrl(product);
+  const categoryLabel = getCategory(product.category)?.label ?? product.category;
+  const inStock = product.stock > 0;
 
-            <p className="text-white/50 text-[10px] uppercase tracking-[0.14em] font-medium mb-4 capitalize">
-              {product.category}
+  return (
+    <section className="py-20 lg:py-32 bg-ink text-white overflow-hidden" aria-labelledby="spotlight-heading">
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+          {/* Beeld */}
+          <div className="lg:col-span-7 lg:order-2">
+            <Link
+              href={href}
+              className="group block relative rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            >
+              <div className="relative aspect-[4/3] overflow-hidden bg-bone rounded-[10px]">
+                <Image
+                  src={src}
+                  loader={cloudinaryLoader}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                  className="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"
+                />
+              </div>
+            </Link>
+          </div>
+
+          {/* Tekst */}
+          <div className="lg:col-span-5 lg:order-1">
+            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-light mb-5">
+              In de spotlight
             </p>
+            <p className="text-sm text-white/70 mb-3">{categoryLabel}</p>
             <h2
-              className="font-serif text-white text-[clamp(2.5rem,5.5vw,5rem)] leading-[0.98] tracking-[-0.035em] mb-8"
-              style={{ fontVariationSettings: '"opsz" 144' }}
+              id="spotlight-heading"
+              className="font-serif text-white text-[clamp(2.25rem,4.5vw,4rem)] leading-[1.02] tracking-[-0.03em] mb-6"
             >
               {product.name}
             </h2>
 
-            <div className="w-12 h-[1px] bg-accent mb-8" />
-
-            <p className="text-white/70 text-base lg:text-lg leading-[1.6] mb-10 max-w-[55ch]">
+            <p className="text-white/80 text-base lg:text-lg leading-[1.7] mb-8 max-w-[55ch] line-clamp-5">
               {product.description}
             </p>
 
-            {/* Meta + CTA */}
-            <div className="flex items-center gap-8 mb-12">
+            <dl className="flex flex-wrap gap-x-10 gap-y-5 mb-10">
               <div>
-                <p className="text-white/40 text-[10px] uppercase tracking-[0.3em] mb-1.5">Vanaf</p>
-                <p className="font-serif text-3xl text-white tabular-nums">
-                  &euro;{product.price.toFixed(0)},-
-                </p>
+                <dt className="text-sm text-white/70 mb-1">Prijs</dt>
+                <dd>
+                  <Price
+                    value={product.price}
+                    listPrice={product.listPrice ?? null}
+                    vat
+                    className="font-serif text-3xl text-white tabular-nums"
+                    vatClassName="text-sm text-white/70 mt-1"
+                  />
+                </dd>
               </div>
-              <div className="w-[1px] h-12 bg-white/15" />
               <div>
-                <p className="text-white/40 text-[10px] uppercase tracking-[0.3em] mb-1.5">Levertijd</p>
-                <p className="font-serif text-lg text-white">2–4 weken</p>
+                <dt className="text-sm text-white/70 mb-1">Levertijd</dt>
+                <dd className="font-serif text-xl text-white">{deliveryLabel(product)}</dd>
               </div>
-            </div>
+              <div>
+                <dt className="text-sm text-white/70 mb-1">Voorraad</dt>
+                <dd className="font-serif text-xl text-white">
+                  {inStock ? "Op voorraad" : "Op bestelling"}
+                </dd>
+              </div>
+            </dl>
 
             <Link
-              href={productUrl(product)}
-              className="group inline-flex items-center gap-3 bg-white text-ink px-8 py-4 rounded-[10px] text-[11px] uppercase tracking-[0.25em] font-medium hover:bg-accent hover:text-white transition-all duration-400"
+              href={href}
+              className="group inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium uppercase tracking-[0.08em] hover:bg-accent hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
             >
-              Bekijk dit stuk
-              <ArrowUpRight className="w-4 h-4 group-hover:rotate-12 transition-transform" strokeWidth={1.5} />
+              Bekijk dit product
+              <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />
             </Link>
           </div>
-        </div>
-
-        {/* RECHTS — Groot beeld bleed naar right viewport edge, clip-reveal van onder */}
-        <div
-          ref={imageReveal.ref}
-          style={imageReveal.style}
-          className="order-1 lg:order-2 px-6 sm:px-10 lg:px-0"
-        >
-          <Link href={productUrl(product)} className="group block relative">
-            <div className="relative aspect-[4/5] lg:aspect-[5/6] overflow-hidden bg-bone rounded-[10px] transition-all duration-500 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
-              <Image
-                src={mainImage}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
-                sizes="(max-width: 1024px) 100vw, 65vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent opacity-60" />
-            </div>
-
-            {/* Floating label — square, niet rounded */}
-            <div className="absolute top-6 right-6 lg:right-[max(56px,calc((100vw-1600px)/2+56px))] flex items-center gap-2 bg-paper/95 backdrop-blur-sm px-3.5 py-1.5">
-              <span className="w-1.5 h-1.5 bg-accent" />
-              <span className="eyebrow text-ink">Editie 01</span>
-            </div>
-          </Link>
         </div>
       </div>
     </section>

@@ -104,7 +104,7 @@ export const shippingInfo = {
     "Gratis verzending vanaf €100",
     "14 dagen wettelijke bedenktijd",
     "Persoonlijk advies in onze showroom",
-    "Nieuwe voorjaarscollectie — nu online",
+    "Kom proefzitten in onze showroom",
   ] as ReadonlyArray<string>,
 
   // Footer USP-balk (4 items, korte sub-tekst)

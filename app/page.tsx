@@ -1,139 +1,183 @@
 import type { Metadata } from "next";
-import { preload } from "react-dom";
-import CinematicHero from "@/components/CinematicHeroLazy";
-import { HERO_IMAGE } from "@/lib/hero-image";
-import PromoBanners from "@/components/PromoBanners";
-import CollectionPreview from "@/components/CollectionPreview";
+import { unstable_cache } from "next/cache";
+import Hero from "@/components/Hero";
+import TrustBar from "@/components/TrustBar";
 import CategoriesGrid from "@/components/CategoriesGrid";
+import CollectionPreview from "@/components/CollectionPreview";
 import FeaturedStory from "@/components/FeaturedStory";
 import ShowroomSection from "@/components/ShowroomSection";
-import TrustBar from "@/components/TrustBar";
 import DarkNewsletterForm from "@/components/DarkNewsletterForm";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
+import { shippingInfo } from "@/lib/shipping-info";
+import { getCategory } from "@/lib/categories";
+import { PRODUCTS_TAG } from "@/lib/revalidate";
 
-// ISR: featured + spotlight veranderen alleen bij admin-mutaties.
-// 1h revalidate balanceert verse content tegen CDN-cache hits.
+// ISR: alle homepage-data zit in unstable_cache op PRODUCTS_TAG, dus een
+// productmutatie in de admin ververst de pagina direct; anders max. 1 uur oud.
 export const revalidate = 3600;
 
+const city = businessInfo.address.city;
+const title = `${businessInfo.name} — Banken, eettafels & bedden, showroom ${city}`;
+const description = `Banken, eettafels en bedden. Kom proefzitten in onze showroom in ${city} of bestel online: ${shippingInfo.freeShippingCopyShort.toLowerCase()} en ${shippingInfo.returnWindowDays} dagen bedenktijd.`;
+
 export const metadata: Metadata = {
-  title: `${businessInfo.name} — Meubels & interieur voor modern wonen`,
-  description: `${businessInfo.tagline} Ontdek banken, eettafels, verlichting en meer in onze showroom in ${businessInfo.address.city} of online.`,
+  title,
+  description,
   alternates: { canonical: "/" },
   openGraph: {
-    title: `${businessInfo.name} — Meubels & interieur voor modern wonen`,
-    description: businessInfo.tagline,
+    title,
+    description,
     type: "website",
     url: "/",
     locale: "nl_NL",
   },
 };
 
-// select-clauses houden response klein: alleen wat CollectionPreview +
-// FeaturedStory daadwerkelijk tonen. Slug/description meegegeven want
-// FeaturedStory linkt + toont productbeschrijving.
+// Alleen de velden die ProductCard toont; slug/description voor FeaturedStory.
+const cardSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  price: true,
+  listPrice: true,
+  category: true,
+  images: true,
+  featured: true,
+  stock: true,
+  createdAt: true,
+  colorGroup: true,
+  colorName: true,
+  colorHex: true,
+  specs: true,
+} as const;
 
-async function getFeaturedProducts() {
-  try {
-    return await prisma.product.findMany({
-      where: { featured: true, hidden: false, deletedAt: null },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        price: true,
-        category: true,
-        images: true,
-        featured: true,
-        stock: true,
-        createdAt: true,
-        colorGroup: true,
-        colorName: true,
-        colorHex: true,
-        specs: true,
-      },
+const visibleWhere = { hidden: false, deletedAt: null } as const;
+const MIN_FEATURED = 4;
+
+type Collection = {
+  kind: "featured" | "new";
+  products: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    price: number;
+    listPrice: number | null;
+    category: string;
+    images: string;
+    featured: boolean;
+    stock: number;
+    createdAt: Date | string;
+    colorGroup: string | null;
+    colorName: string | null;
+    colorHex: string | null;
+    specs: string | null;
+  }>;
+};
+
+// Uitgelichte producten; zijn dat er te weinig voor een volle rij, dan de
+// nieuwste zichtbare producten ("Nieuw binnen").
+const getCollection = unstable_cache(
+  async (): Promise<Collection> => {
+    const featured = await prisma.product.findMany({
+      where: { ...visibleWhere, featured: true },
+      select: cardSelect,
+      orderBy: { createdAt: "desc" },
       take: 8,
     });
-  } catch {
-    return [];
-  }
-}
+    if (featured.length >= MIN_FEATURED) return { kind: "featured", products: featured };
 
-async function getSpotlightProduct() {
-  try {
-    return await prisma.product.findFirst({
-      where: { featured: true, category: "banken", hidden: false, deletedAt: null },
+    const newest = await prisma.product.findMany({
+      where: visibleWhere,
+      select: cardSelect,
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    });
+    return { kind: "new", products: newest };
+  },
+  ["home-collection"],
+  { tags: [PRODUCTS_TAG], revalidate: 3600 },
+);
+
+// Spotlight: nieuwste uitgelichte bank uit álle bank-DB-categorieën
+// (banken, hoekbanken, bankstellen — zie lib/categories "banken").
+const BANK_DB_CATEGORIES = [...(getCategory("banken")?.dbCategories ?? ["banken"])];
+
+const getSpotlightProduct = unstable_cache(
+  async () =>
+    prisma.product.findFirst({
+      where: { ...visibleWhere, featured: true, category: { in: BANK_DB_CATEGORIES } },
       select: {
         id: true,
         slug: true,
         name: true,
         description: true,
         price: true,
+        listPrice: true,
         category: true,
         images: true,
+        stock: true,
+        deliveryTime: true,
       },
       orderBy: { createdAt: "desc" },
-    });
+    }),
+  ["home-spotlight"],
+  { tags: [PRODUCTS_TAG], revalidate: 3600 },
+);
+
+async function loadHomepageData() {
+  try {
+    return await Promise.all([getCollection(), getSpotlightProduct()]);
   } catch {
-    return null;
+    // DB tijdelijk onbereikbaar: toon de statische secties, geen 500.
+    return [{ kind: "featured", products: [] } satisfies Collection, null] as const;
   }
 }
 
 export default async function HomePage() {
-  // LCP: de hero-foto vroeg laten ophalen — alléén op de homepage (voorheen
-  // preloadde de root layout dit op elke route).
-  preload(HERO_IMAGE, { as: "image", fetchPriority: "high" });
-
-  const [featuredProducts, spotlightProduct] = await Promise.all([
-    getFeaturedProducts(),
-    getSpotlightProduct(),
-  ]);
+  const [collection, spotlightProduct] = await loadHomepageData();
 
   return (
     <>
-      {/* Server-gerenderde H1 — altijd in de HTML voor SEO/screenreaders.
-          De cinematic hero is ssr:false en toont de kop visueel; deze H1
-          draagt de semantiek (de zichtbare hero-koppen zijn non-heading). */}
-      <h1 className="sr-only">
-        Mokka Home — meubels met stille kracht en eerlijke materialen
-      </h1>
+      {/* 01 — HERO: zichtbare H1, next/image priority (LCP) */}
+      <Hero />
 
-      {/* 01 — CINEMATIC HERO    Three.js + GSAP scroll-driven */}
-      <CinematicHero />
-
-      {/* 02 — PROMO BANNERS     bg-paper (3 stacked promo cards) */}
-      <PromoBanners />
-
-      {/* 03 — CATEGORIEËN       bg-white (ritme breuk) */}
-      <CategoriesGrid />
-
-      {/* 04 — FEATURED STORY    bg-ink (donker, drama) */}
-      <FeaturedStory product={spotlightProduct} />
-
-      {/* 05 — NIEUWE COLLECTIE  bg-paper */}
-      <CollectionPreview products={featuredProducts} />
-
-      {/* 07 — ATELIER           bg-paper */}
-      <ShowroomSection />
-
-      {/* 08 — TRUST BAR         bg-bone (USPs voor newsletter) */}
+      {/* 02 — TRUST BAR: USP's uit lib/shipping-info, direct onder de fold */}
       <TrustBar />
 
-      {/* 07 — NIEUWSBRIEF       bg-ink (afsluiting, drama) */}
-      <section className="py-24 lg:py-32 bg-ink text-white">
+      {/* 03 — CATEGORIEËN: server-side tellingen + productfoto's */}
+      <CategoriesGrid />
+
+      {/* 04 — UITGELICHT / NIEUW BINNEN */}
+      <CollectionPreview
+        products={collection.products}
+        title={collection.kind === "featured" ? "Uitgelicht" : "Nieuw binnen"}
+        eyebrow={collection.kind === "featured" ? "Onze selectie" : "Net binnengekomen"}
+      />
+
+      {/* 05 — SPOTLIGHT (bank) */}
+      <FeaturedStory product={spotlightProduct} />
+
+      {/* 06 — SHOWROOM */}
+      <ShowroomSection />
+
+      {/* 07 — NIEUWSBRIEF */}
+      <section className="py-20 lg:py-32 bg-ink text-white" aria-labelledby="newsletter-heading">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
           <div className="max-w-xl mx-auto text-center">
-            <p className="text-white/50 text-[11px] uppercase tracking-[0.3em] mb-5">Nieuwsbrief</p>
-            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white mb-5 leading-[1.05]">
-              Nieuwe collecties, <span className="italic text-accent">als eerste</span>.
+            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-light mb-4">
+              Nieuwsbrief
+            </p>
+            <h2
+              id="newsletter-heading"
+              className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white mb-5 leading-[1.05]"
+            >
+              Nieuwe collecties, <span className="italic text-accent-light">als eerste</span>.
             </h2>
-            <p className="text-white/60 text-base mb-10 max-w-md mx-auto">
-              Twee keer per maand — nieuwe stukken, stijladvies en exclusieve aanbiedingen.
+            <p className="text-white/80 text-base lg:text-lg leading-[1.6] mb-10 max-w-md mx-auto">
+              Nieuwe stukken, stijladvies en aanbiedingen uit de showroom.
             </p>
             <DarkNewsletterForm />
-            <p className="text-xs text-white/40 mt-6">
-              Geen spam. Uitschrijven kan altijd.
-            </p>
           </div>
         </div>
       </section>

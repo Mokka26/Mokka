@@ -1,6 +1,8 @@
-// Eén bron voor de homepage-hero-foto. Gedeeld door: de Three.js-hero
-// (texture), de laad-fallback én de preload op de homepage — identieke URL
-// zodat de browser 'm exact één keer downloadt (geen dubbele download of
-// zichtbare beeldwissel tussen fallback en 3D-scene).
-export const HERO_IMAGE =
-  "https://res.cloudinary.com/diaksxzey/image/upload/c_fill,g_center,ar_16:9,w_2400,f_auto,q_auto:good/mokka/bedden/vanilla-loop/03_sq.jpg";
+// Bron-URL van de homepage-hero-foto (Vanilla Loop boxspring, kamer-shot).
+// Zonder transformaties: components/Hero.tsx bouwt via cldOptimize +
+// cloudinaryLoader een responsive srcSet (640–1920px, f_auto, q_auto:good).
+export const HERO_IMAGE_SOURCE =
+  "https://res.cloudinary.com/diaksxzey/image/upload/mokka/bedden/vanilla-loop/03_sq.jpg";
+
+export const HERO_IMAGE_ALT =
+  "Vanilla Loop boxspring in een lichte slaapkamer, gefotografeerd in de showroom van Mokka Home";
