@@ -1,49 +1,85 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { useCart, CartItemType } from "@/context/CartContext";
+import Link from "next/link";
+import { useCart, type CartItemType } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
+import { productUrl } from "@/lib/categories";
+import { shippingInfo } from "@/lib/shipping-info";
+import { Price, formatPrice } from "@/components/ui/price";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
 
 interface Props {
   item: CartItemType;
 }
 
+/** Korte opties-regel: maat · nachtkasten · voetbank. */
+export function cartLineOptions(item: CartItemType): string[] {
+  const parts: string[] = [];
+  if (item.variantLabel) parts.push(`Maat ${item.variantLabel}`);
+  if (item.nachtkast > 0) parts.push(`${item.nachtkast} nachtkast${item.nachtkast > 1 ? "en" : ""}`);
+  if (item.voetbank > 0) parts.push("Voetbank");
+  return parts;
+}
+
+export function cartLineDelivery(item: CartItemType): string {
+  return `Levertijd ${item.product.deliveryTime?.trim() || shippingInfo.deliveryTime.inStock}`;
+}
+
 export default function CartItem({ item }: Props) {
-  const { removeFromCart, updateQuantity } = useCart();
+  const { removeWithUndo, updateQuantity } = useCart();
   const thumb = firstImageUrl(item.product.images);
   const itemTotal = item.product.price * item.quantity;
+  const options = cartLineOptions(item);
+  const maxQty = item.product.stock != null && item.product.stock > 0 ? Math.min(99, item.product.stock) : 99;
 
   return (
-    <motion.div layout className="grid grid-cols-12 gap-4 items-center py-6 border-b border-line">
+    <div className="grid grid-cols-12 gap-x-4 gap-y-4 items-center py-6 border-b border-line">
       <div className="col-span-12 md:col-span-6 flex gap-5">
-        <div className="relative w-20 h-20 bg-white flex-shrink-0 overflow-hidden">
-          {thumb && <Image src={thumb} alt={item.product.name} fill className="object-cover" sizes="80px" />}
-        </div>
-        <div>
-          <h4 className="text-ink text-sm font-medium">{item.product.name}</h4>
-          <p className="text-stone text-xs capitalize mt-1">
-            {item.product.category}
-            {item.variantLabel && <span className="text-ink"> · Maat {item.variantLabel}</span>}
-            {item.nachtkast > 0 && (
-              <span className="text-ink"> · {item.nachtkast} nachtkast{item.nachtkast > 1 ? "en" : ""}</span>
-            )}
-            {item.voetbank > 0 && <span className="text-ink"> · voetbank</span>}
-          </p>
-          <button onClick={() => removeFromCart(item.lineKey)} className="text-[10px] text-stone hover:text-error transition-colors mt-2 uppercase tracking-wider">
-            Verwijderen
+        <Link
+          href={productUrl(item.product)}
+          className="relative w-24 h-24 bg-bone rounded-[8px] shrink-0 overflow-hidden"
+          aria-label={`Bekijk ${item.product.name}`}
+        >
+          {thumb && (
+            <Image src={thumb} alt="" fill className="object-contain" sizes="96px" />
+          )}
+        </Link>
+        <div className="min-w-0">
+          <h3 className="text-ink text-base font-medium leading-snug">
+            <Link href={productUrl(item.product)} className="hover:text-accent transition-colors">
+              {item.product.name}
+            </Link>
+          </h3>
+          {options.length > 0 && (
+            <p className="text-stone text-[14px] mt-1">{options.join(" · ")}</p>
+          )}
+          <p className="text-stone text-[14px] mt-1">{cartLineDelivery(item)}</p>
+          <button
+            type="button"
+            onClick={() => removeWithUndo(item.lineKey)}
+            className="inline-flex items-center min-h-11 text-[14px] text-stone underline underline-offset-4 hover:text-error transition-colors"
+          >
+            Verwijderen<span className="sr-only">: {item.product.name}</span>
           </button>
         </div>
       </div>
-      <div className="col-span-4 md:col-span-2 flex items-center justify-center">
-        <div className="flex items-center border border-line">
-          <button onClick={() => updateQuantity(item.lineKey, item.quantity - 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">-</button>
-          <span className="px-3 py-2 text-xs text-ink min-w-[2rem] text-center">{item.quantity}</span>
-          <button onClick={() => updateQuantity(item.lineKey, item.quantity + 1)} className="px-3 py-2 text-stone hover:text-accent transition-colors text-sm">+</button>
-        </div>
+      <div className="col-span-5 md:col-span-2 flex items-center md:justify-center">
+        <QuantityStepper
+          value={item.quantity}
+          onChange={(q) => updateQuantity(item.lineKey, q)}
+          name={item.product.name}
+          max={maxQty}
+        />
       </div>
-      <div className="col-span-4 md:col-span-2 text-right text-stone text-sm font-light">&euro;{item.product.price.toFixed(2)}</div>
-      <div className="col-span-4 md:col-span-2 text-right text-ink text-sm font-medium">&euro;{itemTotal.toFixed(2)}</div>
-    </motion.div>
+      <div className="col-span-3 md:col-span-2 text-right">
+        <span className="md:hidden sr-only">Stukprijs: </span>
+        <Price price={item.product.price} size="sm" className="!text-base text-stone font-sans" />
+      </div>
+      <div className="col-span-4 md:col-span-2 text-right text-ink text-base font-medium tabular-nums">
+        <span className="sr-only">Regeltotaal: </span>
+        {formatPrice(itemTotal)}
+      </div>
+    </div>
   );
 }

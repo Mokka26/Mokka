@@ -1,20 +1,44 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { Toaster } from "sonner";
 
+const MOBILE_QUERY = "(max-width: 1023px)";
+
+function subscribe(onChange: () => void) {
+  const mql = window.matchMedia(MOBILE_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+}
+const getIsMobile = () => window.matchMedia(MOBILE_QUERY).matches;
+const getServerIsMobile = () => false;
+
+/**
+ * Toasts (sonner) in merkstijl via tokens — geen losse hex.
+ * - Mobiel: top-center, boven de sticky koop-/afrekenbalk uit.
+ * - Desktop: rechtsonder.
+ * - Sluitknop, 5 s zichtbaar, tekst ≥15px; reduced-motion volgt globals.css.
+ */
 export default function ToastProvider() {
+  const isMobile = useSyncExternalStore(subscribe, getIsMobile, getServerIsMobile);
   return (
     <Toaster
-      position="bottom-right"
+      position={isMobile ? "top-center" : "bottom-right"}
+      closeButton
+      duration={5000}
+      offset={24}
+      mobileOffset={{ top: 88, left: 16, right: 16 }}
+      gap={10}
       toastOptions={{
-        style: {
-          background: "#1A1A1A",
-          color: "white",
-          border: "none",
-          borderRadius: "0",
-          fontFamily: "var(--font-sans)",
-          fontSize: "13px",
-          padding: "16px 20px",
+        classNames: {
+          toast:
+            "!bg-ink !text-paper !border !border-graphite !rounded-[10px] !shadow-lg !px-5 !py-4 !gap-3 font-sans",
+          title: "!text-[15px] !leading-snug !font-medium",
+          description: "!text-[14px] !leading-snug !text-paper/80",
+          actionButton: "!bg-paper !text-ink !text-[14px] !font-medium !rounded-[8px] !h-9 !px-3",
+          cancelButton: "!bg-transparent !text-paper/80 !text-[14px] !h-9 !px-3",
+          closeButton: "!bg-ink !text-paper !border-graphite hover:!bg-graphite !w-7 !h-7",
+          icon: "!text-accent-light",
         },
       }}
     />

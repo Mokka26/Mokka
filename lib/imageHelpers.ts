@@ -13,25 +13,39 @@ export type ProductImage = {
   url: string;
   w?: number;
   h?: number;
+  /** Optionele alt-tekst per foto (bv. "zijaanzicht"); leeg → productnaam. */
+  alt?: string;
 };
+
+function toPositiveNumber(value: unknown): number | undefined {
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }
+  return undefined;
+}
 
 export function parseImages(raw: string | null | undefined): ProductImage[] {
   if (!raw) return [];
   try {
-    const arr = JSON.parse(raw);
+    const arr: unknown = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    return arr.flatMap((item): ProductImage[] => {
-      if (typeof item === "string" && item.length > 0) return [{ url: item }];
-      if (item && typeof item === "object" && typeof item.url === "string") {
-        return [
-          {
-            url: item.url,
-            w: typeof item.w === "number" && item.w > 0 ? item.w : undefined,
-            h: typeof item.h === "number" && item.h > 0 ? item.h : undefined,
-          },
-        ];
+    return arr.flatMap((item: unknown): ProductImage[] => {
+      if (typeof item === "string") {
+        const url = item.trim();
+        return url.length > 0 ? [{ url }] : [];
       }
-      return [];
+      if (!item || typeof item !== "object") return [];
+      const rec = item as Record<string, unknown>;
+      // Tolerant: `url` of `src`, dimensies als number óf numerieke string.
+      const urlRaw = typeof rec.url === "string" ? rec.url : typeof rec.src === "string" ? rec.src : "";
+      const url = urlRaw.trim();
+      if (!url) return [];
+      const w = toPositiveNumber(rec.w ?? rec.width);
+      const h = toPositiveNumber(rec.h ?? rec.height);
+      const alt = typeof rec.alt === "string" && rec.alt.trim() ? rec.alt.trim() : undefined;
+      return [{ url, ...(w ? { w } : {}), ...(h ? { h } : {}), ...(alt ? { alt } : {}) }];
     });
   } catch {
     return [];

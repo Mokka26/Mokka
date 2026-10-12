@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import CartItem from "@/components/CartItem";
 import AnimatedSection from "@/components/AnimatedSection";
-import { useCart } from "@/context/CartContext";
+import { useCart, useCartSync } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
+import { PaymentIconRow } from "@/components/PaymentIcons";
 
 export default function CartPage() {
   const { items, totalPrice, totalItems } = useCart();
-  const shipping = isEligibleForFreeShipping(totalPrice) ? 0 : shippingInfo.rates.standard;
+  // Prijzen/voorraad verversen tegen de server (meldingen via toasts).
+  useCartSync();
+
+  const freeShipping = isEligibleForFreeShipping(totalPrice);
+  const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
+  const remaining = Math.max(0, shippingInfo.freeShippingThreshold - totalPrice);
+  const phoneLink = getPhoneLink();
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
@@ -21,16 +28,14 @@ export default function CartPage() {
           <div className="lg:col-span-8">
             <div className="flex items-center gap-4 mb-6">
               <span className="font-serif italic text-stone text-sm">— 01</span>
-              <span className="eyebrow">Jouw Selectie</span>
+              <span className="eyebrow">Jouw selectie</span>
             </div>
-            <h1 className="display-lg text-ink">
-              Winkelwagen
-            </h1>
+            <h1 className="display-lg text-ink">Winkelwagen</h1>
           </div>
           {items.length > 0 && (
             <div className="lg:col-span-4">
               <p className="body-lg text-slate max-w-md">
-                {totalItems} {totalItems === 1 ? "artikel" : "artikelen"} in je selectie, klaar om af te ronden.
+                {totalItems} {totalItems === 1 ? "artikel" : "artikelen"} in je winkelwagen.
               </p>
             </div>
           )}
@@ -39,58 +44,75 @@ export default function CartPage() {
 
       {items.length === 0 ? (
         <AnimatedSection className="text-center py-32 lg:py-40">
-          <p className="eyebrow mb-8">Leeg</p>
           <h2 className="display-md text-ink mb-6">Je winkelwagen is leeg</h2>
           <p className="body-lg text-slate max-w-md mx-auto mb-12">
-            Ontdek onze collectie en voeg je favorieten toe.
+            Bekijk de collectie en voeg toe wat je mooi vindt.
           </p>
           <Link href="/products" className="btn-primary">
-            Bekijk Collectie
+            Bekijk collectie
           </Link>
         </AnimatedSection>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <AnimatedSection direction="left" className="lg:col-span-8">
-            <div className="border-b border-line pb-5 mb-6 hidden md:grid grid-cols-12 gap-4">
-              <div className="col-span-6 eyebrow">Product</div>
-              <div className="col-span-2 eyebrow text-center">Aantal</div>
-              <div className="col-span-2 eyebrow text-right">Prijs</div>
-              <div className="col-span-2 eyebrow text-right">Totaal</div>
+            <div className="border-b border-line pb-5 mb-2 hidden md:grid grid-cols-12 gap-4 text-[13px] uppercase tracking-[0.12em] text-stone">
+              <div className="col-span-6">Product</div>
+              <div className="col-span-2 text-center">Aantal</div>
+              <div className="col-span-2 text-right">Prijs</div>
+              <div className="col-span-2 text-right">Totaal</div>
             </div>
-            {items.map((item, i) => (
-              <motion.div key={item.lineKey} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <CartItem item={item} />
-              </motion.div>
+            {items.map((item) => (
+              <CartItem key={item.lineKey} item={item} />
             ))}
           </AnimatedSection>
 
           <AnimatedSection direction="right" className="lg:col-span-4">
-            <div className="bg-white border border-line p-8 lg:p-10 sticky top-32">
-              <span className="eyebrow">Overzicht</span>
-              <h3 className="font-serif text-2xl text-ink mt-3 mb-8">Jouw bestelling</h3>
-              <div className="space-y-5 text-sm">
+            <div className="bg-white border border-line rounded-[10px] p-8 lg:p-10 sticky top-32">
+              <h2 className="font-serif text-2xl text-ink mb-8">Overzicht</h2>
+              <div className="space-y-4 text-base">
                 <div className="flex justify-between">
                   <span className="text-slate">Artikelen ({totalItems})</span>
-                  <span className="text-ink">{formatPrice(totalPrice)}</span>
+                  <span className="text-ink tabular-nums">{formatPrice(totalPrice)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate">Verzending</span>
-                  <span className="text-ink">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
+                  <span className="text-ink tabular-nums">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
                 </div>
-                {shipping > 0 && (
-                  <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.freeShippingCopyShort}</p>
+                {!freeShipping && (
+                  <p className="text-[14px] text-ink">
+                    Nog <span className="font-medium tabular-nums">{formatPrice(remaining)}</span> tot gratis verzending
+                    (vanaf {formatPrice(shippingInfo.freeShippingThreshold)}).
+                  </p>
                 )}
                 <div className="border-t border-line pt-5 flex justify-between items-baseline">
-                  <span className="eyebrow">Totaal</span>
-                  <span className="font-serif text-2xl text-ink">{formatPrice(total)}</span>
+                  <span className="text-ink">Totaal</span>
+                  <span className="font-serif text-2xl text-ink tabular-nums">{formatPrice(total)}</span>
                 </div>
-                <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.vatLabelLong}</p>
+                <p className="text-[14px] text-stone">{shippingInfo.vatLabelLong}</p>
               </div>
               <Link href="/checkout" className="btn-primary w-full text-center block mt-8">
                 Afrekenen
               </Link>
-              <Link href="/products" className="block text-center mt-6">
-                <span className="eyebrow hover:text-accent transition-colors">Verder Winkelen</span>
+              <ul className="mt-6 space-y-1.5 text-[14px] text-slate">
+                <li>Levertijd {shippingInfo.deliveryTime.inStock}</li>
+                <li>
+                  {shippingInfo.returnWindowDays} dagen bedenktijd —{" "}
+                  <Link href={businessInfo.legal.returnPolicyUrl} className="underline underline-offset-4 hover:text-accent">
+                    zo werkt retourneren
+                  </Link>
+                </li>
+                {phoneLink && businessInfo.contact.phoneFormatted && (
+                  <li>
+                    Vragen? Bel{" "}
+                    <a href={phoneLink} className="underline underline-offset-4 hover:text-accent whitespace-nowrap">
+                      {businessInfo.contact.phoneFormatted}
+                    </a>
+                  </li>
+                )}
+              </ul>
+              <PaymentIconRow className="mt-6" />
+              <Link href="/products" className="block text-center mt-6 min-h-11 leading-[44px] text-[14px] text-ink underline underline-offset-4 hover:text-accent transition-colors">
+                Verder winkelen
               </Link>
             </div>
           </AnimatedSection>

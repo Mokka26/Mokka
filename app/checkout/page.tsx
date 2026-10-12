@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import AnimatedSection from "@/components/AnimatedSection";
-import { useCart } from "@/context/CartContext";
+import { useCart, useCartSync, syncCart, announceCartChanges } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
-import { formatPrice } from "@/components/ui/price";
+import { businessInfo, getPhoneLink } from "@/lib/business-info";
+import { Price, formatPrice } from "@/components/ui/price";
+import { PaymentIconRow } from "@/components/PaymentIcons";
+import { cartLineOptions } from "@/components/CartItem";
 import { createCheckout, getPaymentMethods } from "./actions";
 import type { CheckoutMethod } from "@/lib/mollie";
+
+type Country = "NL" | "BE";
 
 type FormFields = {
   firstName: string;
@@ -20,51 +25,95 @@ type FormFields = {
   phone: string;
   address: string;
   houseNumber: string;
-  city: string;
   zipCode: string;
+  city: string;
+  country: Country;
 };
 type FieldName = keyof FormFields;
 
+const FIELD_ORDER: FieldName[] = ["firstName", "lastName", "email", "phone", "address", "houseNumber", "zipCode", "city", "country"];
+
+const FIELD_LABEL: Record<FieldName, string> = {
+  firstName: "Voornaam",
+  lastName: "Achternaam",
+  email: "E-mailadres",
+  phone: "Telefoonnummer",
+  address: "Straatnaam",
+  houseNumber: "Huisnummer",
+  zipCode: "Postcode",
+  city: "Plaats",
+  country: "Land",
+};
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const POSTCODE_RE = /^\d{4}\s?[A-Za-z]{2}$/;
+const POSTCODE_RE: Record<Country, RegExp> = {
+  NL: /^\d{4}\s?[A-Za-z]{2}$/,
+  BE: /^\d{4}$/,
+};
+const POSTCODE_HINT: Record<Country, string> = { NL: "Bijvoorbeeld 1234 AB", BE: "Bijvoorbeeld 1000" };
 const PHONE_RE = /^[+\d\s()-]{7,20}$/;
 
-function validateField(name: FieldName, value: string): string | undefined {
+function validateField(name: FieldName, value: string, country: Country): string | undefined {
   const v = value.trim();
-  if (name === "phone") {
-    // Server eist telefoon (min. 6) — voor bezorging van grote meubels; client
-    // dus ook verplicht, anders faalt de checkout pas op de laatste stap.
-    if (!v) return "Vereist";
-    if (!PHONE_RE.test(v)) return "Ongeldig telefoonnummer";
-    return undefined;
-  }
-  if (!v) return "Vereist";
-  if (name === "email" && !EMAIL_RE.test(v)) return "Ongeldig e-mailadres";
-  if (name === "zipCode" && !POSTCODE_RE.test(v)) return "Bijv. 1234 AB";
-  if (name === "firstName" && v.length < 2) return "Minstens 2 tekens";
-  if (name === "lastName" && v.length < 2) return "Minstens 2 tekens";
+  if (name === "country") return v === "NL" || v === "BE" ? undefined : "Kies Nederland of België";
+  if (!v) return `Vul je ${FIELD_LABEL[name].toLowerCase()} in`;
+  if (name === "email" && !EMAIL_RE.test(v)) return "Dit lijkt geen geldig e-mailadres";
+  if (name === "phone" && !PHONE_RE.test(v)) return "Dit lijkt geen geldig telefoonnummer";
+  if (name === "zipCode" && !POSTCODE_RE[country].test(v)) return `Ongeldige postcode. ${POSTCODE_HINT[country]}`;
+  if ((name === "firstName" || name === "lastName") && v.length < 2) return "Minstens 2 tekens";
   return undefined;
 }
 
 function validateAll(form: FormFields): Partial<Record<FieldName, string>> {
   const errors: Partial<Record<FieldName, string>> = {};
-  (Object.keys(form) as FieldName[]).forEach((name) => {
-    const e = validateField(name, form[name]);
+  for (const name of FIELD_ORDER) {
+    const e = validateField(name, form[name], form.country);
     if (e) errors[name] = e;
-  });
+  }
   return errors;
+}
+
+/** gclid uit de URL (?gclid=) of de Google Ads-cookie `_gcl_aw` (GCL.<ts>.<id>). */
+function readGclid(): string | null {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("gclid");
+    if (fromUrl) return fromUrl.slice(0, 200);
+    const cookie = document.cookie.split("; ").find((c) => c.startsWith("_gcl_aw="));
+    if (!cookie) return null;
+    const parts = decodeURIComponent(cookie.slice("_gcl_aw=".length)).split(".");
+    return parts.length >= 3 ? parts.slice(2).join(".").slice(0, 200) : null;
+  } catch {
+    return null;
+  }
 }
 
 export default function CheckoutPage() {
   const { items, totalPrice } = useCart();
+  // Prijzen/voorraad verversen tegen de server vóór het afrekenen.
+  useCartSync();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState<FormFields>({ firstName: "", lastName: "", email: "", phone: "", address: "", houseNumber: "", city: "", zipCode: "" });
+  const [form, setForm] = useState<FormFields>({
+    firstName: "", lastName: "", email: "", phone: "", address: "", houseNumber: "", zipCode: "", city: "", country: "NL",
+  });
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
+  const [showSummary, setShowSummary] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
 
-  const shipping = isEligibleForFreeShipping(totalPrice) ? 0 : shippingInfo.rates.standard;
+  // Anti-spam: honeypot (`website` blijft leeg) + timestamp bij mount (`ts`).
+  const [website, setWebsite] = useState("");
+  const tsRef = useRef<number>(0);
+  const gclidRef = useRef<string | null>(null);
+  useEffect(() => {
+    tsRef.current = Date.now();
+    gclidRef.current = readGclid();
+  }, []);
+
+  const freeShipping = isEligibleForFreeShipping(totalPrice, form.country);
+  const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
+  const phoneLink = getPhoneLink();
 
   const [methods, setMethods] = useState<CheckoutMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>("");
@@ -73,50 +122,54 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!(total > 0)) return;
     let active = true;
-    getPaymentMethods(total).then((m) => {
+    getPaymentMethods(total, form.country).then((m) => {
       if (!active) return;
       setMethods(m);
       setSelectedMethod((cur) => (cur && m.some((x) => x.id === cur) ? cur : m[0]?.id ?? ""));
     });
     return () => { active = false; };
-  }, [total]);
+  }, [total, form.country]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const name = e.target.name as FieldName;
-    const value = e.target.value;
-    setForm((f) => ({ ...f, [name]: value }));
+  const setField = (name: FieldName, value: string) => {
+    const next = { ...form, [name]: value } as FormFields;
+    setForm(next);
     if (touched[name]) {
-      setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+      setErrors((prev) => ({ ...prev, [name]: validateField(name, value, next.country) }));
+    }
+    // Landwissel → postcode opnieuw beoordelen.
+    if (name === "country" && touched.zipCode) {
+      setErrors((prev) => ({ ...prev, zipCode: validateField("zipCode", next.zipCode, next.country) }));
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setField(e.target.name as FieldName, e.target.value);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
     const name = e.target.name as FieldName;
     setTouched((t) => ({ ...t, [name]: true }));
-    setErrors((prev) => ({ ...prev, [name]: validateField(name, form[name]) }));
+    setErrors((prev) => ({ ...prev, [name]: validateField(name, form[name], form.country) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const allErrors = validateAll(form);
     setErrors(allErrors);
-    setTouched({
-      firstName: true, lastName: true, email: true, phone: true,
-      address: true, houseNumber: true, city: true, zipCode: true,
-    });
+    setTouched(Object.fromEntries(FIELD_ORDER.map((n) => [n, true])));
     if (Object.keys(allErrors).length > 0) {
-      const first = document.querySelector<HTMLInputElement>(
-        `[name="${Object.keys(allErrors)[0]}"]`,
-      );
-      first?.focus();
-      first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setShowSummary(true);
+      // Focus de samenvatting zodat screenreaders de fouten horen.
+      requestAnimationFrame(() => summaryRef.current?.focus());
       return;
     }
+    setShowSummary(false);
     setSubmitting(true);
     const result = await createCheckout({
       customer: {
         firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,
         address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
+        country: form.country,
       },
       expectedTotal: totalPrice,
       ...(selectedMethod ? { method: selectedMethod } : {}),
@@ -127,6 +180,9 @@ export default function CheckoutPage() {
         voetbank: i.voetbank,
         quantity: i.quantity,
       })),
+      website,
+      ts: tsRef.current,
+      ...(gclidRef.current ? { gclid: gclidRef.current } : {}),
     });
     if (result.ok) {
       // Door naar de beveiligde Mollie-betaalpagina.
@@ -134,30 +190,76 @@ export default function CheckoutPage() {
       return;
     }
     setSubmitting(false);
-    toast.error("Betaling starten mislukt", { description: result.error });
+    if (result.error === "PRICE_CHANGED") {
+      // Prijs gewijzigd sinds toevoegen: wagen verversen, melden, niet blokkeren.
+      const changes = await syncCart();
+      announceCartChanges(changes);
+      toast.info(result.message, { duration: 8000 });
+      return;
+    }
+    toast.error("Betaling starten mislukt", { description: result.message || result.error });
   };
 
+  const hasError = (name: FieldName) => Boolean(errors[name] && touched[name]);
+  const errorId = (name: FieldName) => `co-${name}-err`;
   const fieldClass = (name: FieldName) =>
-    `input-field ${errors[name] && touched[name] ? "border-red-700 focus:border-red-700" : ""}`;
+    `input-field ${hasError(name) ? "border-error focus-visible:border-error" : ""}`;
+  const summaryErrors = FIELD_ORDER.filter((n) => errors[n]).map((n) => ({ name: n, message: errors[n] as string }));
 
   if (items.length === 0) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
         <AnimatedSection className="text-center max-w-xl">
-          <p className="eyebrow mb-6">Afrekenen</p>
           <h1 className="display-md text-ink mb-6">Niets om af te rekenen</h1>
           <p className="body-lg text-slate mb-12">Je winkelwagen is leeg.</p>
-          <button onClick={() => router.push("/products")} className="btn-primary">Producten Bekijken</button>
+          <button type="button" onClick={() => router.push("/products")} className="btn-primary">Bekijk collectie</button>
         </AnimatedSection>
       </div>
     );
   }
 
-  const steps = [
-    { n: "01", label: "Gegevens", active: true },
-    { n: "02", label: "Betaling", active: false },
-    { n: "03", label: "Bevestiging", active: false },
-  ];
+  // Render-functie (géén component): een component-definitie binnen de
+  // pagina zou bij elke toetsaanslag remounten en de focus verliezen.
+  const renderField = ({
+    name, type = "text", autoComplete, inputMode, placeholder, className = "", hint,
+  }: {
+    name: Exclude<FieldName, "country">;
+    type?: string;
+    autoComplete: string;
+    inputMode?: "text" | "numeric" | "tel" | "email";
+    placeholder?: string;
+    className?: string;
+    hint?: string;
+  }) => {
+    const hintId = hint ? `co-${name}-hint` : undefined;
+    const describedBy = [hasError(name) ? errorId(name) : null, hintId].filter(Boolean).join(" ") || undefined;
+    return (
+      <div className={className}>
+        <label htmlFor={`co-${name}`} className="block text-base text-ink mb-2">
+          {FIELD_LABEL[name]}
+        </label>
+        <input
+          type={type}
+          id={`co-${name}`}
+          name={name}
+          value={form[name]}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          required
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          placeholder={placeholder}
+          className={fieldClass(name)}
+          aria-invalid={hasError(name) || undefined}
+          aria-describedby={describedBy}
+        />
+        {hint && <p id={hintId} className="text-[14px] text-stone mt-1.5">{hint}</p>}
+        {hasError(name) && (
+          <p id={errorId(name)} className="text-[14px] text-error mt-1.5">{errors[name]}</p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
@@ -165,107 +267,122 @@ export default function CheckoutPage() {
       <AnimatedSection className="mb-12 lg:mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
           <div className="lg:col-span-8">
-            <div className="flex items-center gap-4 mb-6">
-              <span className="font-serif italic text-stone text-sm">— 02</span>
-              <span className="eyebrow">Bijna Klaar</span>
-            </div>
-            <h1 className="display-lg text-ink">
-              Afrekenen
-            </h1>
+            <h1 className="display-lg text-ink">Afrekenen</h1>
+            <p className="body-lg text-slate mt-6 max-w-xl">
+              Bijna klaar: je gegevens en betaling op één pagina. Een account is niet nodig.
+            </p>
           </div>
-        </div>
-      </AnimatedSection>
-
-      {/* Stappen */}
-      <AnimatedSection className="mb-16 lg:mb-20">
-        <div className="flex items-center justify-center gap-6 sm:gap-10">
-          {steps.map((step, i) => (
-            <div key={step.n} className="flex items-center gap-6 sm:gap-10">
-              <div className="flex items-center gap-3">
-                <span className={`font-serif italic text-sm ${step.active ? "text-ink" : "text-stone"}`}>— {step.n}</span>
-                <span className={`eyebrow ${step.active ? "!text-ink" : ""}`}>{step.label}</span>
-              </div>
-              {i < steps.length - 1 && <span className="w-10 sm:w-16 h-[1px] bg-line" />}
-            </div>
-          ))}
         </div>
       </AnimatedSection>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
         <AnimatedSection direction="left" className="lg:col-span-8">
-          <form onSubmit={handleSubmit} className="space-y-10">
-            {/* Contactgegevens */}
-            <div className="bg-white border border-line p-8 lg:p-12">
-              <span className="eyebrow">01</span>
-              <h3 className="font-serif text-2xl text-ink mt-3 mb-10">Contactgegevens</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                <div>
-                  <label htmlFor="co-firstName" className="eyebrow block mb-3">Voornaam *</label>
-                  <input type="text" id="co-firstName" name="firstName" value={form.firstName} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("firstName")} aria-invalid={Boolean(errors.firstName && touched.firstName)} />
-                  {errors.firstName && touched.firstName && <p className="text-[11px] text-red-700 mt-1.5">{errors.firstName}</p>}
-                </div>
-                <div>
-                  <label htmlFor="co-lastName" className="eyebrow block mb-3">Achternaam *</label>
-                  <input type="text" id="co-lastName" name="lastName" value={form.lastName} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("lastName")} aria-invalid={Boolean(errors.lastName && touched.lastName)} />
-                  {errors.lastName && touched.lastName && <p className="text-[11px] text-red-700 mt-1.5">{errors.lastName}</p>}
-                </div>
-                <div>
-                  <label htmlFor="co-email" className="eyebrow block mb-3">E-mail *</label>
-                  <input type="email" id="co-email" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("email")} aria-invalid={Boolean(errors.email && touched.email)} />
-                  {errors.email && touched.email && <p className="text-[11px] text-red-700 mt-1.5">{errors.email}</p>}
-                </div>
-                <div>
-                  <label htmlFor="co-phone" className="eyebrow block mb-3">Telefoonnummer *</label>
-                  <input type="tel" id="co-phone" name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("phone")} aria-invalid={Boolean(errors.phone && touched.phone)} aria-describedby={errors.phone && touched.phone ? "co-phone-err" : undefined} />
-                  {errors.phone && touched.phone && <p id="co-phone-err" className="text-[11px] text-red-700 mt-1.5">{errors.phone}</p>}
-                </div>
-              </div>
+          {showSummary && summaryErrors.length > 0 && (
+            <div
+              ref={summaryRef}
+              role="alert"
+              tabIndex={-1}
+              className="mb-8 border border-error rounded-[10px] bg-white p-6"
+            >
+              <h2 className="text-base font-medium text-error mb-3">
+                Controleer {summaryErrors.length === 1 ? "dit veld" : `deze ${summaryErrors.length} velden`}
+              </h2>
+              <ul className="space-y-1.5 text-[15px] text-ink">
+                {summaryErrors.map((err) => (
+                  <li key={err.name}>
+                    <a href={`#co-${err.name}`} className="underline underline-offset-4 hover:text-accent">
+                      {FIELD_LABEL[err.name]}
+                    </a>
+                    : {err.message}
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-10">
+            {/* Honeypot — voor mensen onzichtbaar, bots vullen 'm in. */}
+            <div className="absolute -left-[9999px] w-px h-px overflow-hidden" aria-hidden="true">
+              <label htmlFor="co-website">Website</label>
+              <input
+                type="text"
+                id="co-website"
+                name="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
+            {/* Contactgegevens */}
+            <fieldset className="bg-white border border-line rounded-[10px] p-8 lg:p-12">
+              <legend className="sr-only">Contactgegevens</legend>
+              <h2 className="font-serif text-2xl text-ink mb-8">Contactgegevens</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                {renderField({ name: "firstName", autoComplete: "given-name" })}
+                {renderField({ name: "lastName", autoComplete: "family-name" })}
+                {renderField({ name: "email", type: "email", autoComplete: "email", inputMode: "email" })}
+                {renderField({ name: "phone", type: "tel", autoComplete: "tel", inputMode: "tel", hint: "Voor de bezorgafspraak van je meubels." })}
+              </div>
+            </fieldset>
 
             {/* Verzendadres */}
-            <div className="bg-white border border-line p-8 lg:p-12">
-              <span className="eyebrow">02</span>
-              <h3 className="font-serif text-2xl text-ink mt-3 mb-10">Verzendadres</h3>
+            <fieldset className="bg-white border border-line rounded-[10px] p-8 lg:p-12">
+              <legend className="sr-only">Bezorgadres</legend>
+              <h2 className="font-serif text-2xl text-ink mb-8">Bezorgadres</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                <div className="sm:col-span-2 grid grid-cols-3 gap-x-8 gap-y-6">
-                  <div className="col-span-2">
-                    <label htmlFor="co-address" className="eyebrow block mb-3">Straatnaam *</label>
-                    <input type="text" id="co-address" name="address" value={form.address} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("address")} aria-invalid={Boolean(errors.address && touched.address)} />
-                    {errors.address && touched.address && <p className="text-[11px] text-red-700 mt-1.5">{errors.address}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="co-houseNumber" className="eyebrow block mb-3">Huisnr. *</label>
-                    <input type="text" id="co-houseNumber" name="houseNumber" value={form.houseNumber} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("houseNumber")} aria-invalid={Boolean(errors.houseNumber && touched.houseNumber)} />
-                    {errors.houseNumber && touched.houseNumber && <p className="text-[11px] text-red-700 mt-1.5">{errors.houseNumber}</p>}
-                  </div>
-                </div>
                 <div>
-                  <label htmlFor="co-zipCode" className="eyebrow block mb-3">Postcode *</label>
-                  <input type="text" id="co-zipCode" name="zipCode" value={form.zipCode} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("zipCode")} placeholder="1234 AB" aria-invalid={Boolean(errors.zipCode && touched.zipCode)} />
-                  {errors.zipCode && touched.zipCode && <p className="text-[11px] text-red-700 mt-1.5">{errors.zipCode}</p>}
+                  <label htmlFor="co-country" className="block text-base text-ink mb-2">{FIELD_LABEL.country}</label>
+                  <select
+                    id="co-country"
+                    name="country"
+                    value={form.country}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    autoComplete="country"
+                    className={`${fieldClass("country")} min-h-11 cursor-pointer`}
+                    aria-invalid={hasError("country") || undefined}
+                    aria-describedby={hasError("country") ? errorId("country") : undefined}
+                  >
+                    <option value="NL">Nederland</option>
+                    <option value="BE">België</option>
+                  </select>
+                  {hasError("country") && (
+                    <p id={errorId("country")} className="text-[14px] text-error mt-1.5">{errors.country}</p>
+                  )}
                 </div>
-                <div>
-                  <label htmlFor="co-city" className="eyebrow block mb-3">Stad *</label>
-                  <input type="text" id="co-city" name="city" value={form.city} onChange={handleChange} onBlur={handleBlur} required className={fieldClass("city")} aria-invalid={Boolean(errors.city && touched.city)} />
-                  {errors.city && touched.city && <p className="text-[11px] text-red-700 mt-1.5">{errors.city}</p>}
+                <div className="hidden sm:block" aria-hidden="true" />
+                <div className="sm:col-span-2 grid grid-cols-[minmax(0,1fr)_7rem] sm:grid-cols-[minmax(0,1fr)_9rem] gap-x-6 sm:gap-x-8">
+                  {renderField({ name: "address", autoComplete: "street-address" })}
+                  {renderField({ name: "houseNumber", autoComplete: "address-line2", inputMode: "numeric", placeholder: "12a" })}
                 </div>
+                {renderField({
+                  name: "zipCode",
+                  autoComplete: "postal-code",
+                  inputMode: form.country === "BE" ? "numeric" : "text",
+                  placeholder: form.country === "BE" ? "1000" : "1234 AB",
+                })}
+                {renderField({ name: "city", autoComplete: "address-level2" })}
               </div>
-            </div>
+            </fieldset>
 
             {/* Betaalmethode — live uit Mollie (/v2/methods) */}
-            <div className="bg-white border border-line p-8 lg:p-12">
-              <span className="eyebrow">03</span>
-              <h3 className="font-serif text-2xl text-ink mt-3 mb-10">Betaalmethode</h3>
+            <fieldset className="bg-white border border-line rounded-[10px] p-8 lg:p-12">
+              <legend className="sr-only">Betaalmethode</legend>
+              <h2 className="font-serif text-2xl text-ink mb-8">Betaalmethode</h2>
               <div className="space-y-3">
                 {methods.length === 0 && (
-                  <p className="text-sm text-stone" aria-live="polite">Betaalmethoden laden…</p>
+                  <p className="text-base text-stone" aria-live="polite">Betaalmethoden laden…</p>
                 )}
                 {methods.map((m) => {
                   const active = selectedMethod === m.id;
                   return (
                     <label
                       key={m.id}
-                      className={`flex items-center gap-4 p-5 border cursor-pointer transition-colors ${active ? "border-ink" : "border-line hover:border-stone"}`}
+                      className={`flex items-center gap-4 p-4 min-h-14 border rounded-[10px] cursor-pointer transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-1 has-[:focus-visible]:outline-accent has-[:focus-visible]:outline-offset-2 ${
+                        active ? "border-ink bg-paper" : "border-line hover:border-stone"
+                      }`}
                     >
                       <input
                         type="radio"
@@ -273,77 +390,101 @@ export default function CheckoutPage() {
                         value={m.id}
                         checked={active}
                         onChange={() => setSelectedMethod(m.id)}
-                        className="accent-accent"
+                        className="accent-accent w-4 h-4"
                       />
                       {m.image ? (
                         <Image src={m.image} alt="" width={40} height={26} unoptimized className="h-6 w-auto" />
                       ) : (
-                        <span className="w-10" aria-hidden />
+                        <span className="w-10" aria-hidden="true" />
                       )}
-                      <span className="text-ink text-sm font-medium">{m.description}</span>
+                      <span className="text-ink text-base font-medium">{m.description}</span>
                     </label>
                   );
                 })}
               </div>
-              <p className="text-[11px] text-stone uppercase tracking-[0.2em] mt-6">Je wordt doorgestuurd naar een beveiligde betaalomgeving.</p>
-            </div>
+              <p className="text-[14px] text-stone mt-6">Je rondt de betaling af in de beveiligde omgeving van onze betaalpartner.</p>
+            </fieldset>
 
-            <motion.button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-50" whileTap={{ scale: 0.98 }}>
-              {submitting ? "Verwerken..." : `Bestelling Plaatsen — ${formatPrice(total)}`}
-            </motion.button>
+            {/* Bestellen */}
+            <div className="space-y-5">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn-primary w-full !text-sm !normal-case !tracking-normal !py-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? "Even geduld…" : `Bestellen en betalen — ${formatPrice(total)}`}
+              </button>
+              <p className="text-[14px] text-slate leading-relaxed">
+                Met je bestelling ga je akkoord met onze{" "}
+                <Link href={businessInfo.legal.termsUrl} className="underline underline-offset-4 hover:text-accent">
+                  algemene voorwaarden
+                </Link>{" "}
+                en{" "}
+                <Link href={businessInfo.legal.privacyPolicyUrl} className="underline underline-offset-4 hover:text-accent">
+                  privacyverklaring
+                </Link>
+                .
+              </p>
+              <ul className="flex flex-wrap gap-x-6 gap-y-1.5 text-[14px] text-ink">
+                <li>{freeShipping ? "Gratis verzending" : `${shippingInfo.freeShippingCopyShort}`}</li>
+                <li>Levertijd {shippingInfo.deliveryTime.inStock}</li>
+                <li>
+                  {shippingInfo.returnWindowDays} dagen bedenktijd —{" "}
+                  <Link href={businessInfo.legal.returnPolicyUrl} className="underline underline-offset-4 hover:text-accent">
+                    retourneren
+                  </Link>
+                </li>
+                {phoneLink && businessInfo.contact.phoneFormatted && (
+                  <li>
+                    Vragen? Bel{" "}
+                    <a href={phoneLink} className="underline underline-offset-4 hover:text-accent whitespace-nowrap">
+                      {businessInfo.contact.phoneFormatted}
+                    </a>
+                  </li>
+                )}
+              </ul>
+              <PaymentIconRow />
+            </div>
           </form>
         </AnimatedSection>
 
         {/* Samenvatting */}
         <AnimatedSection direction="right" className="lg:col-span-4">
-          <div className="bg-white border border-line p-8 lg:p-10 sticky top-32">
-            <span className="eyebrow">Overzicht</span>
-            <h3 className="font-serif text-2xl text-ink mt-3 mb-8">Jouw Bestelling</h3>
-            <div className="space-y-5 mb-8">
-              {items.map((item) => (
-                <div key={item.lineKey} className="flex gap-4">
-                  <div className="relative w-20 h-20 bg-bone flex-shrink-0 overflow-hidden">
-                    {firstImageUrl(item.product.images) && (
-                      <Image
-                        src={firstImageUrl(item.product.images)!}
-                        alt={item.product.name}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-ink text-sm font-medium truncate">{item.product.name}</p>
-                    {item.variantLabel && (
-                      <p className="text-stone text-[11px] mt-0.5">Maat {item.variantLabel}</p>
-                    )}
-                    {item.nachtkast > 0 && (
-                      <p className="text-stone text-[11px] mt-0.5">{item.nachtkast} nachtkast{item.nachtkast > 1 ? "en" : ""}</p>
-                    )}
-                    {item.voetbank > 0 && (
-                      <p className="text-stone text-[11px] mt-0.5">Voetbank</p>
-                    )}
-                    <p className="text-stone text-[11px] uppercase tracking-[0.2em] mt-1">Aantal: {item.quantity}</p>
-                    <p className="text-accent text-sm font-medium mt-1">{formatPrice(item.product.price * item.quantity)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-line pt-5 space-y-4 text-sm">
+          <div className="bg-white border border-line rounded-[10px] p-8 lg:p-10 sticky top-32">
+            <h2 className="font-serif text-2xl text-ink mb-8">Je bestelling</h2>
+            <ul className="space-y-5 mb-8">
+              {items.map((item) => {
+                const thumb = firstImageUrl(item.product.images);
+                const options = cartLineOptions(item);
+                return (
+                  <li key={item.lineKey} className="flex gap-4">
+                    <div className="relative w-20 h-20 bg-bone rounded-[8px] shrink-0 overflow-hidden">
+                      {thumb && <Image src={thumb} alt="" fill sizes="80px" className="object-contain" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-ink text-base font-medium leading-snug">{item.product.name}</p>
+                      {options.length > 0 && <p className="text-stone text-[14px] mt-0.5">{options.join(" · ")}</p>}
+                      <p className="text-stone text-[14px] mt-0.5">Aantal: {item.quantity}</p>
+                      <Price price={item.product.price * item.quantity} size="sm" className="!text-base mt-1" />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="border-t border-line pt-5 space-y-4 text-base">
               <div className="flex justify-between">
                 <span className="text-slate">Subtotaal</span>
-                <span className="text-ink">{formatPrice(totalPrice)}</span>
+                <span className="text-ink tabular-nums">{formatPrice(totalPrice)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate">Verzending</span>
-                <span className="text-ink">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
+                <span className="text-ink tabular-nums">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
               </div>
               <div className="border-t border-line pt-5 flex justify-between items-baseline">
-                <span className="eyebrow">Totaal</span>
-                <span className="font-serif text-2xl text-ink">{formatPrice(total)}</span>
+                <span className="text-ink">Totaal</span>
+                <span className="font-serif text-2xl text-ink tabular-nums">{formatPrice(total)}</span>
               </div>
-              <p className="text-[11px] text-stone uppercase tracking-[0.2em]">{shippingInfo.vatLabelLong}</p>
+              <p className="text-[14px] text-stone">{shippingInfo.vatLabelLong}</p>
             </div>
           </div>
         </AnimatedSection>

@@ -1,14 +1,20 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
-import { imageUrls, parseImages } from "@/lib/imageHelpers";
+import { parseImages } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
+import { shippingInfo } from "@/lib/shipping-info";
 import { Price } from "@/components/ui/price";
-import { useInFrameParallax } from "@/hooks/useInFrameParallax";
+import { StockBadge } from "@/components/ui/StockBadge";
+import { ASPECT_AR, CARD_ASPECT_CLASS, orientationOf } from "@/components/product/imageAspect";
+import { DIMENSION_KEYS, findSpec, isNewProduct, parseSizeVariants, parseSpecs } from "@/components/product/specs";
 
-interface Product {
+/**
+ * Productkaart — server-vriendelijk (geen hooks, geen event handlers; hover
+ * puur via CSS). Wordt gebruikt in CategoryListing, ProductsContent,
+ * CollectionPreview, RecentlyViewed en op de PDP (gerelateerd / past goed bij).
+ */
+export interface ProductCardProduct {
   id: string;
   slug: string;
   name: string;
@@ -19,96 +25,52 @@ interface Product {
   featured?: boolean;
   createdAt?: Date | string;
   stock?: number;
+  deliveryTime?: string | null;
+  sizeVariants?: string | null;
   colorGroup?: string | null;
   colorName?: string | null;
   colorHex?: string | null;
   specs?: string | null;
 }
 
-interface ProductSpecs {
-  serie?: string;
-  categorie?: string;
-  afmetingen?: string;
-  materiaal?: string;
-  stoffering?: string;
-  kleur?: string;
-  patroon?: string;
-}
-
-function parseSpecs(specs?: string | null): ProductSpecs {
-  if (!specs) return {};
-  try {
-    const p = JSON.parse(specs);
-    const lookup = (...keys: string[]) => {
-      for (const k of keys) {
-        const direct = p[k];
-        if (direct) return String(direct);
-        const lower = k.toLowerCase();
-        for (const [key, val] of Object.entries(p)) {
-          if (key.toLowerCase() === lower && val) return String(val);
-        }
-      }
-      return undefined;
-    };
-    return {
-      serie: lookup("Serie", "serie", "Series"),
-      categorie: lookup("Categorie", "Category"),
-      afmetingen: lookup("Afmetingen", "Afmeting", "Maten", "Maat", "Size"),
-      materiaal: lookup("Materiaal", "Material"),
-      stoffering: lookup("Stoffering", "Bekleding"),
-      kleur: lookup("Kleur", "Color", "Colour"),
-      patroon: lookup("Patroon", "Pattern"),
-    };
-  } catch {
-    return {};
-  }
-}
-
-type ColorVariant = {
+export type ProductCardVariant = {
   slug: string;
   colorName: string | null;
   colorHex: string | null;
 };
 
 interface Props {
-  product: Product;
-  variants?: ColorVariant[];
+  product: ProductCardProduct;
+  variants?: ProductCardVariant[];
   /** Eerste card op een listing → priority + eager loading voor LCP */
   priority?: boolean;
-  /** Liggende 4:3-tegel i.p.v. vierkant — voor banken (liggende foto's vullen
-      dan zonder bijsnede én zonder randen). Alleen op de categorie-listing. */
+  /**
+   * @deprecated De tegelverhouding volgt nu de echte foto (w/h uit het
+   * images-JSON). De prop blijft bestaan zodat bestaande aanroepen werken.
+   */
   wide?: boolean;
 }
 
 export default function ProductCard({ product, variants, priority = false, wide = false }: Props) {
   const parsed = parseImages(product.images);
-  const urls = imageUrls(product.images);
-  const firstRaw = urls[0] ?? "";
-  // Vierkante kaart (1:1): het overgrote deel van de productfoto's is vierkant,
-  // dus c_fill op 1:1 vult de tegel exact — geen witte randen, geen uitzoom,
-  // volledig product. Afwijkende verhoudingen worden minimaal bijgesneden.
-  //
-  // Uitzondering — brede liggende foto's (hoekbanken) op witte achtergrond:
-  // c_fill zou de armleuningen wegsnijden. Daar gebruiken we 'pad' (c_pad,
-  // b_white) zodat de hele bank zichtbaar is; de witruimte valt naadloos samen
-  // met de eigen witte fotostudio-achtergrond.
-  // Banken (wide): liggende 4:3-tegel + 'fill' → hele bank, geen randen, geen
-  // bijsnede die telt (de scènes hebben ruim marge). Tafels: 'contain' (c_pad +
-  // b_auto) toont de hele tafel met rand in de achtergrondkleur. Rest: 'fill'.
-  const TABLE_CATEGORIES = new Set(["eettafels", "salontafels", "bijzettafels"]);
-  const cardMode = wide ? "fill" : TABLE_CATEGORIES.has(product.category) ? "contain" : "fill";
-  const tileAr = wide ? "4:3" : "1:1";
-  const firstDim = parsed[0];
+  const firstImage = parsed[0];
+  const firstRaw = firstImage?.url ?? "";
+
+  // Tegelverhouding uit de echte foto: liggend → 4:3 (cover, gecentreerd —
+  // liggende bron laat dan niets wezenlijks weg), staand → 4:5 (contain op
+  // bone), vierkant → 1:1. `wide` dwingt 4:3 af voor oude aanroepen zonder
+  // dimensies in de data.
+  const orientation = wide && (!firstImage?.w || !firstImage?.h) ? "landscape" : orientationOf(firstImage);
+  const isContain = orientation === "portrait";
+  const aspectClass = CARD_ASPECT_CLASS[orientation];
   // w:1000 is de basis; de cloudinaryLoader overschrijft 'm per srcSet-breedte,
-  // zodat mobiel niet onnodig een 1000px-foto laadt. Geen dpr hier — next/image's
-  // deviceSizes dekken de retina-varianten al via de srcSet.
+  // zodat mobiel niet onnodig een 1000px-foto laadt.
   const first = firstRaw
     ? cldOptimize(firstRaw, {
-        ar: tileAr,
+        ...(isContain ? {} : { ar: ASPECT_AR[orientation], mode: "fill" as const }),
         w: 1000,
-        mode: cardMode,
         upscale: true,
-        sourceW: firstDim?.w,
+        sourceW: firstImage?.w,
         quality: "auto:good",
       })
     : "";
@@ -116,11 +78,16 @@ export default function ProductCard({ product, variants, priority = false, wide 
   // <= 0 (niet === 0): een race kon voorheen negatieve voorraad geven; die moet
   // als uitverkocht tonen. Ontbrekende stock (niet geselecteerd) = op voorraad.
   const isOutOfStock = (product.stock ?? 1) <= 0;
-  const { ref: figureRef, onMouseMove, onMouseLeave } = useInFrameParallax<HTMLElement>({ maxOffset: 10 });
 
-  // Titel = volledige productnaam (incl. kleur indien aanwezig). User-voorkeur:
-  // "Mirage Bankstel Brons" i.p.v. gestripte versie zonder kleur.
-  const s = parseSpecs(product.specs);
+  // Specs één keer parsen (try/catch + type guard in parseSpecs).
+  const specs = parseSpecs(product.specs);
+  const serie = findSpec(specs, "Serie", "Series");
+  const dimensions = findSpec(specs, ...DIMENSION_KEYS);
+  const materiaal = findSpec(specs, "Materiaal", "Material");
+  const stoffering = findSpec(specs, "Stoffering", "Bekleding");
+  const patroon = findSpec(specs, "Patroon", "Pattern");
+
+  // Titel = volledige productnaam (incl. kleur indien aanwezig).
   const title = product.name;
 
   // Korte categorie-regel onder de titel (bv. banken → "In diverse
@@ -128,11 +95,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
   const cardSubtitle = getCategory(product.category)?.cardSubtitle ?? null;
 
   // Eyebrow toont serie/collectie alleen als die niet al in de naam zit.
-  // Voorkomt "Mirage" eyebrow + "Mirage Bankstel Brons" titel = dubbele naam.
-  const eyebrow =
-    s.serie && !product.name.toLowerCase().includes(s.serie.toLowerCase())
-      ? s.serie
-      : null;
+  const eyebrow = serie && !product.name.toLowerCase().includes(serie.toLowerCase()) ? serie : null;
 
   // Materiaal-regel: dedupe waardes die elkaar overlappen (bv "Stof" + "Stoffering")
   const materialParts: string[] = [];
@@ -141,176 +104,142 @@ export default function ProductCard({ product, variants, priority = false, wide 
     const joined = materialParts.join(" ").toLowerCase();
     if (!joined.includes(val.toLowerCase())) materialParts.push(val);
   };
-  addUnique(s.materiaal);
-  addUnique(s.stoffering);
-  addUnique(s.patroon);
+  addUnique(materiaal);
+  addUnique(stoffering);
+  addUnique(patroon);
   const materialLine = materialParts.join(" · ");
 
-  // Color swatches: max 4 dots, rest als "+N"
-  const colorDots = variants && variants.length > 1
-    ? variants.filter((v) => v.colorHex).slice(0, 4)
-    : [];
+  // Maatvarianten → "vanaf" + laagste prijs.
+  const sizeVariants = parseSizeVariants(product.sizeVariants);
+  const variantPrices = sizeVariants.map((v) => v.price).filter((p): p is number => typeof p === "number" && p > 0);
+  const hasSizeVariants = sizeVariants.length > 0;
+  const displayPrice = hasSizeVariants && variantPrices.length > 0 ? Math.min(product.price > 0 ? product.price : Infinity, ...variantPrices) : product.price;
+
+  // Badges: alleen bij feitelijke data (CLAUDE.md §11 — geen fake urgency).
+  const isNew = isNewProduct(product.createdAt);
+  // Adviesprijs hoort bij de basisprijs; bij "vanaf" (maatvarianten) tonen we
+  // geen korting op kaartniveau — dat doet de PDP per maat.
+  const listPrice = hasSizeVariants ? null : product.listPrice ?? null;
+  const hasDiscount = listPrice != null && listPrice > displayPrice && displayPrice > 0;
+  const discountPct = hasDiscount && listPrice ? Math.round(((listPrice - displayPrice) / listPrice) * 100) : 0;
+
+  // Levertijd: productspecifiek of de standaard uit lib/shipping-info.
+  const deliveryLine = isOutOfStock ? null : `Levertijd ${product.deliveryTime?.trim() || shippingInfo.deliveryTime.inStock}`;
+
+  // Color swatches: max 4, rest als "+N"
+  const colorDots = variants && variants.length > 1 ? variants.slice(0, 4) : [];
   const extraColors = variants && variants.length > 4 ? variants.length - 4 : 0;
 
   return (
     <article className="product-card group h-full">
-      <Link href={productUrl(product)} className="flex flex-col h-full">
-        {/* Image — aspect 4/5 magazine-feel, in-frame parallax, geen ring/rounded */}
-        <figure
-          ref={figureRef}
-          onMouseMove={onMouseMove}
-          onMouseLeave={onMouseLeave}
-          className={`relative ${wide ? "aspect-[4/3]" : "aspect-square"} overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]`}
-        >
-          {first && (
+      <Link href={productUrl(product)} className="flex flex-col h-full rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+        <figure className={`relative ${aspectClass} overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]`}>
+          {first ? (
             <Image
               src={first}
-              alt={product.name}
+              alt={firstImage?.alt ? `${product.name} — ${firstImage.alt}` : product.name}
               fill
               loader={cloudinaryLoader}
               loading={priority ? "eager" : "lazy"}
               priority={priority}
-              className="object-cover"
-              style={{
-                transform: "translate(var(--parallax-x, 0px), var(--parallax-y, 0px)) scale(1.06)",
-                transition: "transform 480ms cubic-bezier(0.22, 1, 0.36, 1)",
-                willChange: "transform",
-              }}
+              className={`${isContain ? "object-contain" : "object-cover object-center"} transition-transform duration-[480ms] ease-out motion-safe:group-hover:scale-[1.03]`}
               sizes="(max-width: 768px) 50vw, 33vw"
             />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone">
+              <span aria-hidden="true" className="w-8 h-px bg-accent" />
+              <span className="text-[13px] uppercase tracking-[0.18em]">Foto volgt</span>
+            </div>
+          )}
+
+          {(isNew || hasDiscount) && (
+            <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-[5]">
+              {hasDiscount && (
+                <span className="bg-accent text-paper text-[13px] font-medium px-2.5 py-1 rounded-[6px] tabular-nums">
+                  -{discountPct}%<span className="sr-only"> korting</span>
+                </span>
+              )}
+              {isNew && (
+                <span className="bg-ink text-paper text-[13px] font-medium px-2.5 py-1 rounded-[6px]">Nieuw</span>
+              )}
+            </div>
           )}
 
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-paper/45 z-[5] pointer-events-none" />
+            <div className="absolute inset-0 bg-paper/45 z-[5] pointer-events-none" aria-hidden="true" />
           )}
         </figure>
 
         {/* Info block — flex-col zodat footer (prijs+voorraad) altijd op
             zelfde Y-positie eindigt ongeacht spec-grid lengte */}
         <div className="text-left flex flex-col flex-1">
-          {/* Eyebrow — alleen collectie/serie als die meerwaarde geeft */}
           {eyebrow && (
-            <p className="text-[10px] text-stone uppercase tracking-[0.14em] font-medium mb-1">
-              {eyebrow}
-            </p>
+            <p className="text-[13px] text-stone uppercase tracking-[0.14em] font-medium mb-1">{eyebrow}</p>
           )}
 
-          {/* Hoofdnaam — volledige productnaam (incl. kleur).
-              Mobile: kleiner + line-clamp-2 voor consistente kaart-hoogte */}
-          <h3 className="font-serif text-base sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-1.5 line-clamp-2 sm:line-clamp-none">
+          <h3 className="font-serif text-lg sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-1.5 line-clamp-2 sm:line-clamp-none">
             <span className="card-name">{title}</span>
           </h3>
 
-          {/* Categorie-regel — bv. "In diverse uitvoeringen en kleuren." */}
           {cardSubtitle && (
-            <p className="text-[12px] sm:text-[13px] text-stone leading-snug mb-2">
-              {cardSubtitle}
-            </p>
+            <p className="text-[13px] text-stone leading-snug mb-2">{cardSubtitle}</p>
           )}
 
           {/* SIGNATURE: hairline-marker */}
-          <div className="w-4 h-px bg-[var(--color-accent-light)] mb-2 sm:mb-3" />
+          <div className="w-4 h-px bg-accent-light mb-2 sm:mb-3" aria-hidden="true" />
 
-          {/* Spec-info — twee renders:
-              - Mobile (sm-): compacte stack zonder labels (label krijgt te
-                weinig ruimte op 150-180px cards)
-              - sm+: gestructureerde label/value grid */}
-          {(s.afmetingen || materialLine || colorDots.length > 0) && (
-            <>
-              {/* MOBILE — compact, geen label-kolom */}
-              <div className="sm:hidden mb-3 space-y-0.5 text-[13px] leading-[1.4] text-ink">
-                {s.afmetingen && (
-                  <p className="tabular-nums truncate" title={s.afmetingen}>{s.afmetingen}</p>
-                )}
-                {materialLine && (
-                  <p className="text-stone truncate" title={materialLine}>{materialLine}</p>
-                )}
-                {colorDots.length > 0 && (
-                  <div className="flex items-center gap-1.5 pt-1">
+          {(dimensions || materialLine || colorDots.length > 0) && (
+            <dl className="space-y-1 mb-3 text-[13px] sm:text-sm leading-[1.45]">
+              {dimensions && (
+                <div className="flex items-baseline gap-3">
+                  <dt className="hidden sm:block text-[13px] uppercase tracking-[0.1em] text-stone w-[72px] shrink-0">Afmeting</dt>
+                  <dd className="text-ink tabular-nums truncate" title={dimensions}>
+                    <span className="sr-only sm:hidden">Afmeting: </span>
+                    {dimensions}
+                  </dd>
+                </div>
+              )}
+              {materialLine && (
+                <div className="flex items-baseline gap-3">
+                  <dt className="hidden sm:block text-[13px] uppercase tracking-[0.1em] text-stone w-[72px] shrink-0">Materiaal</dt>
+                  <dd className="text-stone sm:text-ink truncate" title={materialLine}>
+                    <span className="sr-only sm:hidden">Materiaal: </span>
+                    {materialLine}
+                  </dd>
+                </div>
+              )}
+              {colorDots.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <dt className="hidden sm:block text-[13px] uppercase tracking-[0.1em] text-stone w-[72px] shrink-0">Kleuren</dt>
+                  <dd className="flex items-center gap-1.5 pt-0.5">
+                    <span className="sr-only">Verkrijgbaar in: </span>
                     {colorDots.map((v) => (
                       <span
                         key={v.slug}
-                        title={v.colorName ?? ""}
-                        aria-label={v.colorName ? `Kleur: ${v.colorName}` : undefined}
-                        className="w-3 h-3 rounded-full border border-line"
-                        style={{ backgroundColor: v.colorHex ?? "transparent" }}
-                      />
+                        title={v.colorName ?? undefined}
+                        className={`inline-block w-4 h-4 rounded-full border border-line ${v.colorHex ? "" : "bg-stone/30"}`}
+                        style={v.colorHex ? { backgroundColor: v.colorHex } : undefined}
+                      >
+                        {v.colorName && <span className="sr-only">{v.colorName}</span>}
+                      </span>
                     ))}
                     {extraColors > 0 && (
-                      <span className="text-[10px] uppercase tracking-[0.14em] text-stone ml-1">+{extraColors}</span>
+                      <span className="text-[13px] text-stone ml-0.5">+{extraColors}<span className="sr-only"> kleuren</span></span>
                     )}
-                  </div>
-                )}
-              </div>
-
-              {/* sm+ — gestructureerde label/value grid */}
-              <dl className="hidden sm:block space-y-1.5 mb-3 text-sm leading-[1.4]">
-                {s.afmetingen && (
-                  <div className="flex items-baseline gap-3">
-                    <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Afmeting</dt>
-                    <dd className="text-ink tabular-nums">{s.afmetingen}</dd>
-                  </div>
-                )}
-                {materialLine && (
-                  <div className="flex items-baseline gap-3">
-                    <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Materiaal</dt>
-                    <dd className="text-ink">{materialLine}</dd>
-                  </div>
-                )}
-                {colorDots.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <dt className="text-[10px] uppercase tracking-[0.14em] text-stone w-[68px] flex-shrink-0">Kleuren</dt>
-                    <dd className="flex items-center -ml-1.5">
-                      {colorDots.map((v) => (
-                        <span
-                          key={v.slug}
-                          title={v.colorName ?? ""}
-                          aria-label={v.colorName ? `Kleur: ${v.colorName}` : undefined}
-                          className="inline-flex items-center justify-center w-11 h-11"
-                        >
-                          <span
-                            className="w-3.5 h-3.5 rounded-full border border-line"
-                            style={{ backgroundColor: v.colorHex ?? "transparent" }}
-                          />
-                        </span>
-                      ))}
-                      {extraColors > 0 && (
-                        <span className="text-[10px] uppercase tracking-[0.14em] text-stone ml-0.5">+{extraColors}</span>
-                      )}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </>
+                  </dd>
+                </div>
+              )}
+            </dl>
           )}
 
           {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
               cards in een grid-rij hun prijs op gelijke hoogte hebben */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-line/60 mt-auto">
-            <Price
-              value={product.price}
-              listPrice={product.listPrice}
-              vat
-              className="font-serif text-base sm:text-xl text-ink whitespace-nowrap tabular-nums tracking-[-0.015em]"
-              vatClassName="text-[10px] text-slate leading-none mt-0.5"
-            />
-            {!isOutOfStock ? (
-              <span
-                className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone whitespace-nowrap"
-                aria-label="Op voorraad"
-              >
-                <span className="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-accent" aria-hidden />
-                <span className="hidden sm:inline">Op voorraad</span>
-              </span>
-            ) : (
-              <span
-                className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-medium text-stone whitespace-nowrap"
-                aria-label="Uitverkocht"
-              >
-                <span className="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-stone/40" aria-hidden />
-                <span className="hidden sm:inline">Uitverkocht</span>
-              </span>
-            )}
+          <div className="flex flex-col gap-2 pt-2.5 sm:pt-3 border-t border-line/60 mt-auto">
+            <div className="flex items-start justify-between gap-3">
+              <Price price={displayPrice} listPrice={listPrice} vat from={hasSizeVariants} size="sm" />
+              <StockBadge stock={product.stock} className="pt-1" />
+            </div>
+            {deliveryLine && <p className="text-[13px] text-stone leading-snug">{deliveryLine}</p>}
           </div>
         </div>
       </Link>
