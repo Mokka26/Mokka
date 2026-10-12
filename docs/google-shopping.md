@@ -17,23 +17,92 @@ Status: feed live sinds 2026-09-12. Campagne-opzet in Google Ads is handwerk
 URL: `https://mokkahomeinteriors.nl/feed/google-shopping.xml`
 
 - Bron: `lib/google-shopping.ts` (mapping + item-opbouw) en
-  `app/feed/google-shopping.xml/route.ts` (route, elk uur ververst).
-- Bevat alle zichtbare, niet-verwijderde producten. Maatvarianten (bedden,
-  slaapkamers) staan als aparte items met `item_group_id` = product-id.
+  `app/feed/google-shopping.xml/route.ts` (route, `revalidate = 3600`,
+  `Content-Type: application/xml; charset=utf-8`, `Content-Length` en
+  `X-Feed-Items` als headers). Feedregels herzien op 2026-10-12.
+- Omvang (2026-10-12): 1.151 producten → 1.397 items, 2,75 MB.
+
+### Welke producten
+
+- Alleen `hidden = false`, `deletedAt = null`, `stock > 0` en `price > 0`.
+  Uitverkochte producten staan **niet** in de feed (geen `out_of_stock`-items);
+  verborgen producten ook niet. Maatvarianten met prijs 0 worden overgeslagen.
+- Maatvarianten (bedden, slaapkamers) zijn aparte items met `item_group_id` =
+  product-id, `g:size` = label en een eigen link `…?maat=<label>` zodat de PDP
+  de juiste maat en prijs toont (de PDP moet `?maat=` lezen — bij de PDP-engineer).
 - `g:id` = Prisma-id (stabiel, korter dan 50 tekens). Varianten: `<id>-1`, `<id>-2`.
-- Prijs: bij korting is `price` de adviesprijs en `sale_price` de verkoopprijs.
-- Identificatie: `gtin` uit specs `EAN`, `mpn` uit specs `Artikelnummer`,
-  anders `identifier_exists = no`. Merk = `businessInfo.name`.
-- Verzending per item uit `lib/shipping-info.ts` (gratis vanaf drempel, anders
-  standaardtarief) voor NL en BE. Levertijd-tekst → `min/max_handling_time`.
-- Custom labels voor segmentatie in campagnes:
-  - `custom_label_0` = leverancier (`source`)
-  - `custom_label_1` = prijsbucket (`0-250`, `250-750`, `750-1500`, `1500+`)
-  - `custom_label_2` = `featured`
-  - `custom_label_3` = `snel-leverbaar` (≤ 10 werkdagen) of `langere-levertijd`
-- Google-categorie per webshopcategorie staat in `GOOGLE_PRODUCT_CATEGORY`.
-  Nieuwe categorie in `lib/categories.ts`? Voeg hier ook een ID toe
-  (taxonomie: https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt).
+
+### Titel, beschrijving, attributen
+
+- `g:title` = `<producttype> <naam zonder leverancierscode> – <materiaal> – <kleur> – <afmeting>`,
+  zonder herhalingen, afgekapt op 150 tekens (op een scheidingsteken). Het
+  producttype (enkelvoud, uit `lib/specs.ts`) wordt alleen toegevoegd als de
+  naam het nog niet bevat ("Nora Eettafel" blijft "Nora Eettafel").
+- `g:description` = beschrijving zonder HTML, max. 5000 tekens.
+- `g:product_type` = `Meubels > <groep> > <categorielabel>`.
+- `g:product_width/length/height` in cm uit `specs.Afmetingen`
+  (`parseDimensions`); rond → breedte = lengte = Ø. Bij een maatvariant uit het label.
+- `g:color` = `colorName` of `specs.Kleur`; `g:material` = `specs.Materiaal`.
+
+### Prijs (Omnibus)
+
+- `g:price` = verkoopprijs. **Geen** `sale_price`.
+- `USE_LIST_PRICE_AS_REFERENCE` (constante in `lib/google-shopping.ts`) staat op
+  `false`. Op `true` wordt `price` = adviesprijs (`listPrice`) en `sale_price` =
+  verkoopprijs, maar alleen als `listPrice > price`. Dat staat uit omdat een
+  doorgestreepte "van"-prijs onder de Omnibus-richtlijn (art. 6:193g BW / Besluit
+  prijsaanduiding) de laagste prijs van de voorgaande 30 dagen moet zijn; de
+  leveranciers-adviesprijzen in `listPrice` zijn dat niet aantoonbaar. Pas
+  inschakelen als er een prijshistorie is die dat onderbouwt (ook voor de PDP).
+
+### Identificatie (merk, GTIN, MPN)
+
+Google-regel: geen eigen merk bij andermans GTIN (anders "GTIN-mismatch").
+
+| Situatie | brand | gtin | mpn | identifier_exists |
+|---|---|---|---|---|
+| `specs.Merk` aanwezig | Merk | EAN | Artikelnummer | (standaard: ja) |
+| EAN aanwezig, geen Merk | — | EAN | Artikelnummer | (standaard: ja) |
+| geen EAN | `Mokka Home` | — | — | `no` |
+
+Zonder EAN wordt ook geen `mpn` gestuurd: brand + mpn geldt als identificatie
+en spreekt `identifier_exists = no` tegen. Merchant Center kan bij items met
+GTIN maar zonder merk een waarschuwing "ontbrekende waarde: brand" geven; vul
+dan per leverancier `specs.Merk` (de echte fabrikant — nooit `source`, dat is
+intern). Op 2026-10-12: 367 items met GTIN, 1.030 met `identifier_exists = no`.
+
+### Verzending en levertijd
+
+- Per item een `g:shipping`-blok per land uit `shippingInfo.freeShippingCountries`
+  (NL en BE) met de werkelijke kosten voor dát item: 0 vanaf de gratis-drempel,
+  anders `rates.standard`. Twee tarieven per land in één item is niet mogelijk.
+- `g:min_handling_time` / `g:max_handling_time` uit de levertijd-tekst
+  (werkdagen; "x weken" × 5). `g:transit_time_label` = `snel-leverbaar`
+  (≤ 5 werkdagen) of `langere-levertijd`; dat label moet in Merchant Center →
+  Verzending aan een transit-tijd gekoppeld worden, anders wordt het genegeerd.
+- Geen `availability_date`.
+
+### Custom labels (campagne-segmentatie)
+
+| Label | Waarde | Gebruik |
+|---|---|---|
+| `custom_label_0` | `favoriet` (featured) / `regulier` | **Basis voor "alleen favorieten adverteren"** (zie §3) |
+| `custom_label_1` | prijsbucket `0-250`, `250-500`, `500-1000`, `1000-2000`, `2000+` | biedstrategie per prijsklasse |
+| `custom_label_2` | categorie-slug (`eettafels`, `bedden`, …) | assetgroepen per categorie |
+| `custom_label_3` | `snel-leverbaar` (≤ 5 werkdagen) / `langere-levertijd` | snelle levering uitlichten |
+| `custom_label_4` | `nieuw` (aangemaakt < 30 dagen), anders leeg | nieuwe collectie |
+
+De leverancier (`source`) staat **nooit** in de feed.
+
+### Google-productcategorieën
+
+`GOOGLE_PRODUCT_CATEGORY` in `lib/google-shopping.ts`; alle ID's zijn op
+2026-10-12 geverifieerd tegen de Nederlandse taxonomie
+(https://www.google.com/basepages/producttype/taxonomy-with-ids.nl-NL.txt).
+Eén correctie: `kasten` (umbrella) → 6356 "Meubelen > Kasten en opbergmeubelen"
+(was 436 "Meubelen"). Let op: Google's "Dressoirs" (4195) zijn ladekasten/commodes;
+onze `dressoirs` horen bij 447 "Glazenkasten en buffetten". Nieuwe categorie in
+`lib/categories.ts`? Voeg hier ook een ID toe.
 
 ## 2. Merchant Center inrichten (eenmalig, handmatig)
 
@@ -67,8 +136,16 @@ vanzelf te draaien.
 
 Aanbevolen opzet zodra de feed is goedgekeurd:
 
+0. **Alleen favorieten adverteren, de rest pauzeren** (wens eigenaar):
+   in Google Ads → campagne "Performance Max-2" → Vermeldingsgroepen
+   (listing groups) → onderverdelen op *Aangepast label 0* → `favoriet`
+   = opgenomen, `regulier` = **uitgesloten**. Welke producten "favoriet" zijn
+   regel je in de admin met het sterretje (`featured`); binnen een uur staat
+   het in de feed en na de volgende Merchant Center-ophaalactie in Ads.
+   Op 2026-10-12: 352 items favoriet, 1.045 regulier. Dezelfde filter bij een
+   Standaard Shopping-campagne: productgroepen op `custom_label_0`.
 1. **Performance Max — Shopping** (bestaande "Performance Max-2" hergebruiken):
-   assetgroepen per productgroep op `custom_label_0` of categorie
+   assetgroepen per productgroep op `custom_label_2` (categorie-slug)
    (banken, bedden, eettafels + stoelen, verlichting, kasten). Bieden:
    "Maximaliseer conversiewaarde" zonder doel-ROAS tot er ≥ 30 conversies zijn.
 2. **Search "alles"**: nu alleen bank-zoekwoorden en één landingspagina
