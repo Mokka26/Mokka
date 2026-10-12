@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
-import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
+import { cldOptimize } from "@/lib/cloudinary-url";
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { shippingInfo } from "@/lib/shipping-info";
 import { Price } from "@/components/ui/price";
 
@@ -53,9 +53,8 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
               className="group block relative rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-bone rounded-[10px]">
-                <Image
+                <CloudinaryImage
                   src={src}
-                  loader={cloudinaryLoader}
                   alt={product.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"

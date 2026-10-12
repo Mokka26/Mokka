@@ -186,3 +186,21 @@ Campagne "alles" (24094411861):
 
 Nog open: biedplafond "Maximaliseer klikken" staat op € 0,20 (te laag, campagne
 "Beperkt door biedstrategie"). Handmatig verhogen naar € 1,00 in Google Ads.
+
+
+## 6. Status 2026-10-12: campagnes gepauzeerd, favorieten-campagne volgt na deploy
+
+Beide lopende campagnes zijn op 2026-10-12 via Windsor.ai gepauzeerd (omkeerbaar met de actie enable_campaign):
+
+| Campagne | Id | Type | 90 dagen t/m 12 okt |
+|---|---|---|---|
+| alles | 24094411861 | Search | EUR 257, 772 klikken, 0 gemeten conversies |
+| Performance Max-2 | 24244952117 | Performance Max (alle producten) | EUR 1.114, 1.983 klikken, 0 gemeten conversies |
+
+Reden: de eigenaar wil alleen favorieten (featured) adverteren en de rest pauzeren, en de conversiemeting was tot nu blind (alleen een purchase-event op de bedankpagina; zie docs/tracking.md).
+
+**Vervolgstappen (na push + deploy van deze code en het zetten van de env-variabelen uit docs/tracking.md):**
+1. Merchant Center: feed-URL opnieuw laten ophalen; controleren dat custom_label_0 de waarden favoriet/regulier heeft en dat er geen afkeuringen zijn (GTIN/merk, prijs-mismatch).
+2. Google Ads (browser): nieuwe Shopping-campagne (standaard, niet PMax) met EEN productgroep gefilterd op custom_label_0 = favoriet; alles overig uitsluiten. Budget en biedstrategie volgens hoofdstuk 3 (start Maximaliseer klikken met plafond, tROAS na 30+ conversies).
+3. Conversies: purchase als primaire conversie, Enhanced Conversions aan, Consent Mode-status controleren, GA4 koppelen (docs/tracking.md).
+4. Pas daarna eventueel de Search-campagne per categorie opnieuw inschakelen (alleen voor categorieen met favorieten).

@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
+import { cldOptimize } from "@/lib/cloudinary-url";
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { HERO_IMAGE_ALT, HERO_IMAGE_SOURCE } from "@/lib/hero-image";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
@@ -26,9 +26,8 @@ export default function Hero() {
 
   return (
     <section className="relative h-[72svh] min-h-[480px] md:h-[80svh] md:max-h-[900px] bg-bone overflow-hidden">
-      <Image
+      <CloudinaryImage
         src={HERO_SRC}
-        loader={cloudinaryLoader}
         alt={HERO_IMAGE_ALT}
         fill
         priority

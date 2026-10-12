@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCategory, type CategorySlug } from "@/lib/categories";
-import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
+import { cldOptimize } from "@/lib/cloudinary-url";
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { getProductCounts } from "@/lib/product-counts";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
@@ -102,9 +102,8 @@ function CategoryTile({ tile, primary }: { tile: Tile; primary: boolean }) {
         }`}
       >
         {src && tile.image && (
-          <Image
+          <CloudinaryImage
             src={src}
-            loader={cloudinaryLoader}
             alt={`${tile.label} — ${tile.image.productName}`}
             fill
             sizes={

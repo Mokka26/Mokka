@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && node scripts/prisma-env.cjs migrate deploy && next build",
     "db:migrate": "node scripts/prisma-env.cjs migrate deploy",
     "db:migrate:diff": "node scripts/prisma-env.cjs migrate diff --from-url ENV:DATABASE_URL --to-schema-datamodel prisma/schema.prisma --script",
     "start": "next start",

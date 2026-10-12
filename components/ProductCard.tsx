@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
-import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
+import { cldOptimize } from "@/lib/cloudinary-url";
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { parseImages } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
 import { shippingInfo } from "@/lib/shipping-info";
@@ -135,11 +135,10 @@ export default function ProductCard({ product, variants, priority = false, wide 
       <Link href={productUrl(product)} className="flex flex-col h-full rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
         <figure className={`relative ${aspectClass} overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]`}>
           {first ? (
-            <Image
+            <CloudinaryImage
               src={first}
               alt={firstImage?.alt ? `${product.name} — ${firstImage.alt}` : product.name}
               fill
-              loader={cloudinaryLoader}
               loading={priority ? "eager" : "lazy"}
               priority={priority}
               className={`${isContain ? "object-contain" : "object-cover object-center"} transition-transform duration-[480ms] ease-out motion-safe:group-hover:scale-[1.03]`}
