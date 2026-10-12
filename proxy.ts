@@ -26,5 +26,8 @@ export default auth((req) => {
 
 export const config = {
   // Alles behalve API-routes, Next-internals en statische bestanden.
-  matcher: ["/((?!api|_next/static|_next/image|.*\..*).*)"],
+  // Let op de dubbele backslash: "\\." is een letterlijke punt in de regex.
+  // Met een enkele "\." (= ".") werd élk pad van 2+ tekens uitgesloten en
+  // draaide de proxy nergens.
+  matcher: ["/((?!api|_next/static|_next/image|.*\\..*).*)"],
 };
