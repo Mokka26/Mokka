@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { businessInfo } from "@/lib/business-info";
 import { Button } from "@/components/ui/Button";
+import { applyConsent } from "@/lib/analytics";
 
 const STORAGE_KEY = "mokka_cookie_consent_v1";
 
@@ -25,7 +26,8 @@ export function getCookieConsent(): Consent {
  * Cookiemelding — wettelijk verplicht, dus wél bij page load, maar als
  * niet-modale `region`: steelt geen focus, blokkeert de pagina niet en
  * beide keuzes zijn visueel gelijkwaardig (CLAUDE.md §11: geen dark patterns).
- * Tracking (Google Ads) laadt pas na "Accepteren" — zie GoogleAdsTag.
+ * Google-tag (GA4/Ads) draait in Consent Mode v2: cookies en identificatie pas
+ * na "Accepteren" — zie components/Analytics.tsx en lib/analytics.ts.
  */
 // Externe staat (localStorage) netjes via useSyncExternalStore: server kent
 // geen keuze ("unknown" → dicht), client leest 'm en luistert naar wijzigingen.
@@ -51,6 +53,8 @@ export default function CookieBanner() {
     } catch {
       // localStorage geblokkeerd — banner verbergt sowieso voor deze sessie
     }
+    // Consent Mode v2-update naar Google (granted/denied), vóór het event.
+    applyConsent(choice);
     // Custom event zodat tracking-libraries (en deze banner) reageren zonder reload
     window.dispatchEvent(new CustomEvent("cookieConsentChanged", { detail: choice }));
     setDismissed(true);

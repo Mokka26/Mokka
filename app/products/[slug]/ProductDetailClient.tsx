@@ -18,6 +18,7 @@ import { ColorSwatches, type ColorVariant } from "@/components/product/ColorSwat
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { orientationOf } from "@/components/product/imageAspect";
+import { trackAddToCart, trackViewItem, variantLabelOf } from "@/lib/analytics";
 import {
   DELIVERY_KEY_RE,
   DIMENSION_KEYS,
@@ -141,6 +142,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     return () => window.clearTimeout(t);
   }, [added]);
 
+  // GA4 view_item: één keer per bekeken product (prijs van de standaardmaat).
+  useEffect(() => {
+    trackViewItem({ id: product.id, slug: product.slug, name: product.name, category: product.category, price: product.price });
+  }, [product.id, product.slug, product.name, product.category, product.price]);
+
   const openCart = () => {
     // Navbar kan dit event afvangen (preventDefault) en de drawer openen;
     // anders gaan we naar de winkelwagen-pagina.
@@ -168,6 +174,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       nachtkast,
       voetbank,
       quantity,
+    );
+    trackAddToCart(
+      { id: product.id, slug: product.slug, name: product.name, category: product.category, price: lineUnitPrice },
+      quantity,
+      variantLabelOf({ variantLabel, nachtkast, voetbank }),
     );
     const extras = [
       variantLabel ? `Maat ${variantLabel}` : null,

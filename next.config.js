@@ -5,13 +5,14 @@ import { withSentryConfig } from "@sentry/nextjs";
 // strengere Vercel-platform-default overrult; three.js/gsap (de oorspronkelijke
 // reden) zijn verwijderd — kandidaat om te schrappen na een test met de
 // Sentry-SDK.
-// Google Ads (gtag.js, components/GoogleAdsTag.tsx): het script komt van
+// Google Ads + GA4 (gtag.js, components/Analytics.tsx): het script komt van
 // googletagmanager.com; conversie-pings gaan als image/fetch naar google.com,
-// googleadservices.com en doubleclick.net; de conversion-linker zet een
-// onzichtbaar iframe op td.doubleclick.net.
+// googleadservices.com en doubleclick.net; GA4 stuurt naar
+// *.google-analytics.com / *.analytics.google.com (regionale endpoints);
+// de conversion-linker zet een onzichtbaar iframe op td.doubleclick.net.
 const googleAdsHosts = {
-  script: "https://www.googletagmanager.com",
-  ping: "https://www.google.com https://www.google.nl https://www.googleadservices.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com",
+  script: "https://www.googletagmanager.com https://*.googletagmanager.com",
+  ping: "https://www.google.com https://www.google.nl https://www.googleadservices.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
   frame: "https://td.doubleclick.net https://googleads.g.doubleclick.net",
 };
 
@@ -19,7 +20,7 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com ${googleAdsHosts.script}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.mollie.com ${googleAdsHosts.ping}`,
+  `img-src 'self' data: blob: https://res.cloudinary.com https://www.mollie.com ${googleAdsHosts.ping}`,
   "font-src 'self' data:",
   `connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.sentry.io https://*.ingest.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com ${googleAdsHosts.script} ${googleAdsHosts.ping}`,
   `frame-src ${googleAdsHosts.frame}`,
@@ -52,7 +53,6 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       // Officiële Mollie betaalmethode-iconen op de checkout.
       { protocol: "https", hostname: "www.mollie.com" },

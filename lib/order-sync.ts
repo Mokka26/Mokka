@@ -4,6 +4,7 @@ import { getMollie } from "@/lib/mollie";
 import { sendOrderConfirmation } from "@/lib/email";
 import { captureError, captureWarning } from "@/lib/sentry";
 import { revalidateProduct } from "@/lib/revalidate";
+import { queueServerPurchase } from "@/lib/analytics-server";
 
 export type OrderStatus = "open" | "paid" | "failed" | "canceled" | "expired";
 
@@ -110,6 +111,13 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
   }
 
   if (opts.revalidate !== false) await revalidateStockPages(order.items.map((i) => i.productId));
+
+  // Server-side GA4-purchase (Measurement Protocol) — zelfde voorwaarde als de
+  // bevestigingsmail: alleen de claimende invocatie komt hier, dus precies één
+  // keer per order. Fire-and-forget; fouten gaan naar Sentry, nooit naar de
+  // klant. Bewust NIET gekoppeld aan confirmationSentAt/resend: een mislukte
+  // mail mag geen tweede conversie opleveren.
+  queueServerPurchase({ ...order, paidAt, paymentMethod });
 
   // Bevestiging NA de transactie — precies één keer (alleen de claimende
   // invocatie komt hier). Mislukt de mail, dan blijft confirmationSentAt null

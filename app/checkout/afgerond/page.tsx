@@ -67,6 +67,32 @@ export default async function CheckoutDonePage({
           .catch(() => 0)
       : 0;
 
+  // Meetgegevens voor GA4 purchase (regels, verzending) en Enhanced Conversions
+  // (klantgegevens; gtag hasht ze in de browser). Alleen bij een vertrouwde,
+  // betaalde order. Best-effort: zonder deze data vuurt de conversie zonder regels.
+  const measured =
+    order && trusted && status === "paid"
+      ? await prisma.order
+          .findUnique({
+            where: { orderNumber: order.orderNumber },
+            select: {
+              shipping: true,
+              paymentMethod: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              address: true,
+              houseNumber: true,
+              zipCode: true,
+              city: true,
+              country: true,
+              items: { select: { productId: true, productName: true, variantLabel: true, quantity: true, price: true } },
+            },
+          })
+          .catch(() => null)
+      : null;
+
   const phoneLink = getPhoneLink();
 
   return (
@@ -76,7 +102,24 @@ export default async function CheckoutDonePage({
         <PurchaseConversion
           orderNumber={order.orderNumber}
           value={order.total}
+          shipping={measured?.shipping ?? 0}
           newCustomer={priorPaidOrders === 0}
+          items={measured?.items ?? []}
+          paymentMethod={measured?.paymentMethod ?? null}
+          userData={
+            measured
+              ? {
+                  email: measured.email,
+                  phone: measured.phone,
+                  firstName: measured.firstName,
+                  lastName: measured.lastName,
+                  street: `${measured.address} ${measured.houseNumber}`.trim(),
+                  city: measured.city,
+                  postalCode: measured.zipCode,
+                  country: measured.country,
+                }
+              : null
+          }
         />
       )}
       <div className="bg-white border border-line p-12 sm:p-20 text-center max-w-2xl w-full">

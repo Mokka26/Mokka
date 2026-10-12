@@ -12,7 +12,7 @@ import PageTransition from "@/components/PageTransition";
 import MotionProvider from "@/components/MotionProvider";
 import ToastProvider from "@/components/ToastProvider";
 import CookieBanner from "@/components/CookieBanner";
-import { GoogleAdsTag } from "@/components/GoogleAdsTag";
+import { Analytics } from "@/components/Analytics";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Source Serif 4 (display-serif) — leesbaar voor brede doelgroep (27-70),
@@ -105,8 +105,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </CartProvider>
         </MotionProvider>
         <SpeedInsights />
-        {/* Google Ads — client-side, alleen na cookie-akkoord (zie component). */}
-        <GoogleAdsTag />
+        {/* Google-tag (GA4 + Ads) met Consent Mode v2 — zie components/Analytics.tsx. */}
+        <Analytics />
       </body>
     </html>
   );

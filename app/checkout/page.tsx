@@ -15,6 +15,7 @@ import { PaymentIconRow } from "@/components/PaymentIcons";
 import { cartLineOptions } from "@/components/CartItem";
 import { createCheckout, getPaymentMethods } from "./actions";
 import type { CheckoutMethod } from "@/lib/mollie";
+import { trackAddPaymentInfo, trackAddShippingInfo, trackBeginCheckout } from "@/lib/analytics";
 
 type Country = "NL" | "BE";
 
@@ -110,6 +111,15 @@ export default function CheckoutPage() {
     gclidRef.current = readGclid();
   }, []);
 
+  // GA4 begin_checkout: één keer zodra de wagen uit localStorage is gehydrateerd
+  // (de CartProvider-effect draait ná dit effect, dus niet simpelweg bij mount).
+  const beginTrackedRef = useRef(false);
+  useEffect(() => {
+    if (beginTrackedRef.current || items.length === 0) return;
+    beginTrackedRef.current = true;
+    trackBeginCheckout(items, totalPrice);
+  }, [items, totalPrice]);
+
   const freeShipping = isEligibleForFreeShipping(totalPrice, form.country);
   const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
@@ -165,6 +175,10 @@ export default function CheckoutPage() {
     }
     setShowSummary(false);
     setSubmitting(true);
+    // GA4 funnel: bezorggegevens + betaalmethode zijn op deze ene pagina
+    // ingevuld; beide events vuren bij een geldige submit, vóór de redirect.
+    trackAddShippingInfo(items, totalPrice, freeShipping ? "gratis" : "standaard");
+    trackAddPaymentInfo(items, totalPrice, selectedMethod);
     const result = await createCheckout({
       customer: {
         firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,

@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
+import { trackBeginCheckout, trackViewCart } from "@/lib/analytics";
 import { useCart } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
@@ -38,6 +40,12 @@ export default function CartDrawer({ open, onClose }: Props) {
   const total = totalPrice + shipping;
   const remaining = Math.max(0, shippingInfo.freeShippingThreshold - totalPrice);
   const progress = Math.min(100, Math.round((totalPrice / shippingInfo.freeShippingThreshold) * 100));
+
+  // GA4 view_cart bij het openen van de drawer (niet bij elke wijziging erin).
+  useEffect(() => {
+    if (open) trackViewCart(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- alleen bij openen
+  }, [open]);
 
   return (
     <Drawer
@@ -98,7 +106,14 @@ export default function CartDrawer({ open, onClose }: Props) {
             </div>
 
             <div className="space-y-3 pt-1">
-              <Link href="/checkout" onClick={onClose} className="btn-primary w-full text-center block">
+              <Link
+                href="/checkout"
+                onClick={() => {
+                  trackBeginCheckout(items, totalPrice);
+                  onClose();
+                }}
+                className="btn-primary w-full text-center block"
+              >
                 Afrekenen
               </Link>
               <Link href="/cart" onClick={onClose} className="btn-ghost w-full text-center block">

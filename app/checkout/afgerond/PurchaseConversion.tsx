@@ -2,76 +2,70 @@
 
 import { useEffect } from "react";
 import { getCookieConsent } from "@/components/CookieBanner";
+import {
+  isAnalyticsEnabled,
+  isPurchaseReported,
+  getGtag,
+  setUserData,
+  trackPurchase,
+  type AnalyticsOrderItem,
+  type UserData,
+} from "@/lib/analytics";
 
-// Google Ads "Purchase"-conversie op de bedankpagina. Vuurt één keer per
-// bestelnummer (localStorage-vlag, dus ook niet bij refresh of terugkomen),
-// alleen na cookie-akkoord en alleen als de Google-tag (components/
-// GoogleAdsTag.tsx) al is gestart — die definieert window.gtag en zet de
-// 'config' vóór ons event in de dataLayer, zodat de volgorde altijd klopt.
-const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
-const PURCHASE_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL;
-const STORAGE_PREFIX = "mokka_ads_purchase_";
-const CURRENCY = "EUR"; // zelfde valuta als components/ui/price.tsx en Mollie
+// Purchase-meting op de bedankpagina: GA4 `purchase` + Google Ads-conversie
+// (lib/analytics.ts), één keer per bestelnummer (localStorage-vlag, dus ook
+// niet bij refresh of terugkomen). De pagina rendert dit alleen bij status
+// 'paid' en een vertrouwde token.
+//
+// Volgorde: (1) wachten tot window.gtag bestaat (components/Analytics.tsx);
+// (2) als de bezoeker nog geen cookiekeuze maakte, even wachten op de banner —
+// anders gaat het event cookieloos (Consent Mode 'denied') en kan het niet
+// meer aan de klik gekoppeld worden; na MAX_WAIT alsnog cookieloos sturen
+// zodat Google het kan modelleren; (3) bij akkoord eerst Enhanced Conversions
+// user_data zetten (gtag hasht client-side), dán de events.
 const POLL_MS = 250;
-const MAX_POLLS = 40; // 10 s wachten op gtag, daarna opgeven
-
-type Gtag = (...args: unknown[]) => void;
-
-function getGtag(): Gtag | null {
-  const candidate: unknown = (window as Window & { gtag?: unknown }).gtag;
-  return typeof candidate === "function" ? (candidate as Gtag) : null;
-}
-
-function alreadyReported(key: string): boolean {
-  try {
-    return localStorage.getItem(key) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markReported(key: string) {
-  try {
-    localStorage.setItem(key, "1");
-  } catch {
-    // localStorage geblokkeerd — hooguit een dubbele melding bij refresh
-  }
-}
+const MAX_POLLS = 60; // 15 s
 
 type Props = {
   orderNumber: string;
+  /** Ordertotaal incl. btw en verzending. */
   value: number;
+  shipping: number;
   newCustomer: boolean;
+  items: AnalyticsOrderItem[];
+  paymentMethod: string | null;
+  /** Klantgegevens voor Enhanced Conversions; nooit loggen. */
+  userData: UserData | null;
 };
 
-export function PurchaseConversion({ orderNumber, value, newCustomer }: Props) {
+export function PurchaseConversion({ orderNumber, value, shipping, newCustomer, items, paymentMethod, userData }: Props) {
   useEffect(() => {
-    if (!ADS_ID || !PURCHASE_LABEL) return;
+    if (!isAnalyticsEnabled()) return;
+    if (isPurchaseReported(orderNumber)) return;
 
-    const key = STORAGE_PREFIX + orderNumber;
     let polls = 0;
     let timer: number | undefined;
     let done = false;
 
-    const attempt = () => {
-      if (done || alreadyReported(key)) return;
-      if (getCookieConsent() !== "accepted") return; // wacht op consent-event
+    const schedule = () => {
+      if (polls++ < MAX_POLLS) timer = window.setTimeout(attempt, POLL_MS);
+    };
 
-      const gtag = getGtag();
-      if (!gtag) {
-        if (polls++ < MAX_POLLS) timer = window.setTimeout(attempt, POLL_MS);
+    const attempt = () => {
+      if (done) return;
+      if (!getGtag()) {
+        schedule();
+        return;
+      }
+      const consent = getCookieConsent();
+      if (consent === null && polls < MAX_POLLS) {
+        schedule(); // banner staat open: wacht op de keuze (cookieConsentChanged)
         return;
       }
 
       done = true;
-      gtag("event", "conversion", {
-        send_to: `${ADS_ID}/${PURCHASE_LABEL}`,
-        value,
-        currency: CURRENCY,
-        transaction_id: orderNumber,
-        new_customer: newCustomer,
-      });
-      markReported(key);
+      if (consent === "accepted" && userData) setUserData(userData);
+      trackPurchase({ orderNumber, total: value, shipping, items, newCustomer, paymentMethod });
     };
 
     attempt();
@@ -81,7 +75,7 @@ export function PurchaseConversion({ orderNumber, value, newCustomer }: Props) {
       window.clearTimeout(timer);
       window.removeEventListener("cookieConsentChanged", attempt);
     };
-  }, [orderNumber, value, newCustomer]);
+  }, [orderNumber, value, shipping, newCustomer, items, paymentMethod, userData]);
 
   return null;
 }
