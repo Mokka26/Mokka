@@ -1,5 +1,7 @@
+import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { toCents, fromCents, vatFromGrossCents } from "@/lib/money";
 
 export type CheckoutLineInput = {
   productId: string;
@@ -14,7 +16,14 @@ export type ComputedLine = {
   productName: string;
   variantLabel: string | null;
   quantity: number;
-  price: number; // stukprijs (verkoopprijs, evt. maat-override)
+  /** Stukprijs in euro's (verkoopprijs, evt. maat-override + opties). */
+  price: number;
+  /** Stukprijs in centen — basis voor alle optellingen. */
+  unitCents: number;
+  /** Regeltotaal in centen (unitCents × quantity). */
+  totalCents: number;
+  /** Btw-deel van het regeltotaal in centen. */
+  vatCents: number;
 };
 
 export type ComputedOrder = {
@@ -22,9 +31,30 @@ export type ComputedOrder = {
   subtotal: number;
   shipping: number;
   total: number;
+  subtotalCents: number;
+  shippingCents: number;
+  totalCents: number;
+  /** Btw over het totaal, in centen — afgeleid van de regels zodat het exact optelt. */
+  vatCents: number;
+  country: string;
 };
 
 type SizeVariant = { label: string; price?: number };
+
+/** Minimale productvelden die nodig zijn om één regel te prijzen. */
+export type PriceableProduct = {
+  price: number;
+  sizeVariants: string | null;
+  nachtkastMode: string | null;
+  nachtkastPrice: number | null;
+  nachtkastPrice2: number | null;
+  voetbankMode: string | null;
+  voetbankPrice: number | null;
+};
+
+export type LinePricing =
+  | { ok: true; unitCents: number; variantLabel: string | null; fullLabel: string | null }
+  | { ok: false; reason: "VARIANT_MISSING" | "NO_PRICE" };
 
 /**
  * Prijs voor de gekozen maat. Geeft `null` als het product maat-varianten heeft
@@ -44,11 +74,44 @@ function variantPrice(sizeVariants: string | null, label: string | null, fallbac
 }
 
 /**
- * Berekent het ordertotaal SERVER-SIDE uit de database. De prijs die de client
- * stuurt wordt nooit vertrouwd: elke prijs komt vers uit Product (incl. de
- * maat-override). Gooit een Error bij een ongeldige/onverkoopbare regel.
+ * Prijst één regel (maat + nachtkast + voetbank) vers uit de productdata.
+ * Gedeeld door computeOrder (checkout) en getCartSnapshot (cart-sync) zodat
+ * beide altijd dezelfde prijs geven.
  */
-export async function computeOrder(items: CheckoutLineInput[]): Promise<ComputedOrder> {
+export function priceLine(
+  p: PriceableProduct,
+  opts: { variantLabel?: string | null; nachtkast?: number; voetbank?: number },
+): LinePricing {
+  const label = opts.variantLabel?.trim() || null;
+  const sizePrice = variantPrice(p.sizeVariants, label, p.price);
+  if (sizePrice === null) return { ok: false, reason: "VARIANT_MISSING" };
+  if (!(sizePrice > 0)) return { ok: false, reason: "NO_PRICE" };
+  // Nachtkast-toeslag — alleen bij modus "optional" (apart bij te bestellen);
+  // prijs komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
+  // "included" en "none" geven geen toeslag.
+  const nk = p.nachtkastMode === "optional" ? Math.max(0, Math.min(2, Math.floor(opts.nachtkast ?? 0))) : 0;
+  const nkAddon = nk === 1 ? (p.nachtkastPrice ?? 0)
+    : nk === 2 ? (p.nachtkastPrice2 ?? (p.nachtkastPrice ?? 0) * 2)
+    : 0;
+  // Voetbank-toeslag — alleen bij modus "optional", 0/1.
+  const vb = p.voetbankMode === "optional" ? Math.max(0, Math.min(1, Math.floor(opts.voetbank ?? 0))) : 0;
+  const vbAddon = vb * (p.voetbankPrice ?? 0);
+  const unitCents = toCents(sizePrice) + toCents(nkAddon) + toCents(vbAddon);
+  const extras = [
+    nk > 0 ? `${nk} nachtkast${nk > 1 ? "en" : ""}` : "",
+    vb > 0 ? "voetbank" : "",
+  ].filter(Boolean).join(" · ");
+  const fullLabel = extras ? `${label ?? ""}${label ? " · " : ""}${extras}`.trim() : label;
+  return { ok: true, unitCents, variantLabel: label, fullLabel };
+}
+
+/**
+ * Berekent het ordertotaal SERVER-SIDE uit de database, in centen. De prijs
+ * die de client stuurt wordt nooit vertrouwd: elke prijs komt vers uit Product
+ * (incl. de maat-override). Gooit een Error bij een ongeldige/onverkoopbare
+ * regel. `country` bepaalt of gratis verzending geldt (NL/BE).
+ */
+export async function computeOrder(items: CheckoutLineInput[], country = "NL"): Promise<ComputedOrder> {
   if (!Array.isArray(items) || items.length === 0) throw new Error("Lege winkelwagen");
 
   const ids = [...new Set(items.map((i) => i.productId))];
@@ -58,6 +121,7 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
+  const vat = shippingInfo.vatRatePercent;
   const lines: ComputedLine[] = [];
   for (const item of items) {
     const p = byId.get(item.productId);
@@ -66,27 +130,25 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     // Voorraadcheck — voorkomt overselling (order + betaling voor niet-leverbaar).
     if (p.stock <= 0) throw new Error(`${p.name} is uitverkocht`);
     if (qty > p.stock) throw new Error(`${p.name}: nog ${p.stock} op voorraad`);
-    const label = item.variantLabel?.trim() || null;
-    const sizePrice = variantPrice(p.sizeVariants, label, p.price);
-    if (sizePrice === null) throw new Error(`De gekozen maat voor ${p.name} is niet meer beschikbaar`);
-    if (!(sizePrice > 0)) throw new Error(`Geen geldige prijs voor ${p.name}`);
-    // Nachtkast-toeslag — alleen bij modus "optional" (apart bij te bestellen);
-    // prijs komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
-    // "included" en "none" geven geen toeslag.
-    const nk = p.nachtkastMode === "optional" ? Math.max(0, Math.min(2, Math.floor(item.nachtkast ?? 0))) : 0;
-    const nkAddon = nk === 1 ? (p.nachtkastPrice ?? 0)
-      : nk === 2 ? (p.nachtkastPrice2 ?? (p.nachtkastPrice ?? 0) * 2)
-      : 0;
-    // Voetbank-toeslag — alleen bij modus "optional", 0/1.
-    const vb = p.voetbankMode === "optional" ? Math.max(0, Math.min(1, Math.floor(item.voetbank ?? 0))) : 0;
-    const vbAddon = vb * (p.voetbankPrice ?? 0);
-    const price = sizePrice + nkAddon + vbAddon;
-    const extras = [
-      nk > 0 ? `${nk} nachtkast${nk > 1 ? "en" : ""}` : "",
-      vb > 0 ? "voetbank" : "",
-    ].filter(Boolean).join(" · ");
-    const fullLabel = extras ? `${label ?? ""}${label ? " · " : ""}${extras}`.trim() : label;
-    lines.push({ productId: p.id, productName: p.name, variantLabel: fullLabel, quantity: qty, price });
+    const priced = priceLine(p, item);
+    if (!priced.ok) {
+      throw new Error(
+        priced.reason === "VARIANT_MISSING"
+          ? `De gekozen maat voor ${p.name} is niet meer beschikbaar`
+          : `Geen geldige prijs voor ${p.name}`,
+      );
+    }
+    const totalCents = priced.unitCents * qty;
+    lines.push({
+      productId: p.id,
+      productName: p.name,
+      variantLabel: priced.fullLabel,
+      quantity: qty,
+      price: fromCents(priced.unitCents),
+      unitCents: priced.unitCents,
+      totalCents,
+      vatCents: vatFromGrossCents(totalCents, vat),
+    });
   }
 
   // Voorraad ook per PRODUCT aggregeren: hetzelfde bed in twee maten/opties zijn
@@ -99,15 +161,47 @@ export async function computeOrder(items: CheckoutLineInput[]): Promise<Computed
     if (totalQty > p.stock) throw new Error(`${p.name}: nog ${p.stock} op voorraad`);
   }
 
-  const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
-  const shipping = isEligibleForFreeShipping(subtotal) ? 0 : shippingInfo.rates.standard;
-  const total = subtotal + shipping;
-  return { lines, subtotal, shipping, total };
+  const subtotalCents = lines.reduce((s, l) => s + l.totalCents, 0);
+  const shippingCents = isEligibleForFreeShipping(fromCents(subtotalCents), country)
+    ? 0
+    : toCents(shippingInfo.rates.standard);
+  const totalCents = subtotalCents + shippingCents;
+  const vatCents = lines.reduce((s, l) => s + l.vatCents, 0) + vatFromGrossCents(shippingCents, vat);
+  return {
+    lines,
+    subtotal: fromCents(subtotalCents),
+    shipping: fromCents(shippingCents),
+    total: fromCents(totalCents),
+    subtotalCents,
+    shippingCents,
+    totalCents,
+    vatCents,
+    country,
+  };
 }
 
-/** Uniek, leesbaar ordernummer (MOK-XXXXX-YYY). */
-export function generateOrderNumber(now: number): string {
-  const stamp = now.toString(36).toUpperCase().slice(-6);
-  const rand = Math.floor(Math.random() * 36 ** 3).toString(36).toUpperCase().padStart(3, "0");
-  return `MOK-${stamp}-${rand}`;
+// Leesbaar alfabet zonder verwarrende tekens (0/O, 1/I/L) — klanten lezen het
+// ordernummer aan de telefoon voor.
+const ORDER_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+/**
+ * Uniek, leesbaar ordernummer: MOK-YYMMDD-XXXXX. Het random deel komt uit
+ * crypto.randomBytes (niet Math.random): ~28 miljoen combinaties per dag, en
+ * het ordernummer mag nooit voorspelbaar zijn. Bij een (extreem zeldzame)
+ * botsing vangt de checkout P2002 af en probeert één keer opnieuw.
+ */
+export function generateOrderNumber(now: number = Date.now()): string {
+  const d = new Date(now);
+  const yy = String(d.getFullYear() % 100).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const bytes = randomBytes(5);
+  let rand = "";
+  for (let i = 0; i < 5; i++) rand += ORDER_ALPHABET[bytes[i] % ORDER_ALPHABET.length];
+  return `MOK-${yy}${mm}${dd}-${rand}`;
+}
+
+/** Niet-raadbare publieke token voor de bedankpagina (32 hex = 128 bit). */
+export function generatePublicToken(): string {
+  return randomBytes(16).toString("hex");
 }

@@ -1,8 +1,7 @@
 // Auto-purge prullenbak items ouder dan RETENTION_DAYS.
 //
-// Beveiliging:
-//   - Verwacht header `Authorization: Bearer <CRON_SECRET>` (Vercel cron + custom)
-//   - Of `x-vercel-cron: 1` (Vercel cron jobs hebben dit)
+// Beveiliging: uitsluitend `Authorization: Bearer <CRON_SECRET>` (zie
+// lib/cron-auth.ts). Vercel Cron stuurt die header automatisch mee.
 //
 // Aanroepen:
 //   POST /api/cron/purge-trash       (vanaf Vercel cron of handmatig met secret)
@@ -14,25 +13,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
 import { extractPublicId } from "@/lib/cloudinary-helpers";
+import { isCronAuthorized } from "@/lib/cron-auth";
+import { captureError } from "@/lib/sentry";
 
 const RETENTION_DAYS = 30;
 
 export const dynamic = "force-dynamic";
 
-function isAuthorized(req: NextRequest): boolean {
-  const auth = req.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (auth && secret && auth === `Bearer ${secret}`) return true;
-  // Vercel cron jobs add this header automatisch
-  if (req.headers.get("x-vercel-cron") === "1" && secret) {
-    // Vereis nog steeds dat CRON_SECRET is geconfigureerd
-    return true;
-  }
-  return false;
-}
-
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -64,20 +53,21 @@ export async function POST(req: NextRequest) {
           try {
             await cloudinary.uploader.destroy(pid, { invalidate: true });
             result.productImagesDestroyed += 1;
-          } catch {
+          } catch (e) {
             result.cloudinaryFailures += 1;
+            captureError(e, { scope: "purgeTrash.cloudinary", publicId: pid });
           }
         }
       }
     } catch {
-      // images corrupt → sla over
+      // images-JSON corrupt → geen assets te verwijderen; product zelf wel.
     }
 
     try {
       await prisma.product.delete({ where: { id: p.id } });
       result.productsPurged += 1;
-    } catch {
-      // continue
+    } catch (e) {
+      captureError(e, { scope: "purgeTrash.product", slug: p.slug });
     }
   }
 
@@ -90,14 +80,15 @@ export async function POST(req: NextRequest) {
   for (const di of expiredImages) {
     try {
       await cloudinary.uploader.destroy(di.publicId, { invalidate: true });
-    } catch {
+    } catch (e) {
       result.cloudinaryFailures += 1;
+      captureError(e, { scope: "purgeTrash.deletedImage", publicId: di.publicId });
     }
     try {
       await prisma.deletedImage.delete({ where: { id: di.id } });
       result.deletedImagesPurged += 1;
-    } catch {
-      // continue
+    } catch (e) {
+      captureError(e, { scope: "purgeTrash.deletedImageRow", id: di.id });
     }
   }
 

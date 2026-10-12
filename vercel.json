@@ -2,7 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["fra1"],
   "crons": [
-    { "path": "/api/keep-alive", "schedule": "*/5 * * * *" },
+    { "path": "/api/keep-alive", "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/reconcile-orders", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/cleanup", "schedule": "30 3 * * *" },
     { "path": "/api/cron/purge-trash", "schedule": "0 3 * * *" }
   ]
 }

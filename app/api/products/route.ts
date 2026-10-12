@@ -76,12 +76,10 @@ export async function GET(request: NextRequest) {
   // het weglaten van de overige image-URL's ~80% response-grootte.
   const products = rows.map((p) => ({ ...p, images: firstImageOnly(p.images) }));
 
-  return NextResponse.json(
-    { products },
-    {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-      },
-    },
-  );
+  // Admin-respons (met verborgen producten) mag NOOIT in een gedeelde cache
+  // (CDN) belanden en daarna aan anonieme bezoekers worden geserveerd.
+  const headers: Record<string, string> = includeHidden
+    ? { "Cache-Control": "private, no-store", Vary: "Cookie" }
+    : { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" };
+  return NextResponse.json({ products }, { headers });
 }

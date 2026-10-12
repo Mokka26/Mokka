@@ -1,32 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isCronAuthorized } from "@/lib/cron-auth";
+import { captureError } from "@/lib/sentry";
 
-// Vercel cron pingt deze elke 5 min om Neon (auto-suspend na ~5 min idle)
+// Vercel cron pingt deze elke 10 min om Neon (auto-suspend na ~5 min idle)
 // wakker te houden. Voorkomt cold-start van 3-10s bij eerste user-request.
 //
-// Gebruikt $queryRaw met een no-op SELECT zodat Prisma geen schema cache mist;
-// een echte SELECT 1 dwingt een DB-roundtrip af.
+// Alleen voor de cron (Bearer CRON_SECRET): anoniem kon iedereen hiermee
+// onbeperkt DB-roundtrips afdwingen. De respons is generiek — geen
+// foutmeldingen of timings naar buiten (die staan in Sentry).
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
-  const t0 = Date.now();
+const NO_STORE = { "Cache-Control": "no-store" };
+
+export async function GET(req: NextRequest) {
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE });
+  }
   try {
     await prisma.$queryRaw`SELECT 1`;
-    return NextResponse.json({
-      ok: true,
-      ms: Date.now() - t0,
-      ts: new Date().toISOString(),
-    });
+    return NextResponse.json({ ok: true }, { headers: NO_STORE });
   } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-        ms: Date.now() - t0,
-      },
-      { status: 500 },
-    );
+    captureError(err, { scope: "keepAlive" });
+    return NextResponse.json({ ok: false }, { status: 503, headers: NO_STORE });
   }
 }

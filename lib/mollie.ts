@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
-import { createMollieClient, Locale, type MollieClient } from "@mollie/api-client";
+import { createMollieClient, Locale, MollieApiError, type MollieClient } from "@mollie/api-client";
+import { centsToMollieValue, toCents } from "@/lib/money";
 
 // Mollie-client (server-only). Leest MOLLIE_API_KEY (test_… of live_…).
 let client: MollieClient | null = null;
@@ -11,9 +12,21 @@ export function getMollie(): MollieClient {
   return client;
 }
 
+export type MollieAmount = { currency: "EUR"; value: string };
+
 /** Mollie verwacht bedragen als string met exact 2 decimalen, bv. "799.00". */
-export function toMollieAmount(value: number): { currency: "EUR"; value: string } {
-  return { currency: "EUR", value: value.toFixed(2) };
+export function toMollieAmount(value: number): MollieAmount {
+  return toMollieAmountCents(toCents(value));
+}
+
+/** Zelfde, maar vanuit centen (exact — geen float-afronding onderweg). */
+export function toMollieAmountCents(cents: number): MollieAmount {
+  return { currency: "EUR", value: centsToMollieValue(cents) };
+}
+
+/** Mollie kent het id niet (404) — bv. een webhook voor een verwijderde/andere-account betaling. */
+export function isMollieNotFound(err: unknown): boolean {
+  return err instanceof MollieApiError && err.statusCode === 404;
 }
 
 export type CheckoutMethod = { id: string; description: string; image: string | null };
@@ -33,7 +46,7 @@ export async function listEnabledMethods(
       ...(amountValue && amountValue > 0 ? { amount: toMollieAmount(amountValue) } : {}),
       billingCountry,
       includeWallets: "applepay",
-      locale: Locale.nl_NL,
+      locale: billingCountry === "BE" ? Locale.nl_BE : Locale.nl_NL,
     });
     return methods.map((m) => ({
       id: m.id,

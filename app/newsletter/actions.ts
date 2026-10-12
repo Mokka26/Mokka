@@ -1,34 +1,74 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { sendMail, INFO_EMAIL } from "@/lib/email";
+import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
+import { sendNewsletterConfirmation } from "@/lib/email";
+import { businessInfo } from "@/lib/business-info";
+import { captureError } from "@/lib/sentry";
 
-const emailSchema = z.string().trim().email("Ongeldig e-mailadres").max(120);
+/**
+ * Nieuwsbrief-aanmelding met double opt-in:
+ *   1. aanmelding → confirmToken + bevestigingsmail met link naar
+ *      /nieuwsbrief/bevestigen?token=…
+ *   2. klik → confirmedAt gezet, welkomstmail + melding naar info@
+ *      (app/nieuwsbrief/bevestigen/page.tsx).
+ * Niet-bevestigde aanmeldingen worden na 7 dagen opgeruimd (cron/cleanup).
+ *
+ * Spam-bescherming: honeypot `website` (moet leeg zijn) en `startedAt`
+ * (ms-epoch; inzending < 3 s = bot). Beide optioneel totdat de UI ze stuurt.
+ * Compatibel: `subscribeNewsletter("mail@…")` blijft werken.
+ */
+const MIN_FILL_MS = 3000;
 
-export async function subscribeNewsletter(email: string): Promise<{ ok: boolean; error?: string }> {
-  const parsed = emailSchema.safeParse(email);
+const inputSchema = z.object({
+  email: z.string().trim().email("Ongeldig e-mailadres").max(120),
+  website: z.string().max(200).optional(),
+  startedAt: z.number().int().nonnegative().optional(),
+});
+
+export type NewsletterInput = string | z.input<typeof inputSchema>;
+
+const GENERIC_ERROR = "Er ging iets mis. Probeer het later opnieuw.";
+
+export async function subscribeNewsletter(input: NewsletterInput): Promise<{ ok: boolean; error?: string }> {
+  const parsed = inputSchema.safeParse(typeof input === "string" ? { email: input } : input);
   if (!parsed.success) return { ok: false, error: "Vul een geldig e-mailadres in" };
+  const { email, website, startedAt } = parsed.data;
 
-  const rl = await rateLimit(`newsletter:ip:${await clientIp()}`, 5, 10 * 60 * 1000);
-  if (!rl.ok) return { ok: false, error: "Te veel pogingen. Probeer het later opnieuw." };
+  // Bots krijgen "ok" (geen signaal), zonder opslag of mail.
+  if (website && website.trim() !== "") return { ok: true };
+  if (typeof startedAt === "number" && Date.now() - startedAt < MIN_FILL_MS) return { ok: true };
+
+  const addr = email.toLowerCase();
+  // Per IP én per adres: voorkomt dat iemand een ander adres bestookt met
+  // bevestigingsmails.
+  const [byIp, byEmail] = await Promise.all([
+    rateLimitIp("newsletter", 5, 10 * 60 * 1000),
+    rateLimit(`newsletter:email:${addr}`, 3, 60 * 60 * 1000),
+  ]);
+  if (!byIp.ok || !byEmail.ok) return { ok: false, error: "Te veel pogingen. Probeer het later opnieuw." };
 
   try {
-    const addr = parsed.data.toLowerCase();
-    // Alleen mailen bij een NIEUWE aanmelding (dubbele aanmelding = geen spam
-    // naar info@). findUnique vóór de upsert bepaalt dat.
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email: addr } });
-    await prisma.newsletterSubscriber.upsert({ where: { email: addr }, create: { email: addr }, update: {} });
-    if (!existing) {
-      await sendMail({
-        to: INFO_EMAIL,
-        subject: "📬 Nieuwe nieuwsbrief-aanmelding",
-        text: `Nieuwe aanmelding voor de nieuwsbrief: ${addr}`,
-      });
-    }
+    // Al bevestigd en niet uitgeschreven → niets te doen (zelfde "ok" als een
+    // nieuwe aanmelding, zodat het formulier niet verraadt wie er op de lijst staat).
+    if (existing?.confirmedAt && !existing.unsubscribedAt) return { ok: true };
+
+    const confirmToken = randomBytes(24).toString("hex");
+    await prisma.newsletterSubscriber.upsert({
+      where: { email: addr },
+      create: { email: addr, confirmToken },
+      update: { confirmToken },
+    });
+
+    const base = (process.env.NEXT_PUBLIC_BASE_URL || businessInfo.siteUrl).replace(/\/$/, "");
+    const sent = await sendNewsletterConfirmation(addr, `${base}/nieuwsbrief/bevestigen?token=${confirmToken}`);
+    if (!sent) return { ok: false, error: "We konden de bevestigingsmail niet versturen. Probeer het later opnieuw." };
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Er ging iets mis. Probeer het later opnieuw." };
+  } catch (e) {
+    captureError(e, { scope: "subscribeNewsletter" });
+    return { ok: false, error: GENERIC_ERROR };
   }
 }

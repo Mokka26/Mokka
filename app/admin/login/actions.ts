@@ -4,7 +4,7 @@ import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 import { safeInternalPath } from "@/lib/safePath";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email("Ongeldig e-mailadres"),
@@ -35,13 +35,16 @@ export async function loginAction(
   }
 
   // Bruteforce-bescherming: max 5 pogingen per 10 min per IP + per e-mailadres.
-  const ip = await clientIp();
+  // Fail closed: zonder werkende limiter geen login. (authorize() in auth.ts
+  // heeft daarnaast een eigen limiet voor directe POSTs op de callback-route.)
   const emailKey = parsed.data.email.toLowerCase();
-  for (const key of [`login:ip:${ip}`, `login:email:${emailKey}`]) {
-    const rl = await rateLimit(key, 5, 10 * 60 * 1000);
-    if (!rl.ok) {
-      return { error: `Te veel inlogpogingen. Probeer het over ${Math.ceil(rl.retryAfter / 60)} minuten opnieuw.` };
-    }
+  const [byIp, byEmail] = await Promise.all([
+    rateLimitIp("login", 5, 10 * 60 * 1000, { failClosed: true }),
+    rateLimit(`login:email:${emailKey}`, 5, 10 * 60 * 1000, { failClosed: true }),
+  ]);
+  const blocked = [byIp, byEmail].find((r) => !r.ok);
+  if (blocked) {
+    return { error: `Te veel inlogpogingen. Probeer het over ${Math.max(1, Math.ceil(blocked.retryAfter / 60))} minuten opnieuw.` };
   }
 
   try {
