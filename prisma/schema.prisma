@@ -67,8 +67,12 @@ model ContactMessage {
 
 // Nieuwsbrief-inschrijvingen.
 model NewsletterSubscriber {
-  email     String   @id
-  createdAt DateTime @default(now())
+  email        String    @id
+  createdAt    DateTime  @default(now())
+  // Double opt-in: token in de bevestigingsmail; confirmedAt gezet na klik.
+  confirmToken String?   @unique
+  confirmedAt  DateTime?
+  unsubscribedAt DateTime?
 }
 
 // Simpele DB-backed rate-limiter (werkt over serverless-instances heen).
@@ -98,8 +102,24 @@ model Order {
   orderNumber String     @unique
   total      Float
   shipping   Float       @default(0)
-  status     String      @default("open") // open | paid | failed | canceled | expired
+  status     String      @default("open") // open | paid | failed | canceled | expired | refunded
   molliePaymentId String?
+  // Betaalmethode zoals Mollie die meldt (ideal, creditcard, klarna…), gezet bij paid.
+  paymentMethod   String?
+  paidAt          DateTime?
+  // Publieke, niet-raadbare token voor de bedankpagina (i.p.v. het ordernummer).
+  publicToken     String?   @unique
+  // Wanneer de bevestigingsmail succesvol is verstuurd; null = nog te versturen.
+  confirmationSentAt DateTime?
+  // Afhandeling door de winkel, los van de betaalstatus:
+  //   pending | processing | shipped | delivered | returned
+  fulfillmentStatus String   @default("pending")
+  trackingCode    String?
+  trackingUrl     String?
+  shippedAt       DateTime?
+  adminNote       String?   @db.Text
+  // Google Ads click-id voor server-side conversies.
+  gclid           String?
   firstName  String
   lastName   String
   email      String
@@ -108,11 +128,25 @@ model Order {
   houseNumber String     @default("")
   city       String
   zipCode    String
+  country    String      @default("NL") // ISO-2: NL | BE
   items      OrderItem[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
   @@index([status])
+  @@index([fulfillmentStatus])
+  @@index([createdAt])
+  @@index([email])
+}
+
+// Oude product-slugs blijven werken na een hernoeming (301 naar het product).
+model SlugRedirect {
+  id        String   @id @default(cuid())
+  oldSlug   String   @unique
+  productId String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
 }
 
 model OrderItem {
@@ -135,6 +169,8 @@ model AdminUser {
   email        String   @unique
   name         String
   passwordHash String
+  // Sessies (JWT) van vóór dit tijdstip zijn ongeldig na een wachtwoordwijziging.
+  passwordChangedAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
