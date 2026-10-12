@@ -1,50 +1,80 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { CATEGORIES, dbCategoryToRouteSlug } from "@/lib/categories";
+import { CATEGORIES, productUrl } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 
+export const revalidate = 3600;
+
+const VISIBLE = { hidden: false, deletedAt: null } as const;
+
 /**
- * Genereert sitemap.xml met:
- *  - Statische pagina's (home, about, contact, lookbook)
- *  - Categorie-pagina's (15)
- *  - Product-pagina's onder hun canonieke /<categorie>/<slug>
- *
- * Admin en API routes worden geblokkeerd in robots.ts.
+ * sitemap.xml:
+ *  - statische pagina's
+ *  - categorie-pagina's met ≥ 1 zichtbaar product (lastModified = nieuwste update)
+ *  - /aanbiedingen en /nieuw als ze producten hebben
+ *  - product-pagina's onder hun canonieke /<categorie>/<slug>
+ * Geen priority/changeFrequency (Google negeert ze) en geen /products (noindex).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = businessInfo.siteUrl;
 
-  // Statische pagina's
+  const [perCategory, products, saleCount, newCount] = await Promise.all([
+    prisma.product.groupBy({
+      by: ["category"],
+      where: VISIBLE,
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+    prisma.product.findMany({
+      where: VISIBLE,
+      select: { slug: true, category: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.product.count({
+      where: { ...VISIBLE, price: { gt: 0 }, listPrice: { gt: prisma.product.fields.price } },
+    }),
+    prisma.product.count({ where: { ...VISIBLE, price: { gt: 0 } } }),
+  ]);
+
+  const stats = new Map(perCategory.map((row) => [row.category, row]));
+
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1.0 },
-    { url: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${baseUrl}/contact`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${baseUrl}/products`, changeFrequency: "daily", priority: 0.5 },
-    { url: `${baseUrl}/retourneren`, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${baseUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${baseUrl}/algemene-voorwaarden`, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${baseUrl}/cookies`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/` },
+    { url: `${baseUrl}/about` },
+    { url: `${baseUrl}/contact` },
+    { url: `${baseUrl}/retourneren` },
+    { url: `${baseUrl}/privacy` },
+    { url: `${baseUrl}/algemene-voorwaarden` },
+    { url: `${baseUrl}/cookies` },
   ];
 
-  // Categorie-pagina's
-  const categoryRoutes: MetadataRoute.Sitemap = CATEGORIES.map((c) => ({
-    url: `${baseUrl}/${c.slug}`,
-    changeFrequency: "weekly" as const,
-    priority: c.isUmbrella ? 0.7 : 0.8,
-  }));
+  const categoryRoutes: MetadataRoute.Sitemap = [];
+  for (const c of CATEGORIES) {
+    let count = 0;
+    let lastModified: Date | undefined;
+    for (const db of c.dbCategories) {
+      const row = stats.get(db);
+      if (!row) continue;
+      count += row._count._all;
+      const max = row._max.updatedAt;
+      if (max && (!lastModified || max > lastModified)) lastModified = max;
+    }
+    if (count === 0) continue;
+    categoryRoutes.push({ url: `${baseUrl}/${c.slug}`, lastModified });
+  }
 
-  // Product-pagina's (alleen zichtbare, niet-verwijderde)
-  const products = await prisma.product.findMany({
-    where: { hidden: false, deletedAt: null },
-    select: { slug: true, category: true, updatedAt: true },
-  });
+  const collectionRoutes: MetadataRoute.Sitemap = [];
+  const newest = products[0]?.updatedAt;
+  if (saleCount > 0) collectionRoutes.push({ url: `${baseUrl}/aanbiedingen`, lastModified: newest });
+  if (newCount > 0) collectionRoutes.push({ url: `${baseUrl}/nieuw`, lastModified: newest });
 
-  const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${baseUrl}/${dbCategoryToRouteSlug(p.category)}/${p.slug}`,
-    lastModified: p.updatedAt,
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
+  const productRoutes: MetadataRoute.Sitemap = [];
+  for (const p of products) {
+    const path = productUrl(p);
+    // Categorie zonder route → geen canonieke pagina → niet in de sitemap.
+    if (path.startsWith("/products/")) continue;
+    productRoutes.push({ url: `${baseUrl}${path}`, lastModified: p.updatedAt });
+  }
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  return [...staticRoutes, ...categoryRoutes, ...collectionRoutes, ...productRoutes];
 }

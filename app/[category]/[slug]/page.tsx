@@ -1,18 +1,27 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
 import RecentlyViewed from "@/components/RecentlyViewed";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import {
-  CATEGORIES,
+  complementaryCategoryFor,
   dbCategoryToRouteSlug,
   getCategory,
   isCategorySlug,
 } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
-import { parseImages } from "@/lib/imageHelpers";
-import { shippingInfo } from "@/lib/shipping-info";
-import { jsonLdHtml } from "@/lib/jsonLd";
+import { firstImageOnly } from "@/lib/imageHelpers";
+import {
+  buildBreadcrumbJsonLd,
+  buildProductDescription,
+  buildProductJsonLd,
+  buildProductTitle,
+  jsonLdHtml,
+  type BreadcrumbItem,
+} from "@/lib/jsonLd";
+import { findRedirectTarget } from "@/lib/slug-redirect";
 
 interface Props {
   params: Promise<{ category: string; slug: string }>;
@@ -30,24 +39,75 @@ export function generateStaticParams() {
 export const dynamicParams = true;
 export const revalidate = 3600;
 
+// Expliciete select: geen `source` (interne leverancierstag) en geen
+// `deletedAt`/`hidden` in de payload — het filter zit in de where-clause.
+const PRODUCT_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  description: true,
+  price: true,
+  listPrice: true,
+  category: true,
+  images: true,
+  specs: true,
+  sizeVariants: true,
+  nachtkastMode: true,
+  nachtkastPrice: true,
+  nachtkastPrice2: true,
+  voetbankMode: true,
+  voetbankPrice: true,
+  featured: true,
+  stock: true,
+  deliveryTime: true,
+  colorGroup: true,
+  colorName: true,
+  colorHex: true,
+} as const;
+
+// Kaart-velden voor gerelateerde/aanvullende producten.
+const CARD_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  price: true,
+  listPrice: true,
+  category: true,
+  images: true,
+  featured: true,
+  stock: true,
+  createdAt: true,
+  deliveryTime: true,
+  sizeVariants: true,
+  colorGroup: true,
+  colorName: true,
+  colorHex: true,
+  specs: true,
+} as const;
+
+/** Eén query per request, gedeeld door generateMetadata en de page. */
+const getProduct = cache(async (slug: string) =>
+  prisma.product.findFirst({
+    where: { slug, hidden: false, deletedAt: null },
+    select: PRODUCT_SELECT,
+  }),
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: categorySlug, slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    select: { name: true, description: true, hidden: true, deletedAt: true },
-  });
-  if (!product || product.hidden || product.deletedAt) return { title: "Product niet gevonden" };
+  const category = getCategory(categorySlug);
+  const product = await getProduct(slug);
+  if (!product || !category) {
+    return { title: "Product niet gevonden", robots: { index: false, follow: false } };
+  }
 
-  const url = `/${categorySlug}/${slug}`;
-  const catLabel = getCategory(categorySlug)?.label ?? "";
-  const title = `${product.name} kopen${catLabel ? ` — ${catLabel}` : ""} | ${businessInfo.name}`;
-  const base = product.description.replace(/\s+/g, " ").trim();
-  const description = (
-    base.length >= 120 ? base : `${base ? base + " " : ""}${product.name} online bestellen bij ${businessInfo.name} — snelle levering, veilig betalen.`
-  ).slice(0, 160);
+  const url = `/${category.slug}/${product.slug}`;
+  const title = buildProductTitle(product.name, category.label);
+  const description = buildProductDescription(product.description, product.name, category.label);
 
   return {
-    title,
+    // Absolute title: de layout-template zou anders "| Mokka Home" dubbel zetten.
+    title: { absolute: title },
     description,
     alternates: { canonical: url },
     openGraph: {
@@ -55,8 +115,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url,
-      // Geen `images` hier: laat de gegenereerde opengraph-image.tsx (product-
-      // foto + prijs) de OG-kaart maken i.p.v. de rauwe Cloudinary-bron.
+      locale: "nl_NL",
+      // Geen `images` hier: de gegenereerde opengraph-image.tsx (product-
+      // foto + prijs) maakt de OG-kaart.
     },
   };
 }
@@ -64,110 +125,75 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPageInCategory({ params }: Props) {
   const { category: categorySlug, slug } = await params;
 
+  // 1. Categorie-validatie en product-lookup VÓÓR elke Suspense-boundary,
+  //    zodat notFound()/redirect de echte HTTP-status zetten (404/308).
   if (!isCategorySlug(categorySlug)) notFound();
   const category = getCategory(categorySlug);
   if (!category) notFound();
 
-  const product = await prisma.product.findFirst({
-    where: { slug, hidden: false, deletedAt: null },
-  });
-  if (!product) notFound();
+  const product = await getProduct(slug);
+  if (!product) {
+    // Oude slug? → 308 naar de nieuwe canonieke URL, anders 404.
+    const target = await findRedirectTarget(slug);
+    if (target) permanentRedirect(target.url);
+    notFound();
+  }
 
-  // Hoort dit product wel in deze categorie? Zo niet → redirect naar canonieke URL
+  // 2. Hoort dit product in deze categorie? Zo niet → 308 naar de canonieke URL.
+  const canonicalCategory = dbCategoryToRouteSlug(product.category);
   if (!category.dbCategories.includes(product.category)) {
-    const canonicalCategory = dbCategoryToRouteSlug(product.category);
-    redirect(`/${canonicalCategory}/${product.slug}`);
+    if (!canonicalCategory) notFound();
+    permanentRedirect(`/${canonicalCategory}/${product.slug}`);
+  }
+  // Umbrella (bv. /banken/<slug>): canoniek is de specifieke categorie.
+  if (category.isUmbrella && canonicalCategory && canonicalCategory !== category.slug) {
+    permanentRedirect(`/${canonicalCategory}/${product.slug}`);
   }
 
-  // Voor umbrella's: canonieke URL is de specifieke categorie, niet de umbrella
-  if (category.isUmbrella) {
-    const canonicalCategory = dbCategoryToRouteSlug(product.category);
-    if (canonicalCategory !== category.slug) {
-      redirect(`/${canonicalCategory}/${product.slug}`);
-    }
-  }
-
-  // Related + color variants — zelfde logica als oude route
-  const [relatedProducts, colorVariants] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        category: product.category,
-        id: { not: product.id },
-        hidden: false,
-        deletedAt: null,
-      },
-      take: 4,
-      // Kaart-velden (+ description voor het gedeelde Product-type; slechts 4 rijen).
-      select: {
-        id: true, slug: true, name: true, price: true, listPrice: true, description: true,
-        category: true, images: true, featured: true, stock: true, createdAt: true,
-        colorGroup: true, colorName: true, colorHex: true, specs: true,
-      },
-    }),
+  // 3. Kleurvarianten (alleen zichtbare), gerelateerde producten uit dezelfde
+  //    categorie en "Past goed bij" uit de aanvullende categorie. Alles ná de
+  //    404/redirect-checks, zodat de HTTP-status klopt.
+  const complementary = complementaryCategoryFor(product.category);
+  const [colorVariants, relatedProducts, complementaryProducts] = await Promise.all([
     product.colorGroup
       ? prisma.product.findMany({
-          where: { colorGroup: product.colorGroup, deletedAt: null },
+          where: { colorGroup: product.colorGroup, hidden: false, deletedAt: null },
           select: { id: true, slug: true, colorName: true, colorHex: true },
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
+    prisma.product.findMany({
+      where: { category: product.category, id: { not: product.id }, hidden: false, deletedAt: null },
+      take: 4,
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      select: CARD_SELECT,
+    }),
+    complementary
+      ? prisma.product.findMany({
+          where: {
+            category: { in: [...complementary.dbCategories] },
+            hidden: false,
+            deletedAt: null,
+            price: { gt: 0 },
+          },
+          take: 4,
+          orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+          select: CARD_SELECT,
+        })
+      : Promise.resolve([]),
   ]);
+  // Payload-trim: de kaart toont alleen foto 1.
+  for (const p of relatedProducts) p.images = firstImageOnly(p.images);
+  for (const p of complementaryProducts) p.images = firstImageOnly(p.images);
 
-  // JSON-LD: Product + BreadcrumbList
-  const images = parseImages(product.images).map((i) => i.url);
-  const productSchema: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    sku: product.slug,
-    image: images,
-    brand: { "@type": "Brand", name: businessInfo.name },
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "EUR",
-      price: product.price.toFixed(2),
-      availability:
-        product.stock > 0
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
-      url: `${businessInfo.siteUrl}/${category.slug}/${product.slug}`,
-      seller: { "@type": "Organization", name: businessInfo.legalName },
-      shippingDetails: {
-        "@type": "OfferShippingDetails",
-        shippingRate: {
-          "@type": "MonetaryAmount",
-          value:
-            product.price >= shippingInfo.freeShippingThreshold ? 0 : shippingInfo.rates.standard,
-          currency: "EUR",
-        },
-        shippingDestination: shippingInfo.freeShippingCountries.map((c) => ({
-          "@type": "DefinedRegion",
-          addressCountry: c,
-        })),
-      },
-    },
-  };
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${businessInfo.siteUrl}/` },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: category.label,
-        item: `${businessInfo.siteUrl}/${category.slug}`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: product.name,
-        item: `${businessInfo.siteUrl}/${category.slug}/${product.slug}`,
-      },
-    ],
-  };
+  const url = `/${category.slug}/${product.slug}`;
+  const breadcrumbs: BreadcrumbItem[] = [
+    { name: "Home", url: "/" },
+    { name: category.label, url: `/${category.slug}` },
+    { name: product.name, url },
+  ];
+  const productSchema = buildProductJsonLd(product, { url: `${businessInfo.siteUrl}${url}` });
+  const breadcrumbSchema = buildBreadcrumbJsonLd(breadcrumbs);
 
   return (
     <>
@@ -179,15 +205,16 @@ export default async function ProductPageInCategory({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbSchema) }}
       />
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40">
+        <Breadcrumbs items={breadcrumbs} />
+      </div>
       <ProductDetailClient
         product={product}
         relatedProducts={relatedProducts}
+        complementaryProducts={complementaryProducts}
         colorVariants={colorVariants}
       />
       <RecentlyViewed currentSlug={product.slug} />
     </>
   );
 }
-
-// Ensure CATEGORIES wordt gebundeld (anders tree-shake door static gen)
-void CATEGORIES;

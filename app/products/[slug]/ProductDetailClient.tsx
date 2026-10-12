@@ -1,23 +1,37 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
-import Image from "next/image";
+import { Suspense, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import useEmblaCarousel from "embla-carousel-react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import ProductCard from "@/components/ProductCard";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import ProductCard, { type ProductCardProduct } from "@/components/ProductCard";
 import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
-import { toast } from "sonner";
-import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
 import { parseImages } from "@/lib/imageHelpers";
-import { getUspsByKey, shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
-import { getCategory, productUrl } from "@/lib/categories";
-import { formatPrice } from "@/components/ui/price";
+import { getCategory } from "@/lib/categories";
+import { Price, formatPrice } from "@/components/ui/price";
+import { StockBadge } from "@/components/ui/StockBadge";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import { ProductGallery } from "@/components/product/ProductGallery";
+import { ColorSwatches, type ColorVariant } from "@/components/product/ColorSwatches";
+import { PurchaseInfo } from "@/components/product/PurchaseInfo";
+import { ProductDescription } from "@/components/product/ProductDescription";
+import { orientationOf } from "@/components/product/imageAspect";
+import {
+  DELIVERY_KEY_RE,
+  DIMENSION_KEYS,
+  dimensionContext,
+  findSpec,
+  parseSizeVariants,
+  parseSpecs,
+  type SizeVariant,
+} from "@/components/product/specs";
 
-interface Product {
+// Lightbox (embla + grote foto's) pas laden als een foto wordt vergroot.
+const ProductLightbox = dynamic(() => import("@/components/product/ProductLightbox"), { ssr: false });
+
+export interface Product {
   id: string;
   slug: string;
   name: string;
@@ -41,856 +55,399 @@ interface Product {
   colorHex?: string | null;
 }
 
-type SizeVariant = { label: string; price?: number; listPrice?: number };
-
-function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
-  if (!raw) return [];
-  try {
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr)) return [];
-    return arr
-      .filter((v) => v && typeof v.label === "string")
-      .map((v) => ({
-        label: String(v.label),
-        ...(typeof v.price === "number" ? { price: Number(v.price) } : {}),
-        ...(typeof v.listPrice === "number" ? { listPrice: Number(v.listPrice) } : {}),
-      }));
-  } catch {
-    return [];
-  }
-}
-
-interface ColorVariant {
-  id: string;
-  slug: string;
-  colorName: string | null;
-  colorHex: string | null;
-}
-
-function parseSpecs(raw: string | null | undefined): Record<string, string> {
-  if (!raw) return {};
-  try {
-    const obj = JSON.parse(raw);
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return {};
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      if (typeof k === "string" && typeof v === "string") out[k] = v;
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 interface Props {
   product: Product;
-  relatedProducts: Product[];
+  relatedProducts: ProductCardProduct[];
   colorVariants: ColorVariant[];
+  /** "Past goed bij" — aanvullende producten uit andere categorieën (optioneel). */
+  complementaryProducts?: ProductCardProduct[];
 }
 
-// Icons matched op USP-key uit lib/shipping-info
-const USP_ICONS: Record<string, string> = {
-  shipping: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
-  warranty: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-  matras: "M3 12V8a2 2 0 012-2h14a2 2 0 012 2v4m-18 0h18m-18 0v4m18-4v4M3 14h18",
-  return: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
-};
+/** Event waarmee de Navbar de winkelwagen-drawer kan openen (cancelable). */
+export const OPEN_CART_EVENT = "mokka:open-cart";
 
-export default function ProductDetailClient({ product, relatedProducts, colorVariants }: Props) {
-  const parsed = parseImages(product.images);
-  const images: string[] = parsed.map((i) => i.url);
-  // Vierkante weergave (1:1) + c_fill: vrijwel alle productfoto's zijn vierkant,
-  // dus ze vullen het frame exact — geen witte zijbalken, volledig product.
-  const sourceWAt = (idx: number): number | undefined => parsed[idx]?.w;
+/**
+ * Leest `?maat=<label>` (feed-links per maatvariant) en selecteert die maat.
+ * Apart component in Suspense: useSearchParams mag niet in de statische
+ * render van de (ISR-)pagina.
+ */
+function SizeFromQuery({ variants, onSelect }: { variants: SizeVariant[]; onSelect: (index: number) => void }) {
+  const params = useSearchParams();
+  const maat = params.get("maat");
+  useEffect(() => {
+    if (!maat) return;
+    const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+    const idx = variants.findIndex((v) => norm(v.label) === norm(maat));
+    if (idx >= 0) onSelect(idx);
+  }, [maat, variants, onSelect]);
+  return null;
+}
 
-  // USP's op de productpagina: verzending, retour + garantie per categorie
-  // (standaard 1j, bedden 2j, slaapkamers geen → dan geen garantie-USP).
-  const warrantyY = warrantyYearsFor(product.category);
-  const usps = [
-    { icon: USP_ICONS.shipping, label: getUspsByKey("shipping")[0]?.title ?? "Gratis verzending" },
-    { icon: USP_ICONS.return, label: "14 dagen retour" },
-    ...(warrantyY > 0 ? [{ icon: USP_ICONS.warranty, label: `${warrantyY} jaar garantie` }] : []),
-  ];
+const OPTION_BTN = "inline-flex items-center justify-center px-4 py-2.5 min-h-11 text-[15px] border rounded-[8px] transition-colors";
+const OPTION_ACTIVE = "bg-ink text-paper border-ink";
+const OPTION_IDLE = "bg-transparent text-ink border-line hover:border-ink";
+
+export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [] }: Props) {
+  const router = useRouter();
+  const images = parseImages(product.images);
+  const orientation = orientationOf(images[0]);
+  const categoryInfo = getCategory(product.category);
+  const categoryLabel = categoryInfo?.label ?? product.category;
+  const categorySubtitle = categoryInfo?.cardSubtitle ?? null;
+
+  // Specs één keer parsen; levertijd niet dubbel tonen (staat in het koopblok).
+  const specs = parseSpecs(product.specs);
+  const dimensions = findSpec(specs, ...DIMENSION_KEYS);
+  const dimensionNote = dimensionContext(product.category, dimensions);
+  const specEntries = Object.entries(specs).filter(([k]) => !DELIVERY_KEY_RE.test(k));
 
   // Maat-varianten (bv. bedden): elke maat een eigen prijs. Eerste maat is
-  // standaard geselecteerd. Geen varianten → normale enkele prijs.
+  // standaard geselecteerd, tenzij ?maat= een andere kiest.
   const sizeVariants = parseSizeVariants(product.sizeVariants);
   const [selectedSize, setSelectedSize] = useState(0);
   const activeVariant = sizeVariants[selectedSize] ?? null;
-  // Maat-prijs is een optionele override; leeg → product-verkoopprijs/advies.
   const activePrice = activeVariant?.price ?? product.price;
   const activeListPrice = activeVariant?.listPrice ?? product.listPrice ?? null;
-  const hasDiscount = activeListPrice != null && activeListPrice > activePrice;
 
-  // Nachtkast-optie (bedden), modus per bed in de admin:
-  //  - "included": nachtkast hoort erbij → "inclusief nachtkast" (geen meerprijs)
-  //  - "optional": klant kiest 0/1/2 → toeslag (1 = prijs1, 2 = prijs2)
-  //  - anders: geen nachtkast.
+  // Nachtkast-optie (bedden): "included" = inbegrepen, "optional" = 0/1/2 tegen toeslag.
   const nkPrice1 = product.nachtkastPrice ?? 0;
   const nkPrice2 = product.nachtkastPrice2 ?? nkPrice1 * 2;
   const isNkOptional = product.nachtkastMode === "optional" && nkPrice1 > 0;
   const nkAddon = (n: number) => (n === 1 ? nkPrice1 : n === 2 ? nkPrice2 : 0);
   const [nachtkast, setNachtkast] = useState(0);
 
-  // Voetbank-optie (bedden), zelfde standen als nachtkast; 0/1 tegen voetbankPrice.
+  // Voetbank-optie (bedden): 0/1 tegen voetbankPrice.
   const vbPrice = product.voetbankPrice ?? 0;
   const isVbOptional = product.voetbankMode === "optional" && vbPrice > 0;
   const [voetbank, setVoetbank] = useState(0);
 
-  // Regel-prijs = maatprijs + gekozen nachtkasten + voetbank (alleen bij "optional").
-  const lineUnitPrice = activePrice
-    + (isNkOptional ? nkAddon(nachtkast) : 0)
-    + (isVbOptional ? voetbank * vbPrice : 0);
+  const lineUnitPrice = activePrice + (isNkOptional ? nkAddon(nachtkast) : 0) + (isVbOptional ? voetbank * vbPrice : 0);
+  const hasOptions = (isNkOptional && nachtkast > 0) || (isVbOptional && voetbank > 0);
 
-  const [added, setAdded] = useState(false);
+  const stock = product.stock ?? 0;
+  const inStock = stock > 0;
+  const priceOnRequest = activePrice <= 0;
+  const canBuy = inStock && !priceOnRequest;
+  const requestUrl = `/contact?product=${encodeURIComponent(product.slug)}`;
+
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [zoomActive, setZoomActive] = useState(false);
-  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
-  // Portal mount-flag: createPortal vereist een client-side document
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [added, setAdded] = useState(false);
+  const [lightbox, setLightbox] = useState<number | null>(null);
   const { addToCart } = useCart();
 
-  // Categorie-regel onder de prijs (bv. banken → "In diverse uitvoeringen
-  // en kleuren."). Bron: lib/categories.ts.
-  const categorySubtitle = getCategory(product.category)?.cardSubtitle ?? null;
-
-  // Mobile swipe carousel
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: "start" });
-  // Lightbox carousel (loops)
-  const [lightboxRef, lightboxApi] = useEmblaCarousel({ loop: true });
-
-  const scrollTo = useCallback(
-    (index: number) => emblaApi && emblaApi.scrollTo(index),
-    [emblaApi]
-  );
-
   useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => setActiveSlide(emblaApi.selectedScrollSnap());
-    emblaApi.on("select", onSelect);
-    onSelect();
-    return () => {
-      emblaApi.off("select", onSelect);
-    };
-  }, [emblaApi]);
+    if (!added) return;
+    const t = window.setTimeout(() => setAdded(false), 2500);
+    return () => window.clearTimeout(t);
+  }, [added]);
 
-  // Lightbox: sync swipe → index, jump to start index on open.
-  // lightboxIndex is hier alleen seed bij init; embla "select" stuurt het verder.
-  useEffect(() => {
-    if (!lightboxApi) return;
-    lightboxApi.scrollTo(lightboxIndex, true);
-    const onSelect = () => setLightboxIndex(lightboxApi.selectedScrollSnap());
-    lightboxApi.on("select", onSelect);
-    return () => {
-      lightboxApi.off("select", onSelect);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lightboxApi]);
-
-  // Lightbox: scroll lock + keyboard navigation
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    document.body.style.overflow = "hidden";
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightboxOpen(false);
-      if (e.key === "ArrowLeft") lightboxApi?.scrollPrev();
-      if (e.key === "ArrowRight") lightboxApi?.scrollNext();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKey);
-    };
-  }, [lightboxOpen, lightboxApi]);
-
-  const openLightbox = (i: number) => {
-    setLightboxIndex(i);
-    setLightboxOpen(true);
+  const openCart = () => {
+    // Navbar kan dit event afvangen (preventDefault) en de drawer openen;
+    // anders gaan we naar de winkelwagen-pagina.
+    const ev = new CustomEvent(OPEN_CART_EVENT, { cancelable: true });
+    const handled = !window.dispatchEvent(ev);
+    if (!handled) router.push("/cart");
   };
 
   const handleAddToCart = () => {
-    // Regel-prijs = maatprijs + nachtkasten; de maat als variant-label.
-    const linePrice = lineUnitPrice;
+    if (!canBuy) return;
     const variantLabel = activeVariant?.label ?? null;
-    for (let i = 0; i < quantity; i++) {
-      addToCart(
-        { id: product.id, slug: product.slug, name: product.name, price: linePrice, images: product.images, category: product.category },
-        variantLabel,
-        nachtkast,
-        voetbank,
-      );
-    }
-    const nkText = nachtkast > 0 ? ` · ${nachtkast} nachtkast${nachtkast > 1 ? "en" : ""}` : "";
-    const vbText = voetbank > 0 ? " · voetbank" : "";
-    toast.success(`${product.name} toegevoegd aan winkelwagen`, {
-      description: `${variantLabel ? `Maat ${variantLabel}` : `Aantal: ${quantity}`}${nkText}${vbText}`,
+    addToCart(
+      {
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: lineUnitPrice,
+        listPrice: hasOptions ? null : activeListPrice,
+        images: product.images,
+        category: product.category,
+        deliveryTime: product.deliveryTime ?? null,
+        stock,
+      },
+      variantLabel,
+      nachtkast,
+      voetbank,
+      quantity,
+    );
+    const extras = [
+      variantLabel ? `Maat ${variantLabel}` : null,
+      nachtkast > 0 ? `${nachtkast} nachtkast${nachtkast > 1 ? "en" : ""}` : null,
+      voetbank > 0 ? "voetbank" : null,
+      `Aantal: ${quantity}`,
+    ].filter(Boolean);
+    toast.success(`${product.name} ligt in je winkelwagen`, {
+      description: extras.join(" · "),
+      duration: 5000,
+      action: { label: "Bekijk winkelwagen", onClick: openCart },
     });
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
   };
 
-  const handleZoomMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomPos({ x, y });
-  };
+  const buyButtonLabel = !inStock ? "Uitverkocht" : added ? "Toegevoegd" : "In winkelwagen";
 
   return (
     <>
-      <div className="pt-32 lg:pt-40 pb-28 lg:pb-40">
-        {/* Breadcrumb */}
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-12 lg:mb-16">
-          <nav className="text-[11px] text-stone uppercase tracking-[0.25em] font-medium">
-            <Link href="/" className="hover:text-accent transition-colors duration-[280ms]">Home</Link>
-            <span className="mx-3 text-mist">/</span>
-            <Link href="/products" className="hover:text-accent transition-colors duration-[280ms]">Producten</Link>
-            <span className="mx-3 text-mist">/</span>
-            <Link href={`/${product.category}`} className="hover:text-accent transition-colors duration-[280ms] capitalize">{product.category}</Link>
-            <span className="mx-3 text-mist">/</span>
-            <span className="text-ink">{product.name}</span>
-          </nav>
-        </div>
+      {sizeVariants.length > 0 && (
+        <Suspense fallback={null}>
+          <SizeFromQuery variants={sizeVariants} onSelect={setSelectedSize} />
+        </Suspense>
+      )}
 
-        {/* Product — magazine-spread: image bleed naar left edge op desktop */}
-        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-12 items-start">
-          {/* Vertical chapter label — sticky in left margin op desktop */}
-          <div className="hidden lg:block absolute left-6 top-44 z-10 pointer-events-none">
+      <div className="pt-8 lg:pt-12 pb-28 lg:pb-40">
+        {/* Product — magazine-spread: beeld links, sticky info rechts */}
+        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] lg:gap-12 items-start">
+          <div className="hidden lg:block absolute left-6 top-6 z-10 pointer-events-none" aria-hidden="true">
             <span className="block origin-top-left rotate-90 translate-x-[2px] eyebrow text-stone whitespace-nowrap">
               <span className="text-accent">— </span>
-              {product.category}
-              <span className="text-stone/50"> · 01</span>
+              {categoryLabel}
             </span>
           </div>
 
-          {/* Afbeeldingen — bleeds links */}
-          <div className="px-6 sm:px-10 lg:pl-0 lg:pr-0 relative">
-              {/* Mobile — swipe carousel */}
-              <div className="lg:hidden">
-                <div
-                  className="relative overflow-hidden bg-bone cursor-zoom-in rounded-[10px]"
-                  ref={emblaRef}
-                  onClick={() => openLightbox(activeSlide)}
-                >
-                  <div className="flex">
-                    {images.map((img, i) => (
-                      <div
-                        key={i}
-                        className="flex-[0_0_100%] bg-white"
-                      >
-                        <Image
-                          src={cldOptimize(img, {
-                            ar: "1:1",
-                            w: 1600,
-                            mode: "fill",
-                            upscale: true,
-                            sourceW: sourceWAt(i),
-                            quality: "auto:good",
-                          })}
-                          alt={`${product.name} — ${i + 1}`}
-                          width={1600}
-                          height={1600}
-                          priority={i === 0}
-                          // Alleen slide 1 eager (LCP); de rest pas bij swipen —
-                          // anders downloadt mobiel direct 2-4 MB aan foto's.
-                          loading={i === 0 ? "eager" : "lazy"}
-                          loader={cloudinaryLoader}
-                          sizes="100vw"
-                          className="w-full h-auto object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {images.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-ink font-medium rounded-full">
-                      {activeSlide + 1} / {images.length}
-                    </div>
-                  )}
-                </div>
-
-                {/* Pagination dots */}
-                {images.length > 1 && (
-                  <div className="flex justify-center gap-2 mt-5">
-                    {images.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => scrollTo(i)}
-                        aria-label={`Ga naar foto ${i + 1}`}
-                        className={`h-[2px] transition-all duration-300 ${
-                          activeSlide === i ? "w-8 bg-ink" : "w-4 bg-mist hover:bg-stone"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop — vertical thumbs + main met hover zoom */}
-              <div className="hidden lg:flex gap-5">
-                {/* Vertical thumbnails */}
-                <div className="flex flex-col gap-3 flex-shrink-0 w-[96px]">
-                  {images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedImage(i)}
-                      aria-label={`Toon foto ${i + 1}`}
-                      className={`relative w-[80px] h-[80px] flex-shrink-0 overflow-hidden bg-bone rounded-md transition-all duration-200 ${
-                        selectedImage === i
-                          ? "opacity-100 ring-1 ring-ink/40"
-                          : "opacity-50 hover:opacity-100"
-                      }`}
-                    >
-                      <Image src={cldOptimize(img, { ar: "1:1", w: 240, mode: "fill", quality: "auto:good" })} alt="" fill loading="lazy" unoptimized className="object-cover" sizes="80px" />
-                    </button>
-                  ))}
-                </div>
-
-                {/* Hoofd afbeelding met hover zoom */}
-                <div
-                  className="relative aspect-square flex-1 bg-white overflow-hidden cursor-zoom-in rounded-[10px]"
-                  onMouseEnter={() => setZoomActive(true)}
-                  onMouseLeave={() => setZoomActive(false)}
-                  onMouseMove={handleZoomMove}
-                  onClick={() => openLightbox(selectedImage)}
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={selectedImage}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="absolute inset-0"
-                    >
-                      <Image
-                        src={cldOptimize(images[selectedImage], {
-                          ar: "1:1",
-                          w: 1800,
-                          mode: "fill",
-                          upscale: true,
-                          sourceW: sourceWAt(selectedImage),
-                          quality: "auto:good",
-                        })}
-                        alt={product.name}
-                        fill
-                        priority
-                        loader={cloudinaryLoader}
-                        className="object-cover transition-transform duration-200 ease-out will-change-transform"
-                        style={
-                          zoomActive
-                            ? { transform: "scale(1.8)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
-                            : undefined
-                        }
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                      />
-                    </motion.div>
-                  </AnimatePresence>
-
-                  {/* Subtiele expand hint */}
-                  <div className="absolute bottom-4 right-4 bg-white/85 backdrop-blur-sm px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-ink font-medium pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                    Vergroten
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Info — sticky op desktop, focus op conversie */}
-          {/* Info — sticky op desktop, gracious whitespace rechts */}
-          <div className="px-6 sm:px-10 lg:px-0 lg:pr-[max(56px,calc((100vw-1600px)/2+56px))] flex flex-col lg:sticky lg:top-32 lg:py-8">
-              <p className="eyebrow capitalize mb-4">
-                {product.category}
-              </p>
-              <h1 className="display-md text-ink mb-5">
-                {product.name}
-              </h1>
-              {categorySubtitle && (
-                <p className="text-sm text-slate mb-5 -mt-2">{categorySubtitle}</p>
-              )}
-
-              <div className="mb-8">
-                <div className="flex items-baseline gap-3">
-                  {hasDiscount && (
-                    <span className="font-serif text-lg lg:text-xl text-stone font-light line-through tabular-nums">
-                      {formatPrice(activeListPrice)}
-                    </span>
-                  )}
-                  <p className="font-serif text-2xl lg:text-3xl text-accent font-light tabular-nums tracking-[-0.025em]" style={{ fontVariationSettings: '"opsz" 48' }}>
-                    {formatPrice(activePrice)}
-                  </p>
-                </div>
-                <p className="text-[13px] text-slate mt-1">{shippingInfo.vatLabelShort}</p>
-              </div>
-
-              {sizeVariants.length > 0 && (
-                <div className="mb-8">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Kies je maat</p>
-                  <div className="flex flex-wrap gap-2">
-                    {sizeVariants.map((v, i) => {
-                      const active = i === selectedSize;
-                      return (
-                        <button
-                          key={v.label}
-                          type="button"
-                          onClick={() => setSelectedSize(i)}
-                          aria-pressed={active}
-                          className={`px-4 py-2.5 text-sm border rounded-[8px] transition-colors min-h-[44px] ${
-                            active
-                              ? "bg-ink text-white border-ink"
-                              : "bg-transparent text-ink border-line hover:border-ink"
-                          }`}
-                        >
-                          {v.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {isNkOptional && (
-                <div className="mb-8">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Nachtkast erbij?</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[0, 1, 2].map((n) => {
-                      const active = n === nachtkast;
-                      return (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setNachtkast(n)}
-                          aria-pressed={active}
-                          className={`px-4 py-2.5 text-sm border rounded-[8px] transition-colors min-h-[44px] ${
-                            active
-                              ? "bg-ink text-white border-ink"
-                              : "bg-transparent text-ink border-line hover:border-ink"
-                          }`}
-                        >
-                          {n === 0 ? "Geen" : `${n} nachtkast${n > 1 ? "en" : ""} (+${formatPrice(nkAddon(n))})`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {isVbOptional && (
-                <div className="mb-8">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-stone mb-3">Voetbank erbij?</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[0, 1].map((n) => {
-                      const active = n === voetbank;
-                      return (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setVoetbank(n)}
-                          aria-pressed={active}
-                          className={`px-4 py-2.5 text-sm border rounded-[8px] transition-colors min-h-[44px] ${
-                            active
-                              ? "bg-ink text-white border-ink"
-                              : "bg-transparent text-ink border-line hover:border-ink"
-                          }`}
-                        >
-                          {n === 0 ? "Geen" : `Voetbank (+${formatPrice(vbPrice)})`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {((isNkOptional && nachtkast > 0) || (isVbOptional && voetbank > 0)) && (
-                <p className="text-sm text-ink mb-8">Totaal met opties: <span className="font-medium">{formatPrice(lineUnitPrice)}</span></p>
-              )}
-
-              <div className="w-10 h-[1px] bg-line mb-8" />
-
-              <ColorVariantPicker
-                currentSlug={product.slug}
-                currentColorName={product.colorName ?? null}
-                category={product.category}
-                variants={colorVariants}
-              />
-
-              <StockDeliveryInfo
-                stock={product.stock ?? 0}
-                deliveryTime={product.deliveryTime ?? null}
-              />
-
-              {/* Aantal + Knop */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <div className="flex items-center border border-line rounded-[10px] overflow-hidden">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={(product.stock ?? 0) <= 0}
-                    className="px-5 py-4 text-stone hover:text-accent transition-colors duration-[280ms] text-sm disabled:opacity-40"
-                  >−</button>
-                  <span className="px-4 py-4 text-ink text-sm min-w-[3rem] text-center tabular-nums">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(Math.min(product.stock ?? 99, quantity + 1))}
-                    disabled={quantity >= (product.stock ?? 0)}
-                    className="px-5 py-4 text-stone hover:text-accent transition-colors duration-[280ms] text-sm disabled:opacity-40"
-                  >+</button>
-                </div>
-                <motion.button
-                  onClick={handleAddToCart}
-                  disabled={(product.stock ?? 0) <= 0}
-                  className={`btn-primary flex-1 text-center ${added ? "!bg-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {(product.stock ?? 0) <= 0 ? "Uitverkocht" : added ? "Toegevoegd!" : "In Winkelwagen"}
-                </motion.button>
-              </div>
-
-              {/* Korte intro paragraaf (eerste deel beschrijving) */}
-              <p className="text-base text-slate leading-relaxed mb-8">
-                {product.description.length > 220
-                  ? product.description.slice(0, 220).trim() + "…"
-                  : product.description}
-              </p>
-
-              {/* Specificaties — uitklapbaar in de hero */}
-              <HeroSpecs specs={parseSpecs(product.specs)} />
-
-              {/* USP's */}
-              <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 pt-8 border-t border-line">
-                {usps.map((usp) => (
-                  <div key={usp.label} className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={usp.icon} />
-                    </svg>
-                    <span className="text-stone text-[11px] uppercase tracking-[0.2em] font-medium">{usp.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Galerij */}
+          <div className="px-6 sm:px-10 lg:pl-24 lg:pr-0">
+            <ProductGallery images={images} productName={product.name} orientation={orientation} onOpen={setLightbox} />
           </div>
 
-        {/* Beschrijving — editoriale sectie */}
-        <DescriptionSection product={product} />
+          {/* Info — sticky op desktop */}
+          <div className="px-6 sm:px-10 lg:px-0 lg:pr-[max(56px,calc((100vw-1600px)/2+56px))] flex flex-col lg:sticky lg:top-32 lg:py-4 mt-8 lg:mt-0">
+            <p className="text-[14px] uppercase tracking-[0.14em] text-stone mb-3">{categoryLabel}</p>
+            <h1 className="display-md text-ink mb-4">{product.name}</h1>
+            {categorySubtitle && <p className="text-base text-graphite mb-5">{categorySubtitle}</p>}
 
-        {/* Gerelateerd */}
-        {relatedProducts.length > 0 && (
-          <section className="mt-32 lg:mt-48">
+            <div className="mb-5">
+              <Price price={activePrice} listPrice={activeListPrice} vat size="lg" className="text-accent" />
+            </div>
+
+            {dimensions && (
+              <dl className="mb-6 text-[15px] leading-relaxed">
+                <div className="flex flex-wrap gap-x-2">
+                  <dt className="text-stone">Afmetingen:</dt>
+                  <dd className="text-ink tabular-nums">{dimensions}</dd>
+                </div>
+                {dimensionNote && <dd className="text-graphite">{dimensionNote}</dd>}
+              </dl>
+            )}
+
+            {sizeVariants.length > 0 && (
+              <div className="mb-6" role="group" aria-labelledby="pdp-size-label">
+                <p id="pdp-size-label" className="text-[14px] text-stone mb-3">
+                  Kies je maat{activeVariant ? ":" : ""}{" "}
+                  {activeVariant && <span className="text-ink font-medium">{activeVariant.label}</span>}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sizeVariants.map((v, i) => {
+                    const active = i === selectedSize;
+                    return (
+                      <button
+                        key={v.label}
+                        type="button"
+                        onClick={() => setSelectedSize(i)}
+                        aria-pressed={active}
+                        className={`${OPTION_BTN} ${active ? OPTION_ACTIVE : OPTION_IDLE}`}
+                      >
+                        {v.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isNkOptional && (
+              <div className="mb-6" role="group" aria-labelledby="pdp-nk-label">
+                <p id="pdp-nk-label" className="text-[14px] text-stone mb-3">Nachtkast erbij?</p>
+                <div className="flex flex-wrap gap-2">
+                  {[0, 1, 2].map((n) => {
+                    const active = n === nachtkast;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setNachtkast(n)}
+                        aria-pressed={active}
+                        className={`${OPTION_BTN} ${active ? OPTION_ACTIVE : OPTION_IDLE}`}
+                      >
+                        {n === 0 ? "Geen" : `${n} nachtkast${n > 1 ? "en" : ""} (+${formatPrice(nkAddon(n))})`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isVbOptional && (
+              <div className="mb-6" role="group" aria-labelledby="pdp-vb-label">
+                <p id="pdp-vb-label" className="text-[14px] text-stone mb-3">Voetbank erbij?</p>
+                <div className="flex flex-wrap gap-2">
+                  {[0, 1].map((n) => {
+                    const active = n === voetbank;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setVoetbank(n)}
+                        aria-pressed={active}
+                        className={`${OPTION_BTN} ${active ? OPTION_ACTIVE : OPTION_IDLE}`}
+                      >
+                        {n === 0 ? "Geen" : `Voetbank (+${formatPrice(vbPrice)})`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {hasOptions && !priceOnRequest && (
+              <p className="text-base text-ink mb-6" aria-live="polite">
+                Totaal met opties: <span className="font-medium tabular-nums">{formatPrice(lineUnitPrice)}</span>
+              </p>
+            )}
+
+            <ColorSwatches
+              currentSlug={product.slug}
+              currentColorName={product.colorName ?? null}
+              category={product.category}
+              variants={colorVariants}
+            />
+
+            <div className="mb-5">
+              <StockBadge stock={stock} showLow size="md" />
+            </div>
+
+            {/* Aantal + koopknop, of prijsaanvraag */}
+            {priceOnRequest ? (
+              <div className="mb-2">
+                <Link href={requestUrl} className="btn-primary w-full text-center">
+                  Vraag prijs en levertijd aan
+                </Link>
+                <p className="text-[14px] text-stone mt-3">We reageren binnen één werkdag met prijs en levertijd.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3 mb-2">
+                <QuantityStepper
+                  value={quantity}
+                  onChange={setQuantity}
+                  name={product.name}
+                  max={Math.min(99, Math.max(1, stock))}
+                  disabled={!inStock}
+                  size="md"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={!inStock}
+                  aria-disabled={!inStock || undefined}
+                  className={`btn-primary flex-1 min-h-[52px] text-center ${added ? "!bg-success !border-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-ink`}
+                >
+                  {buyButtonLabel}
+                </button>
+              </div>
+            )}
+
+            <PurchaseInfo price={lineUnitPrice} stock={stock} deliveryTime={product.deliveryTime ?? null} category={product.category} />
+
+            {specEntries.length > 0 && (
+              <details className="group border-t border-line">
+                <summary className="flex items-center justify-between gap-4 py-5 min-h-11 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden text-base text-ink font-medium">
+                  Specificaties
+                  <svg
+                    className="w-4 h-4 text-stone shrink-0 transition-transform duration-300 group-open:rotate-180"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </summary>
+                <dl className="pb-5">
+                  {specEntries.map(([k, v]) => (
+                    <div key={k} className="flex items-baseline justify-between gap-6 py-2.5 border-t border-line/60 first:border-t-0 text-[15px]">
+                      <dt className="text-stone shrink-0">{k}</dt>
+                      <dd className="text-ink text-right">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            )}
+          </div>
+        </div>
+
+        <ProductDescription name={product.name} description={product.description} />
+
+        {complementaryProducts.length > 0 && (
+          <section className="mt-24 lg:mt-36" aria-labelledby="pdp-complementary">
             <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-              <div className="mb-14 lg:mb-20">
+              <div className="mb-10 lg:mb-14">
+                <h2 id="pdp-complementary" className="font-serif text-3xl lg:text-4xl text-ink">
+                  Past goed bij de {product.name}
+                </h2>
+              </div>
+              <ul className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16 list-none">
+                {complementaryProducts.slice(0, 4).map((p) => (
+                  <li key={p.id}><ProductCard product={p} /></li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {relatedProducts.length > 0 && (
+          <section className="mt-24 lg:mt-36">
+            <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+              <div className="mb-10 lg:mb-14">
                 <SectionHeader
                   number="02"
                   label="Meer uit deze collectie"
-                  title="Gerelateerde"
-                  titleItalic="producten"
+                  title={`Meer ${categoryLabel.toLowerCase()}`}
                   linkHref={`/${product.category}`}
                   linkLabel="Alles bekijken"
                 />
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-14 sm:gap-x-6 sm:gap-y-20">
+              <ul className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16 list-none">
                 {relatedProducts.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+                  <li key={p.id}><ProductCard product={p} /></li>
                 ))}
-              </div>
+              </ul>
             </div>
           </section>
         )}
 
         {/* Sticky mobile CTA */}
-        <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-5 py-3">
+        <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
-              <p className="font-serif text-xl text-ink leading-none">
-                {hasDiscount && (
-                  <span className="text-sm text-stone line-through mr-2">{formatPrice(activeListPrice)}</span>
-                )}
-                {formatPrice(activePrice)}
-              </p>
-              <p className="text-[11px] text-slate leading-none mt-1">
-                {activeVariant ? `Maat ${activeVariant.label}` : shippingInfo.vatLabelShort}
-              </p>
+            <div className="shrink-0 min-w-0">
+              <Price price={lineUnitPrice} listPrice={hasOptions ? null : activeListPrice} vat size="sm" inline />
+              {activeVariant && <p className="text-[13px] text-stone leading-none mt-1">Maat {activeVariant.label}</p>}
             </div>
-            <button
-              onClick={handleAddToCart}
-              className={`flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] text-[11px] uppercase tracking-[0.2em] font-medium transition-colors ${
-                added ? "bg-success text-white" : "bg-ink text-white hover:bg-accent"
-              }`}
-            >
-              {added ? (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Toegevoegd
-                </>
-              ) : (
-                <>
-                  Voeg toe aan tas
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                  </svg>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div className="lg:hidden h-20" />
-      </div>
-
-      {/* Fullscreen Lightbox — via Portal naar document.body om stacking-context
-          issues (transform-parents, SmoothScroll, overflow:hidden) te vermijden */}
-      {mounted && createPortal(
-      <AnimatePresence>
-        {lightboxOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[200] bg-ink/95 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Foto galerij"
-          >
-            {/* Close */}
-            <button
-              onClick={() => setLightboxOpen(false)}
-              className="absolute top-4 right-4 lg:top-6 lg:right-6 w-11 h-11 flex items-center justify-center text-white/80 hover:text-white transition-colors z-20"
-              aria-label="Sluiten"
-            >
-              <X className="w-6 h-6" strokeWidth={1.5} />
-            </button>
-
-            {/* Counter */}
-            {images.length > 1 && (
-              <div className="absolute top-6 left-6 lg:top-8 lg:left-8 text-white/70 text-[11px] uppercase tracking-[0.25em] z-20 font-medium">
-                {lightboxIndex + 1} / {images.length}
-              </div>
-            )}
-
-            {/* Carousel — slides buiten current ±1 zijn lazy om 10MB+
-                upfront-bytes te besparen (4 foto's × 2400w) */}
-            <div className="w-full h-full overflow-hidden" ref={lightboxRef}>
-              <div className="flex h-full">
-                {images.map((img, i) => {
-                  const isNear = Math.abs(i - lightboxIndex) <= 1 ||
-                    (lightboxIndex === 0 && i === images.length - 1) ||
-                    (lightboxIndex === images.length - 1 && i === 0);
-                  return (
-                  <div
-                    key={i}
-                    className="relative flex-[0_0_100%] h-full flex items-center justify-center p-6 lg:p-20"
-                  >
-                    <div className="relative w-full h-full max-w-[1800px] max-h-[90vh] mx-auto">
-                      <Image
-                        src={cldOptimize(img, { w: 2400, upscale: true, sourceW: sourceWAt(i), quality: "auto:best" })}
-                        alt={`${product.name} — ${i + 1}`}
-                        fill
-                        unoptimized
-                        loading={isNear ? "eager" : "lazy"}
-                        className="object-contain"
-                        sizes="100vw"
-                      />
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Arrows — desktop/tablet only, mobile swipes */}
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={() => lightboxApi?.scrollPrev()}
-                  className="hidden sm:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center text-white/80 hover:text-white bg-white/5 hover:bg-white/15 backdrop-blur-sm transition-all z-20"
-                  aria-label="Vorige foto"
-                >
-                  <ChevronLeft className="w-6 h-6" strokeWidth={1.5} />
-                </button>
-                <button
-                  onClick={() => lightboxApi?.scrollNext()}
-                  className="hidden sm:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center text-white/80 hover:text-white bg-white/5 hover:bg-white/15 backdrop-blur-sm transition-all z-20"
-                  aria-label="Volgende foto"
-                >
-                  <ChevronRight className="w-6 h-6" strokeWidth={1.5} />
-                </button>
-              </>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>,
-      document.body)}
-    </>
-  );
-}
-
-function ColorVariantPicker({
-  currentSlug,
-  currentColorName,
-  category,
-  variants,
-}: {
-  currentSlug: string;
-  currentColorName: string | null;
-  category: string;
-  variants: ColorVariant[];
-}) {
-  if (!variants || variants.length <= 1) return null;
-  return (
-    <div className="mb-10">
-      <div className="flex items-baseline justify-between mb-3">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-stone">Kleur</p>
-        {currentColorName && (
-          <p className="font-serif italic text-ink text-sm">{currentColorName}</p>
-        )}
-      </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        {variants.map((v) => {
-          const isCurrent = v.slug === currentSlug;
-          const swatch = v.colorHex ?? "#CFCFCF";
-          return (
-            <Link
-              key={v.id}
-              href={productUrl({ category, slug: v.slug })}
-              aria-label={v.colorName ?? "Variant"}
-              title={v.colorName ?? ""}
-              className={`relative w-10 h-10 border-2 transition-all ${
-                isCurrent
-                  ? "border-ink scale-100"
-                  : "border-line hover:border-accent hover:scale-105"
-              }`}
-              style={{ backgroundColor: swatch }}
-            >
-              {isCurrent && (
-                <span className="absolute inset-0 ring-2 ring-ink/0 ring-offset-2 ring-offset-paper" />
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function StockDeliveryInfo({
-  stock,
-  deliveryTime,
-}: {
-  stock: number;
-  deliveryTime: string | null;
-}) {
-  const hasStock = stock > 0;
-  const lowStock = stock > 0 && stock <= 3;
-  return (
-    <div className="mb-10 flex flex-col gap-2.5 pb-6 border-b border-line">
-      <div className="flex items-center gap-2.5">
-        <span
-          className={`w-1.5 h-1.5 rounded-full ${
-            !hasStock ? "bg-red-700" : lowStock ? "bg-amber-600" : "bg-emerald-600"
-          }`}
-        />
-        <span className="text-sm text-ink">
-          {!hasStock
-            ? "Tijdelijk uitverkocht"
-            : lowStock
-              ? `Nog ${stock} op voorraad`
-              : "Op voorraad"}
-        </span>
-      </div>
-      {deliveryTime && hasStock && (
-        <p className="text-[12px] text-stone pl-4">
-          Levertijd: <span className="text-ink">{deliveryTime}</span>
-        </p>
-      )}
-    </div>
-  );
-}
-
-function DescriptionSection({ product }: { product: Product }) {
-  if (!product.description) return null;
-  // Splits paragrafen op dubbele newlines, fallback naar 1 paragraaf
-  const paragraphs = product.description
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  return (
-    <section className="mt-24 lg:mt-40 bg-bone/40 py-20 lg:py-32">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
-          <div className="lg:col-span-4">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-5">
-              Over dit stuk
-            </p>
-            <h2 className="font-serif text-3xl lg:text-4xl text-ink leading-[1.1] mb-6">
-              Het verhaal van{" "}
-              <span className="italic text-accent">{product.name.split(" ")[0]}</span>
-            </h2>
-            <div className="w-10 h-[1px] bg-accent" />
-          </div>
-          <div className="lg:col-span-8 space-y-6">
-            {paragraphs.length > 0 ? (
-              paragraphs.map((p, i) => (
-                <p
-                  key={i}
-                  className={
-                    i === 0
-                      ? "font-serif text-xl lg:text-2xl text-ink leading-relaxed first-letter:font-medium"
-                      : "text-base lg:text-lg text-slate leading-relaxed"
-                  }
-                >
-                  {p}
-                </p>
-              ))
+            {priceOnRequest ? (
+              <Link href={requestUrl} className="btn-primary flex-1 !px-4 text-center">
+                Vraag prijs aan
+              </Link>
             ) : (
-              <p className="font-serif text-xl lg:text-2xl text-ink leading-relaxed">
-                {product.description}
-              </p>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!inStock}
+                className={`btn-primary flex-1 !px-4 min-h-11 ${added ? "!bg-success !border-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-ink`}
+              >
+                {buyButtonLabel}
+              </button>
             )}
           </div>
         </div>
+        <div className="lg:hidden h-24" aria-hidden="true" />
       </div>
-    </section>
-  );
-}
 
-function HeroSpecs({ specs }: { specs: Record<string, string> }) {
-  // Levertijd niet in de spec-lijst tonen — die staat al in het levertijd-blok
-  // (StockDeliveryInfo). Voorkomt dat de levertijd dubbel op de pagina staat.
-  const entries = Object.entries(specs).filter(
-    ([k]) => !/^\s*(levertijd|levering|leverdatum|levertermijn)\s*$/i.test(k),
-  );
-  if (entries.length === 0) return null;
-  return (
-    <details className="group border-t border-line mb-8">
-      <summary className="flex items-center justify-between gap-4 py-5 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
-        <span className="text-[11px] uppercase tracking-[0.2em] text-ink font-medium">
-          Specificaties
-        </span>
-        <svg
-          className="w-4 h-4 text-stone shrink-0 transition-transform duration-300 group-open:rotate-180"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          aria-hidden
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </summary>
-      <dl className="pb-5">
-        {entries.map(([k, v]) => (
-          <div
-            key={k}
-            className="flex items-baseline justify-between gap-6 py-2.5 border-t border-line/60 first:border-t-0"
-          >
-            <dt className="text-[11px] uppercase tracking-[0.18em] text-stone shrink-0">{k}</dt>
-            <dd className="text-sm text-ink text-right">{v}</dd>
-          </div>
-        ))}
-      </dl>
-    </details>
+      {lightbox !== null && (
+        <ProductLightbox
+          images={images}
+          productName={product.name}
+          startIndex={lightbox}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+    </>
   );
 }

@@ -6,12 +6,15 @@ export const alt = "Mokka Home — Categorie";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+const siteHost = businessInfo.siteUrl.replace(/^https?:\/\//, "");
+
 export default async function CategoryOpengraphImage({
   params,
 }: {
-  params: { category: string };
+  params: Promise<{ category: string }>;
 }) {
-  const cat = getCategory(params.category);
+  const { category } = await params;
+  const cat = getCategory(category);
   if (!cat) {
     return new ImageResponse(<div>Mokka Home</div>, { ...size });
   }
@@ -75,7 +78,7 @@ export default async function CategoryOpengraphImage({
             textTransform: "uppercase",
           }}
         >
-          mokkahomeinteriors.nl/{cat.slug}
+          {siteHost}/{cat.slug}
         </div>
       </div>
     ),

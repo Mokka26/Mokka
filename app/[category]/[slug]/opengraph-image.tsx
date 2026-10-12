@@ -5,16 +5,19 @@ import { cldOptimize } from "@/lib/cloudinary-url";
 import { businessInfo } from "@/lib/business-info";
 
 export const alt = "Product";
+const siteHost = businessInfo.siteUrl.replace(/^https?:\/\//, "");
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function ProductOpengraphImage({
   params,
 }: {
-  params: { category: string; slug: string };
+  params: Promise<{ category: string; slug: string }>;
 }) {
+  const { category, slug } = await params;
+  // Verborgen/verwijderde producten krijgen geen OG-kaart met naam en prijs.
   const product = await prisma.product.findFirst({
-    where: { slug: params.slug, deletedAt: null },
+    where: { slug, hidden: false, deletedAt: null },
     select: { name: true, price: true, images: true, category: true },
   });
 
@@ -90,7 +93,7 @@ export default async function ProductOpengraphImage({
                 textTransform: "uppercase",
               }}
             >
-              mokkahomeinteriors.nl/{params.category}
+              {siteHost}/{category}
             </div>
           </div>
         </div>

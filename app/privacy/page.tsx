@@ -4,7 +4,7 @@ import { LegalPage, LegalSection } from "@/components/LegalPage";
 import { businessInfo, getFullAddress } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-  title: `Privacybeleid — ${businessInfo.name}`,
+  title: "Privacybeleid: zo gaan we met je gegevens om",
   description:
     "Hoe Mokka Home omgaat met je persoonsgegevens: welke gegevens we verwerken, waarvoor, hoe lang we ze bewaren en welke rechten je hebt onder de AVG.",
   alternates: { canonical: "/privacy" },
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
         <p>
           Voor de werking en het meten van de website gebruiken we cookies. Lees hier meer over in
           ons{" "}
-          <Link href="/cookies" className="text-accent underline underline-offset-2">cookiebeleid</Link>.
+          <Link href="/cookies" className="text-accent-dark underline underline-offset-2 hover:text-ink">cookiebeleid</Link>.
         </p>
       </LegalSection>
       <LegalSection heading="Bewaartermijn">

@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import FilterBar from "@/components/FilterBar";
-import TypographicLoader from "@/components/TypographicLoader";
 
 interface Product {
   id: string;
@@ -236,7 +235,15 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pb-24 lg:pb-0">
         <div>
             {loading ? (
-              <TypographicLoader label="Collectie laden" number="01" minHeight="40vh" />
+              <div aria-busy="true" aria-label="Collectie laden" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="space-y-4">
+                    <div className="aspect-square bg-white animate-shimmer" />
+                    <div className="h-3 w-3/4 bg-bone animate-shimmer" />
+                    <div className="h-3 w-1/3 bg-bone animate-shimmer" />
+                  </div>
+                ))}
+              </div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-32 lg:py-40">
                 <p className="eyebrow mb-6">Niets gevonden</p>

@@ -4,7 +4,7 @@ import { LegalPage, LegalSection } from "@/components/LegalPage";
 import { businessInfo, getFullAddress } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-  title: `Algemene voorwaarden — ${businessInfo.name}`,
+  title: "Algemene voorwaarden voor je bestelling",
   description:
     "De algemene voorwaarden van Mokka Home: identiteit van de onderneming, prijzen inclusief btw, levering, betaling, het herroepingsrecht en garantie.",
   alternates: { canonical: "/algemene-voorwaarden" },
@@ -55,7 +55,7 @@ export default function VoorwaardenPage() {
           Retourneren kan mits het product ongebruikt is en in de originele, ongeopende verpakking
           zit. Op maat gemaakte of speciaal bestelde artikelen zijn wettelijk uitgesloten van het
           herroepingsrecht. De volledige procedure en voorwaarden lees je op de pagina{" "}
-          <Link href="/retourneren" className="text-accent underline underline-offset-2">
+          <Link href="/retourneren" className="text-accent-dark underline underline-offset-2 hover:text-ink">
             Retourneren
           </Link>
           .

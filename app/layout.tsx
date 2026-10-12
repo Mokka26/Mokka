@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Source_Serif_4, Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { businessInfo, getActiveSocials } from "@/lib/business-info";
-import { jsonLdHtml } from "@/lib/jsonLd";
+import { businessInfo } from "@/lib/business-info";
+import { shippingInfo } from "@/lib/shipping-info";
+import { buildOrganizationJsonLd, buildWebSiteJsonLd, jsonLdHtml } from "@/lib/jsonLd";
 import Footer from "@/components/Footer";
 import { getFooterMethods } from "@/lib/mollie";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
-import TouchHoverProvider from "@/components/TouchHoverProvider";
+import MotionProvider from "@/components/MotionProvider";
 import ToastProvider from "@/components/ToastProvider";
-import ScrollProgress from "@/components/ScrollProgress";
 import CookieBanner from "@/components/CookieBanner";
 import { GoogleAdsTag } from "@/components/GoogleAdsTag";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-
-// Lenis (~30kB) is nooit kritiek voor first paint — laad client-side
-const SmoothScroll = dynamic(() => import("@/components/SmoothScroll"));
 
 // Source Serif 4 (display-serif) — leesbaar voor brede doelgroep (27-70),
 // behoudt serif-karakter (industrial-luxe brand) zonder Fraunces' ornament.
@@ -40,52 +36,35 @@ const geist = Geist({
   display: "swap",
 });
 
+const DEFAULT_TITLE = `${businessInfo.name} | Meubels en verlichting, showroom ${businessInfo.address.city}`;
+const DEFAULT_DESCRIPTION = `Banken, eettafels, stoelen, kasten, bedden en verlichting van ${businessInfo.name}. Prijzen incl. btw, ${shippingInfo.returnWindowDays} dagen bedenktijd en een showroom in ${businessInfo.address.city}.`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(businessInfo.siteUrl),
-  title: "Mokka Home Interior — Modern Wonen, Tijdloos Design",
-  description:
-    "Ontdek zorgvuldig geselecteerde meubels, verlichting en decoratie voor het moderne interieur. Mokka Home Interior brengt ambachtelijk design met eerlijke materialen.",
-  keywords: ["meubels", "woonaccessoires", "verlichting", "interieurdesign", "modern meubilair", "mokka home interior"],
+  title: {
+    default: DEFAULT_TITLE,
+    template: `%s | ${businessInfo.name}`,
+  },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: businessInfo.name,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
   openGraph: {
-    title: "Mokka Home Interior — Modern Wonen, Tijdloos Design",
-    description: "Ontdek zorgvuldig geselecteerde meubels, verlichting en decoratie voor het moderne interieur.",
+    siteName: businessInfo.name,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
     type: "website",
+    locale: "nl_NL",
   },
 };
 
-function buildOrganizationSchema() {
-  const { legalName, name, address, contact, kvk, btw, foundingYear } = businessInfo;
-  const socials = getActiveSocials();
-
-  const schema: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "@id": `${businessInfo.siteUrl}/#organization`,
-    url: businessInfo.siteUrl,
-    name: legalName,
-    alternateName: name,
-    description: businessInfo.tagline,
-    foundingDate: String(foundingYear),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: address.street,
-      postalCode: address.postalCode,
-      addressLocality: address.city,
-      addressCountry: address.country,
-    },
-  };
-  if (contact.email) schema.email = contact.email;
-  if (contact.phone) schema.telephone = contact.phone;
-  if (kvk) schema.vatID = btw ?? undefined;
-  if (kvk) schema.taxID = kvk;
-  if (socials.length > 0) schema.sameAs = socials.map((s) => s.url);
-
-  return schema;
-}
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const footerMethods = await getFooterMethods();
-  const organizationSchema = buildOrganizationSchema();
+  const organizationSchema = buildOrganizationJsonLd();
+  const webSiteSchema = buildWebSiteJsonLd();
   return (
     <html lang="nl" data-scroll-behavior="smooth" className={`${sourceSerif.variable} ${geist.variable}`}>
       <head>
@@ -99,22 +78,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             en zou anders overal ~200KB ongebruikt beeld ophalen. */}
       </head>
       <body className="min-h-screen flex flex-col bg-paper">
+        {/* Skip-link: eerste focusbare element, zichtbaar zodra 'ie focus krijgt. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-ink focus:text-paper focus:px-5 focus:py-3 focus:text-[15px] focus:outline-none focus:ring-2 focus:ring-accent"
+        >
+          Ga naar inhoud
+        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(organizationSchema) }}
         />
-        <CartProvider>
-          <SmoothScroll />
-          <TouchHoverProvider />
-          <ToastProvider />
-          <ScrollProgress />
-          <Navbar />
-          <main className="flex-1">
-            <PageTransition>{children}</PageTransition>
-          </main>
-          <Footer mollieMethods={footerMethods} />
-          <CookieBanner />
-        </CartProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(webSiteSchema) }}
+        />
+        <MotionProvider>
+          <CartProvider>
+            <ToastProvider />
+            <Navbar />
+            <main id="main" className="flex-1">
+              <PageTransition>{children}</PageTransition>
+            </main>
+            <Footer mollieMethods={footerMethods} />
+            <CookieBanner />
+          </CartProvider>
+        </MotionProvider>
         <SpeedInsights />
         {/* Google Ads — client-side, alleen na cookie-akkoord (zie component). */}
         <GoogleAdsTag />

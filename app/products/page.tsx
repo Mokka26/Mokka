@@ -6,6 +6,7 @@ import { isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { prisma } from "@/lib/prisma";
 import { firstImageOnly } from "@/lib/imageHelpers";
+import { PRODUCTS_TAG } from "@/lib/revalidate";
 import ProductsContent from "./ProductsContent";
 
 export const revalidate = 3600;
@@ -22,6 +23,7 @@ const getAllProducts = unstable_cache(
       select: {
         id: true, slug: true, name: true, price: true, listPrice: true, category: true,
         images: true, featured: true, stock: true, createdAt: true,
+        deliveryTime: true, sizeVariants: true,
         colorGroup: true, colorName: true, colorHex: true, specs: true,
       },
     });
@@ -30,18 +32,22 @@ const getAllProducts = unstable_cache(
     return products.map((p) => ({ ...p, images: firstImageOnly(p.images) }));
   },
   ["all-products"],
-  { revalidate: 3600 },
+  { tags: [PRODUCTS_TAG], revalidate: 3600 },
 );
 
 export const metadata: Metadata = {
-  title: `Alle producten — ${businessInfo.name}`,
-  description: `Ontdek het volledige assortiment van ${businessInfo.name}: banken, eettafels, verlichting en meer. Bekijk per categorie of doorzoek de hele collectie.`,
+  title: "Alle producten: het volledige assortiment",
+  description: `Het volledige assortiment van ${businessInfo.name} in één overzicht: banken, eettafels, stoelen, kasten, bedden en verlichting. Filter op categorie, prijs of materiaal.`,
   alternates: { canonical: "/products" },
+  // Totaaloverzicht is een hulpmiddel, geen landingspagina: de categorie-
+  // pagina's zijn canoniek. Niet indexeren, wel links volgen; niet in de sitemap.
+  robots: { index: false, follow: true },
   openGraph: {
-    title: `Alle producten — ${businessInfo.name}`,
-    description: "Het volledige Mokka Home Interior assortiment in één overzicht.",
+    title: `Alle producten | ${businessInfo.name}`,
+    description: `Het volledige assortiment van ${businessInfo.name} in één overzicht.`,
     type: "website",
     url: "/products",
+    locale: "nl_NL",
   },
 };
 

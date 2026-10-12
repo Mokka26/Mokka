@@ -1,23 +1,15 @@
 import type { MetadataRoute } from "next";
+import { businessInfo } from "@/lib/business-info";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://mokkahomeinteriors.nl";
-
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api/",
-          "/admin/",
-          "/checkout",
-          "/cart",
-          // Oude querystring-filters niet indexeren (vervangen door /<categorie>)
-          "/products?",
-        ],
+        disallow: ["/admin", "/api", "/checkout", "/cart"],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${businessInfo.siteUrl}/sitemap.xml`,
   };
 }

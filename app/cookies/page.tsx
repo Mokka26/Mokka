@@ -3,9 +3,9 @@ import { LegalPage, LegalSection } from "@/components/LegalPage";
 import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-  title: `Cookiebeleid — ${businessInfo.name}`,
+  title: "Cookiebeleid: welke cookies we gebruiken",
   description:
-    "Welke cookies Mokka Home gebruikt en waarom: functionele cookies die altijd nodig zijn en analytische cookies die je via de cookiemelding kunt accepteren of weigeren.",
+    "Welke cookies Mokka Home gebruikt en waarom: functionele cookies die nodig zijn voor de winkelwagen en analytische cookies die je zelf accepteert of weigert.",
   alternates: { canonical: "/cookies" },
 };
 

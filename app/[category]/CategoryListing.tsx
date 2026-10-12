@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { getCategory, type Category } from "@/lib/categories";
 
-type Product = {
+export type ListingProduct = {
   id: string;
   slug: string;
   name: string;
@@ -17,15 +18,30 @@ type Product = {
   featured: boolean;
   stock: number;
   createdAt: Date | string;
+  deliveryTime: string | null;
+  sizeVariants: string | null;
   colorGroup: string | null;
   colorName: string | null;
   colorHex: string | null;
   specs: string | null;
 };
 
+export type ListingVariant = { slug: string; colorName: string | null; colorHex: string | null };
+
+type Product = ListingProduct;
+
 interface Props {
   category: Category;
+  /** De producten van déze pagina (max. 24), al ontdubbeld per kleurgroep. */
   products: Product[];
+  /** Swatch-rij per colorGroup voor de kaarten op deze pagina. */
+  variants: Record<string, ListingVariant[]>;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  prevHref: string | null;
+  nextHref: string | null;
 }
 
 type SortKey = "newest" | "price-asc" | "price-desc" | "name";
@@ -46,7 +62,17 @@ function parseMaterials(specs: string | null): string[] {
   }
 }
 
-export default function CategoryListing({ category, products }: Props) {
+export default function CategoryListing({
+  category,
+  products,
+  variants,
+  page,
+  pageSize,
+  totalPages,
+  totalCount,
+  prevHref,
+  nextHref,
+}: Props) {
   const [sortBy, setSortBy] = useState<SortKey>("newest");
   const maxPrice = useMemo(() => getMaxPrice(products), [products]);
   const [maxFilter, setMaxFilter] = useState(maxPrice);
@@ -63,18 +89,6 @@ export default function CategoryListing({ category, products }: Props) {
       document.body.style.overflow = "";
     };
   }, [mobileSheetOpen]);
-
-  // Group color-broers per colorGroup → ProductCard rendert swatch-row
-  const variantsByGroup = useMemo(() => {
-    const map = new Map<string, { slug: string; colorName: string | null; colorHex: string | null }[]>();
-    for (const p of products) {
-      if (!p.colorGroup) continue;
-      const arr = map.get(p.colorGroup) ?? [];
-      arr.push({ slug: p.slug, colorName: p.colorName, colorHex: p.colorHex });
-      map.set(p.colorGroup, arr);
-    }
-    return map;
-  }, [products]);
 
   const availableMaterials = useMemo(() => {
     const counts = new Map<string, number>();
@@ -115,12 +129,9 @@ export default function CategoryListing({ category, products }: Props) {
       return next;
     });
 
-  // Paginatie — initial 24 cards, IntersectionObserver laadt batches van 24 bij
-  // bereiken sentinel. Bij filter-wijziging reset naar 24.
-  const PAGE_SIZE = 24;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
+  // Filters en sortering werken binnen de geladen pagina (24 producten); de
+  // paginering zelf is server-side (?page=N) zodat elke pagina echt in de
+  // HTML staat.
   const filtered = useMemo(() => {
     let arr = products.filter((p) => p.price <= maxFilter);
     if (inStockOnly) arr = arr.filter((p) => (p.stock ?? 0) > 0);
@@ -143,42 +154,8 @@ export default function CategoryListing({ category, products }: Props) {
     }
   }, [products, maxFilter, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
 
-  // Kleurgroepen samenvouwen: per colorGroup één kaart (de op-voorraad-
-  // representant, anders de eerste). De swatches op die kaart wijzen naar de
-  // andere kleuren. Producten zonder colorGroup blijven los.
-  const collapsed = useMemo(() => {
-    const rep = new Map<string, Product>();
-    for (const p of filtered) {
-      if (!p.colorGroup) continue;
-      const cur = rep.get(p.colorGroup);
-      if (!cur || ((p.stock ?? 0) > 0 && (cur.stock ?? 0) === 0)) rep.set(p.colorGroup, p);
-    }
-    return filtered.filter((p) => !p.colorGroup || rep.get(p.colorGroup) === p);
-  }, [filtered]);
-
-  // Reset paginatie wanneer filter/sort verandert — anders blijft visibleCount
-  // hoog terwijl filtered nu kleinere set is.
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [maxFilter, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
-
-  // IntersectionObserver: sentinel komt in view → laad volgende batch
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || visibleCount >= collapsed.length) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((c) => Math.min(c + PAGE_SIZE, collapsed.length));
-        }
-      },
-      { rootMargin: "400px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [visibleCount, collapsed.length]);
-
-  const visible = collapsed.slice(0, visibleCount);
+  const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, totalCount);
 
   const activeFilterCount =
     (maxFilter < maxPrice ? 1 : 0) +
@@ -212,14 +189,7 @@ export default function CategoryListing({ category, products }: Props) {
   );
 
   return (
-    <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
-      {/* Header */}
-      <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
-        <p className="eyebrow mb-4">Collectie</p>
-        <h1 className="display-lg text-ink mb-6">{category.label}</h1>
-        <p className="body-lg text-slate max-w-2xl">{category.intro}</p>
-      </header>
-
+    <div>
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* DESKTOP FILTER-BALK — boven het grid */}
         <div className="hidden lg:block border-y border-line bg-paper/60 backdrop-blur-sm mb-10">
@@ -230,8 +200,10 @@ export default function CategoryListing({ category, products }: Props) {
 
         {/* Resultaten + sort (mobile + desktop) */}
         <div className="flex items-center justify-between mb-8 px-2">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-stone">
-            {collapsed.length} van {products.length} producten
+          <p className="text-[13px] uppercase tracking-[0.2em] text-stone">
+            {activeFilterCount > 0
+              ? `${filtered.length} van ${products.length} op deze pagina`
+              : `${rangeStart}–${rangeEnd} van ${totalCount} producten`}
           </p>
           <label className="flex items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-stone">
             <span className="hidden sm:inline">Sorteer</span>
@@ -249,7 +221,7 @@ export default function CategoryListing({ category, products }: Props) {
         </div>
 
         {/* Product grid */}
-        {collapsed.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="text-center py-32">
             <p className="font-serif text-2xl text-ink mb-4">
               {products.length === 0 ? "Nog geen producten" : "Geen resultaten"}
@@ -272,26 +244,39 @@ export default function CategoryListing({ category, products }: Props) {
         ) : (
           <>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
-            {visible.map((p, i) => (
+            {filtered.map((p, i) => (
               <ProductCard
                 key={p.id}
                 product={p}
                 priority={i < 2}
                 wide={p.category === "hoekbanken" || p.category === "bankstellen" || p.category === "slaapkamers" || p.category === "jeugdkamers"}
-                variants={p.colorGroup ? variantsByGroup.get(p.colorGroup) : undefined}
+                variants={p.colorGroup ? variants[p.colorGroup] : undefined}
               />
             ))}
           </div>
-          {visibleCount < collapsed.length && (
-            <div
-              ref={sentinelRef}
-              aria-hidden
-              className="h-12 mt-12 flex items-center justify-center text-[10px] uppercase tracking-[0.2em] text-stone"
-            >
-              {visible.length} van {collapsed.length} geladen…
-            </div>
-          )}
           </>
+        )}
+
+        {totalPages > 1 && (
+          <nav aria-label="Paginering" className="mt-16 flex items-center justify-between gap-6 border-t border-line pt-8">
+            {prevHref ? (
+              <Link href={prevHref} rel="prev" className="btn-ghost text-center">
+                Vorige
+              </Link>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            <p className="text-[13px] uppercase tracking-[0.2em] text-stone">
+              Pagina {page} van {totalPages}
+            </p>
+            {nextHref ? (
+              <Link href={nextHref} rel="next" className="btn-primary text-center">
+                Volgende
+              </Link>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+          </nav>
         )}
       </div>
 
@@ -353,7 +338,7 @@ export default function CategoryListing({ category, products }: Props) {
                   onClick={() => setMobileSheetOpen(false)}
                   className="w-full bg-ink text-white px-6 py-3.5 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors"
                 >
-                  Toon {collapsed.length} resultaten
+                  Toon {filtered.length} resultaten
                 </button>
               </div>
             </motion.div>
