@@ -2,8 +2,13 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, productUrl } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
+import { GIDS_PATH, GUIDES, guidePath } from "@/app/gids/guides";
 
 export const revalidate = 3600;
+
+// Publicatiedatum van de content-/servicepagina's (bezorging, betalen,
+// showroom, gids-overzicht).
+const CONTENT_PAGES_UPDATED = "2026-10-12";
 
 const VISIBLE = { hidden: false, deletedAt: null } as const;
 
@@ -38,6 +43,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const stats = new Map(perCategory.map((row) => [row.category, row]));
 
+  // Content- en servicepagina's (app/bezorging, /betalen, /showroom, /gids):
+  // lastModified = publicatiedatum van de huidige tekst; bijwerken bij een
+  // inhoudelijke wijziging. De gidsen zelf komen uit app/gids/guides.ts.
+  const contentLastModified = new Date(CONTENT_PAGES_UPDATED);
+
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/` },
     { url: `${baseUrl}/about` },
@@ -46,6 +56,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/privacy` },
     { url: `${baseUrl}/algemene-voorwaarden` },
     { url: `${baseUrl}/cookies` },
+    { url: `${baseUrl}/bezorging`, lastModified: contentLastModified },
+    { url: `${baseUrl}/betalen`, lastModified: contentLastModified },
+    { url: `${baseUrl}/showroom`, lastModified: contentLastModified },
+    { url: `${baseUrl}${GIDS_PATH}`, lastModified: contentLastModified },
+    ...GUIDES.map((g) => ({ url: `${baseUrl}${guidePath(g.slug)}`, lastModified: new Date(g.dateModified) })),
   ];
 
   const categoryRoutes: MetadataRoute.Sitemap = [];

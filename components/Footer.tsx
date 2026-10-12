@@ -200,6 +200,8 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
             <ul className="space-y-2.5 text-base list-none m-0 p-0">
               <li><Link href={legal.returnPolicyUrl} className={footerLink}>Retourneren &amp; ruilen</Link></li>
               <li><Link href="/bezorging" className={footerLink}>Bezorging &amp; montage</Link></li>
+              <li><Link href="/betalen" className={footerLink}>Veilig betalen</Link></li>
+              <li><Link href="/gids" className={footerLink}>Woongids: maten &amp; keuzes</Link></li>
               <li><Link href="/contact" className={footerLink}>Vragen? Neem contact op</Link></li>
               <li><Link href={legal.termsUrl} className={footerLink}>Algemene voorwaarden</Link></li>
             </ul>
@@ -209,6 +211,7 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
             <h2 className={footerHeading}>Over ons</h2>
             <ul className="space-y-2.5 text-base list-none m-0 p-0">
               <li><Link href="/about" className={footerLink}>Over Mokka Home</Link></li>
+              <li><Link href="/showroom" className={footerLink}>Showroom in {address.city}</Link></li>
               <li><Link href="/contact" className={footerLink}>Contact &amp; showroom</Link></li>
               <li><Link href={legal.privacyPolicyUrl} className={footerLink}>Privacybeleid</Link></li>
               <li><Link href={legal.cookiePolicyUrl} className={footerLink}>Cookiebeleid</Link></li>

@@ -343,3 +343,46 @@ export function buildFaqJsonLd(faq: ReadonlyArray<{ q: string; a: string }>): Re
     })),
   };
 }
+
+// ─── Article (gidsen / content-pagina's) ────────────────────────────
+
+export type ArticleJsonLdInput = {
+  headline: string;
+  description: string;
+  /** Absoluut of relatief ("/gids/eettafel-maat-kiezen"); wordt absoluut gemaakt. */
+  url: string;
+  /** ISO-datum (YYYY-MM-DD). */
+  datePublished: string;
+  /** ISO-datum (YYYY-MM-DD); valt terug op datePublished. */
+  dateModified?: string;
+  /** Absoluut of relatief pad naar een beeld; weggelaten als leeg. */
+  image?: string | null;
+};
+
+function absoluteUrl(path: string): string {
+  return path.startsWith("http") ? path : `${businessInfo.siteUrl}${path}`;
+}
+
+/**
+ * Article-schema voor adviesgidsen. Auteur en uitgever verwijzen naar het
+ * Organization-schema uit de root-layout (`#organization`), zodat er geen
+ * tweede organisatie-entiteit ontstaat.
+ */
+export function buildArticleJsonLd(input: ArticleJsonLdInput): Record<string, unknown> {
+  const url = absoluteUrl(input.url);
+  const schema: Record<string, unknown> = {
+    "@context": SCHEMA,
+    "@type": "Article",
+    headline: collapseWhitespace(input.headline),
+    description: truncateAtWord(input.description, 300),
+    url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    inLanguage: "nl-NL",
+    datePublished: input.datePublished,
+    dateModified: input.dateModified ?? input.datePublished,
+    author: { "@id": `${businessInfo.siteUrl}/#organization` },
+    publisher: { "@id": `${businessInfo.siteUrl}/#organization` },
+  };
+  if (input.image) schema.image = absoluteUrl(input.image);
+  return schema;
+}
