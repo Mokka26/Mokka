@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { businessInfo } from "@/lib/business-info";
+import { Button } from "@/components/ui/Button";
 
 const STORAGE_KEY = "mokka_cookie_consent_v1";
 
@@ -11,37 +12,56 @@ type Consent = "accepted" | "declined" | null;
 
 export function getCookieConsent(): Consent {
   if (typeof window === "undefined") return null;
-  const v = localStorage.getItem(STORAGE_KEY);
-  return v === "accepted" || v === "declined" ? v : null;
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v === "accepted" || v === "declined" ? v : null;
+  } catch {
+    // localStorage geblokkeerd (private mode / strikte instellingen)
+    return null;
+  }
 }
 
-export default function CookieBanner() {
-  // Render strategy: SSR-safe (start hidden), na mount: kijk naar storage
-  const [open, setOpen] = useState(false);
+/**
+ * Cookiemelding — wettelijk verplicht, dus wél bij page load, maar als
+ * niet-modale `region`: steelt geen focus, blokkeert de pagina niet en
+ * beide keuzes zijn visueel gelijkwaardig (CLAUDE.md §11: geen dark patterns).
+ * Tracking (Google Ads) laadt pas na "Accepteren" — zie GoogleAdsTag.
+ */
+// Externe staat (localStorage) netjes via useSyncExternalStore: server kent
+// geen keuze ("unknown" → dicht), client leest 'm en luistert naar wijzigingen.
+function subscribeConsent(onChange: () => void) {
+  window.addEventListener("cookieConsentChanged", onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener("cookieConsentChanged", onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+const getServerConsent = (): Consent | "unknown" => "unknown";
 
-  useEffect(() => {
-    const consent = getCookieConsent();
-    if (!consent) setOpen(true);
-  }, []);
+export default function CookieBanner() {
+  const consent = useSyncExternalStore(subscribeConsent, getCookieConsent, getServerConsent);
+  // Vangnet als localStorage geblokkeerd is: keuze onthouden voor deze sessie.
+  const [dismissed, setDismissed] = useState(false);
+  const open = consent === null && !dismissed;
 
   const handleChoice = (choice: "accepted" | "declined") => {
     try {
       localStorage.setItem(STORAGE_KEY, choice);
-      // Trigger custom event zodat tracking-libraries (Sentry etc.) kunnen reageren
-      window.dispatchEvent(new CustomEvent("cookieConsentChanged", { detail: choice }));
     } catch {
-      // localStorage geblokkeerd (private mode) — banner verbergt sowieso
+      // localStorage geblokkeerd — banner verbergt sowieso voor deze sessie
     }
-    setOpen(false);
+    // Custom event zodat tracking-libraries (en deze banner) reageren zonder reload
+    window.dispatchEvent(new CustomEvent("cookieConsentChanged", { detail: choice }));
+    setDismissed(true);
   };
 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
-          role="dialog"
-          aria-label="Cookie-toestemming"
-          aria-describedby="cookie-banner-text"
+        <motion.section
+          role="region"
+          aria-label="Cookievoorkeuren"
           initial={{ y: "100%", opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
@@ -51,41 +71,33 @@ export default function CookieBanner() {
           <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 py-6 lg:py-7">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
               <div className="lg:col-span-8">
-                <p className="eyebrow mb-2">Cookies</p>
-                <p id="cookie-banner-text" className="text-sm text-slate leading-relaxed">
-                  We gebruiken functionele cookies voor de werking van de site (winkelwagen, login),
+                <h2 className="eyebrow-lg text-ink mb-2">Cookies</h2>
+                <p className="text-base text-slate leading-relaxed">
+                  We gebruiken functionele cookies voor de werking van de site (winkelwagen, inloggen),
                   analytische cookies om de webshop te verbeteren en marketingcookies (Google Ads) om
-                  te meten of onze advertenties werken. Die laatste twee laden pas na akkoord.{" "}
+                  te meten of onze advertenties werken. Die laatste twee laden pas na je akkoord.{" "}
                   <Link
                     href={businessInfo.legal.cookiePolicyUrl}
-                    className="underline hover:text-ink transition-colors"
+                    className="underline underline-offset-2 text-ink hover:text-accent-dark transition-colors"
                   >
-                    Meer informatie
+                    Lees het cookiebeleid
                   </Link>
                   .
                 </p>
               </div>
 
-              {/* Knoppen — gelijke visuele weight, geen dark patterns (CLAUDE.md sectie 11) */}
+              {/* Beide knoppen identiek gestyled: weigeren is even makkelijk als accepteren. */}
               <div className="lg:col-span-4 flex flex-col sm:flex-row gap-3 lg:justify-end">
-                <button
-                  type="button"
-                  onClick={() => handleChoice("declined")}
-                  className="px-5 py-3 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:border-ink transition-colors"
-                >
+                <Button variant="secondary" size="sm" onClick={() => handleChoice("declined")} className="sm:flex-1 lg:flex-none">
                   Weigeren
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChoice("accepted")}
-                  className="px-5 py-3 text-[11px] uppercase tracking-[0.25em] bg-ink text-white hover:bg-accent transition-colors"
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => handleChoice("accepted")} className="sm:flex-1 lg:flex-none">
                   Accepteren
-                </button>
+                </Button>
               </div>
             </div>
           </div>
-        </motion.div>
+        </motion.section>
       )}
     </AnimatePresence>
   );

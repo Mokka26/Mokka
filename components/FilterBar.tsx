@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, X, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { useState, useRef, useEffect, useMemo, useId } from "react";
+import { ChevronDown, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { CATEGORIES, GROUP_ORDER } from "@/lib/categories";
+import { Drawer } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 
 interface ProductForFilter {
   category: string;
@@ -31,690 +34,118 @@ interface Props {
   productsForFacets?: ProductForFilter[];
 }
 
+/* ─── Prijs ──────────────────────────────────────────────────────── */
+
+// Bovengrens van het prijsfilter; [0, PRICE_MAX] = "geen prijsfilter"
+// (ProductsContent gebruikt dezelfde default).
+export const PRICE_MAX = 5000;
+
+const PRICE_BUCKETS: ReadonlyArray<{ label: string; range: [number, number] }> = [
+  { label: "Tot € 250", range: [0, 250] },
+  { label: "€ 250 – € 500", range: [250, 500] },
+  { label: "€ 500 – € 1.000", range: [500, 1000] },
+  { label: "€ 1.000 – € 2.000", range: [1000, 2000] },
+  { label: "€ 2.000 en meer", range: [2000, PRICE_MAX] },
+];
+
+const eur = (n: number) => `€ ${n.toLocaleString("nl-NL")}`;
+
+const isDefaultPrice = (r: [number, number]) => r[0] <= 0 && r[1] >= PRICE_MAX;
+
+function priceSummary(r: [number, number]): string | undefined {
+  if (isDefaultPrice(r)) return undefined;
+  const bucket = PRICE_BUCKETS.find((b) => b.range[0] === r[0] && b.range[1] === r[1]);
+  if (bucket) return bucket.label;
+  if (r[1] >= PRICE_MAX) return `Vanaf ${eur(r[0])}`;
+  if (r[0] <= 0) return `Tot ${eur(r[1])}`;
+  return `${eur(r[0])} – ${eur(r[1])}`;
+}
+
+/* ─── Categorieën — afgeleid uit lib/categories.ts ───────────────── */
+
 interface SubCat { label: string; value: string }
 interface Group { label: string; subs: SubCat[] }
 
-const groups: Group[] = [
-  { label: "Banken", subs: [
-    { label: "Alle banken", value: "alle-banken" },
-    { label: "Hoekbanken", value: "hoekbanken" },
-    { label: "Bankstellen", value: "bankstellen" },
-  ]},
-  { label: "Tafels", subs: [
-    { label: "Eettafels", value: "eettafels" },
-    { label: "Salontafels", value: "salontafels" },
-    { label: "Bijzettafels", value: "bijzettafels" },
-    { label: "TV-meubels", value: "tv-meubels" },
-    { label: "Overige tafels", value: "tafels" },
-    { label: "Tafel-accessoires", value: "tafel-accessoires" },
-  ]},
-  { label: "Stoelen", subs: [{ label: "Eetkamerstoelen", value: "stoelen" }] },
-  { label: "Slapen", subs: [
-    { label: "Bedden", value: "bedden" },
-    { label: "Matrassen", value: "matrassen" },
-    { label: "Slaapkamers", value: "slaapkamers" },
-  ]},
-  { label: "Opbergen", subs: [{ label: "Kasten", value: "kasten" }] },
-  { label: "Sfeer", subs: [
-    { label: "Verlichting", value: "verlichting" },
-    { label: "Spiegels", value: "spiegels" },
-  ]},
-];
+const groups: Group[] = GROUP_ORDER.map((group) => {
+  const inGroup = CATEGORIES.filter((c) => c.group === group);
+  const subs: SubCat[] = [];
+  const umbrella = inGroup.find((c) => c.isUmbrella);
+  // De API (/api/products) kent één umbrella-filter: "alle-banken".
+  if (umbrella?.slug === "banken") subs.push({ label: umbrella.label, value: "alle-banken" });
+  for (const c of inGroup) {
+    if (!c.isUmbrella) subs.push({ label: c.label, value: c.slug });
+  }
+  // Producten die direct onder de umbrella-categorie in de DB staan
+  // (bv. category = "tafels") blijven bereikbaar als "Overige …".
+  if (umbrella && umbrella.slug !== "banken" && umbrella.dbCategories.includes(umbrella.slug)) {
+    subs.push({ label: `Overige ${group.toLowerCase()}`, value: umbrella.slug });
+  }
+  return { label: group, subs };
+});
 
 const allSubs = groups.flatMap((g) => g.subs);
 const findSubLabel = (v: string) => allSubs.find((s) => s.value === v)?.label;
 const findGroupOf = (v: string) => groups.find((g) => g.subs.some((s) => s.value === v));
 
 const sortOptions = [
-  { label: "Aanbevolen", value: "newest" },
-  { label: "Prijs: laag → hoog", value: "price-asc" },
-  { label: "Prijs: hoog → laag", value: "price-desc" },
-  { label: "Naam: A–Z", value: "name" },
+  { label: "Aanbevolen", short: "Aanbevolen", value: "newest" },
+  { label: "Prijs: laag naar hoog", short: "Prijs oplopend", value: "price-asc" },
+  { label: "Prijs: hoog naar laag", short: "Prijs aflopend", value: "price-desc" },
+  { label: "Naam: A tot Z", short: "Naam", value: "name" },
 ];
 
-// Universele filter-row
-function FilterRow({
-  label, count, active, onClick, indent = 0, swatch,
-}: {
-  label: string; count?: number; active: boolean;
-  onClick: () => void; indent?: number; swatch?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative group w-full flex items-center justify-between py-2.5 text-left text-sm transition-colors ${
-        active ? "text-ink font-medium" : "text-stone hover:text-ink"
-      }`}
-      style={{ paddingLeft: indent ? `${indent * 16}px` : undefined }}
-    >
-      <span
-        className={`absolute top-1/2 -translate-y-1/2 w-[2px] h-5 bg-accent transition-opacity ${
-          active ? "opacity-100" : "opacity-0"
-        }`}
-        style={{ left: indent ? `${indent * 16 - 12}px` : "-12px" }}
-      />
-      <span className="flex items-center gap-2.5">
-        {swatch && (
-          <span
-            className="block w-5 h-5 rounded-full border border-line/80"
-            style={{ backgroundColor: swatch }}
-          />
-        )}
-        <span>{label}</span>
-      </span>
-      {typeof count === "number" && (
-        <span className={`text-[10px] tabular-nums transition-opacity ${
-          active ? "text-stone/80 opacity-100" : "text-stone/50 opacity-0 group-hover:opacity-100"
-        }`}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
+/* ─── Tellingen per categorie (één fetch, gedeeld) ───────────────── */
+
+type Counts = Record<string, number>;
+
+function isCountsResponse(d: unknown): d is { counts: Counts } {
+  if (typeof d !== "object" || d === null || !("counts" in d)) return false;
+  const counts = (d as { counts: unknown }).counts;
+  if (typeof counts !== "object" || counts === null) return false;
+  return Object.values(counts as Record<string, unknown>).every((v) => typeof v === "number");
 }
 
-function Section({
-  title, defaultOpen = true, children,
-}: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="border-b border-line py-4">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between text-left group"
-      >
-        <span className="text-[11px] uppercase tracking-[0.2em] font-medium text-ink">
-          {title}
-        </span>
-        <ChevronDown
-          className={`w-3.5 h-3.5 text-stone group-hover:text-ink transition-all duration-200 ${open ? "rotate-180" : ""}`}
-          strokeWidth={1.5}
-        />
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.25, 0.4, 0.25, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="pt-3 pl-3">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+let cachedCounts: Counts | null = null;
 
-function FilterContent(props: Props) {
-  const {
-    category, onCategoryChange,
-    priceRange, onPriceRangeChange,
-    selectedColors = [], onColorsChange,
-    selectedMaterials = [], onMaterialsChange,
-    selectedDelivery = [], onDeliveryChange,
-    inStockOnly = false, onInStockOnlyChange,
-    productsForFacets = [],
-  } = props;
-
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [catExpanded, setCatExpanded] = useState<Set<string>>(() => {
-    const set = new Set<string>();
-    if (category) {
-      const g = findGroupOf(category);
-      if (g) set.add(g.label);
-    }
-    return set;
-  });
+function useCategoryCounts(): { counts: Counts; failed: boolean } {
+  const [counts, setCounts] = useState<Counts>(() => cachedCounts ?? {});
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    fetch("/api/products/counts", { cache: "no-store" }).then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
-  }, []);
-
-  const toggleCatGroup = (label: string) => {
-    setCatExpanded((p) => {
-      const n = new Set(p);
-      if (n.has(label)) n.delete(label); else n.add(label);
-      return n;
-    });
-  };
-
-  const groupCount = (g: Group) => g.subs.reduce((s, sub) => s + (counts[sub.value] ?? 0), 0);
-
-  const facets = useMemo(() => {
-    const colors = new Map<string, { hex: string; count: number }>();
-    const materials = new Map<string, number>();
-    const deliveries = new Map<string, number>();
-    let stockCount = 0;
-    for (const p of productsForFacets) {
-      if ((p.stock ?? 0) > 0) stockCount++;
-      if (p.colorName && p.colorHex) {
-        const existing = colors.get(p.colorName);
-        colors.set(p.colorName, { hex: p.colorHex, count: (existing?.count ?? 0) + 1 });
-      }
+    if (cachedCounts) return;
+    const controller = new AbortController();
+    (async () => {
       try {
-        const specs = JSON.parse(p.specs ?? "{}");
-        const mat = specs.Materiaal;
-        if (mat) for (const m of mat.split(/[,/]\s*/)) materials.set(m.trim(), (materials.get(m.trim()) ?? 0) + 1);
-        const del = specs.Levertijd;
-        if (del) deliveries.set(del, (deliveries.get(del) ?? 0) + 1);
-      } catch {}
-    }
-    return {
-      colors: Array.from(colors.entries()).sort((a, b) => b[1].count - a[1].count),
-      materials: Array.from(materials.entries()).sort((a, b) => b[1] - a[1]),
-      deliveries: Array.from(deliveries.entries()).sort((a, b) => b[1] - a[1]),
-      stockCount,
-    };
-  }, [productsForFacets]);
-
-  const toggleArr = (arr: string[], val: string, setter?: (v: string[]) => void) => {
-    if (!setter) return;
-    setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
-  };
-
-  return (
-    <div>
-      <Section title="Categorie">
-        <FilterRow
-          label="Alle producten"
-          count={counts._total ?? 0}
-          active={!category}
-          onClick={() => onCategoryChange("")}
-        />
-        {groups.map((g) => {
-          const isExp = catExpanded.has(g.label);
-          const hasActive = g.subs.some((s) => s.value === category);
-          return (
-            <div key={g.label}>
-              <button
-                onClick={() => toggleCatGroup(g.label)}
-                className={`relative group w-full flex items-center justify-between py-2.5 text-left text-sm transition-colors ${
-                  hasActive ? "text-ink font-medium" : "text-stone hover:text-ink"
-                }`}
-              >
-                <span>{g.label}</span>
-                <span className="flex items-center gap-2.5">
-                  <span className={`text-[10px] tabular-nums transition-opacity ${
-                    hasActive ? "text-stone/80 opacity-100" : "text-stone/50 opacity-0 group-hover:opacity-100"
-                  }`}>
-                    {groupCount(g)}
-                  </span>
-                  <ChevronDown
-                    className={`w-3 h-3 text-stone/60 transition-transform ${isExp ? "rotate-180" : ""}`}
-                    strokeWidth={1.5}
-                  />
-                </span>
-              </button>
-              <AnimatePresence initial={false}>
-                {isExp && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.22, ease: [0.25, 0.4, 0.25, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pb-1">
-                      {g.subs.map((s) => (
-                        <FilterRow
-                          key={s.value}
-                          label={s.label}
-                          count={counts[s.value] ?? 0}
-                          active={category === s.value}
-                          onClick={() => onCategoryChange(s.value)}
-                          indent={1}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
-      </Section>
-
-      <Section title="Prijs">
-        <div className="font-serif text-base text-ink mb-4 tabular-nums">
-          €{priceRange[0]} <span className="text-stone/40 mx-1">—</span> €{priceRange[1]}
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1.5">
-              <span>Min</span><span className="tabular-nums">€{priceRange[0]}</span>
-            </label>
-            <input type="range" min={0} max={5000} step={50} value={priceRange[0]}
-              onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-              className="w-full accent-accent h-1" />
-          </div>
-          <div>
-            <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1.5">
-              <span>Max</span><span className="tabular-nums">€{priceRange[1]}</span>
-            </label>
-            <input type="range" min={0} max={5000} step={50} value={priceRange[1]}
-              onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-              className="w-full accent-accent h-1" />
-          </div>
-        </div>
-      </Section>
-
-      {facets.stockCount > 0 && onInStockOnlyChange && (
-        <Section title="Voorraad">
-          <FilterRow
-            label="Alleen op voorraad"
-            count={facets.stockCount}
-            active={inStockOnly}
-            onClick={() => onInStockOnlyChange(!inStockOnly)}
-          />
-        </Section>
-      )}
-
-      {facets.colors.length > 0 && onColorsChange && (
-        <Section title="Kleur">
-          {facets.colors.map(([name, { hex, count }]) => (
-            <FilterRow
-              key={name}
-              label={name}
-              count={count}
-              active={selectedColors.includes(name)}
-              onClick={() => toggleArr(selectedColors, name, onColorsChange)}
-              swatch={hex}
-            />
-          ))}
-        </Section>
-      )}
-
-      {facets.materials.length > 0 && onMaterialsChange && (
-        <Section title="Materiaal" defaultOpen={false}>
-          {facets.materials.map(([mat, count]) => (
-            <FilterRow
-              key={mat}
-              label={mat}
-              count={count}
-              active={selectedMaterials.includes(mat)}
-              onClick={() => toggleArr(selectedMaterials, mat, onMaterialsChange)}
-            />
-          ))}
-        </Section>
-      )}
-
-      {facets.deliveries.length > 0 && onDeliveryChange && (
-        <Section title="Levertijd" defaultOpen={false}>
-          {facets.deliveries.map(([del, count]) => (
-            <FilterRow
-              key={del}
-              label={del}
-              count={count}
-              active={selectedDelivery.includes(del)}
-              onClick={() => toggleArr(selectedDelivery, del, onDeliveryChange)}
-            />
-          ))}
-        </Section>
-      )}
-    </div>
-  );
-}
-
-// Desktop chip-bar: filter-pills in 1 rij, elk opent eigen popover
-type ChipBarProps = Props & {
-  sortOpen: boolean;
-  setSortOpen: (o: boolean) => void;
-  sortRef: React.RefObject<HTMLDivElement | null>;
-  activeSortLabel?: string;
-  hasActiveFilters: boolean;
-  resetAll: () => void;
-  activeCount: number;
-};
-
-function DesktopChipBar(props: ChipBarProps) {
-  const {
-    category, productCount,
-    priceRange,
-    selectedColors = [], selectedMaterials = [], selectedDelivery = [],
-    inStockOnly = false, onInStockOnlyChange,
-    sortBy, onSortChange,
-    sortOpen, setSortOpen, sortRef, activeSortLabel,
-    hasActiveFilters, resetAll, activeCount,
-  } = props;
-
-  const [openChip, setOpenChip] = useState<string | null>(null);
-  const barRef = useRef<HTMLDivElement>(null);
-  const facets = useFacets(props.productsForFacets);
-
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (barRef.current && !barRef.current.contains(e.target as Node)) setOpenChip(null);
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+        // Route krijgt s-maxage van de server; browser-cache mag gewoon meedoen.
+        const res = await fetch("/api/products/counts", { cache: "default", signal: controller.signal });
+        if (!res.ok) throw new Error(`counts ${res.status}`);
+        const data: unknown = await res.json();
+        if (!isCountsResponse(data)) throw new Error("counts: onverwacht antwoord");
+        cachedCounts = data.counts;
+        setCounts(data.counts);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setFailed(true);
+      }
+    })();
+    return () => controller.abort();
   }, []);
 
-  const activeSubLabel = category ? findSubLabel(category) : null;
+  return { counts, failed };
+}
 
-  type ChipKey = "categorie" | "prijs" | "kleur" | "materiaal" | "levertijd";
+/* ─── Facetten uit specs (kleur / materiaal / levertijd) ─────────── */
 
-  interface ChipDef {
-    key: ChipKey;
-    label: string;
-    count: number;
-    active: boolean;
-    summary?: string;
+function parseSpecs(raw: string | null | undefined): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
   }
-
-  const chips: ChipDef[] = [
-    {
-      key: "categorie", label: "Categorie", count: category ? 1 : 0,
-      active: !!category, summary: activeSubLabel ?? undefined,
-    },
-    {
-      key: "prijs", label: "Prijs",
-      count: priceRange[0] > 0 || priceRange[1] < 5000 ? 1 : 0,
-      active: priceRange[0] > 0 || priceRange[1] < 5000,
-      summary: (priceRange[0] > 0 || priceRange[1] < 5000) ? `€${priceRange[0]}–${priceRange[1]}` : undefined,
-    },
-    {
-      key: "kleur", label: "Kleur", count: selectedColors.length,
-      active: selectedColors.length > 0,
-      summary: selectedColors.length === 1 ? selectedColors[0] : undefined,
-    },
-    {
-      key: "materiaal", label: "Materiaal", count: selectedMaterials.length,
-      active: selectedMaterials.length > 0,
-      summary: selectedMaterials.length === 1 ? selectedMaterials[0] : undefined,
-    },
-    {
-      key: "levertijd", label: "Levertijd", count: selectedDelivery.length,
-      active: selectedDelivery.length > 0,
-      summary: selectedDelivery.length === 1 ? selectedDelivery[0] : undefined,
-    },
-  ];
-
-  // Filter out chips voor lege facets
-  const visibleChips = chips.filter((c) => {
-    if (c.key === "kleur") return facets.colors.length > 0;
-    if (c.key === "materiaal") return facets.materials.length > 0;
-    if (c.key === "levertijd") return facets.deliveries.length > 0;
-    return true;
-  });
-
-  return (
-    <div ref={barRef} className="hidden lg:block sticky top-24 z-30 bg-paper/95 backdrop-blur-md border-y border-line -mx-6 sm:-mx-10 lg:-mx-14 mb-10">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="flex items-center justify-between gap-6 min-h-14 py-2.5">
-          {/* Filter chips in een rij — geen overflow-x-auto omdat dat de popovers verbergt */}
-          <div className="flex items-center gap-2 flex-1 flex-wrap">
-            {visibleChips.map((chip) => (
-              <div key={chip.key} className="relative flex-shrink-0">
-                <button
-                  onClick={() => setOpenChip(openChip === chip.key ? null : chip.key)}
-                  className={`group/chip relative flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium px-5 py-2.5 border transition-all duration-[280ms] whitespace-nowrap ${
-                    openChip === chip.key
-                      ? "border-ink bg-ink text-paper"
-                      : chip.active
-                      ? "border-ink text-ink bg-paper"
-                      : "border-line text-ink hover:border-ink"
-                  }`}
-                  style={{ borderRadius: "8px", transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
-                >
-                  {/* SIGNATURE: hover-onderlijn-within (alleen inactive state) */}
-                  {openChip !== chip.key && !chip.active && (
-                    <span
-                      className="absolute left-4 right-4 bottom-1.5 h-px bg-ink scale-x-0 group-hover/chip:scale-x-100 origin-right group-hover/chip:origin-left transition-transform duration-[480ms]"
-                      style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
-                    />
-                  )}
-                  <span>{chip.label}</span>
-                  {chip.summary && (
-                    <span className={`normal-case tracking-normal text-xs ${
-                      openChip === chip.key ? "text-paper/80" : "text-stone"
-                    }`}>
-                      · {chip.summary}
-                    </span>
-                  )}
-                  {chip.count > 1 && (
-                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] tabular-nums font-medium ${
-                      openChip === chip.key ? "bg-paper text-ink" : "bg-accent text-paper"
-                    }`}>
-                      {chip.count}
-                    </span>
-                  )}
-                  <ChevronDown
-                    className={`w-3 h-3 transition-transform duration-[280ms] ${openChip === chip.key ? "rotate-180" : ""}`}
-                    strokeWidth={1.5}
-                  />
-                </button>
-
-                {/* Popover per chip */}
-                <AnimatePresence>
-                  {openChip === chip.key && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.18, ease: [0.25, 0.4, 0.25, 1] }}
-                      className="absolute left-0 top-full mt-2 bg-paper border border-line shadow-xl z-40 w-[320px] max-h-[60vh] overflow-y-auto"
-                    >
-                      <div className="px-5 py-4">
-                        {chip.key === "categorie" && (
-                          <CategoryPopover {...props} onAfterChange={() => setOpenChip(null)} />
-                        )}
-                        {chip.key === "prijs" && <PricePopover {...props} />}
-                        {chip.key === "kleur" && <ColorPopover {...props} />}
-                        {chip.key === "materiaal" && <MaterialPopover {...props} />}
-                        {chip.key === "levertijd" && <DeliveryPopover {...props} />}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
-
-            {/* Voorraad als toggle-chip (geen popover) */}
-            {facets.stockCount > 0 && onInStockOnlyChange && (
-              <button
-                onClick={() => onInStockOnlyChange(!inStockOnly)}
-                className={`group/voorraad relative flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium px-5 py-2.5 border transition-all duration-[280ms] whitespace-nowrap flex-shrink-0 ${
-                  inStockOnly ? "border-ink bg-ink text-paper" : "border-line text-ink hover:border-ink"
-                }`}
-                style={{ borderRadius: "8px", transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
-              >
-                {!inStockOnly && (
-                  <span
-                    className="absolute left-4 right-4 bottom-1.5 h-px bg-ink scale-x-0 group-hover/voorraad:scale-x-100 origin-right group-hover/voorraad:origin-left transition-transform duration-[480ms]"
-                    style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
-                  />
-                )}
-                <span className={`w-1.5 h-1.5 ${inStockOnly ? "bg-accent" : "bg-stone/40"}`} />
-                <span>Op voorraad</span>
-              </button>
-            )}
-
-            {hasActiveFilters && (
-              <button
-                onClick={resetAll}
-                className="text-[10px] uppercase tracking-[0.22em] text-stone hover:text-ink underline underline-offset-4 decoration-stone/40 ml-2 whitespace-nowrap flex-shrink-0"
-              >
-                Wissen ({activeCount})
-              </button>
-            )}
-          </div>
-
-          {/* Count + Sort rechts */}
-          <div className="flex items-center gap-5 flex-shrink-0">
-            <p className="text-[11px] text-stone uppercase tracking-[0.15em] tabular-nums">
-              {productCount} {productCount === 1 ? "item" : "items"}
-            </p>
-            <div ref={sortRef} className="relative">
-              <button
-                onClick={() => setSortOpen(!sortOpen)}
-                className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] font-medium text-ink hover:text-accent transition-colors duration-[280ms]"
-              >
-                <ArrowUpDown className="w-3.5 h-3.5" strokeWidth={1.5} />
-                <span>{activeSortLabel?.split(":")[0] ?? "Sorteer"}</span>
-                <ChevronDown className={`w-3 h-3 transition-transform ${sortOpen ? "rotate-180" : ""}`} strokeWidth={1.5} />
-              </button>
-              <AnimatePresence>
-                {sortOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-2 w-60 bg-white border border-line shadow-xl overflow-hidden z-40"
-                  >
-                    {sortOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => { onSortChange(opt.value); setSortOpen(false); }}
-                        className={`w-full text-left text-[11px] uppercase tracking-[0.18em] px-5 py-3 transition-colors ${
-                          sortBy === opt.value ? "bg-ink text-white" : "text-stone hover:bg-bone hover:text-ink"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
-
-// Popover-inhoud per chip
-function CategoryPopover({ category, onCategoryChange, onAfterChange }: Props & { onAfterChange?: () => void }) {
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [expanded, setExpanded] = useState<Set<string>>(() => {
-    const set = new Set<string>();
-    if (category) { const g = findGroupOf(category); if (g) set.add(g.label); }
-    return set;
-  });
-  useEffect(() => {
-    fetch("/api/products/counts", { cache: "no-store" }).then((r) => r.json()).then((d) => setCounts(d.counts ?? {})).catch(() => null);
-  }, []);
-  const toggleGroup = (label: string) => setExpanded((p) => {
-    const n = new Set(p); if (n.has(label)) n.delete(label); else n.add(label); return n;
-  });
-  const groupCount = (g: Group) => g.subs.reduce((s, sub) => s + (counts[sub.value] ?? 0), 0);
-  const select = (v: string) => { onCategoryChange(v); onAfterChange?.(); };
-  return (
-    <div>
-      <FilterRow label="Alle producten" count={counts._total ?? 0} active={!category} onClick={() => select("")} />
-      {groups.map((g) => {
-        const isExp = expanded.has(g.label);
-        const hasActive = g.subs.some((s) => s.value === category);
-        return (
-          <div key={g.label}>
-            <button
-              onClick={() => toggleGroup(g.label)}
-              className={`relative group w-full flex items-center justify-between py-2 text-left text-sm transition-colors ${
-                hasActive ? "text-ink font-medium" : "text-stone hover:text-ink"
-              }`}
-            >
-              <span>{g.label}</span>
-              <span className="flex items-center gap-2">
-                <span className="text-[10px] text-stone/50 tabular-nums">{groupCount(g)}</span>
-                <ChevronDown className={`w-3 h-3 text-stone/60 transition-transform ${isExp ? "rotate-180" : ""}`} strokeWidth={1.5} />
-              </span>
-            </button>
-            <AnimatePresence initial={false}>
-              {isExp && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                  {g.subs.map((s) => (
-                    <FilterRow key={s.value} label={s.label} count={counts[s.value] ?? 0} active={category === s.value} onClick={() => select(s.value)} indent={1} />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function PricePopover({ priceRange, onPriceRangeChange }: Props) {
-  return (
-    <div>
-      <div className="font-serif text-base text-ink mb-3 tabular-nums">
-        €{priceRange[0]} <span className="text-stone/40 mx-1">—</span> €{priceRange[1]}
-      </div>
-      <div className="space-y-4">
-        <div>
-          <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1.5">
-            <span>Min</span><span className="tabular-nums">€{priceRange[0]}</span>
-          </label>
-          <input type="range" min={0} max={5000} step={50} value={priceRange[0]}
-            onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-            className="w-full accent-accent h-1" />
-        </div>
-        <div>
-          <label className="flex justify-between text-[10px] uppercase tracking-[0.15em] text-stone mb-1.5">
-            <span>Max</span><span className="tabular-nums">€{priceRange[1]}</span>
-          </label>
-          <input type="range" min={0} max={5000} step={50} value={priceRange[1]}
-            onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-            className="w-full accent-accent h-1" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ColorPopover({ selectedColors = [], onColorsChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onColorsChange) return null;
-  return (
-    <div>
-      {f.colors.map(([name, { hex, count }]) => (
-        <FilterRow
-          key={name} label={name} count={count} swatch={hex}
-          active={selectedColors.includes(name)}
-          onClick={() => onColorsChange(selectedColors.includes(name) ? selectedColors.filter((c) => c !== name) : [...selectedColors, name])}
-        />
-      ))}
-    </div>
-  );
-}
-
-function MaterialPopover({ selectedMaterials = [], onMaterialsChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onMaterialsChange) return null;
-  return (
-    <div>
-      {f.materials.map(([mat, count]) => (
-        <FilterRow
-          key={mat} label={mat} count={count}
-          active={selectedMaterials.includes(mat)}
-          onClick={() => onMaterialsChange(selectedMaterials.includes(mat) ? selectedMaterials.filter((m) => m !== mat) : [...selectedMaterials, mat])}
-        />
-      ))}
-    </div>
-  );
-}
-
-function DeliveryPopover({ selectedDelivery = [], onDeliveryChange, productsForFacets }: Props) {
-  const f = useFacets(productsForFacets);
-  if (!onDeliveryChange) return null;
-  return (
-    <div>
-      {f.deliveries.map(([del, count]) => (
-        <FilterRow
-          key={del} label={del} count={count}
-          active={selectedDelivery.includes(del)}
-          onClick={() => onDeliveryChange(selectedDelivery.includes(del) ? selectedDelivery.filter((d) => d !== del) : [...selectedDelivery, del])}
-        />
-      ))}
-    </div>
-  );
-}
-
 
 function useFacets(productsForFacets: ProductForFilter[] = []) {
   return useMemo(() => {
@@ -728,13 +159,17 @@ function useFacets(productsForFacets: ProductForFilter[] = []) {
         const existing = colors.get(p.colorName);
         colors.set(p.colorName, { hex: p.colorHex, count: (existing?.count ?? 0) + 1 });
       }
-      try {
-        const specs = JSON.parse(p.specs ?? "{}");
-        const mat = specs.Materiaal;
-        if (mat) for (const m of mat.split(/[,/]\s*/)) materials.set(m.trim(), (materials.get(m.trim()) ?? 0) + 1);
-        const del = specs.Levertijd;
-        if (del) deliveries.set(del, (deliveries.get(del) ?? 0) + 1);
-      } catch {}
+      const specs = parseSpecs(p.specs);
+      if (!specs) continue;
+      const mat = specs.Materiaal;
+      if (typeof mat === "string") {
+        for (const m of mat.split(/[,/]\s*/)) {
+          const key = m.trim();
+          if (key) materials.set(key, (materials.get(key) ?? 0) + 1);
+        }
+      }
+      const del = specs.Levertijd;
+      if (typeof del === "string" && del.trim()) deliveries.set(del, (deliveries.get(del) ?? 0) + 1);
     }
     return {
       colors: Array.from(colors.entries()).sort((a, b) => b[1].count - a[1].count),
@@ -744,6 +179,599 @@ function useFacets(productsForFacets: ProductForFilter[] = []) {
     };
   }, [productsForFacets]);
 }
+
+const toggleIn = (arr: string[], val: string) =>
+  arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+
+/* ─── Bouwstenen ─────────────────────────────────────────────────── */
+
+// Universele filter-rij: een toggle-knop met aria-pressed en teller.
+function FilterRow({
+  label, count, active, onClick, indent = false, swatch,
+}: {
+  label: string; count?: number; active: boolean;
+  onClick: () => void; indent?: boolean; swatch?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`relative w-full flex items-center justify-between gap-3 py-2 min-h-11 text-left text-base transition-colors ${
+        indent ? "pl-4" : ""
+      } ${active ? "text-ink font-medium" : "text-slate hover:text-ink"}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute top-1/2 -translate-y-1/2 -left-3 w-[2px] h-5 bg-accent-dark transition-opacity ${
+          active ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <span className="flex items-center gap-2.5">
+        {swatch && (
+          <span
+            className="block w-5 h-5 rounded-full border border-line-strong"
+            // Kleur komt uit de productdata (hex per variant) — enige
+            // toegestane inline style: dynamische data, geen design-token.
+            style={{ backgroundColor: swatch }}
+            aria-hidden="true"
+          />
+        )}
+        <span>{label}</span>
+      </span>
+      {typeof count === "number" && (
+        <span className="text-sm text-stone tabular-nums">
+          {count}
+          <span className="sr-only"> producten</span>
+        </span>
+      )}
+    </button>
+  );
+}
+
+function Section({
+  title, defaultOpen = true, children,
+}: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const panelId = useId();
+  return (
+    <div className="border-b border-line py-3">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="w-full flex items-center justify-between min-h-11 text-left group"
+      >
+        <span className="eyebrow-lg text-ink">{title}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-stone group-hover:text-ink transition-all duration-200 ${open ? "rotate-180" : ""}`}
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            id={panelId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.25, 0.4, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 pl-3">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Categorie-boom: groepen met uitklapbare subcategorieën.
+function CategoryTree({
+  category, onSelect, compact = false,
+}: { category: string; onSelect: (v: string) => void; compact?: boolean }) {
+  const { counts, failed } = useCategoryCounts();
+  const [expanded, setExpanded] = useState<Set<string>>(() => {
+    const set = new Set<string>();
+    const g = category ? findGroupOf(category) : undefined;
+    if (g) set.add(g.label);
+    return set;
+  });
+  const toggleGroup = (label: string) =>
+    setExpanded((p) => {
+      const n = new Set(p);
+      if (n.has(label)) n.delete(label); else n.add(label);
+      return n;
+    });
+  const show = (v: number | undefined) => (failed ? undefined : v ?? 0);
+  const groupCount = (g: Group) => g.subs.reduce((s, sub) => s + (counts[sub.value] ?? 0), 0);
+
+  return (
+    <div>
+      <FilterRow
+        label="Alle producten"
+        count={show(counts._total)}
+        active={!category}
+        onClick={() => onSelect("")}
+      />
+      {groups.map((g) => {
+        const isExp = expanded.has(g.label);
+        const hasActive = g.subs.some((s) => s.value === category);
+        const panelId = `cat-${compact ? "pop" : "drawer"}-${g.label.toLowerCase()}`;
+        return (
+          <div key={g.label}>
+            <button
+              type="button"
+              onClick={() => toggleGroup(g.label)}
+              aria-expanded={isExp}
+              aria-controls={panelId}
+              className={`w-full flex items-center justify-between gap-3 py-2 min-h-11 text-left text-base transition-colors ${
+                hasActive ? "text-ink font-medium" : "text-slate hover:text-ink"
+              }`}
+            >
+              <span>{g.label}</span>
+              <span className="flex items-center gap-2.5">
+                {!failed && (
+                  <span className="text-sm text-stone tabular-nums">
+                    {groupCount(g)}
+                    <span className="sr-only"> producten</span>
+                  </span>
+                )}
+                <ChevronDown
+                  className={`w-4 h-4 text-stone transition-transform ${isExp ? "rotate-180" : ""}`}
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+            <AnimatePresence initial={false}>
+              {isExp && (
+                <motion.div
+                  id={panelId}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: [0.25, 0.4, 0.25, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="pb-1">
+                    {g.subs.map((s) => (
+                      <FilterRow
+                        key={s.value}
+                        label={s.label}
+                        count={show(counts[s.value])}
+                        active={category === s.value}
+                        onClick={() => onSelect(s.value)}
+                        indent
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Prijs: klassen als chips + optioneel eigen min/max.
+function PriceFilter({ priceRange, onPriceRangeChange, idPrefix }: {
+  priceRange: [number, number];
+  onPriceRangeChange: (r: [number, number]) => void;
+  idPrefix: string;
+}) {
+  const [minText, setMinText] = useState(priceRange[0] > 0 ? String(priceRange[0]) : "");
+  const [maxText, setMaxText] = useState(priceRange[1] < PRICE_MAX ? String(priceRange[1]) : "");
+
+  // Externe wijziging (chip, "wissen") → velden mee laten lopen. Reset tijdens
+  // render (React-patroon) i.p.v. setState in een effect.
+  const [prevRange, setPrevRange] = useState(priceRange);
+  if (prevRange[0] !== priceRange[0] || prevRange[1] !== priceRange[1]) {
+    setPrevRange(priceRange);
+    setMinText(priceRange[0] > 0 ? String(priceRange[0]) : "");
+    setMaxText(priceRange[1] < PRICE_MAX ? String(priceRange[1]) : "");
+  }
+
+  const apply = () => {
+    const min = Math.max(0, parseInt(minText.replace(/\D/g, ""), 10) || 0);
+    const maxParsed = parseInt(maxText.replace(/\D/g, ""), 10);
+    const max = Number.isFinite(maxParsed) && maxParsed > 0 ? Math.min(PRICE_MAX, maxParsed) : PRICE_MAX;
+    onPriceRangeChange(min <= max ? [min, max] : [max, min]);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Prijsklasse">
+        {PRICE_BUCKETS.map((b) => {
+          const active = priceRange[0] === b.range[0] && priceRange[1] === b.range[1];
+          return (
+            <button
+              key={b.label}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onPriceRangeChange(active ? [0, PRICE_MAX] : b.range)}
+              className={`inline-flex items-center min-h-11 px-4 rounded-full border text-sm font-medium transition-colors ${
+                active
+                  ? "border-ink bg-ink text-paper"
+                  : "border-line-strong text-ink hover:border-ink hover:bg-bone"
+              }`}
+            >
+              {b.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <form
+        onSubmit={(e) => { e.preventDefault(); apply(); }}
+        className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end"
+        aria-label="Eigen prijsbereik"
+      >
+        <div>
+          <label htmlFor={`${idPrefix}-min`} className="field-label text-sm mb-1">Van (€)</label>
+          <input
+            id={`${idPrefix}-min`}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="0"
+            value={minText}
+            onChange={(e) => setMinText(e.target.value)}
+            onBlur={apply}
+            className="input-field tabular-nums"
+          />
+        </div>
+        <div>
+          <label htmlFor={`${idPrefix}-max`} className="field-label text-sm mb-1">Tot (€)</label>
+          <input
+            id={`${idPrefix}-max`}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder={String(PRICE_MAX)}
+            value={maxText}
+            onChange={(e) => setMaxText(e.target.value)}
+            onBlur={apply}
+            className="input-field tabular-nums"
+          />
+        </div>
+        <Button type="submit" variant="secondary" size="sm">Toepassen</Button>
+      </form>
+    </div>
+  );
+}
+
+function ColorList({ selectedColors = [], onColorsChange, productsForFacets }: Props) {
+  const f = useFacets(productsForFacets);
+  if (!onColorsChange) return null;
+  return (
+    <div>
+      {f.colors.map(([name, { hex, count }]) => (
+        <FilterRow
+          key={name} label={name} count={count} swatch={hex}
+          active={selectedColors.includes(name)}
+          onClick={() => onColorsChange(toggleIn(selectedColors, name))}
+        />
+      ))}
+    </div>
+  );
+}
+
+function MaterialList({ selectedMaterials = [], onMaterialsChange, productsForFacets }: Props) {
+  const f = useFacets(productsForFacets);
+  if (!onMaterialsChange) return null;
+  return (
+    <div>
+      {f.materials.map(([mat, count]) => (
+        <FilterRow
+          key={mat} label={mat} count={count}
+          active={selectedMaterials.includes(mat)}
+          onClick={() => onMaterialsChange(toggleIn(selectedMaterials, mat))}
+        />
+      ))}
+    </div>
+  );
+}
+
+function DeliveryList({ selectedDelivery = [], onDeliveryChange, productsForFacets }: Props) {
+  const f = useFacets(productsForFacets);
+  if (!onDeliveryChange) return null;
+  return (
+    <div>
+      {f.deliveries.map(([del, count]) => (
+        <FilterRow
+          key={del} label={del} count={count}
+          active={selectedDelivery.includes(del)}
+          onClick={() => onDeliveryChange(toggleIn(selectedDelivery, del))}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Drawer-inhoud (mobiel) ─────────────────────────────────────── */
+
+function FilterContent(props: Props) {
+  const {
+    category, onCategoryChange,
+    priceRange, onPriceRangeChange,
+    inStockOnly = false, onInStockOnlyChange,
+    productsForFacets = [],
+  } = props;
+  const facets = useFacets(productsForFacets);
+
+  return (
+    <div>
+      <Section title="Categorie">
+        <CategoryTree category={category} onSelect={onCategoryChange} />
+      </Section>
+
+      <Section title="Prijs">
+        <PriceFilter priceRange={priceRange} onPriceRangeChange={onPriceRangeChange} idPrefix="drawer-price" />
+      </Section>
+
+      {facets.stockCount > 0 && onInStockOnlyChange && (
+        <Section title="Voorraad">
+          <FilterRow
+            label="Alleen op voorraad"
+            count={facets.stockCount}
+            active={inStockOnly}
+            onClick={() => onInStockOnlyChange(!inStockOnly)}
+          />
+        </Section>
+      )}
+
+      {facets.colors.length > 0 && props.onColorsChange && (
+        <Section title="Kleur"><ColorList {...props} /></Section>
+      )}
+
+      {facets.materials.length > 0 && props.onMaterialsChange && (
+        <Section title="Materiaal" defaultOpen={false}><MaterialList {...props} /></Section>
+      )}
+
+      {facets.deliveries.length > 0 && props.onDeliveryChange && (
+        <Section title="Levertijd" defaultOpen={false}><DeliveryList {...props} /></Section>
+      )}
+    </div>
+  );
+}
+
+/* ─── Desktop chip-bar ───────────────────────────────────────────── */
+
+type ChipKey = "categorie" | "prijs" | "kleur" | "materiaal" | "levertijd";
+
+interface ChipDef {
+  key: ChipKey;
+  label: string;
+  count: number;
+  active: boolean;
+  summary?: string;
+}
+
+type ChipBarProps = Props & {
+  sortOpen: boolean;
+  setSortOpen: (o: boolean) => void;
+  sortRef: React.RefObject<HTMLDivElement | null>;
+  activeSortLabel?: string;
+  hasActiveFilters: boolean;
+  resetAll: () => void;
+  activeCount: number;
+};
+
+const chipBase =
+  "relative flex items-center gap-2 min-h-11 px-4 rounded-lg border text-sm font-medium whitespace-nowrap transition-colors duration-[280ms]";
+
+function DesktopChipBar(props: ChipBarProps) {
+  const {
+    category, productCount,
+    priceRange,
+    selectedColors = [], selectedMaterials = [], selectedDelivery = [],
+    inStockOnly = false, onInStockOnlyChange,
+    sortBy, onSortChange,
+    sortOpen, setSortOpen, sortRef, activeSortLabel,
+    hasActiveFilters, resetAll, activeCount,
+  } = props;
+
+  const [openChip, setOpenChip] = useState<ChipKey | null>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const facets = useFacets(props.productsForFacets);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (barRef.current && !barRef.current.contains(e.target as Node)) setOpenChip(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenChip(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  const activeSubLabel = category ? findSubLabel(category) : undefined;
+  const priceActive = !isDefaultPrice(priceRange);
+
+  const chips: ChipDef[] = [
+    { key: "categorie", label: "Categorie", count: category ? 1 : 0, active: !!category, summary: activeSubLabel },
+    { key: "prijs", label: "Prijs", count: priceActive ? 1 : 0, active: priceActive, summary: priceSummary(priceRange) },
+    { key: "kleur", label: "Kleur", count: selectedColors.length, active: selectedColors.length > 0, summary: selectedColors.length === 1 ? selectedColors[0] : undefined },
+    { key: "materiaal", label: "Materiaal", count: selectedMaterials.length, active: selectedMaterials.length > 0, summary: selectedMaterials.length === 1 ? selectedMaterials[0] : undefined },
+    { key: "levertijd", label: "Levertijd", count: selectedDelivery.length, active: selectedDelivery.length > 0, summary: selectedDelivery.length === 1 ? selectedDelivery[0] : undefined },
+  ];
+
+  const visibleChips = chips.filter((c) => {
+    if (c.key === "kleur") return facets.colors.length > 0;
+    if (c.key === "materiaal") return facets.materials.length > 0;
+    if (c.key === "levertijd") return facets.deliveries.length > 0;
+    return true;
+  });
+
+  return (
+    <div ref={barRef} className="hidden lg:block sticky top-24 z-30 bg-paper/95 backdrop-blur-md border-y border-line -mx-6 sm:-mx-10 lg:-mx-14 mb-10">
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="flex items-center justify-between gap-6 min-h-16 py-2.5">
+          {/* Filter chips — elk opent een eigen paneel (disclosure-patroon) */}
+          <div className="flex items-center gap-2 flex-1 flex-wrap" role="group" aria-label="Filters">
+            {visibleChips.map((chip) => {
+              const isOpen = openChip === chip.key;
+              const panelId = `filter-panel-${chip.key}`;
+              return (
+                <div key={chip.key} className="relative flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setOpenChip(isOpen ? null : chip.key)}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    className={`${chipBase} ${
+                      isOpen
+                        ? "border-ink bg-ink text-paper"
+                        : chip.active
+                        ? "border-ink text-ink bg-paper"
+                        : "border-line-strong text-ink hover:border-ink hover:bg-bone"
+                    }`}
+                  >
+                    <span>{chip.label}</span>
+                    {chip.summary && (
+                      <span className={`font-normal ${isOpen ? "text-paper/85" : "text-stone"}`}>
+                        · {chip.summary}
+                      </span>
+                    )}
+                    {chip.count > 1 && (
+                      <span className={`flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs tabular-nums font-medium ${
+                        isOpen ? "bg-paper text-ink" : "bg-ink text-paper"
+                      }`}>
+                        {chip.count}
+                        <span className="sr-only"> geselecteerd</span>
+                      </span>
+                    )}
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-[280ms] ${isOpen ? "rotate-180" : ""}`}
+                      strokeWidth={1.5}
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        id={panelId}
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.18, ease: [0.25, 0.4, 0.25, 1] }}
+                        className="absolute left-0 top-full mt-2 bg-paper border border-line rounded-[12px] shadow-xl z-40 w-[360px] max-h-[60vh] overflow-y-auto"
+                      >
+                        <div className="px-5 py-4">
+                          {chip.key === "categorie" && (
+                            <CategoryTree
+                              compact
+                              category={category}
+                              onSelect={(v) => { props.onCategoryChange(v); setOpenChip(null); }}
+                            />
+                          )}
+                          {chip.key === "prijs" && (
+                            <PriceFilter priceRange={priceRange} onPriceRangeChange={props.onPriceRangeChange} idPrefix="chip-price" />
+                          )}
+                          {chip.key === "kleur" && <ColorList {...props} />}
+                          {chip.key === "materiaal" && <MaterialList {...props} />}
+                          {chip.key === "levertijd" && <DeliveryList {...props} />}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+
+            {/* Voorraad als toggle-chip (geen paneel) */}
+            {facets.stockCount > 0 && onInStockOnlyChange && (
+              <button
+                type="button"
+                onClick={() => onInStockOnlyChange(!inStockOnly)}
+                aria-pressed={inStockOnly}
+                className={`${chipBase} flex-shrink-0 ${
+                  inStockOnly ? "border-ink bg-ink text-paper" : "border-line-strong text-ink hover:border-ink hover:bg-bone"
+                }`}
+              >
+                <span aria-hidden="true" className={`w-2 h-2 rounded-full ${inStockOnly ? "bg-accent-light" : "bg-success"}`} />
+                <span>Op voorraad</span>
+              </button>
+            )}
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={resetAll} className="flex-shrink-0 underline underline-offset-4">
+                Wis filters ({activeCount})
+              </Button>
+            )}
+          </div>
+
+          {/* Teller + sorteren rechts */}
+          <div className="flex items-center gap-5 flex-shrink-0">
+            <p className="text-sm text-stone tabular-nums" aria-live="polite" aria-atomic="true">
+              {productCount} {productCount === 1 ? "product" : "producten"}
+            </p>
+            <div ref={sortRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setSortOpen(!sortOpen)}
+                aria-expanded={sortOpen}
+                aria-controls="sort-menu"
+                className="inline-flex items-center gap-2 min-h-11 px-2 text-sm font-medium text-ink hover:text-accent-dark transition-colors duration-[280ms]"
+              >
+                <ArrowUpDown className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
+                <span>
+                  <span className="sr-only">Sorteren: </span>
+                  {activeSortLabel ?? "Sorteer"}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${sortOpen ? "rotate-180" : ""}`} strokeWidth={1.5} aria-hidden="true" />
+              </button>
+              <AnimatePresence>
+                {sortOpen && (
+                  <motion.div
+                    id="sort-menu"
+                    role="group"
+                    aria-label="Sorteervolgorde"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-white border border-line rounded-[12px] shadow-xl overflow-hidden z-40"
+                  >
+                    {sortOptions.map((opt) => {
+                      const pressed = sortBy === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          aria-pressed={pressed}
+                          onClick={() => { onSortChange(opt.value); setSortOpen(false); }}
+                          className={`w-full text-left text-base min-h-11 px-5 py-2.5 transition-colors ${
+                            pressed ? "bg-ink text-paper" : "text-ink hover:bg-bone"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Root ───────────────────────────────────────────────────────── */
 
 export default function FilterBar(props: Props) {
   const {
@@ -755,7 +783,7 @@ export default function FilterBar(props: Props) {
     selectedDelivery = [],
   } = props;
 
-  const [drawerOpen, setDrawerOpen] = useState(false); // mobile filter
+  const [drawerOpen, setDrawerOpen] = useState(false); // mobiel filterpaneel
   const [sortOpen, setSortOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -765,7 +793,7 @@ export default function FilterBar(props: Props) {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setSortOpen(false); setDrawerOpen(false); setMobileSortOpen(false); }
+      if (e.key === "Escape") setSortOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -775,179 +803,128 @@ export default function FilterBar(props: Props) {
     };
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = (drawerOpen || mobileSortOpen) ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [drawerOpen, mobileSortOpen]);
-
   const inStockOnly = props.inStockOnly ?? false;
   const activeCount =
     (category ? 1 : 0) +
-    (priceRange[0] > 0 || priceRange[1] < 5000 ? 1 : 0) +
+    (isDefaultPrice(priceRange) ? 0 : 1) +
     selectedColors.length + selectedMaterials.length + selectedDelivery.length +
     (inStockOnly ? 1 : 0);
   const hasActiveFilters = activeCount > 0;
-  const activeSortLabel = sortOptions.find((o) => o.value === sortBy)?.label;
+  const activeSort = sortOptions.find((o) => o.value === sortBy);
 
   const resetAll = () => {
     props.onCategoryChange("");
-    props.onPriceRangeChange([0, 5000]);
+    props.onPriceRangeChange([0, PRICE_MAX]);
     props.onColorsChange?.([]);
     props.onMaterialsChange?.([]);
     props.onDeliveryChange?.([]);
     props.onInStockOnlyChange?.(false);
   };
 
+  const countLabel = `${productCount} ${productCount === 1 ? "product" : "producten"}`;
+
   return (
     <>
-      {/* Desktop: chip-row pattern — elke filter is een chip in 1 rij, klik opent popover */}
+      {/* Desktop: chip-rij — elke filter is een chip, klik opent een paneel */}
       <DesktopChipBar
         {...props}
         sortOpen={sortOpen}
         setSortOpen={setSortOpen}
         sortRef={sortRef}
-        activeSortLabel={activeSortLabel}
+        activeSortLabel={activeSort?.short}
         hasActiveFilters={hasActiveFilters}
         resetAll={resetAll}
         activeCount={activeCount}
       />
 
-      {/* Mobile: floating sticky bottom bar */}
-      <div
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 backdrop-blur-md border-t border-line"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
+      {/* Mobiel: vaste balk onderaan */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 backdrop-blur-md border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-stretch gap-px bg-line">
           <button
+            type="button"
             onClick={() => setDrawerOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-4 bg-paper text-[11px] uppercase tracking-[0.14em] font-medium text-ink hover:bg-bone transition-colors"
+            aria-haspopup="dialog"
+            aria-expanded={drawerOpen}
+            aria-controls="filter-drawer"
+            className="flex-1 flex items-center justify-center gap-2 min-h-14 bg-paper text-sm font-medium uppercase tracking-[0.08em] text-ink hover:bg-bone transition-colors"
           >
-            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} />
+            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
             Filter
             {hasActiveFilters && (
-              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-accent text-paper text-[10px] font-medium tabular-nums">
+              <span className="flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-ink text-paper text-xs font-medium tabular-nums">
                 {activeCount}
+                <span className="sr-only"> actieve filters</span>
               </span>
             )}
           </button>
           <button
+            type="button"
             onClick={() => setMobileSortOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-4 bg-paper text-[11px] uppercase tracking-[0.14em] font-medium text-ink hover:bg-bone transition-colors"
+            aria-haspopup="dialog"
+            aria-expanded={mobileSortOpen}
+            aria-controls="sort-sheet"
+            className="flex-1 flex items-center justify-center gap-2 min-h-14 bg-paper text-sm font-medium uppercase tracking-[0.08em] text-ink hover:bg-bone transition-colors"
           >
-            <ArrowUpDown className="w-4 h-4" strokeWidth={1.5} />
+            <ArrowUpDown className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
             Sorteer
           </button>
         </div>
+        <p className="sr-only" aria-live="polite" aria-atomic="true">{countLabel}</p>
       </div>
 
-      {/* Side drawer — filter inhoud, slide-in vanaf rechts (desktop + mobile) */}
-      <AnimatePresence>
-        {drawerOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              onClick={() => setDrawerOpen(false)}
-              className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50"
-            />
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed right-0 top-0 bottom-0 w-full sm:w-[440px] bg-paper z-50 flex flex-col"
-            >
-              {/* SIGNATURE: linker rand-divider in accent kleur tijdens open-state */}
-              <motion.span
-                aria-hidden
-                initial={{ scaleY: 0 }}
-                animate={{ scaleY: 1 }}
-                exit={{ scaleY: 0 }}
-                transition={{ duration: 0.64, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute left-0 top-0 bottom-0 w-px bg-accent origin-top z-10"
-              />
-              <div className="flex items-center justify-between px-7 py-6 border-b border-line">
-                <div className="flex items-center gap-3">
-                  <span className="eyebrow text-accent">— Filter</span>
-                  {hasActiveFilters && (
-                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-accent text-paper text-[10px] font-medium tabular-nums">
-                      {activeCount}
-                    </span>
-                  )}
-                </div>
-                <button onClick={() => setDrawerOpen(false)} className="p-1 -mr-1 text-stone hover:text-ink transition-colors duration-[280ms]" aria-label="Sluit">
-                  <X className="w-5 h-5" strokeWidth={1.5} />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-7 pl-10 py-4">
-                <FilterContent {...props} />
-              </div>
-              <div className="border-t border-line px-7 py-4 flex items-center gap-3">
-                {hasActiveFilters && (
-                  <button
-                    onClick={resetAll}
-                    className="text-[11px] uppercase tracking-[0.14em] font-medium text-stone hover:text-ink underline underline-offset-4 decoration-stone/40 transition-colors duration-[280ms]"
-                  >
-                    Wissen
-                  </button>
-                )}
-                <button
-                  onClick={() => setDrawerOpen(false)}
-                  className="flex-1 bg-ink text-paper text-[11px] uppercase tracking-[0.14em] font-medium py-3.5 rounded-[10px] hover:bg-accent transition-colors duration-[280ms]"
-                >
-                  Toon {productCount} {productCount === 1 ? "item" : "items"}
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Filterpaneel — native dialog vanaf rechts */}
+      <Drawer
+        id="filter-drawer"
+        side="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={hasActiveFilters ? `Filter (${activeCount})` : "Filter"}
+        footer={
+          <div className="px-6 py-4 flex items-center gap-3">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={resetAll} className="underline underline-offset-4">
+                Wissen
+              </Button>
+            )}
+            <Button onClick={() => setDrawerOpen(false)} className="flex-1">
+              Toon {countLabel}
+            </Button>
+          </div>
+        }
+      >
+        <div className="px-6 pl-9 py-2">
+          <FilterContent {...props} />
+        </div>
+      </Drawer>
 
-      {/* Mobile sort sheet — slide-up sheet voor sorteer */}
-      <AnimatePresence>
-        {mobileSortOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setMobileSortOpen(false)}
-              className="lg:hidden fixed inset-0 bg-ink/40 backdrop-blur-sm z-50"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ duration: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
-              className="lg:hidden fixed bottom-0 inset-x-0 bg-paper z-50 rounded-t-2xl"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-            >
-              <div className="flex items-center justify-between px-6 py-5 border-b border-line">
-                <h3 className="text-[11px] uppercase tracking-[0.22em] font-medium text-ink">Sorteer</h3>
-                <button onClick={() => setMobileSortOpen(false)} className="p-1" aria-label="Sluit">
-                  <X className="w-5 h-5" strokeWidth={1.5} />
-                </button>
-              </div>
-              <div className="py-2">
-                {sortOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => { onSortChange(opt.value); setMobileSortOpen(false); }}
-                    className={`w-full text-left text-sm px-6 py-4 transition-colors ${
-                      sortBy === opt.value ? "bg-bone text-ink font-medium" : "text-stone hover:bg-bone hover:text-ink"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Sorteren — sheet van onderen (mobiel) */}
+      <Drawer
+        id="sort-sheet"
+        side="bottom"
+        open={mobileSortOpen}
+        onClose={() => setMobileSortOpen(false)}
+        title="Sorteer"
+        className="rounded-t-2xl"
+      >
+        <div className="py-2 pb-[env(safe-area-inset-bottom)]" role="group" aria-label="Sorteervolgorde">
+          {sortOptions.map((opt) => {
+            const pressed = sortBy === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={pressed}
+                onClick={() => { onSortChange(opt.value); setMobileSortOpen(false); }}
+                className={`w-full text-left text-base min-h-12 px-6 py-3 transition-colors ${
+                  pressed ? "bg-bone text-ink font-medium" : "text-ink hover:bg-bone"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </Drawer>
     </>
   );
 }

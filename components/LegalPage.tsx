@@ -2,8 +2,8 @@ import Link from "next/link";
 
 /**
  * Gedeelde layout voor juridische pagina's (privacy, voorwaarden, cookies,
- * retour). Consistente, leesbare typografie (body ≥16px, line-height 1.65)
- * voor de brede doelgroep.
+ * retour). Consistente, leesbare typografie (body ≥16px, line-height ≥1.6)
+ * voor de brede doelgroep. Geen eigen <main>: die staat in app/layout.tsx.
  */
 
 // Bijwerken wanneer een juridische tekst inhoudelijk wijzigt.
@@ -18,25 +18,25 @@ export function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <main className="bg-paper">
-      <div className="max-w-[760px] mx-auto px-6 sm:px-10 py-20 lg:py-28">
-        <p className="text-[11px] uppercase tracking-[0.25em] text-slate mb-4">Juridisch</p>
+    <div className="bg-paper">
+      <div className="max-w-[760px] mx-auto px-6 sm:px-10 pt-32 lg:pt-40 pb-20 lg:pb-28">
+        <p className="eyebrow-lg mb-4">Juridisch</p>
         <h1 className="font-serif text-4xl lg:text-5xl text-ink leading-[1.1] mb-6">{title}</h1>
         {intro && <p className="text-lg text-slate leading-[1.7] mb-8">{intro}</p>}
 
-        <p className="mb-12 text-[15px] text-slate">Laatst bijgewerkt: {LAST_UPDATED}</p>
+        <p className="mb-12 text-base text-slate">Laatst bijgewerkt: {LAST_UPDATED}</p>
 
         <div className="space-y-10 text-ink">{children}</div>
 
-        <p className="mt-16 pt-8 border-t border-line text-[15px] text-slate leading-[1.6]">
+        <p className="mt-16 pt-8 border-t border-line text-base text-slate leading-[1.7]">
           Vragen? Neem gerust contact op via de{" "}
-          <Link href="/contact" className="text-accent underline underline-offset-2">
+          <Link href="/contact" className="text-accent-dark underline underline-offset-2 hover:text-ink">
             contactpagina
           </Link>
           .
         </p>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -45,7 +45,7 @@ export function LegalSection({ heading, children }: { heading: string; children:
   return (
     <section>
       <h2 className="font-serif text-2xl text-ink leading-snug mb-3">{heading}</h2>
-      <div className="space-y-3 text-[16px] leading-[1.7] text-slate">{children}</div>
+      <div className="space-y-3 text-base leading-[1.7] text-slate">{children}</div>
     </section>
   );
 }
