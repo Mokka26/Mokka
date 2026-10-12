@@ -54,7 +54,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
     return (
       <div className={`relative ${aspect} w-full bg-bone rounded-[10px] flex flex-col items-center justify-center gap-2 text-stone`}>
         <span aria-hidden="true" className="w-10 h-px bg-accent" />
-        <span className="text-[14px] uppercase tracking-[0.18em]">Foto volgt</span>
+        <span className="eyebrow-lg">Foto volgt</span>
       </div>
     );
   }
@@ -117,7 +117,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                   />
                   <span
                     aria-hidden="true"
-                    className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 bg-white/90 text-ink text-[13px] px-3 py-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover/zoom:opacity-100 lg:group-focus-visible/zoom:opacity-100 transition-opacity"
+                    className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 bg-white/90 text-ink text-sm px-3 py-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover/zoom:opacity-100 lg:group-focus-visible/zoom:opacity-100 transition-opacity"
                   >
                     <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                     Vergroten
@@ -127,7 +127,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
             ))}
           </div>
           {total > 1 && (
-            <div className="lg:hidden absolute bottom-3 left-3 bg-white/90 px-3 py-1.5 text-[13px] text-ink rounded-full tabular-nums" aria-hidden="true">
+            <div className="lg:hidden absolute bottom-3 left-3 bg-white/90 px-3 py-1.5 text-sm text-ink rounded-full tabular-nums" aria-hidden="true">
               {active + 1} / {total}
             </div>
           )}

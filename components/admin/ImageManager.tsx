@@ -271,7 +271,7 @@ export default function ImageManager({ productId, category, slug, initialImages,
         {uploads.map((u) => (
           <li key={u.id} className="border border-line bg-white">
             <div className="aspect-square bg-bone flex flex-col items-center justify-center gap-3 px-4">
-              <span className="text-[10px] uppercase tracking-[0.25em] text-stone">Uploaden…</span>
+              <span className="eyebrow-lg">Uploaden…</span>
               <progress
                 value={u.progress}
                 max={100}
@@ -291,7 +291,7 @@ export default function ImageManager({ productId, category, slug, initialImages,
             className="w-full aspect-square bg-white border-2 border-dashed border-line hover:border-accent hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors flex flex-col items-center justify-center gap-2"
           >
             <Upload className="w-5 h-5 text-stone" aria-hidden="true" />
-            <span className="text-[10px] uppercase tracking-[0.25em] text-stone">Foto&rsquo;s toevoegen</span>
+            <span className="eyebrow-lg">Foto&rsquo;s toevoegen</span>
             <span className="text-sm text-stone">JPG, PNG, WebP of AVIF · max 10 MB</span>
           </button>
         </li>
@@ -370,7 +370,7 @@ function ImageTile({
           className="object-cover"
         />
         {isPrimary && (
-          <span className="absolute top-2 left-2 bg-ink text-white text-[9px] uppercase tracking-[0.25em] px-2 py-1">
+          <span className="badge absolute top-2 left-2">
             Hoofdfoto
           </span>
         )}
@@ -386,14 +386,14 @@ function ImageTile({
             <button
               type="button"
               onClick={onCancelRemove}
-              className="flex-1 min-h-11 text-[11px] uppercase tracking-[0.2em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex-1 min-h-11 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Annuleren
             </button>
             <button
               type="button"
               onClick={onConfirmRemove}
-              className="flex-1 min-h-11 text-[11px] uppercase tracking-[0.2em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
+              className="flex-1 min-h-11 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
             >
               Verwijderen
             </button>
@@ -430,7 +430,7 @@ function ImageTile({
       )}
 
       <div className="p-3 border-t border-line">
-        <label htmlFor={altId} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+        <label htmlFor={altId} className="block eyebrow-lg mb-1.5">
           Alt-tekst
         </label>
         <input
@@ -440,7 +440,7 @@ function ImageTile({
           onBlur={onAltBlur}
           maxLength={200}
           placeholder="Bijv. Hoekbank Lucce in bruin, vooraanzicht"
-          className="w-full min-h-11 px-3 py-2 bg-bone border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
         />
       </div>
     </li>

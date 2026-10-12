@@ -33,7 +33,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     <div>
       <Link
         href="/admin/orders"
-        className="inline-flex items-center gap-1.5 min-h-11 text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent mb-4"
+        className="inline-flex items-center gap-1.5 min-h-11 eyebrow-lg hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent mb-4"
       >
         <ChevronLeft className="w-3.5 h-3.5" />
         Terug naar bestellingen
@@ -41,7 +41,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2">Bestelling</p>
+          <p className="eyebrow-lg mb-2">Bestelling</p>
           <h1 className="font-serif text-4xl text-ink leading-none tabular-nums mb-3">{order.orderNumber}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <OrderStatusBadge status={order.status} />
@@ -120,7 +120,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
         <aside className="space-y-6">
           <section className="bg-white border border-line p-5">
-            <h2 className="text-[10px] uppercase tracking-[0.25em] text-stone mb-3">Klant</h2>
+            <h2 className="eyebrow-lg mb-3">Klant</h2>
             <p className="text-base text-ink">
               {order.firstName} {order.lastName}
             </p>
@@ -139,7 +139,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </section>
 
           <section className="bg-white border border-line p-5">
-            <h2 className="text-[10px] uppercase tracking-[0.25em] text-stone mb-3">Bezorgadres</h2>
+            <h2 className="eyebrow-lg mb-3">Bezorgadres</h2>
             <address className="not-italic text-base text-ink leading-relaxed">
               {order.firstName} {order.lastName}
               <br />
@@ -152,7 +152,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </section>
 
           <section className="bg-white border border-line p-5">
-            <h2 className="text-[10px] uppercase tracking-[0.25em] text-stone mb-3">Betaling</h2>
+            <h2 className="eyebrow-lg mb-3">Betaling</h2>
             <dl className="space-y-1.5 text-base">
               <Row label="Status" value={<OrderStatusBadge status={order.status} />} />
               <Row label="Methode" value={paymentMethodLabel(order.paymentMethod)} />
@@ -162,7 +162,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </section>
 
           <section className="bg-white border border-line p-5">
-            <h2 className="text-[10px] uppercase tracking-[0.25em] text-stone mb-3">Tijdlijn</h2>
+            <h2 className="eyebrow-lg mb-3">Tijdlijn</h2>
             <ol className="space-y-2">
               {timeline.map((t) => (
                 <li key={t.label} className="flex items-start gap-3">

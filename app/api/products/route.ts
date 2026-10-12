@@ -2,11 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { firstImageOnly } from "@/lib/imageHelpers";
+import { getCategory } from "@/lib/categories";
 
 // Public listing-endpoint: korte cache OK (admin-mutaties zijn niet
 // kritiek-real-time). s-maxage=60 = CDN cached 60s, stale-while-revalidate
 // 300s = klant ziet altijd directe response terwijl achtergrond ververst.
 export const dynamic = "force-dynamic";
+
+const LEGACY_CATEGORY_ALIASES: Readonly<Record<string, string>> = {
+  "alle-banken": "banken",
+};
+
+function resolveCategoryFilter(
+  category: string | null,
+): string | { in: ReadonlyArray<string> } | null {
+  if (!category) return null;
+  const slug = LEGACY_CATEGORY_ALIASES[category] ?? category;
+  const def = getCategory(slug);
+  if (def?.isUmbrella) return { in: def.dbCategories };
+  // Bekende sub-categorie of onbekende waarde: 1-op-1 op Product.category
+  // (onbekende waarden geven gewoon een lege lijst, geen fout).
+  return slug;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -34,12 +51,12 @@ export async function GET(request: NextRequest) {
     where.hidden = false;
   }
 
-  if (category === "alle-banken") {
-    // Umbrella: alle bank-types samen — hoekbanken (alle folder-banken) + bankstellen
-    where.category = { in: ["banken", "hoekbanken", "bankstellen"] };
-  } else if (category) {
-    where.category = category;
-  }
+  // Categorie-filter. Umbrella-slugs uit lib/categories.ts (banken, tafels,
+  // stoelen, kasten, verlichting) worden uitgebreid naar hun `dbCategories`,
+  // zodat `?category=tafels` ook eettafels/salontafels/bijzettafels teruggeeft.
+  // "alle-banken" blijft als legacy-alias voor "banken" werken.
+  const categoryFilter = resolveCategoryFilter(category);
+  if (categoryFilter) where.category = categoryFilter;
 
   if (q) {
     // insensitive: Postgres 'contains' is standaard hoofdlettergevoelig —

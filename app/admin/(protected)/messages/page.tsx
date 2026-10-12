@@ -55,14 +55,14 @@ export default async function AdminMessagesPage({
   const subscriberTotal = confirmedCount + unconfirmedCount + unsubscribedCount;
 
   const tabCls = (active: boolean) =>
-    `inline-flex items-center gap-2 min-h-11 px-4 text-[12px] uppercase tracking-[0.2em] border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+    `inline-flex items-center gap-2 min-h-11 px-4 text-sm uppercase tracking-[0.1em] border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
       active ? "border-ink text-ink" : "border-transparent text-stone hover:text-ink"
     }`;
 
   return (
     <div>
       <header className="mb-8">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2">Contact</p>
+        <p className="eyebrow-lg mb-2">Contact</p>
         <h1 className="font-serif text-4xl text-ink leading-none">Berichten</h1>
       </header>
 
@@ -102,7 +102,7 @@ function SearchForm({ tab, q, status, placeholder }: { tab: Tab; q?: string; sta
       {tab !== "contact" && <input type="hidden" name="tab" value={tab} />}
       {status && status !== "all" && <input type="hidden" name="status" value={status} />}
       <div className="flex-1 min-w-[16rem]">
-        <label htmlFor={id} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+        <label htmlFor={id} className="block eyebrow-lg mb-1.5">
           Zoeken
         </label>
         <div className="relative">
@@ -113,18 +113,18 @@ function SearchForm({ tab, q, status, placeholder }: { tab: Tab; q?: string; sta
             type="search"
             defaultValue={q ?? ""}
             placeholder={placeholder}
-            className="w-full min-h-11 pl-10 pr-3 py-2.5 bg-white border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-full min-h-11 pl-10 pr-3 py-2.5 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
           />
         </div>
       </div>
       <button
         type="submit"
-        className="min-h-11 px-5 text-[11px] uppercase tracking-[0.25em] border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+        className="min-h-11 px-5 text-sm uppercase tracking-[0.1em] border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
       >
         Zoeken
       </button>
       {q && (
-        <Link href={href({ tab, status })} className="inline-flex items-center min-h-11 px-3 text-[11px] uppercase tracking-[0.2em] text-stone hover:text-ink underline-offset-4 hover:underline">
+        <Link href={href({ tab, status })} className="inline-flex items-center min-h-11 px-3 eyebrow-lg hover:text-ink underline-offset-4 hover:underline">
           Wissen
         </Link>
       )}
@@ -225,7 +225,7 @@ async function NewsletterTab({
               key={f}
               href={href({ tab: "nieuwsbrief", status: f, q })}
               aria-current={status === f ? "page" : undefined}
-              className={`inline-flex items-center min-h-11 px-3.5 text-[11px] uppercase tracking-[0.2em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`inline-flex items-center min-h-11 px-3.5 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 status === f ? "bg-ink text-white border-ink" : "bg-white text-ink border-line hover:border-accent"
               }`}
             >
@@ -235,7 +235,7 @@ async function NewsletterTab({
         </nav>
         <a
           href={`/api/admin/newsletter/export${status !== "all" ? `?status=${status}` : ""}`}
-          className="inline-flex items-center gap-2 min-h-11 px-4 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 px-4 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           <Download className="w-3.5 h-3.5" aria-hidden="true" />
           Export CSV ({SUBSCRIBER_FILTER_LABEL[status].toLowerCase()})

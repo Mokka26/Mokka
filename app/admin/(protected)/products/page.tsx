@@ -21,7 +21,7 @@ import { VALID_DB_CATEGORIES } from "../_lib/db-categories";
 export const dynamic = "force-dynamic";
 
 const selectCls =
-  "min-h-11 px-3 py-2 bg-white border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
+  "min-h-11 px-3 py-2 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
 
 export default async function AdminProductsPage({
   searchParams,
@@ -94,7 +94,7 @@ export default async function AdminProductsPage({
     <div>
       <header className="flex items-end justify-between mb-8 flex-wrap gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2">Catalogus</p>
+          <p className="eyebrow-lg mb-2">Catalogus</p>
           <h1 className="font-serif text-4xl text-ink leading-none">Producten</h1>
           <p className="text-base text-stone mt-3 tabular-nums">
             {total} resultaat{total === 1 ? "" : "en"}
@@ -102,7 +102,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="inline-flex items-center gap-2 min-h-11 bg-ink text-white px-5 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Nieuw product
@@ -116,7 +116,7 @@ export default async function AdminProductsPage({
             key={status}
             href={productListHref({ ...params, status, page: 1 })}
             aria-current={params.status === status ? "page" : undefined}
-            className={`inline-flex items-center min-h-11 px-3.5 text-[11px] uppercase tracking-[0.2em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`inline-flex items-center min-h-11 px-3.5 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               params.status === status ? "bg-ink text-white border-ink" : "bg-white text-ink border-line hover:border-accent"
             }`}
           >
@@ -130,7 +130,7 @@ export default async function AdminProductsPage({
         {params.status !== "all" && <input type="hidden" name="status" value={params.status} />}
         <SearchInput />
         <div>
-          <label htmlFor="f-category" className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+          <label htmlFor="f-category" className="block eyebrow-lg mb-1.5">
             Categorie
           </label>
           <select id="f-category" name="category" defaultValue={params.category ?? ""} className={selectCls}>
@@ -144,7 +144,7 @@ export default async function AdminProductsPage({
           </select>
         </div>
         <div>
-          <label htmlFor="f-source" className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+          <label htmlFor="f-source" className="block eyebrow-lg mb-1.5">
             Bron
           </label>
           <select id="f-source" name="source" defaultValue={params.source ?? ""} className={selectCls}>
@@ -157,7 +157,7 @@ export default async function AdminProductsPage({
           </select>
         </div>
         <div>
-          <label htmlFor="f-sort" className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+          <label htmlFor="f-sort" className="block eyebrow-lg mb-1.5">
             Sorteren
           </label>
           <select id="f-sort" name="sort" defaultValue={params.sort} className={selectCls}>
@@ -167,7 +167,7 @@ export default async function AdminProductsPage({
           </select>
         </div>
         <div>
-          <label htmlFor="f-dir" className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+          <label htmlFor="f-dir" className="block eyebrow-lg mb-1.5">
             Volgorde
           </label>
           <select id="f-dir" name="dir" defaultValue={params.dir} className={selectCls}>
@@ -177,14 +177,14 @@ export default async function AdminProductsPage({
         </div>
         <button
           type="submit"
-          className="min-h-11 px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+          className="min-h-11 px-5 py-2.5 text-sm uppercase tracking-[0.1em] border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           Toepassen
         </button>
         {(params.category || params.source || params.q || params.status !== "all") && (
           <Link
             href="/admin/products"
-            className="inline-flex items-center min-h-11 px-3 text-[11px] uppercase tracking-[0.2em] text-stone hover:text-ink underline-offset-4 hover:underline"
+            className="inline-flex items-center min-h-11 px-3 eyebrow-lg hover:text-ink underline-offset-4 hover:underline"
           >
             Filters wissen
           </Link>

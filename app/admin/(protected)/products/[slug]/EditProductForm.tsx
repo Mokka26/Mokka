@@ -83,7 +83,7 @@ function money(n: number | null): string {
 }
 
 const inputCls =
-  "w-full min-h-11 px-3 py-2.5 border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+  "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 
 export default function EditProductForm({ product, categories, validCategories, sources, imageCount, justSaved = false }: Props) {
   const [state, action, pending] = useActionState(updateProductFull, initial);
@@ -194,7 +194,7 @@ export default function EditProductForm({ product, categories, validCategories, 
                 setSlug(slugify(name));
                 onFormChange();
               }}
-              className="shrink-0 min-h-11 px-3 text-[11px] uppercase tracking-[0.15em] border border-line text-stone hover:text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+              className="shrink-0 min-h-11 px-3 text-sm uppercase tracking-[0.1em] border border-line text-stone hover:text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
             >
               Uit naam
             </button>
@@ -215,14 +215,14 @@ export default function EditProductForm({ product, categories, validCategories, 
         </Field>
 
         <div id={fid("specs")} tabIndex={-1}>
-          <p className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">Specificaties</p>
+          <p className="block eyebrow-lg mb-2">Specificaties</p>
           <p className="text-sm text-stone mb-3">Verschijnt als tabel op de productpagina onder de beschrijving.</p>
           <SpecsEditor name="specs" initial={product.specs} />
           {err.specs && <p className="text-sm text-error mt-1.5">{err.specs}</p>}
         </div>
 
         <div id={fid("sizeVariants")} tabIndex={-1}>
-          <p className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">Maten &amp; prijzen</p>
+          <p className="block eyebrow-lg mb-2">Maten &amp; prijzen</p>
           <p className="text-sm text-stone mb-3">
             Voor bijvoorbeeld bedden: maten met een eigen prijs. De klant kiest de maat op de productpagina.
             Leeg laten = één vaste prijs.
@@ -481,7 +481,7 @@ export default function EditProductForm({ product, categories, validCategories, 
         </div>
 
         <div className="bg-white border border-line p-5 space-y-5">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone">Kleurvariant</p>
+          <p className="eyebrow-lg">Kleurvariant</p>
           <p className="text-sm text-stone leading-relaxed">
             Producten met dezelfde groep tonen op de productpagina een kleurkiezer en delen de verkoop- en
             adviesprijs. Maten, voorraad en foto&rsquo;s blijven per kleur. Laat leeg als dit product geen
@@ -527,7 +527,7 @@ export default function EditProductForm({ product, categories, validCategories, 
           <button
             type="submit"
             disabled={pending}
-            className="min-h-11 bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
+            className="min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
           >
             {pending ? "Opslaan…" : "Wijzigingen opslaan"}
           </button>
@@ -544,7 +544,7 @@ export default function EditProductForm({ product, categories, validCategories, 
           <Link
             href={`/admin/preview/${product.slug}`}
             target="_blank"
-            className="block text-center min-h-11 text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent pt-2"
+            className="block text-center min-h-11 eyebrow-lg hover:text-accent pt-2"
           >
             Voorbeeld bekijken (verborgen) →
           </Link>
@@ -552,7 +552,7 @@ export default function EditProductForm({ product, categories, validCategories, 
           <Link
             href={productUrl(product)}
             target="_blank"
-            className="block text-center min-h-11 text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent pt-2"
+            className="block text-center min-h-11 eyebrow-lg hover:text-accent pt-2"
           >
             Bekijk live →
           </Link>
@@ -577,7 +577,7 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+      <label htmlFor={id} className="block eyebrow-lg mb-2">
         {label}
       </label>
       {children}

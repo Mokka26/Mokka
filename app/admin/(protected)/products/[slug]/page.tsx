@@ -74,7 +74,7 @@ export default async function AdminProductEditPage({
     <div>
       <Link
         href="/admin/products"
-        className="inline-flex items-center gap-1.5 min-h-11 text-[11px] uppercase tracking-[0.25em] text-stone hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent mb-4"
+        className="inline-flex items-center gap-1.5 min-h-11 eyebrow-lg hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent mb-4"
       >
         <ChevronLeft className="w-3.5 h-3.5" />
         Terug naar producten
@@ -82,7 +82,7 @@ export default async function AdminProductEditPage({
 
       <header className="mb-10 flex items-end justify-between gap-6 flex-wrap">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2 capitalize">{product.category}</p>
+          <p className="eyebrow-lg mb-2 capitalize">{product.category}</p>
           <h1 className="font-serif text-4xl text-ink leading-none">{product.name}</h1>
           {product.deletedAt && (
             <p className="text-sm text-error mt-2">Dit product staat in de prullenbak; herstel het eerst om te bewerken.</p>
@@ -127,7 +127,7 @@ export default async function AdminProductEditPage({
 
       <section className="mt-12 pt-10 border-t border-line">
         <header className="mb-6">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-1.5">Afbeeldingen</p>
+          <p className="eyebrow-lg mb-1.5">Afbeeldingen</p>
           <h2 className="font-serif text-2xl text-ink leading-none">
             {images.length} foto{images.length === 1 ? "" : "'s"}
           </h2>

@@ -18,6 +18,12 @@ interface NavItem {
   label: string;
   href: string;
   subLinks?: { heading: string; links: SubLink[] }[];
+  /**
+   * Secundaire items staan tussen lg (1024px) en xl (1280px) samen in een
+   * "Meer"-dropdown, zodat de desktopnavigatie op 1024px past zonder onder
+   * 16px te gaan. Vanaf xl staan ze gewoon naast de andere items.
+   */
+  secondary?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -124,15 +130,35 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  { label: "Aanbiedingen", href: "/aanbiedingen" },
-  { label: "Over ons", href: "/about" },
+  { label: "Aanbiedingen", href: "/aanbiedingen", secondary: true },
+  { label: "Over ons", href: "/about", secondary: true },
 ];
+
+const MORE_LABEL = "Meer";
+
+// "Meer"-item (alleen lg–xl): bundelt de secundaire items in één dropdown.
+const moreItem: NavItem = {
+  label: MORE_LABEL,
+  href: navItems.find((i) => i.secondary)?.href ?? "/",
+  subLinks: [
+    {
+      heading: "Meer",
+      links: navItems.filter((i) => i.secondary).map(({ label, href }) => ({ label, href })),
+    },
+  ],
+};
 
 const POPULAR_SEARCHES = ["Hoekbank", "Eettafel", "Fauteuil", "Boxspring"];
 
 // Icoonknop in de header: 44×44 touch target, zichtbare hover + focus.
 const iconButton =
   "relative inline-flex items-center justify-center w-11 h-11 rounded-full text-ink hover:text-accent-dark hover:bg-bone transition-colors duration-[280ms]";
+
+// Desktop-navigatie-item: 16px, compacte spacing op lg (1024px), ruimer vanaf xl.
+const desktopItemClass =
+  "relative flex items-center gap-1 lg:px-2 xl:gap-1.5 xl:px-3 min-h-11 text-base font-medium whitespace-nowrap transition-colors duration-300";
+const desktopUnderlineClass =
+  "pointer-events-none absolute bottom-1 left-2 right-2 xl:left-3 xl:right-3 h-px bg-accent-dark origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -211,7 +237,7 @@ export default function Navbar() {
         </AnimatePresence>
 
         <div className="max-w-[1600px] mx-auto">
-          <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-4 sm:px-10 lg:px-14">
+          <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-4 sm:px-10 lg:px-8 xl:px-14">
             {/* Logo links */}
             <Link href="/" className="flex-shrink-0 inline-flex items-center min-h-11" aria-label="Mokka Home Interior — naar de homepage">
               <Image
@@ -219,20 +245,23 @@ export default function Navbar() {
                 alt=""
                 width={180}
                 height={60}
-                className="h-10 sm:h-12 lg:h-14 w-auto"
+                className="h-10 sm:h-12 xl:h-14 w-auto"
                 priority
               />
             </Link>
 
-            {/* Desktop navigation — vanaf xl, zodat 16px-items naast elkaar passen */}
-            <ul className="hidden xl:flex items-center list-none m-0 p-0">
-              {navItems.map((item) => {
+            {/* Desktop navigation — vanaf lg (1024px) met 16px-items. Tussen lg en
+                xl staan de secundaire items in "Meer"; vanaf xl staat alles naast elkaar. */}
+            <ul className="hidden lg:flex items-center list-none m-0 p-0">
+              {[...navItems, moreItem].map((item) => {
                 const isOpen = activeDropdown === item.label;
                 const panelId = `submenu-${slug(item.label)}`;
+                const isMore = item.label === MORE_LABEL;
+                const visibility = isMore ? "xl:hidden" : item.secondary ? "hidden xl:block" : "";
                 return (
                   <li
                     key={item.label}
-                    className="relative group"
+                    className={`relative group ${visibility}`}
                     onMouseEnter={() => item.subLinks && setActiveDropdown(item.label)}
                     onMouseLeave={() => item.subLinks && setActiveDropdown(null)}
                     // Toetsenbord: open het submenu wanneer het item (of een link
@@ -244,31 +273,44 @@ export default function Navbar() {
                       }
                     }}
                   >
-                    <Link
-                      href={item.href}
-                      aria-haspopup={item.subLinks ? "true" : undefined}
-                      aria-expanded={item.subLinks ? isOpen : undefined}
-                      aria-controls={item.subLinks ? panelId : undefined}
-                      className={`relative flex items-center gap-1.5 px-3 min-h-11 text-base font-medium transition-colors duration-300 ${
-                        isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"
-                      }`}
-                    >
-                      {item.label}
-                      {item.subLinks && (
+                    {isMore ? (
+                      // "Meer" is geen pagina: een knop die alleen het menu opent.
+                      <button
+                        type="button"
+                        onClick={() => setActiveDropdown(isOpen ? null : item.label)}
+                        aria-haspopup="true"
+                        aria-expanded={isOpen}
+                        aria-controls={panelId}
+                        className={`${desktopItemClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
+                      >
+                        {item.label}
                         <ChevronDown
                           className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                           strokeWidth={1.5}
                           aria-hidden="true"
                         />
-                      )}
-                      {/* Fijne onderlijn — verschijnt bij hover/actief */}
-                      <span
-                        aria-hidden="true"
-                        className={`pointer-events-none absolute bottom-1 left-3 right-3 h-px bg-accent-dark origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                          isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                        }`}
-                      />
-                    </Link>
+                        <span aria-hidden="true" className={`${desktopUnderlineClass} ${isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        aria-haspopup={item.subLinks ? "true" : undefined}
+                        aria-expanded={item.subLinks ? isOpen : undefined}
+                        aria-controls={item.subLinks ? panelId : undefined}
+                        className={`${desktopItemClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
+                      >
+                        {item.label}
+                        {item.subLinks && (
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                            strokeWidth={1.5}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {/* Fijne onderlijn — verschijnt bij hover/actief */}
+                        <span aria-hidden="true" className={`${desktopUnderlineClass} ${isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+                      </Link>
+                    )}
 
                     {/* Compact dropdown — verankerd onder het item */}
                     {item.subLinks && (
@@ -280,7 +322,7 @@ export default function Navbar() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 6 }}
                             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                            className="absolute left-0 top-full pt-2 z-50"
+                            className={`absolute top-full pt-2 z-50 ${isMore ? "right-0" : "left-0"}`}
                           >
                             <div className="flex gap-10 bg-paper border border-line rounded-[12px] shadow-[0_20px_50px_-18px_rgba(20,17,13,0.22)] px-8 py-7">
                               {item.subLinks.map((group) => (
@@ -347,7 +389,7 @@ export default function Navbar() {
                 {totalItems > 0 && (
                   <span
                     aria-hidden="true"
-                    className="absolute top-0.5 right-0.5 min-w-5 h-5 px-1 rounded-full bg-ink text-paper text-xs leading-5 text-center font-medium tabular-nums"
+                    className="absolute top-0.5 right-0.5 min-w-5 h-5 px-1 rounded-full bg-ink text-paper text-sm leading-5 text-center font-medium tabular-nums"
                   >
                     {totalItems}
                   </span>
@@ -356,7 +398,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className={`xl:hidden ${iconButton}`}
+                className={`lg:hidden ${iconButton}`}
                 aria-label="Menu openen"
                 aria-haspopup="dialog"
                 aria-expanded={mobileMenuOpen}

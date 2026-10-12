@@ -38,10 +38,12 @@ type Tab = "products" | "images";
 export default function TrashClient({
   products,
   images,
+  now,
 }: {
   products: ProductItem[];
   images: ImageItem[];
-  cutoff: string;
+  /** Request-tijdstip (ms) van de server: geen `Date.now()` tijdens render. */
+  now: number;
 }) {
   const [tab, setTab] = useState<Tab>(products.length > 0 ? "products" : "images");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -101,7 +103,7 @@ export default function TrashClient({
         <button
           type="button"
           onClick={() => setTab("products")}
-          className={`flex items-center gap-2 px-4 py-3 text-[12px] uppercase tracking-[0.2em] transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-3 text-sm uppercase tracking-[0.1em] transition-colors border-b-2 -mb-px ${
             tab === "products"
               ? "border-ink text-ink"
               : "border-transparent text-stone hover:text-ink"
@@ -113,7 +115,7 @@ export default function TrashClient({
         <button
           type="button"
           onClick={() => setTab("images")}
-          className={`flex items-center gap-2 px-4 py-3 text-[12px] uppercase tracking-[0.2em] transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-3 text-sm uppercase tracking-[0.1em] transition-colors border-b-2 -mb-px ${
             tab === "images"
               ? "border-ink text-ink"
               : "border-transparent text-stone hover:text-ink"
@@ -127,7 +129,7 @@ export default function TrashClient({
             type="button"
             onClick={() => setConfirmEmpty(true)}
             disabled={pending}
-            className="ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
+            className="min-h-11 ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Prullenbak leegmaken
@@ -146,10 +148,17 @@ export default function TrashClient({
       )}
 
       {error && (
-        <div className="mb-4 flex items-start gap-2 px-3 py-2 bg-error/10 border border-error/30 text-[12px] text-error">
-          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+        <div className="mb-4 flex items-start gap-2 px-3 py-2 bg-error/10 border border-error/30 text-sm text-error">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto">×</button>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            aria-label="Melding sluiten"
+            className="ml-auto -my-2 inline-flex items-center justify-center w-11 h-11 shrink-0 hover:bg-error/10"
+          >
+            <X className="w-4 h-4" aria-hidden="true" />
+          </button>
         </div>
       )}
 
@@ -161,7 +170,7 @@ export default function TrashClient({
             <div className="space-y-2">
               {products.map((p) => {
                 const daysLeft = Math.ceil(
-                  (p.autoPurgeAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                  (p.autoPurgeAt.getTime() - now) / (1000 * 60 * 60 * 24),
                 );
                 const isExpiring = daysLeft <= 3;
                 return (
@@ -182,10 +191,10 @@ export default function TrashClient({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-serif text-lg text-ink truncate">{p.name}</p>
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-stone mt-0.5">
+                      <p className="eyebrow-lg mt-0.5">
                         {p.category} · €{p.price.toFixed(0)}
                       </p>
-                      <p className={`text-[11px] mt-1 ${isExpiring ? "text-error" : "text-stone"}`}>
+                      <p className={`text-sm mt-1 ${isExpiring ? "text-error" : "text-stone"}`}>
                         Verwijderd {formatDate(p.deletedAt)} · Permanent over {daysLeft} dagen
                       </p>
                     </div>
@@ -194,7 +203,7 @@ export default function TrashClient({
                         type="button"
                         onClick={() => handleRestoreProduct(p.id)}
                         disabled={pending}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] border border-line text-ink hover:bg-bone disabled:opacity-50"
+                        className="min-h-11 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone disabled:opacity-50"
                       >
                         <RotateCcw className="w-3 h-3" />
                         Herstel
@@ -203,7 +212,7 @@ export default function TrashClient({
                         type="button"
                         onClick={() => setConfirmId(p.id)}
                         disabled={pending}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
+                        className="min-h-11 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
                       >
                         <X className="w-3 h-3" />
                         Permanent
@@ -235,7 +244,7 @@ export default function TrashClient({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {images.map((img) => {
                 const daysLeft = Math.ceil(
-                  (img.autoPurgeAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                  (img.autoPurgeAt.getTime() - now) / (1000 * 60 * 60 * 24),
                 );
                 const isExpiring = daysLeft <= 3;
                 return (
@@ -250,8 +259,8 @@ export default function TrashClient({
                       />
                     </div>
                     <div className="p-2.5">
-                      <p className="text-[11px] text-stone truncate">{img.productSlug}</p>
-                      <p className={`text-[10px] mt-0.5 ${isExpiring ? "text-error" : "text-stone"}`}>
+                      <p className="text-sm text-stone truncate">{img.productSlug}</p>
+                      <p className={`text-sm mt-0.5 ${isExpiring ? "text-error" : "text-stone"}`}>
                         Over {daysLeft}d permanent weg
                       </p>
                       <div className="flex items-center gap-1.5 mt-2">
@@ -260,7 +269,7 @@ export default function TrashClient({
                           onClick={() => handleRestoreImage(img.id)}
                           disabled={pending || !img.productId}
                           title={img.productId ? "Herstel" : "Product weg"}
-                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] border border-line text-ink hover:bg-bone disabled:opacity-30"
+                          className="min-h-11 flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone disabled:opacity-30"
                         >
                           <RotateCcw className="w-2.5 h-2.5" />
                           Herstel
@@ -269,7 +278,7 @@ export default function TrashClient({
                           type="button"
                           onClick={() => setConfirmId(img.id)}
                           disabled={pending}
-                          className="inline-flex items-center justify-center px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
+                          className="min-h-11 inline-flex items-center justify-center px-2 py-1.5 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
                           title="Permanent verwijderen"
                         >
                           <X className="w-2.5 h-2.5" />
@@ -333,15 +342,15 @@ function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="flex-1 px-6 py-3 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:bg-bone disabled:opacity-60"
+            className="min-h-11 flex-1 px-6 py-3 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone disabled:opacity-60"
           >
-            Annuleer
+            Annuleren
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="flex-1 px-6 py-3 text-[11px] uppercase tracking-[0.25em] bg-error text-white hover:opacity-90 disabled:opacity-50"
+            className="min-h-11 flex-1 px-6 py-3 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 disabled:opacity-50"
           >
             {pending ? "Verwijderen…" : "Definitief weg"}
           </button>

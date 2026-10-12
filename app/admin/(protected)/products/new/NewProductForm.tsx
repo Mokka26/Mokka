@@ -17,7 +17,7 @@ function slugify(input: string): string {
 }
 
 const inputCls =
-  "w-full min-h-11 px-3 py-2.5 border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+  "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 
 export default function NewProductForm({ categories }: { categories: string[] }) {
   const [state, action, pending] = useActionState(createProduct, initial);
@@ -185,7 +185,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
         <button
           type="submit"
           disabled={pending}
-          className="w-full min-h-11 bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
+          className="w-full min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
         >
           {pending ? "Aanmaken…" : "Product aanmaken"}
         </button>
@@ -193,7 +193,7 @@ export default function NewProductForm({ categories }: { categories: string[] })
 
       <section className="lg:col-span-3 mt-6 pt-8 border-t border-line">
         <header className="mb-5">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-1.5">Afbeeldingen (optioneel)</p>
+          <p className="eyebrow-lg mb-1.5">Afbeeldingen (optioneel)</p>
           <h2 className="font-serif text-xl text-ink leading-none">Voeg foto&rsquo;s toe</h2>
           <p className="text-base text-stone mt-2">
             Vul eerst de naam en categorie in zodat foto&rsquo;s in de juiste map worden opgeslagen. Foto&rsquo;s
@@ -228,7 +228,7 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+      <label htmlFor={id} className="block eyebrow-lg mb-2">
         {label}
       </label>
       {children}

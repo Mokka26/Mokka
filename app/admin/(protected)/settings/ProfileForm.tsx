@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState } from "react";
 import { Check } from "lucide-react";
 import { updateProfile, type ProfileState } from "./actions";
 
@@ -14,45 +14,44 @@ export default function ProfileForm({
   email: string;
 }) {
   const [state, action, pending] = useActionState(updateProfile, initial);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (state.ok) setSavedAt(Date.now());
-  }, [state.ok]);
+  // Afgeleid van de action-state: geen effect, geen `Date.now()` in render.
+  const saved = Boolean(state.ok) && !pending;
 
   return (
     <form action={action} className="space-y-5">
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+        <label htmlFor="profile-email" className="block eyebrow-lg mb-2">
           E-mail
         </label>
         <input
+          id="profile-email"
           value={email}
           disabled
-          className="w-full px-3 py-2.5 bg-bone border border-line text-stone text-sm cursor-not-allowed"
+          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-stone text-base cursor-not-allowed"
         />
-        <p className="text-[11px] text-stone mt-1.5">E-mail kan niet worden gewijzigd.</p>
+        <p className="text-sm text-stone mt-1.5">E-mail kan niet worden gewijzigd.</p>
       </div>
 
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+        <label htmlFor="profile-name" className="block eyebrow-lg mb-2">
           Naam
         </label>
         <input
+          id="profile-name"
           name="name"
           defaultValue={initialName}
           required
           minLength={2}
           maxLength={100}
-          className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
+          className="w-full min-h-11 px-3 py-2.5 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent"
         />
         {state.fieldErrors?.name && (
-          <p className="text-[11px] text-error mt-1.5">{state.fieldErrors.name}</p>
+          <p className="text-sm text-error mt-1.5">{state.fieldErrors.name}</p>
         )}
       </div>
 
       {state.error && (
-        <p className="text-[12px] text-error bg-error/10 border border-error/30 px-3 py-2">
+        <p className="text-sm text-error bg-error/10 border border-error/30 px-3 py-2">
           {state.error}
         </p>
       )}
@@ -61,12 +60,12 @@ export default function ProfileForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
+          className="min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent transition-colors disabled:opacity-60"
         >
           {pending ? "Opslaan…" : "Profiel opslaan"}
         </button>
-        {savedAt && !pending && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-accent">
+        {saved && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-accent">
             <Check className="w-3.5 h-3.5" />
             Opgeslagen
           </span>

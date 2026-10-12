@@ -27,8 +27,8 @@ export const dynamic = "force-dynamic";
 const dt = new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Amsterdam" });
 
 const selectCls =
-  "w-full min-h-11 px-3 py-2 bg-white border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
-const labelCls = "block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5";
+  "w-full min-h-11 px-3 py-2 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
+const labelCls = "block eyebrow-lg mb-1.5";
 
 export default async function AdminOrdersPage({
   searchParams,
@@ -78,12 +78,12 @@ export default async function AdminOrdersPage({
     <div>
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2">Verkoop</p>
+          <p className="eyebrow-lg mb-2">Verkoop</p>
           <h1 className="font-serif text-4xl text-ink leading-none">Bestellingen</h1>
         </div>
         <a
           href={exportHref}
-          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
           Export CSV
@@ -101,7 +101,7 @@ export default async function AdminOrdersPage({
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Link
           href={orderListHref({ ...params, status: "paid", page: 1 })}
-          className={`inline-flex items-center min-h-11 px-4 text-[11px] uppercase tracking-[0.2em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
             params.status === "paid" ? "bg-success text-white border-success" : "bg-success/10 text-success border-success/30 hover:bg-success/20"
           }`}
         >
@@ -109,7 +109,7 @@ export default async function AdminOrdersPage({
         </Link>
         <Link
           href={orderListHref({ ...params, fulfillment: "pending", status: "paid", page: 1 })}
-          className={`inline-flex items-center min-h-11 px-4 text-[11px] uppercase tracking-[0.2em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
             params.fulfillment === "pending" && params.status === "paid"
               ? "bg-ink text-white border-ink"
               : "bg-white text-ink border-line hover:border-accent"
@@ -120,7 +120,7 @@ export default async function AdminOrdersPage({
         {hasFilter && (
           <Link
             href="/admin/orders"
-            className="inline-flex items-center min-h-11 px-4 text-[11px] uppercase tracking-[0.2em] text-stone hover:text-ink underline-offset-4 hover:underline"
+            className="inline-flex items-center min-h-11 px-4 eyebrow-lg hover:text-ink underline-offset-4 hover:underline"
           >
             Filters wissen
           </Link>
@@ -181,7 +181,7 @@ export default async function AdminOrdersPage({
           <div className="sm:col-span-2 flex items-end">
             <button
               type="submit"
-              className="w-full sm:w-auto min-h-11 bg-ink text-white px-6 py-2.5 text-[11px] uppercase tracking-[0.25em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+              className="w-full sm:w-auto min-h-11 bg-ink text-white px-6 py-2.5 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
             >
               Filteren
             </button>
@@ -235,7 +235,7 @@ export default async function AdminOrdersPage({
                 <div className="shrink-0 flex items-center gap-1">
                   <Link
                     href={`/admin/orders/${o.id}`}
-                    className="hidden sm:inline-flex items-center min-h-11 px-3 text-[11px] uppercase tracking-[0.2em] text-ink border border-line hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+                    className="hidden sm:inline-flex items-center min-h-11 px-3 text-sm uppercase tracking-[0.1em] text-ink border border-line hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
                   >
                     Details
                   </Link>
@@ -261,7 +261,7 @@ export default async function AdminOrdersPage({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white border border-line p-5">
-      <p className="text-[10px] uppercase tracking-[0.25em] text-stone mb-2">{label}</p>
+      <p className="eyebrow-lg mb-2">{label}</p>
       <p className="font-serif text-3xl text-ink leading-none tabular-nums">{value}</p>
     </div>
   );

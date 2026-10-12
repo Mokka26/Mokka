@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 import { changePassword, type PasswordState } from "./actions";
 
@@ -8,15 +8,15 @@ const initial: PasswordState = {};
 
 export default function PasswordForm() {
   const [state, action, pending] = useActionState(changePassword, initial);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  // Afgeleid van de action-state: geen setState in een effect.
+  const saved = Boolean(state.ok) && !pending;
 
+  // Formulier leegmaken na succes is een DOM-bijwerking (extern systeem) en
+  // hoort dus wél in een effect.
   useEffect(() => {
-    if (state.ok) {
-      setSavedAt(Date.now());
-      formRef.current?.reset();
-    }
-  }, [state.ok]);
+    if (state.ok) formRef.current?.reset();
+  }, [state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
@@ -40,7 +40,7 @@ export default function PasswordForm() {
       />
 
       {state.error && (
-        <p className="text-[12px] text-error bg-error/10 border border-error/30 px-3 py-2">
+        <p className="text-sm text-error bg-error/10 border border-error/30 px-3 py-2">
           {state.error}
         </p>
       )}
@@ -49,12 +49,12 @@ export default function PasswordForm() {
         <button
           type="submit"
           disabled={pending}
-          className="bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
+          className="min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent transition-colors disabled:opacity-60"
         >
           {pending ? "Wijzigen…" : "Wachtwoord wijzigen"}
         </button>
-        {savedAt && !pending && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-accent">
+        {saved && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-accent">
             <Check className="w-3.5 h-3.5" />
             Wachtwoord gewijzigd
           </span>
@@ -79,7 +79,7 @@ function PasswordField({
     <div>
       <label
         htmlFor={`pw-${name}`}
-        className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2"
+        className="block eyebrow-lg mb-2"
       >
         {label}
       </label>
@@ -89,9 +89,9 @@ function PasswordField({
         type="password"
         autoComplete={autoComplete}
         required
-        className="w-full px-3 py-2.5 bg-white border border-line text-ink text-sm focus:outline-none focus:border-accent"
+        className="w-full min-h-11 px-3 py-2.5 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent"
       />
-      {error && <p className="text-[11px] text-error mt-1.5">{error}</p>}
+      {error && <p className="text-sm text-error mt-1.5">{error}</p>}
     </div>
   );
 }

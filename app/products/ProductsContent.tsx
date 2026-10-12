@@ -69,6 +69,8 @@ const categoryLabels = (slug: string): string =>
 const categoryIntros = (slug: string): string =>
   getCategory(slug)?.intro ?? "";
 
+const PAGE_SIZE = 48;
+
 export default function ProductsContent({ initialProducts }: { initialProducts: Product[] }) {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -81,10 +83,14 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [selectedDelivery, setSelectedDelivery] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [displayedCount, setDisplayedCount] = useState(48);
-  const PAGE_SIZE = 48;
 
-  useEffect(() => {
+  // URL-wissel (categorie/zoekterm) → filters resetten. Geen effect maar het
+  // "state aanpassen tijdens render"-patroon uit de React-docs: vergelijk met
+  // de vorige URL-sleutel en zet de state in dezelfde render (geen cascade).
+  const paramsKey = `${searchParams.get("category") || ""}\u0000${searchParams.get("q") || ""}`;
+  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
+  if (paramsKey !== prevParamsKey) {
+    setPrevParamsKey(paramsKey);
     setCategory(searchParams.get("category") || "");
     setSearchQuery(searchParams.get("q") || "");
     // Reset extra filters bij categorie-wissel
@@ -92,13 +98,19 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
     setSelectedMaterials([]);
     setSelectedDelivery([]);
     setInStockOnly(false);
-    setDisplayedCount(PAGE_SIZE);
-  }, [searchParams]);
+  }
 
-  // Reset paging wanneer filter-state verandert
-  useEffect(() => {
-    setDisplayedCount(PAGE_SIZE);
-  }, [category, sortBy, priceRange, searchQuery, selectedColors, selectedMaterials, selectedDelivery, inStockOnly]);
+  // Paging is afgeleid van de filter-state: het aantal getoonde kaarten hoort
+  // bij één filter-combinatie. Wisselt die, dan begint de telling automatisch
+  // weer bij PAGE_SIZE — zonder effect en zonder extra render.
+  const filterKey = [
+    category, sortBy, priceRange.join("-"), searchQuery,
+    selectedColors.join(","), selectedMaterials.join(","), selectedDelivery.join(","), String(inStockOnly),
+  ].join("|");
+  const [paging, setPaging] = useState({ key: filterKey, count: PAGE_SIZE });
+  const displayedCount = paging.key === filterKey ? paging.count : PAGE_SIZE;
+  const showMore = () =>
+    setPaging((p) => ({ key: filterKey, count: (p.key === filterKey ? p.count : PAGE_SIZE) + PAGE_SIZE }));
 
   // Eerste render gebruikt initialProducts (server-side, in de SSR-HTML).
   // Pas bij een filter-wijziging die de server raakt (categorie/sort/prijs/zoek)
@@ -165,21 +177,21 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
     <div className="pt-24 lg:pt-28 pb-24 lg:pb-32">
       {/* Magazine sticky-moment header — asymmetric 12-col */}
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-8 lg:mb-16">
-        <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] font-medium text-stone mb-5">
-          <Link href="/" className="hover:text-ink transition-colors duration-[280ms]">Home</Link>
-          <span className="text-stone/40">/</span>
-          <Link href="/products" className={`transition-colors duration-[280ms] ${!category ? "text-ink" : "hover:text-ink"}`}>
+        <nav aria-label="Kruimelpad" className="flex flex-wrap items-center gap-x-2 eyebrow-lg mb-5">
+          <Link href="/" className="inline-flex items-center min-h-11 hover:text-ink transition-colors duration-[280ms]">Home</Link>
+          <span className="text-line-strong" aria-hidden="true">/</span>
+          <Link href="/products" className={`inline-flex items-center min-h-11 transition-colors duration-[280ms] ${!category ? "text-ink" : "hover:text-ink"}`}>
             Producten
           </Link>
           {category && (
             <>
-              <span className="text-stone/40">/</span>
+              <span className="text-line-strong" aria-hidden="true">/</span>
               <span className="text-ink">{categoryLabels(category) || category}</span>
             </>
           )}
           {searchQuery && (
             <>
-              <span className="text-stone/40">/</span>
+              <span className="text-line-strong" aria-hidden="true">/</span>
               <span className="text-ink">Zoekresultaten</span>
             </>
           )}
@@ -191,7 +203,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
             <span className="eyebrow text-accent">— {eyebrowLabel}</span>
           </div>
           <div className="lg:col-span-7">
-            <h1 className="display-md text-ink" style={{ fontVariationSettings: '"opsz" 144' }}>
+            <h1 className="display-md text-ink">
               {pageTitle}
             </h1>
             {pageSubtitle && (
@@ -202,7 +214,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
           </div>
           <div className="lg:col-span-3 flex items-end justify-start lg:justify-end">
             <div className="flex items-baseline gap-2">
-              <span className="font-serif text-3xl text-ink tabular-nums" style={{ fontVariationSettings: '"opsz" 96' }}>
+              <span className="font-serif text-3xl text-ink tabular-nums [font-variation-settings:'opsz'_96]">
                 {String(filteredProducts.length).padStart(2, "0")}
               </span>
               <span className="eyebrow text-stone">
@@ -252,6 +264,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
                   We konden geen producten vinden die aan je zoekcriteria voldoen. Probeer je filters aan te passen.
                 </p>
                 <button
+                  type="button"
                   onClick={() => {
                     setCategory("");
                     setSearchQuery("");
@@ -295,12 +308,13 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
                   {/* Paging */}
                   {hasMore ? (
                     <div className="flex flex-col items-center gap-3 mt-20 lg:mt-24">
-                      <p className="text-[10px] uppercase tracking-[0.25em] text-stone tabular-nums">
+                      <p className="eyebrow-lg tabular-nums">
                         {visible.length} van {deduped.length}
                       </p>
                       <button
-                        onClick={() => setDisplayedCount((c) => c + PAGE_SIZE)}
-                        className="text-[11px] uppercase tracking-[0.25em] text-ink py-3.5 px-10 border border-ink rounded-[10px] hover:bg-ink hover:text-white transition-colors"
+                        type="button"
+                        onClick={showMore}
+                        className="btn-ghost"
                       >
                         Toon meer
                       </button>
@@ -308,7 +322,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
                   ) : deduped.length > PAGE_SIZE ? (
                     <div className="flex items-center justify-center gap-6 mt-20 lg:mt-24">
                       <div className="w-12 h-[1px] bg-line" />
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-stone">
+                      <span className="eyebrow-lg">
                         Einde · {deduped.length} items
                       </span>
                       <div className="w-12 h-[1px] bg-line" />

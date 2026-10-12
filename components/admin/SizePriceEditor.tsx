@@ -67,7 +67,7 @@ export default function SizePriceEditor({
     .map((r) => ({ label: r.label.trim(), price: r.price.trim(), listPrice: r.listPrice.trim() }));
 
   const inputCls =
-    "min-h-11 px-3 py-2 border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+    "min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 
   return (
     <div>
@@ -75,7 +75,7 @@ export default function SizePriceEditor({
 
       {rows.length > 0 && (
         <div className="space-y-3 mb-3">
-          <div className="hidden sm:grid sm:grid-cols-[11rem_1fr_1fr_2.75rem] gap-2 text-[10px] uppercase tracking-[0.2em] text-stone">
+          <div className="hidden sm:grid sm:grid-cols-[11rem_1fr_1fr_2.75rem] gap-2 eyebrow-lg">
             <span>Maat</span>
             <span>Verkoopprijs incl. btw</span>
             <span>Adviesprijs (optioneel)</span>
@@ -141,7 +141,7 @@ export default function SizePriceEditor({
             key={p}
             type="button"
             onClick={() => addRow(p)}
-            className="min-h-11 text-[11px] uppercase tracking-[0.2em] px-3 border border-line text-stone hover:border-accent hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+            className="min-h-11 text-sm uppercase tracking-[0.1em] px-3 border border-line text-stone hover:border-accent hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
           >
             + {p}
           </button>
@@ -149,7 +149,7 @@ export default function SizePriceEditor({
         <button
           type="button"
           onClick={() => addRow()}
-          className="inline-flex items-center gap-1.5 min-h-11 text-[11px] uppercase tracking-[0.2em] px-3 bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+          className="inline-flex items-center gap-1.5 min-h-11 text-sm uppercase tracking-[0.1em] px-3 bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
         >
           <Plus className="w-3 h-3" />
           Eigen maat

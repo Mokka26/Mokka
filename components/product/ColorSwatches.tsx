@@ -25,11 +25,11 @@ export function ColorSwatches({ currentSlug, currentColorName, category, variant
   return (
     <div className="mb-8">
       <div className="flex items-baseline justify-between gap-4 mb-3">
-        <p className="text-[14px] text-stone">
+        <p className="text-sm text-stone">
           Kleur{currentColorName ? ":" : ""}{" "}
           {currentColorName && <span className="text-ink font-medium">{currentColorName}</span>}
         </p>
-        <p className="text-[14px] text-stone">{variants.length} kleuren</p>
+        <p className="text-sm text-stone">{variants.length} kleuren</p>
       </div>
       <ul role="group" aria-label="Kleur" className="flex items-center gap-1 flex-wrap">
         {variants.map((v) => {
@@ -47,7 +47,7 @@ export function ColorSwatches({ currentSlug, currentColorName, category, variant
                 <span
                   aria-hidden="true"
                   className={`block w-7 h-7 rounded-full border transition-[box-shadow,transform] duration-[280ms] ${
-                    v.colorHex ? "" : "bg-stone/30"
+                    v.colorHex ? "" : "bg-mist"
                   } ${
                     isCurrent
                       ? "border-ink ring-2 ring-ink ring-offset-2 ring-offset-paper"

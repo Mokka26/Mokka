@@ -39,11 +39,11 @@ export default async function AdminDashboard() {
   return (
     <div>
       <header className="mb-10">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2">Overzicht</p>
+        <p className="eyebrow-lg mb-2">Overzicht</p>
         <h1 className="font-serif text-4xl text-ink leading-none">Dashboard</h1>
       </header>
 
-      <h2 className="text-[10px] uppercase tracking-[0.25em] text-stone mb-3">Laatste 30 dagen</h2>
+      <h2 className="eyebrow-lg mb-3">Laatste 30 dagen</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <Stat
           icon={<Euro className="w-5 h-5" aria-hidden="true" />}
@@ -68,7 +68,7 @@ export default async function AdminDashboard() {
         />
       </div>
 
-      <h2 className="text-[10px] uppercase tracking-[0.25em] text-stone mb-3">Catalogus</h2>
+      <h2 className="eyebrow-lg mb-3">Catalogus</h2>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
         <Stat icon={<Package className="w-5 h-5" aria-hidden="true" />} label="Producten" value={`${productTotal}`} href="/admin/products" />
         <Stat icon={<EyeOff className="w-5 h-5" aria-hidden="true" />} label="Verborgen" value={`${hiddenCount}`} href={productListHref({ status: "hidden" })} />
@@ -81,7 +81,7 @@ export default async function AdminDashboard() {
         <section className="bg-white border border-line">
           <div className="px-5 py-4 border-b border-line flex items-center justify-between">
             <h2 className="font-serif text-lg text-ink">Recente bestellingen</h2>
-            <Link href="/admin/orders" className="text-[10px] uppercase tracking-[0.25em] text-stone hover:text-accent min-h-11 inline-flex items-center">
+            <Link href="/admin/orders" className="eyebrow-lg hover:text-accent min-h-11 inline-flex items-center">
               Alles bekijken
             </Link>
           </div>
@@ -112,7 +112,7 @@ export default async function AdminDashboard() {
         <section className="bg-white border border-line">
           <div className="px-5 py-4 border-b border-line flex items-center justify-between">
             <h2 className="font-serif text-lg text-ink">Berichten</h2>
-            <Link href="/admin/messages" className="text-[10px] uppercase tracking-[0.25em] text-stone hover:text-accent min-h-11 inline-flex items-center">
+            <Link href="/admin/messages" className="eyebrow-lg hover:text-accent min-h-11 inline-flex items-center">
               Naar berichten
             </Link>
           </div>
@@ -153,7 +153,7 @@ function Stat({
     >
       <div className="flex items-center gap-3 text-stone mb-3">
         {icon}
-        <span className="text-[10px] uppercase tracking-[0.25em]">{label}</span>
+        <span className="eyebrow-lg">{label}</span>
       </div>
       <p className={`font-serif text-3xl leading-none tabular-nums ${highlight ? "text-accent-dark" : "text-ink"}`}>{value}</p>
       {sub && <p className="text-sm text-stone mt-2">{sub}</p>}

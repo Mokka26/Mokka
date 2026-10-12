@@ -13,7 +13,7 @@ export default function LoginForm({ from }: { from?: string }) {
       {from && <input type="hidden" name="from" value={from} />}
 
       <div>
-        <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+        <label htmlFor="email" className="block eyebrow-lg mb-2">
           E-mail
         </label>
         <input
@@ -23,15 +23,15 @@ export default function LoginForm({ from }: { from?: string }) {
           autoComplete="email"
           required
           disabled={pending}
-          className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
+          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
         />
         {state.fieldErrors?.email && (
-          <p className="text-[11px] text-red-700 mt-1.5">{state.fieldErrors.email}</p>
+          <p className="text-sm text-error mt-1.5">{state.fieldErrors.email}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-2">
+        <label htmlFor="password" className="block eyebrow-lg mb-2">
           Wachtwoord
         </label>
         <input
@@ -41,15 +41,15 @@ export default function LoginForm({ from }: { from?: string }) {
           autoComplete="current-password"
           required
           disabled={pending}
-          className="w-full px-3 py-2.5 bg-bone border border-line text-ink text-sm focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
+          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
         />
         {state.fieldErrors?.password && (
-          <p className="text-[11px] text-red-700 mt-1.5">{state.fieldErrors.password}</p>
+          <p className="text-sm text-error mt-1.5">{state.fieldErrors.password}</p>
         )}
       </div>
 
       {state.error && (
-        <p className="text-[12px] text-red-700 bg-red-50 border border-red-200 px-3 py-2">
+        <p className="text-sm text-error bg-error/10 border border-error/30 px-3 py-2">
           {state.error}
         </p>
       )}
@@ -57,7 +57,7 @@ export default function LoginForm({ from }: { from?: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-ink text-white px-6 py-3 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors disabled:opacity-60"
+        className="min-h-11 w-full bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent transition-colors disabled:opacity-60"
       >
         {pending ? "Inloggen…" : "Inloggen"}
       </button>

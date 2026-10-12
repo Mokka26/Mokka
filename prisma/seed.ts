@@ -120,14 +120,14 @@ const products = [
   { name: "Wooltouch Boxspring", description: "Wooltouch — een boxspring met de finesse van wol en de souplesse van premium textiel. Comfort dat lang meegaat.", price: 2599, category: "bedden", featured: false, images: bedImgs("wooltouch-jpg", 4) },
 
   // ── PLACEHOLDER CATEGORIEËN (worden later vervangen door echte producten) ──
-  { name: "Slaapkamer Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 1299, category: "slaapkamers", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]) },
-  { name: "Slaapkamer Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 899, category: "slaapkamers", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]) },
-  { name: "Kast Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 749, category: "kasten", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=800"]) },
-  { name: "Kast Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 599, category: "kasten", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=800"]) },
-  { name: "Tafel Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 999, category: "tafels", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800"]) },
-  { name: "Tafel Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 649, category: "tafels", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800"]) },
-  { name: "Stoel Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 449, category: "stoelen", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800"]) },
-  { name: "Stoel Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 349, category: "stoelen", featured: false, images: JSON.stringify(["https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800"]) },
+  { name: "Slaapkamer Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 1299, category: "slaapkamers", featured: false, images: "[]" },
+  { name: "Slaapkamer Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 899, category: "slaapkamers", featured: false, images: "[]" },
+  { name: "Kast Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 749, category: "kasten", featured: false, images: "[]" },
+  { name: "Kast Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 599, category: "kasten", featured: false, images: "[]" },
+  { name: "Tafel Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 999, category: "tafels", featured: false, images: "[]" },
+  { name: "Tafel Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 649, category: "tafels", featured: false, images: "[]" },
+  { name: "Stoel Product 1", description: "Tijdelijk product — wordt later aangevuld.", price: 449, category: "stoelen", featured: false, images: "[]" },
+  { name: "Stoel Product 2", description: "Tijdelijk product — wordt later aangevuld.", price: 349, category: "stoelen", featured: false, images: "[]" },
 ];
 
 async function main() {

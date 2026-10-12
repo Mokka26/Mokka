@@ -5,11 +5,11 @@ import {
   orderStatusLabel,
 } from "@/app/admin/(protected)/_lib/order-status";
 
-/** Pill met tokenkleuren; werkt in server- én client components. */
+/** Pill op de gedeelde `.badge`-utility (13px); kleur via tokenklassen. */
 export function StatusPill({ label, className }: { label: string; className: string }) {
   return (
     <span
-      className={`inline-flex items-center text-[10px] uppercase tracking-[0.18em] px-2 py-1 rounded-full whitespace-nowrap ${className}`}
+      className={`badge ${className}`}
     >
       {label}
     </span>

@@ -108,7 +108,7 @@ export default function ProductsTable({ products, categories, sort, dir, sortHre
 
 function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
   return (
-    <div role="columnheader" className={`text-[10px] uppercase tracking-[0.2em] text-stone ${className}`}>
+    <div role="columnheader" className={`eyebrow-lg ${className}`}>
       {children}
     </div>
   );
@@ -132,7 +132,7 @@ function SortHeader({
     <div role="columnheader" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"} className={`flex ${className}`}>
       <Link
         href={href}
-        className={`inline-flex items-center gap-1 min-h-9 text-[10px] uppercase tracking-[0.2em] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        className={`inline-flex items-center gap-1 min-h-11 text-sm uppercase tracking-[0.1em] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           active ? "text-ink" : "text-stone"
         }`}
       >

@@ -148,19 +148,19 @@ export default function ProductCard({ product, variants, priority = false, wide 
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone">
               <span aria-hidden="true" className="w-8 h-px bg-accent" />
-              <span className="text-[13px] uppercase tracking-[0.18em]">Foto volgt</span>
+              <span className="eyebrow-lg">Foto volgt</span>
             </div>
           )}
 
           {(isNew || hasDiscount) && (
             <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-[5]">
               {hasDiscount && (
-                <span className="bg-accent text-paper text-[13px] font-medium px-2.5 py-1 rounded-[6px] tabular-nums">
+                <span className="badge bg-accent tabular-nums">
                   -{discountPct}%<span className="sr-only"> korting</span>
                 </span>
               )}
               {isNew && (
-                <span className="bg-ink text-paper text-[13px] font-medium px-2.5 py-1 rounded-[6px]">Nieuw</span>
+                <span className="badge">Nieuw</span>
               )}
             </div>
           )}
@@ -174,7 +174,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
             zelfde Y-positie eindigt ongeacht spec-grid lengte */}
         <div className="text-left flex flex-col flex-1">
           {eyebrow && (
-            <p className="text-[13px] text-stone uppercase tracking-[0.14em] font-medium mb-1">{eyebrow}</p>
+            <p className="eyebrow-lg mb-1">{eyebrow}</p>
           )}
 
           <h3 className="font-serif text-lg sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-1.5 line-clamp-2 sm:line-clamp-none">
@@ -192,7 +192,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
             <dl className="space-y-1 mb-3 text-[13px] sm:text-sm leading-[1.45]">
               {dimensions && (
                 <div className="flex items-baseline gap-3">
-                  <dt className="hidden sm:block text-[13px] uppercase tracking-[0.1em] text-stone w-[72px] shrink-0">Afmeting</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Afmeting</dt>
                   <dd className="text-ink tabular-nums truncate" title={dimensions}>
                     <span className="sr-only sm:hidden">Afmeting: </span>
                     {dimensions}
@@ -201,7 +201,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
               )}
               {materialLine && (
                 <div className="flex items-baseline gap-3">
-                  <dt className="hidden sm:block text-[13px] uppercase tracking-[0.1em] text-stone w-[72px] shrink-0">Materiaal</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Materiaal</dt>
                   <dd className="text-stone sm:text-ink truncate" title={materialLine}>
                     <span className="sr-only sm:hidden">Materiaal: </span>
                     {materialLine}
@@ -210,14 +210,14 @@ export default function ProductCard({ product, variants, priority = false, wide 
               )}
               {colorDots.length > 0 && (
                 <div className="flex items-center gap-3">
-                  <dt className="hidden sm:block text-[13px] uppercase tracking-[0.1em] text-stone w-[72px] shrink-0">Kleuren</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Kleuren</dt>
                   <dd className="flex items-center gap-1.5 pt-0.5">
                     <span className="sr-only">Verkrijgbaar in: </span>
                     {colorDots.map((v) => (
                       <span
                         key={v.slug}
                         title={v.colorName ?? undefined}
-                        className={`inline-block w-4 h-4 rounded-full border border-line ${v.colorHex ? "" : "bg-stone/30"}`}
+                        className={`inline-block w-4 h-4 rounded-full border border-line ${v.colorHex ? "" : "bg-mist"}`}
                         style={v.colorHex ? { backgroundColor: v.colorHex } : undefined}
                       >
                         {v.colorName && <span className="sr-only">{v.colorName}</span>}
@@ -234,7 +234,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
 
           {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
               cards in een grid-rij hun prijs op gelijke hoogte hebben */}
-          <div className="flex flex-col gap-2 pt-2.5 sm:pt-3 border-t border-line/60 mt-auto">
+          <div className="flex flex-col gap-2 pt-2.5 sm:pt-3 border-t border-line mt-auto">
             <div className="flex items-start justify-between gap-3">
               <Price price={displayPrice} listPrice={listPrice} vat from={hasSizeVariants} size="sm" />
               <StockBadge stock={product.stock} className="pt-1" />

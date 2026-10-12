@@ -200,17 +200,17 @@ export default function CategoryListing({
 
         {/* Resultaten + sort (mobile + desktop) */}
         <div className="flex items-center justify-between mb-8 px-2">
-          <p className="text-[13px] uppercase tracking-[0.2em] text-stone">
+          <p className="eyebrow-lg">
             {activeFilterCount > 0
               ? `${filtered.length} van ${products.length} op deze pagina`
               : `${rangeStart}–${rangeEnd} van ${totalCount} producten`}
           </p>
-          <label className="flex items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-stone">
+          <label className="flex items-center gap-3 eyebrow-lg">
             <span className="hidden sm:inline">Sorteer</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="bg-transparent border border-line px-3 py-2 text-ink text-xs focus:outline-none focus:border-accent"
+              className="min-h-11 bg-transparent border border-line-strong rounded-[8px] px-3 py-2 text-ink text-sm normal-case tracking-normal focus:border-ink"
             >
               <option value="newest">Aanbevolen</option>
               <option value="price-asc">Prijs ↑</option>
@@ -226,7 +226,7 @@ export default function CategoryListing({
             <p className="font-serif text-2xl text-ink mb-4">
               {products.length === 0 ? "Nog geen producten" : "Geen resultaten"}
             </p>
-            <p className="text-sm text-stone">
+            <p className="text-base text-stone">
               {products.length === 0
                 ? "Deze collectie wordt binnenkort gevuld."
                 : "Pas je filters aan om meer producten te zien."}
@@ -235,7 +235,7 @@ export default function CategoryListing({
               <button
                 type="button"
                 onClick={resetFilters}
-                className="mt-6 text-[11px] uppercase tracking-[0.2em] text-accent hover:text-accent-dark"
+                className="btn-link mt-6"
               >
                 Filters wissen
               </button>
@@ -266,7 +266,7 @@ export default function CategoryListing({
             ) : (
               <span aria-hidden="true" />
             )}
-            <p className="text-[13px] uppercase tracking-[0.2em] text-stone">
+            <p className="eyebrow-lg">
               Pagina {page} van {totalPages}
             </p>
             {nextHref ? (
@@ -285,12 +285,12 @@ export default function CategoryListing({
         <button
           type="button"
           onClick={() => setMobileSheetOpen(true)}
-          className="pointer-events-auto flex items-center gap-2.5 bg-ink text-white px-6 py-3.5 text-[11px] uppercase tracking-[0.25em] shadow-[0_12px_30px_-8px_rgba(20,17,13,0.4)] hover:bg-accent transition-colors"
+          className="pointer-events-auto flex items-center gap-2.5 min-h-11 bg-ink text-white px-6 py-3 rounded-[10px] text-sm font-medium uppercase tracking-[0.1em] shadow-[0_12px_30px_-8px_rgba(20,17,13,0.4)] hover:bg-accent transition-colors"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
           <span>Filters & sortering</span>
           {activeFilterCount > 0 && (
-            <span className="ml-1 min-w-5 h-5 inline-flex items-center justify-center rounded-full bg-accent text-[10px] px-1.5">
+            <span className="ml-1 min-w-6 h-6 inline-flex items-center justify-center rounded-full bg-accent text-sm tabular-nums px-1.5">
               {activeFilterCount}
             </span>
           )}
@@ -324,9 +324,9 @@ export default function CategoryListing({
                   type="button"
                   onClick={() => setMobileSheetOpen(false)}
                   aria-label="Sluiten"
-                  className="w-9 h-9 inline-flex items-center justify-center text-stone hover:text-ink"
+                  className="w-11 h-11 inline-flex items-center justify-center rounded-full text-stone hover:text-ink hover:bg-bone"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
               <div className="px-6 py-6">
@@ -336,7 +336,7 @@ export default function CategoryListing({
                 <button
                   type="button"
                   onClick={() => setMobileSheetOpen(false)}
-                  className="w-full bg-ink text-white px-6 py-3.5 text-[11px] uppercase tracking-[0.25em] hover:bg-accent transition-colors"
+                  className="btn-primary w-full"
                 >
                   Toon {filtered.length} resultaten
                 </button>
@@ -384,7 +384,7 @@ function FilterControls({
       {/* Type (alleen umbrella, bv. Tafels) */}
       {availableTypes.length > 1 && (
         <div className="lg:flex-shrink-0">
-          <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone mb-2">Type</p>
+          <p className="eyebrow-lg mb-2">Type</p>
           <div className="flex flex-wrap gap-2">
             {availableTypes.map(({ cat, label, count }) => {
               const active = selectedTypes.has(cat);
@@ -393,13 +393,13 @@ function FilterControls({
                   key={cat}
                   type="button"
                   onClick={() => toggleType(cat)}
-                  className={`px-3 py-1.5 text-xs border transition-colors ${
+                  className={`inline-flex items-center min-h-11 px-4 py-2 text-sm border rounded-full transition-colors ${
                     active
                       ? "bg-ink text-white border-ink"
                       : "bg-transparent text-ink border-line hover:border-ink"
                   }`}
                 >
-                  {label} <span className="opacity-60 ml-0.5">({count})</span>
+                  {label} <span className="ml-1 tabular-nums">({count})</span>
                 </button>
               );
             })}
@@ -409,7 +409,7 @@ function FilterControls({
 
       {/* Prijs */}
       <div className="lg:min-w-[200px] lg:flex-1 lg:max-w-xs">
-        <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone mb-2">
+        <p className="eyebrow-lg mb-2">
           Prijs (max)
         </p>
         <input
@@ -422,17 +422,17 @@ function FilterControls({
           className="w-full accent-accent"
           aria-label="Maximum prijs"
         />
-        <p className="text-xs text-stone mt-1">tot €{maxFilter.toFixed(0)}</p>
+        <p className="text-sm text-stone mt-1 tabular-nums">tot €{maxFilter.toFixed(0)}</p>
       </div>
 
       {/* Voorraad */}
       <div className="lg:flex-shrink-0">
-        <label className="flex items-center gap-2.5 cursor-pointer text-sm">
+        <label className="flex items-center gap-2.5 min-h-11 cursor-pointer text-base">
           <input
             type="checkbox"
             checked={inStockOnly}
             onChange={(e) => setInStockOnly(e.target.checked)}
-            className="w-4 h-4 accent-accent"
+            className="w-5 h-5 accent-accent"
           />
           <span className="text-ink">Alleen op voorraad</span>
         </label>
@@ -441,7 +441,7 @@ function FilterControls({
       {/* Materiaal-chips */}
       {availableMaterials.length > 0 && (
         <div className="lg:flex-1">
-          <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone mb-2 lg:sr-only">
+          <p className="eyebrow-lg mb-2 lg:sr-only">
             Materiaal
           </p>
           <div className="flex flex-wrap gap-2">
@@ -452,13 +452,13 @@ function FilterControls({
                   key={m}
                   type="button"
                   onClick={() => toggleMaterial(m)}
-                  className={`px-3 py-1.5 text-xs border transition-colors ${
+                  className={`inline-flex items-center min-h-11 px-4 py-2 text-sm border rounded-full transition-colors ${
                     active
                       ? "bg-ink text-white border-ink"
                       : "bg-transparent text-ink border-line hover:border-ink"
                   }`}
                 >
-                  {m} <span className="opacity-60 ml-0.5">({count})</span>
+                  {m} <span className="ml-1 tabular-nums">({count})</span>
                 </button>
               );
             })}
@@ -471,7 +471,7 @@ function FilterControls({
         <button
           type="button"
           onClick={resetFilters}
-          className="lg:flex-shrink-0 text-[11px] uppercase tracking-[0.2em] text-stone hover:text-ink text-left lg:text-right"
+          className="btn-link lg:flex-shrink-0 self-start lg:self-end"
         >
           Wissen ({activeFilterCount})
         </button>

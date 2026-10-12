@@ -55,7 +55,7 @@ export default function DeleteButton(props: Props) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-[11px] uppercase tracking-[0.25em] text-error border border-error/30 hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Verwijderen
@@ -84,7 +84,7 @@ export default function DeleteButton(props: Props) {
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="flex-1 min-h-11 px-6 py-3 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
+                className="flex-1 min-h-11 px-6 py-3 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
               >
                 Annuleren
               </button>
@@ -92,7 +92,7 @@ export default function DeleteButton(props: Props) {
                 type="button"
                 onClick={run}
                 disabled={pending}
-                className="flex-1 min-h-11 px-6 py-3 text-[11px] uppercase tracking-[0.25em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-50"
+                className="flex-1 min-h-11 px-6 py-3 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-50"
               >
                 {pending ? "Bezig…" : "Verwijderen"}
               </button>

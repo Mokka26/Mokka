@@ -55,7 +55,7 @@ export default function CartPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <AnimatedSection direction="left" className="lg:col-span-8">
-            <div className="border-b border-line pb-5 mb-2 hidden md:grid grid-cols-12 gap-4 text-[13px] uppercase tracking-[0.12em] text-stone">
+            <div className="border-b border-line pb-5 mb-2 hidden md:grid grid-cols-12 gap-4 eyebrow-lg">
               <div className="col-span-6">Product</div>
               <div className="col-span-2 text-center">Aantal</div>
               <div className="col-span-2 text-right">Prijs</div>
@@ -79,7 +79,7 @@ export default function CartPage() {
                   <span className="text-ink tabular-nums">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
                 </div>
                 {!freeShipping && (
-                  <p className="text-[14px] text-ink">
+                  <p className="text-sm text-ink">
                     Nog <span className="font-medium tabular-nums">{formatPrice(remaining)}</span> tot gratis verzending
                     (vanaf {formatPrice(shippingInfo.freeShippingThreshold)}).
                   </p>
@@ -88,12 +88,12 @@ export default function CartPage() {
                   <span className="text-ink">Totaal</span>
                   <span className="font-serif text-2xl text-ink tabular-nums">{formatPrice(total)}</span>
                 </div>
-                <p className="text-[14px] text-stone">{shippingInfo.vatLabelLong}</p>
+                <p className="text-sm text-stone">{shippingInfo.vatLabelLong}</p>
               </div>
               <Link href="/checkout" className="btn-primary w-full text-center block mt-8">
                 Afrekenen
               </Link>
-              <ul className="mt-6 space-y-1.5 text-[14px] text-slate">
+              <ul className="mt-6 space-y-1.5 text-sm text-slate">
                 <li>Levertijd {shippingInfo.deliveryTime.inStock}</li>
                 <li>
                   {shippingInfo.returnWindowDays} dagen bedenktijd —{" "}
@@ -111,7 +111,7 @@ export default function CartPage() {
                 )}
               </ul>
               <PaymentIconRow className="mt-6" />
-              <Link href="/products" className="block text-center mt-6 min-h-11 leading-[44px] text-[14px] text-ink underline underline-offset-4 hover:text-accent transition-colors">
+              <Link href="/products" className="block text-center mt-6 min-h-11 leading-[44px] text-sm text-ink underline underline-offset-4 hover:text-accent transition-colors">
                 Verder winkelen
               </Link>
             </div>

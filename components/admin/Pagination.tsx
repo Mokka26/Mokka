@@ -24,7 +24,7 @@ export function Pagination({
   const to = Math.min(total, page * pageSize);
 
   const btn =
-    "inline-flex items-center justify-center min-w-11 h-11 px-3 border border-line text-[11px] uppercase tracking-[0.2em] text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors";
+    "inline-flex items-center justify-center min-w-11 h-11 px-3 border border-line text-sm uppercase tracking-[0.1em] text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors";
   const disabled = "opacity-40 pointer-events-none";
 
   return (

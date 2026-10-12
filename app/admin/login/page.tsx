@@ -22,7 +22,7 @@ export default async function AdminLoginPage({
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <p className="font-serif text-3xl text-ink tracking-tight">Mokka</p>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone mt-1">Admin</p>
+          <p className="eyebrow-lg mt-1">Admin</p>
         </div>
         <LoginForm from={params.from} />
       </div>

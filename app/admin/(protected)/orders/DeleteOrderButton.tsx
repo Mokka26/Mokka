@@ -72,7 +72,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-[11px] uppercase tracking-[0.25em] text-error border border-error/30 hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Bestelling verwijderen
@@ -98,7 +98,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
 
             {paid && (
               <div className="mb-4">
-                <label htmlFor={inputId} className="block text-[11px] uppercase tracking-[0.25em] text-stone mb-2">
+                <label htmlFor={inputId} className="block eyebrow-lg mb-2">
                   Typ het ordernummer om te bevestigen
                 </label>
                 <input
@@ -125,7 +125,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
                 type="button"
                 onClick={close}
                 disabled={pending}
-                className="flex-1 min-h-11 px-6 py-3 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors disabled:opacity-60"
+                className="flex-1 min-h-11 px-6 py-3 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors disabled:opacity-60"
               >
                 Annuleren
               </button>
@@ -133,7 +133,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
                 type="button"
                 onClick={handleDelete}
                 disabled={pending || !canConfirm}
-                className="flex-1 min-h-11 px-6 py-3 text-[11px] uppercase tracking-[0.25em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-opacity disabled:opacity-50"
+                className="flex-1 min-h-11 px-6 py-3 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-opacity disabled:opacity-50"
               >
                 {pending ? "Verwijderen…" : "Definitief verwijderen"}
               </button>

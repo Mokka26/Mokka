@@ -16,7 +16,6 @@ function nowMs(): number {
 
 export default async function TrashPage() {
   const now = nowMs();
-  const cutoff = new Date(now - RETENTION_DAYS * DAY_MS);
 
   const [products, images] = await Promise.all([
     prisma.product.findMany({
@@ -79,8 +78,8 @@ export default async function TrashPage() {
     <div>
       <header className="mb-10">
         <div className="flex items-center gap-3 mb-3">
-          <Trash2 className="w-5 h-5 text-stone" />
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone">Beheer</p>
+          <Trash2 className="w-5 h-5 text-stone" aria-hidden="true" />
+          <p className="eyebrow-lg">Beheer</p>
         </div>
         <h1 className="font-serif text-4xl text-ink leading-none">Prullenbak</h1>
         <p className="text-sm text-stone mt-3">
@@ -93,7 +92,7 @@ export default async function TrashPage() {
         </p>
       </header>
 
-      <TrashClient products={productItems} images={imageItems} cutoff={cutoff.toISOString()} />
+      <TrashClient products={productItems} images={imageItems} now={now} />
     </div>
   );
 }

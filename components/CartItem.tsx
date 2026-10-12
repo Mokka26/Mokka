@@ -52,13 +52,13 @@ export default function CartItem({ item }: Props) {
             </Link>
           </h3>
           {options.length > 0 && (
-            <p className="text-stone text-[14px] mt-1">{options.join(" · ")}</p>
+            <p className="text-stone text-sm mt-1">{options.join(" · ")}</p>
           )}
-          <p className="text-stone text-[14px] mt-1">{cartLineDelivery(item)}</p>
+          <p className="text-stone text-sm mt-1">{cartLineDelivery(item)}</p>
           <button
             type="button"
             onClick={() => removeWithUndo(item.lineKey)}
-            className="inline-flex items-center min-h-11 text-[14px] text-stone underline underline-offset-4 hover:text-error transition-colors"
+            className="inline-flex items-center min-h-11 text-sm text-stone underline underline-offset-4 hover:text-error transition-colors"
           >
             Verwijderen<span className="sr-only">: {item.product.name}</span>
           </button>

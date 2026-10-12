@@ -21,7 +21,7 @@ type Dialog = "category" | "price" | "trash" | null;
 type BulkCommand = BulkInput extends infer U ? (U extends BulkInput ? Omit<U, "ids"> : never) : never;
 
 const btn =
-  "inline-flex items-center gap-1.5 min-h-11 px-3 text-[11px] uppercase tracking-[0.18em] border border-white/30 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 transition-colors";
+  "inline-flex items-center gap-1.5 min-h-11 px-3 text-sm uppercase tracking-[0.1em] border border-white/30 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 transition-colors";
 
 /** Balk met bulkacties; verschijnt zodra er een selectie is. */
 export default function BulkActions({ selected, categories, onDone, onClear }: Props) {
@@ -84,7 +84,7 @@ export default function BulkActions({ selected, categories, onDone, onClear }: P
           type="button"
           onClick={onClear}
           aria-label="Selectie wissen"
-          className="ml-auto inline-flex items-center justify-center w-11 h-11 text-white/70 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="ml-auto inline-flex items-center justify-center w-11 h-11 text-mist hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           <X className="w-4 h-4" />
         </button>
@@ -139,9 +139,9 @@ function Overlay({ titleId, children, onClose }: { titleId: string; children: Re
 }
 
 const dialogBtnSecondary =
-  "flex-1 min-h-11 px-5 py-3 text-[11px] uppercase tracking-[0.25em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60";
+  "flex-1 min-h-11 px-5 py-3 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60";
 const dialogBtnPrimary =
-  "flex-1 min-h-11 px-5 py-3 text-[11px] uppercase tracking-[0.25em] bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-50";
+  "flex-1 min-h-11 px-5 py-3 text-sm uppercase tracking-[0.1em] bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-50";
 
 function ConfirmDialog({
   title,
@@ -195,14 +195,14 @@ function CategoryDialog({
       <p className="text-base text-stone mb-4">
         {count} product{count === 1 ? " krijgt" : "en krijgen"} de gekozen categorie.
       </p>
-      <label htmlFor={selectId} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+      <label htmlFor={selectId} className="block eyebrow-lg mb-1.5">
         Nieuwe categorie
       </label>
       <select
         id={selectId}
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-full min-h-11 px-3 py-2 bg-bone border border-line text-ink text-base mb-6 focus:outline-none focus:border-accent"
+        className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base mb-6 focus:outline-none focus:border-accent"
       >
         {categories.map((c) => (
           <option key={c} value={c}>{c}</option>
@@ -270,19 +270,19 @@ function PriceDialog({
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <label htmlFor={modeId} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">Manier</label>
+          <label htmlFor={modeId} className="block eyebrow-lg mb-1.5">Manier</label>
           <select
             id={modeId}
             value={mode}
             onChange={(e) => setMode(e.target.value === "absolute" ? "absolute" : "percent")}
-            className="w-full min-h-11 px-3 py-2 bg-bone border border-line text-ink text-base focus:outline-none focus:border-accent"
+            className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent"
           >
             <option value="percent">Percentage</option>
             <option value="absolute">Vast bedrag</option>
           </select>
         </div>
         <div>
-          <label htmlFor={amountId} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+          <label htmlFor={amountId} className="block eyebrow-lg mb-1.5">
             {mode === "percent" ? "Verschil in %" : "Nieuwe prijs (€)"}
           </label>
           <input
@@ -293,14 +293,14 @@ function PriceDialog({
             placeholder={mode === "percent" ? "bijv. -10 of 5" : "bijv. 599,00"}
             aria-invalid={!!error}
             aria-describedby={error ? `${amountId}-err` : undefined}
-            className="w-full min-h-11 px-3 py-2 bg-bone border border-line text-ink text-base tabular-nums focus:outline-none focus:border-accent aria-[invalid=true]:border-error"
+            className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base tabular-nums focus:outline-none focus:border-accent aria-[invalid=true]:border-error"
           />
         </div>
       </div>
       {error && <p id={`${amountId}-err`} className="text-sm text-error mb-3">{error}</p>}
 
       <div className="bg-bone border border-line p-3 mb-6">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-stone mb-2">Voorbeeld</p>
+        <p className="eyebrow-lg mb-2">Voorbeeld</p>
         <ul className="space-y-1 text-sm">
           {preview.map((p) => (
             <li key={p.name} className="flex justify-between gap-3">

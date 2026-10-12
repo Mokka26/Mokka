@@ -36,9 +36,13 @@ export default function AdminSidebar(props: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
+  // Route-wissel sluit het mobiele menu: "state aanpassen tijdens render"
+  // (React-docs) in plaats van een effect met setState.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -55,7 +59,7 @@ export default function AdminSidebar(props: Props) {
       <header className="lg:hidden sticky top-0 z-30 bg-ink text-white border-b border-white/10 flex items-center justify-between px-4 py-2">
         <Link href="/admin" className="block min-h-11 flex flex-col justify-center">
           <p className="font-serif text-xl tracking-tight leading-none">Mokka</p>
-          <p className="text-[9px] uppercase tracking-[0.3em] text-white/60 mt-0.5">Admin</p>
+          <p className="eyebrow-lg text-mist mt-0.5">Admin</p>
         </Link>
         <button
           type="button"
@@ -81,7 +85,7 @@ export default function AdminSidebar(props: Props) {
         <div className="px-7 pt-9 pb-7 border-b border-white/10 flex items-center justify-between">
           <Link href="/admin" className="block">
             <p className="font-serif text-2xl tracking-tight">Mokka</p>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 mt-0.5">Admin</p>
+            <p className="eyebrow-lg text-mist mt-0.5">Admin</p>
           </Link>
           <button
             type="button"
@@ -104,15 +108,15 @@ export default function AdminSidebar(props: Props) {
                   <Link
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 min-h-11 px-4 py-2.5 text-[13px] tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                      isActive ? "bg-white/10 text-white" : "text-white/80 hover:text-white hover:bg-white/5"
+                    className={`flex items-center gap-3 min-h-11 px-4 py-2.5 text-sm tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                      isActive ? "bg-white/10 text-white" : "text-bone hover:text-white hover:bg-white/5"
                     }`}
                   >
                     <Icon className="w-4 h-4" aria-hidden="true" />
                     {item.label}
                     {badge != null && badge > 0 && (
                       <span
-                        className="ml-auto inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-accent text-white text-[11px] tabular-nums"
+                        className="ml-auto inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-accent text-white text-sm tabular-nums"
                         aria-label={`${badge} ${badge === 1 ? "nieuw bericht" : "nieuwe berichten"} in de laatste 7 dagen`}
                       >
                         {badge > 99 ? "99+" : badge}
@@ -127,13 +131,13 @@ export default function AdminSidebar(props: Props) {
 
         <div className="px-3 pb-5 pt-4 border-t border-white/10">
           <div className="px-4 py-3">
-            <p className="text-[13px] text-white">{props.userName}</p>
-            <p className="text-[12px] text-white/60 truncate">{props.userEmail}</p>
+            <p className="text-sm text-white">{props.userName}</p>
+            <p className="text-sm text-mist truncate">{props.userEmail}</p>
           </div>
           <form action={props.signOutAction}>
             <button
               type="submit"
-              className="w-full flex items-center gap-3 min-h-11 px-4 py-2.5 text-[13px] tracking-wide text-white/80 hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
+              className="w-full flex items-center gap-3 min-h-11 px-4 py-2.5 text-sm tracking-wide text-bone hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
             >
               <LogOut className="w-4 h-4" aria-hidden="true" />
               Uitloggen

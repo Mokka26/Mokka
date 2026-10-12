@@ -16,9 +16,13 @@ export default function SearchInput({ placeholder = "Zoek op naam, slug of kleur
   const [value, setValue] = useState(initial);
   const id = useId();
 
-  useEffect(() => {
+  // URL-wijziging van buitenaf (bv. "Filters wissen") → veld synchroniseren.
+  // "State aanpassen tijdens render" i.p.v. setState in een effect.
+  const [prevInitial, setPrevInitial] = useState(initial);
+  if (initial !== prevInitial) {
+    setPrevInitial(initial);
     setValue(initial);
-  }, [initial]);
+  }
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -34,11 +38,11 @@ export default function SearchInput({ placeholder = "Zoek op naam, slug of kleur
 
   return (
     <div>
-      <label htmlFor={id} className="block text-[10px] uppercase tracking-[0.25em] text-stone mb-1.5">
+      <label htmlFor={id} className="block eyebrow-lg mb-1.5">
         Zoeken
       </label>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone pointer-events-none" aria-hidden="true" />
         <input
           id={id}
           name="q"
@@ -46,7 +50,7 @@ export default function SearchInput({ placeholder = "Zoek op naam, slug of kleur
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-full sm:w-80 min-h-11 pl-10 pr-11 py-2.5 bg-white border border-line text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="w-full sm:w-80 min-h-11 pl-10 pr-11 py-2.5 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
         />
         {value && (
           <button
@@ -55,7 +59,7 @@ export default function SearchInput({ placeholder = "Zoek op naam, slug of kleur
             aria-label="Zoekopdracht wissen"
             className="absolute right-0 top-0 h-full w-11 inline-flex items-center justify-center text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>

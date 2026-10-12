@@ -56,7 +56,7 @@ export default function ProductLightbox({ images, productName, startIndex, onClo
       className="bg-ink text-paper"
       header={
         <div className="flex items-center justify-between gap-4 px-4 sm:px-6 min-h-16 shrink-0 text-paper">
-          <p className="text-[14px] tabular-nums" aria-live="polite">
+          <p className="text-sm tabular-nums" aria-live="polite">
             <span className="sr-only">Foto </span>
             {index + 1} / {total}
           </p>

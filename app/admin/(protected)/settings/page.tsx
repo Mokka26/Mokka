@@ -18,14 +18,14 @@ export default async function AdminSettingsPage() {
   return (
     <div className="max-w-2xl">
       <header className="mb-10">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-stone mb-2">Beheer</p>
+        <p className="eyebrow-lg mb-2">Beheer</p>
         <h1 className="font-serif text-4xl text-ink leading-none">Instellingen</h1>
       </header>
 
       <section className="bg-white border border-line p-6 lg:p-8 mb-6">
         <header className="mb-5">
           <h2 className="font-serif text-xl text-ink leading-none mb-1">Profiel</h2>
-          <p className="text-[12px] text-stone">Naam zoals zichtbaar in het admin paneel.</p>
+          <p className="text-sm text-stone">Naam zoals zichtbaar in het admin paneel.</p>
         </header>
         <ProfileForm initialName={user?.name ?? ""} email={user?.email ?? ""} />
       </section>
@@ -33,7 +33,7 @@ export default async function AdminSettingsPage() {
       <section className="bg-white border border-line p-6 lg:p-8">
         <header className="mb-5">
           <h2 className="font-serif text-xl text-ink leading-none mb-1">Wachtwoord wijzigen</h2>
-          <p className="text-[12px] text-stone">
+          <p className="text-sm text-stone">
             Minimaal 8 tekens. Gebruik een sterk wachtwoord, vooral voor productie.
           </p>
         </header>
