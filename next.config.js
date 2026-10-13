@@ -42,6 +42,15 @@ const securityHeaders = [
   ...(process.env.NODE_ENV === "production" ? [{ key: "Content-Security-Policy", value: csp }] : []),
 ];
 
+// Statische bestanden uit public/ (en de app-iconen) krijgen een jaar cache,
+// immutable: de browser vraagt ze bij herhaalbezoek niet opnieuw op. Dat is
+// alleen veilig voor bestanden waarvan de naam meeverandert als de inhoud
+// verandert — wijzigt het logo, geef het bestand dan een nieuwe naam
+// (logo-2027.png) i.p.v. het te overschrijven. Voor /_next/static regelt
+// Next dit zelf (gehashte namen).
+const immutableCache = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
+const immutableStaticPaths = ["/images/:path*", "/icon.png", "/apple-icon.png", "/mokka-poster.jpg"];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Trimt barrel-imports van zware libs (alleen gebruikte exports bundelen).
@@ -49,18 +58,30 @@ const nextConfig = {
     optimizePackageImports: ["framer-motion", "lucide-react"],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      ...immutableStaticPaths.map((source) => ({ source, headers: immutableCache })),
+    ];
   },
   images: {
+    // Productfoto's gaan NIET door de Next-optimizer: components/ui/
+    // CloudinaryImage (+ lib/cloudinary-url cloudinaryLoader) laat Cloudinary
+    // resizen en f_auto/q_auto kiezen. De optimizer hieronder bedient alleen
+    // lokale statics (public/images/logo.png); Mollie-iconen zijn `unoptimized`.
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       // Officiële Mollie betaalmethode-iconen op de checkout.
       { protocol: "https", hostname: "www.mollie.com" },
     ],
+    // Alleen voor de lokale statics: AVIF eerst (kleinste, alpha ondersteund),
+    // WebP als fallback. Cloudinary kiest zijn eigen formaat via f_auto.
     formats: ["image/avif", "image/webp"],
-    qualities: [75, 95],
+    // Enige quality die <Image> nog meekrijgt (default 75; de Cloudinary-loader
+    // negeert 'm en gebruikt q_auto). Next waarschuwt bij waarden buiten deze lijst.
+    qualities: [75],
     // Bewust compact: elke breedte is een extra Cloudinary-transformatie per
-    // foto. 5 + 4 maten dekken 375px-mobiel t/m 2x-retina-desktop.
+    // foto (de loader gebruikt deze lijst voor de srcSet). 5 + 4 maten dekken
+    // 375px-mobiel t/m 2x-retina-desktop.
     deviceSizes: [640, 828, 1080, 1440, 1920],
     imageSizes: [96, 128, 256, 384],
     minimumCacheTTL: 31536000,

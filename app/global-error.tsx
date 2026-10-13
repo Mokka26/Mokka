@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import "./globals.css";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
-import { captureError } from "@/lib/sentry";
+import { captureError } from "@/lib/sentry-client";
 
 // Vangnet als de ROOT layout zelf faalt: vervangt de hele pagina en moet
 // daarom zijn eigen <html>/<body> leveren. globals.css wordt hier expliciet

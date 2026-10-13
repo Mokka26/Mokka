@@ -7,9 +7,16 @@ import { businessInfo } from "@/lib/business-info";
 import { prisma } from "@/lib/prisma";
 import { firstImageOnly } from "@/lib/imageHelpers";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
+import { dedupeByColorGroup } from "./dedupe";
 import ProductsContent from "./ProductsContent";
 
 export const revalidate = 3600;
+
+// Kaarten per pagina. De catalogus (±1.200 producten) ging eerder in zijn
+// geheel als RSC-payload naar de client (~600 kB); nu alleen de pagina die
+// de bezoeker ziet (?page=N, server-side slice). Filters halen zelf via
+// /api/products op (zie ProductsContent).
+const PAGE_SIZE = 48;
 
 // De ?category=-redirect maakt deze route per-request dynamisch, waardoor de
 // volledige-catalogus-query anders bij ELKE bezoeker Neon zou raken. Cache de
@@ -28,8 +35,10 @@ const getAllProducts = unstable_cache(
       },
     });
     // Payload-trim: kaart toont alleen foto 1 — rest van de images-JSON is
-    // ballast in de flight-payload (grootste HTML van de site, −80%).
-    return products.map((p) => ({ ...p, images: firstImageOnly(p.images) }));
+    // ballast in de flight-payload.
+    // Kleurvarianten hier al samenvoegen, zodat de paginering op kaarten telt
+    // en een kleurgroep nooit over twee pagina's verdeeld raakt.
+    return dedupeByColorGroup(products.map((p) => ({ ...p, images: firstImageOnly(p.images) })));
   },
   ["all-products"],
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
@@ -52,17 +61,23 @@ export const metadata: Metadata = {
 };
 
 interface Props {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; page?: string }>;
+}
+
+function parsePage(raw: string | undefined, pageCount: number): number {
+  const n = Number.parseInt(raw ?? "1", 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(n, pageCount);
 }
 
 /**
- * /products — overzicht "alle producten" (geen filter).
+ * /products — overzicht "alle producten" (geen filter), 48 per pagina.
  *
  * Als ?category=X aanwezig → 301-redirect naar canonieke /<categorie>.
  * Speciale waarde "alle-banken" mapt naar /banken (umbrella).
  */
 export default async function ProductsPage({ searchParams }: Props) {
-  const { category } = await searchParams;
+  const { category, page: rawPage } = await searchParams;
 
   if (category) {
     const target = category === "alle-banken" ? "banken" : category;
@@ -71,9 +86,12 @@ export default async function ProductsPage({ searchParams }: Props) {
     }
   }
 
-  // Server-side ophalen (gecached, zie getAllProducts) → producten staan in de
-  // SSR-HTML (SEO + LCP), geen client-fetch bij eerste load. Filters client-side.
-  const initialProducts = await getAllProducts();
+  // Server-side ophalen (gecached, zie getAllProducts) → de kaarten van deze
+  // pagina staan in de SSR-HTML (LCP), geen client-fetch bij eerste load.
+  const all = await getAllProducts();
+  const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const page = parsePage(rawPage, pageCount);
+  const initialProducts = all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <Suspense fallback={
@@ -96,7 +114,12 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       </div>
     }>
-      <ProductsContent initialProducts={initialProducts} />
+      <ProductsContent
+        initialProducts={initialProducts}
+        page={page}
+        pageCount={pageCount}
+        total={all.length}
+      />
     </Suspense>
   );
 }

@@ -53,7 +53,7 @@ export default function CollectionPreview({ products, title, eyebrow }: Props) {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16">
           {products.slice(0, 8).map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} sizes="(max-width: 768px) 50vw, 25vw" />
           ))}
         </div>
 

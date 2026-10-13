@@ -11,8 +11,13 @@ import { ADS_ID, ADS_ID_PATTERN, GA4_ID, GA4_ID_PATTERN } from "@/lib/analytics"
 //    en upgradet direct naar 'granted' als de bezoeker eerder al "Accepteren"
 //    koos (localStorage-sleutel van components/CookieBanner.tsx). Daardoor
 //    hoeft Google niet op `wait_for_update` te wachten bij terugkerend bezoek.
-// 2. gtag.js laadt daarna (afterInteractive). Zonder akkoord zet het geen
-//    cookies en stuurt het alleen cookieloze pings (gemodelleerde conversies).
+// 2. gtag.js laadt daarna met strategy="lazyOnload": pas ná window.load,
+//    dus buiten het kritieke pad van LCP/INP op mobiel (gtag.js + GA4-config is
+//    ~100 kB JS en ~150 ms main-thread op een mid-range Android). Afweging:
+//    bezoekers die vóór window.load al weg zijn (zeldzaam, <1-2 s) missen in
+//    GA4; alle events die vóór het laden worden gepusht staan al in de
+//    dataLayer en gaan alsnog mee. Zonder akkoord zet gtag geen cookies en
+//    stuurt het alleen cookieloze pings (gemodelleerde conversies).
 // 3. Bij een keuze in de banner roept CookieBanner `applyConsent()` aan
 //    (lib/analytics.ts) → `gtag('consent','update', …)`.
 //
@@ -72,7 +77,7 @@ export function Analytics() {
       <script id="google-tag-bootstrap" dangerouslySetInnerHTML={{ __html: buildBootstrap() }} />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(primaryId)}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
     </>
   );

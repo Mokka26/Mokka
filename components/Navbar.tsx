@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { motion, AnimatePresence } from "framer-motion";
 import { Search, ShoppingBag, Menu, ChevronDown, Phone } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartDrawer, { CART_DRAWER_ID } from "./CartDrawer";
@@ -162,6 +161,14 @@ const desktopUnderlineClass =
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
+// Bewegingen in de header zijn puur CSS (geen framer-motion in de root-bundle):
+//  - dropdown: fade-in via de mk-fade-in keyframes uit globals.css
+//  - mobiel submenu: grid-template-rows 0fr → 1fr (animatie naar height:auto)
+//  - topbanner: max-height + opacity bij scrollen
+// `motion-safe:` respecteert prefers-reduced-motion.
+const dropdownPanelClass =
+  "absolute top-full pt-2 z-50 motion-safe:animate-[mk-fade-in_200ms_var(--ease-out-soft)]";
+
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -212,41 +219,37 @@ export default function Navbar() {
 
   return (
     <>
-      <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      {/* Gewone <header>, geen entree-animatie: de header staat direct in de
+          eerste paint en wordt niet verborgen tot hydratie. */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,border-color,box-shadow] duration-500 ${
           scrolled ? "bg-paper border-b border-line shadow-[0_1px_0_rgba(20,17,13,0.04)]" : "bg-paper border-b border-transparent"
         }`}
-        initial={{ y: -80 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
         onMouseLeave={() => setActiveDropdown(null)}
       >
-        {/* Top banner — verdwijnt bij scroll */}
-        <AnimatePresence>
-          {!scrolled && (
-            <motion.div
-              initial={{ height: 36, opacity: 1 }}
-              animate={{ height: 36, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <TopBanner />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Top banner — klapt in bij scroll (max-height 36px → 0) */}
+        <div
+          className={`overflow-hidden motion-safe:transition-[max-height,opacity] duration-300 ease-out ${
+            scrolled ? "max-h-0 opacity-0" : "max-h-9 opacity-100"
+          }`}
+          aria-hidden={scrolled}
+        >
+          <TopBanner />
+        </div>
 
         <div className="max-w-[1600px] mx-auto">
           <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-4 sm:px-10 lg:px-8 xl:px-14">
             {/* Logo links */}
             <Link href="/" className="flex-shrink-0 inline-flex items-center min-h-11" aria-label="Mokka Home Interior — naar de homepage">
+              {/* 480×166 PNG (20 kB). Geen priority/preload: het logo is klein
+                  en staat direct in de HTML; eager zodat 'ie niet op layout wacht. */}
               <Image
                 src="/images/logo.png"
                 alt=""
-                width={180}
-                height={60}
+                width={160}
+                height={55}
                 className="h-10 sm:h-12 xl:h-14 w-auto"
-                priority
+                loading="eager"
               />
             </Link>
 
@@ -313,40 +316,29 @@ export default function Navbar() {
                     )}
 
                     {/* Compact dropdown — verankerd onder het item */}
-                    {item.subLinks && (
-                      <AnimatePresence>
-                        {isOpen && (
-                          <motion.div
-                            id={panelId}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 6 }}
-                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                            className={`absolute top-full pt-2 z-50 ${isMore ? "right-0" : "left-0"}`}
-                          >
-                            <div className="flex gap-10 bg-paper border border-line rounded-[12px] shadow-[0_20px_50px_-18px_rgba(20,17,13,0.22)] px-8 py-7">
-                              {item.subLinks.map((group) => (
-                                <div key={group.heading} className="min-w-[160px]">
-                                  <p className="eyebrow mb-3 whitespace-nowrap">{group.heading}</p>
-                                  <ul className="space-y-1 list-none m-0 p-0">
-                                    {group.links.map((l) => (
-                                      <li key={l.label}>
-                                        <Link
-                                          href={l.href}
-                                          onClick={() => setActiveDropdown(null)}
-                                          className="inline-flex items-center min-h-10 text-base text-slate hover:text-accent-dark transition-colors duration-200 whitespace-nowrap"
-                                        >
-                                          {l.label}
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
+                    {item.subLinks && isOpen && (
+                      <div id={panelId} className={`${dropdownPanelClass} ${isMore ? "right-0" : "left-0"}`}>
+                        <div className="flex gap-10 bg-paper border border-line rounded-[12px] shadow-[0_20px_50px_-18px_rgba(20,17,13,0.22)] px-8 py-7">
+                          {item.subLinks.map((group) => (
+                            <div key={group.heading} className="min-w-[160px]">
+                              <p className="eyebrow mb-3 whitespace-nowrap">{group.heading}</p>
+                              <ul className="space-y-1 list-none m-0 p-0">
+                                {group.links.map((l) => (
+                                  <li key={l.label}>
+                                    <Link
+                                      href={l.href}
+                                      onClick={() => setActiveDropdown(null)}
+                                      className="inline-flex items-center min-h-10 text-base text-slate hover:text-accent-dark transition-colors duration-200 whitespace-nowrap"
+                                    >
+                                      {l.label}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </li>
                 );
@@ -409,7 +401,7 @@ export default function Navbar() {
             </div>
           </nav>
         </div>
-      </motion.header>
+      </header>
 
       {/* Mobiel menu — native dialog: focus blijft erin, Esc sluit, focus terug naar de knop */}
       <Drawer
@@ -442,39 +434,38 @@ export default function Navbar() {
                           aria-hidden="true"
                         />
                       </button>
-                      <AnimatePresence initial={false}>
-                        {expanded && (
-                          <motion.div
-                            id={panelId}
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="pb-5 space-y-5">
-                              {item.subLinks.map((group) => (
-                                <div key={group.heading}>
-                                  <p className="eyebrow mb-2">{group.heading}</p>
-                                  <ul className="list-none m-0 p-0">
-                                    {group.links.map((l) => (
-                                      <li key={l.label}>
-                                        <Link
-                                          href={l.href}
-                                          onClick={() => setMobileMenuOpen(false)}
-                                          className="inline-flex items-center min-h-11 text-base text-slate hover:text-accent-dark"
-                                        >
-                                          {l.label}
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {/* Altijd gerenderd; ingeklapt via grid-rows 0fr + inert
+                          (niet focusbaar, niet in de accessibility tree). */}
+                      <div
+                        id={panelId}
+                        className={`grid motion-safe:transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                        }`}
+                        inert={!expanded}
+                      >
+                        <div className="overflow-hidden min-h-0">
+                          <div className="pb-5 space-y-5">
+                            {item.subLinks.map((group) => (
+                              <div key={group.heading}>
+                                <p className="eyebrow mb-2">{group.heading}</p>
+                                <ul className="list-none m-0 p-0">
+                                  {group.links.map((l) => (
+                                    <li key={l.label}>
+                                      <Link
+                                        href={l.href}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="inline-flex items-center min-h-11 text-base text-slate hover:text-accent-dark"
+                                      >
+                                        {l.label}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <Link
@@ -523,8 +514,11 @@ export default function Navbar() {
         title="Zoeken"
         initialFocusRef={searchInputRef}
       >
-        <div className="h-full flex items-center">
-          <form onSubmit={handleSearch} role="search" className="w-full max-w-4xl mx-auto px-6 sm:px-10 lg:px-14 py-10">
+        {/* Het veld staat bovenaan, direct onder de titelbalk — niet verticaal
+            gecentreerd (op mobiel met toetsenbord open is de helft van het
+            scherm anders leeg). */}
+        <div>
+          <form onSubmit={handleSearch} role="search" className="w-full max-w-4xl mx-auto px-6 sm:px-10 lg:px-14 pt-4 sm:pt-8 pb-10">
             <label htmlFor="site-search-input" className="sr-only">Zoek in de webshop</label>
             <div className="relative">
               <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 text-stone" strokeWidth={1.25} aria-hidden="true" />

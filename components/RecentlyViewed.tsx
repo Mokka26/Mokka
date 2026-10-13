@@ -28,9 +28,15 @@ type State =
   | { status: "loading" }
   | { status: "ready"; products: Product[] };
 
-// Client component (localStorage). Onder de fold: geen priority op de kaarten.
-// Zodra er slugs bekend zijn, reserveert de sectie direct hoogte zodat de
-// pagina niet verspringt als de producten binnenkomen.
+// Vier kolommen vanaf lg, twee daaronder.
+const CARD_SIZES = "(max-width: 768px) 50vw, 25vw";
+
+// Client component (localStorage via useSyncExternalStore: server en eerste
+// client-render geven dezelfde lege lijst, dus geen hydration-mismatch).
+// Zonder slugs rendert dit niets — geen lege sectie, geen gereserveerde
+// ruimte. Zijn er wél slugs, dan staat er per verwachte kaart direct een
+// skeleton in dezelfde grid, zodat de footer niet verspringt (CLS) zodra de
+// producten binnenkomen. Onder de fold: geen priority op de kaarten.
 export default function RecentlyViewed({ currentSlug, max = 4 }: Props) {
   const slugs = useRecentlyViewed(currentSlug);
   const [state, setState] = useState<State>({ status: "loading" });
@@ -69,6 +75,8 @@ export default function RecentlyViewed({ currentSlug, max = 4 }: Props) {
   if (slugs.length === 0) return null;
   if (state.status === "ready" && state.products.length === 0) return null;
 
+  const expected = Math.min(slugs.length, max);
+
   return (
     <section
       className="bg-paper py-16 lg:py-24 border-t border-line"
@@ -82,9 +90,18 @@ export default function RecentlyViewed({ currentSlug, max = 4 }: Props) {
             Recent bekeken
           </h2>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 min-h-[22rem] sm:min-h-[26rem]">
-          {state.status === "ready" &&
-            state.products.map((p) => <ProductCard key={p.id} product={p} />)}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {state.status === "ready"
+            ? state.products.map((p) => <ProductCard key={p.id} product={p} sizes={CARD_SIZES} />)
+            : Array.from({ length: expected }, (_, i) => (
+                // Skeleton in de maat van een kaart: foto (1:1, het midden van
+                // de 4:3/4:5-tegels) + titel + prijsregel.
+                <div key={i} className="space-y-3" aria-hidden="true">
+                  <div className="aspect-square rounded-[10px] bg-bone animate-shimmer" />
+                  <div className="h-5 w-3/4 bg-bone animate-shimmer" />
+                  <div className="h-4 w-1/3 bg-bone animate-shimmer" />
+                </div>
+              ))}
         </div>
       </div>
     </section>

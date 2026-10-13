@@ -671,38 +671,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TOPBANNER — op mobiel wisselen de USP's rustig (CSS, geen library).
-   Vanaf sm staan ze gewoon naast elkaar (zie TopBanner.tsx).
-   ═══════════════════════════════════════════════════════════ */
-
-@keyframes topbanner-rotate {
-  0%   { opacity: 0; }
-  5%   { opacity: 1; }
-  30%  { opacity: 1; }
-  35%  { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-@media (max-width: 639px) {
-  .topbanner-item {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    animation: topbanner-rotate 12s linear infinite;
-  }
-  .topbanner-item-1 { opacity: 1; animation-delay: 0s; }
-  .topbanner-item-2 { animation-delay: 4s; }
-  .topbanner-item-3 { animation-delay: 8s; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .topbanner-item { animation: none; }
-}
-
-/* ═══════════════════════════════════════════════════════════
    SCROLLBAR
    ═══════════════════════════════════════════════════════════ */
 

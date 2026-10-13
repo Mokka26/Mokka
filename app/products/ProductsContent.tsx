@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import FilterBar from "@/components/FilterBar";
+import { getCategory } from "@/lib/categories";
+import { dedupeByColorGroup, type ColorVariant } from "./dedupe";
 
 interface Product {
   id: string;
@@ -22,47 +24,9 @@ interface Product {
   colorName?: string | null;
   colorHex?: string | null;
   specs?: string | null;
+  /** Al server-side samengevoegde kleurvarianten (app/products/page.tsx). */
+  variants?: ColorVariant[];
 }
-
-interface ProductWithVariants extends Product {
-  variants?: { slug: string; colorName: string | null; colorHex: string | null }[];
-}
-
-function dedupeByColorGroup(products: Product[]): ProductWithVariants[] {
-  const groups = new Map<string, Product[]>();
-  const standalone: Product[] = [];
-
-  for (const p of products) {
-    if (p.colorGroup) {
-      const arr = groups.get(p.colorGroup) ?? [];
-      arr.push(p);
-      groups.set(p.colorGroup, arr);
-    } else {
-      standalone.push(p);
-    }
-  }
-
-  const out: ProductWithVariants[] = [...standalone];
-  for (const items of Array.from(groups.values())) {
-    const primary = items[0];
-    out.push({
-      ...primary,
-      variants: items.map((v: Product) => ({
-        slug: v.slug,
-        colorName: v.colorName ?? null,
-        colorHex: v.colorHex ?? null,
-      })),
-    });
-  }
-
-  // Sorteer op originele volgorde — gebruik index in input array
-  const orderMap = new Map(products.map((p, i) => [p.id, i]));
-  out.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
-
-  return out;
-}
-
-import { getCategory } from "@/lib/categories";
 
 const categoryLabels = (slug: string): string =>
   getCategory(slug)?.label ?? slug;
@@ -71,7 +35,16 @@ const categoryIntros = (slug: string): string =>
 
 const PAGE_SIZE = 48;
 
-export default function ProductsContent({ initialProducts }: { initialProducts: Product[] }) {
+interface Props {
+  /** De kaarten van de huidige server-pagina (max PAGE_SIZE). */
+  initialProducts: Product[];
+  page: number;
+  pageCount: number;
+  /** Totaal aantal kaarten in de catalogus (na samenvoegen van kleurvarianten). */
+  total: number;
+}
+
+export default function ProductsContent({ initialProducts, page, pageCount, total }: Props) {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -83,6 +56,14 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [selectedDelivery, setSelectedDelivery] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
+
+  // ?page=N wisselt server-side de set kaarten (nieuwe props, zelfde
+  // component-instantie): de lokale lijst meenemen in dezelfde render.
+  const [prevInitial, setPrevInitial] = useState(initialProducts);
+  if (prevInitial !== initialProducts) {
+    setPrevInitial(initialProducts);
+    setProducts(initialProducts);
+  }
 
   // URL-wissel (categorie/zoekterm) → filters resetten. Geen effect maar het
   // "state aanpassen tijdens render"-patroon uit de React-docs: vergelijk met
@@ -112,17 +93,24 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
   const showMore = () =>
     setPaging((p) => ({ key: filterKey, count: (p.key === filterKey ? p.count : PAGE_SIZE) + PAGE_SIZE }));
 
+  // Server-fetch nodig? (categorie/sort/prijs/zoek). De default-staat wordt
+  // door initialProducts gedekt (één server-pagina van PAGE_SIZE kaarten).
+  const isServerDefault =
+    !category && !searchQuery && sortBy === "newest" &&
+    priceRange[0] === 0 && priceRange[1] === 5000;
+  // Zonder enig filter tonen we de server-pagina met echte ?page=-navigatie;
+  // met filters werkt de bestaande "Toon meer"-telling op de gefetchte set.
+  const isServerPaged =
+    isServerDefault && selectedColors.length === 0 && selectedMaterials.length === 0 &&
+    selectedDelivery.length === 0 && !inStockOnly;
+
   // Eerste render gebruikt initialProducts (server-side, in de SSR-HTML).
-  // Pas bij een filter-wijziging die de server raakt (categorie/sort/prijs/zoek)
-  // halen we opnieuw op. De default-staat wordt al door initialProducts gedekt.
+  // Pas bij een filter-wijziging die de server raakt halen we opnieuw op.
   const firstRun = useRef(true);
   useEffect(() => {
-    const isDefault =
-      !category && !searchQuery && sortBy === "newest" &&
-      priceRange[0] === 0 && priceRange[1] === 5000;
     if (firstRun.current) {
       firstRun.current = false;
-      if (isDefault) return;
+      if (isServerDefault) return;
     }
     const fetchProducts = async () => {
       setLoading(true);
@@ -138,7 +126,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
       setLoading(false);
     };
     fetchProducts();
-  }, [category, sortBy, priceRange, searchQuery]);
+  }, [category, sortBy, priceRange, searchQuery, isServerDefault]);
 
   // Client-side filter: kleur / materiaal / levertijd / voorraad toepassen op fetched products
   const filteredProducts = products.filter((p) => {
@@ -160,13 +148,17 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
     return true;
   });
 
+  const deduped = dedupeByColorGroup(filteredProducts);
+  // Teller in de kop: zonder filters het catalogus-totaal, anders de gefilterde set.
+  const countShown = isServerPaged ? total : deduped.length;
+
   const pageTitle = searchQuery
     ? `Resultaten: "${searchQuery}"`
     : category
     ? categoryLabels(category) || category
     : "De Collectie";
   const pageSubtitle = searchQuery
-    ? `${filteredProducts.length} resultaten`
+    ? `${countShown} resultaten`
     : category
     ? categoryIntros(category) || ""
     : "Zorgvuldig geselecteerde meubels en interieur, voor het moderne thuis.";
@@ -215,10 +207,10 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
           <div className="lg:col-span-3 flex items-end justify-start lg:justify-end">
             <div className="flex items-baseline gap-2">
               <span className="font-serif text-3xl text-ink tabular-nums [font-variation-settings:'opsz'_96]">
-                {String(filteredProducts.length).padStart(2, "0")}
+                {String(countShown).padStart(2, "0")}
               </span>
               <span className="eyebrow text-stone">
-                {filteredProducts.length === 1 ? "stuk" : "stuks"}
+                {countShown === 1 ? "stuk" : "stuks"}
               </span>
             </div>
           </div>
@@ -232,7 +224,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
         onPriceRangeChange={setPriceRange}
         sortBy={sortBy}
         onSortChange={setSortBy}
-        productCount={filteredProducts.length}
+        productCount={countShown}
         selectedColors={selectedColors}
         onColorsChange={setSelectedColors}
         selectedMaterials={selectedMaterials}
@@ -256,7 +248,7 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
                   </div>
                 ))}
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : deduped.length === 0 ? (
               <div className="text-center py-32 lg:py-40">
                 <p className="eyebrow mb-6">Niets gevonden</p>
                 <p className="display-md text-ink mb-6">Geen resultaten</p>
@@ -280,13 +272,14 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
                 </button>
               </div>
             ) : (() => {
-              const deduped = dedupeByColorGroup(filteredProducts);
-              const visible = deduped.slice(0, displayedCount);
-              const hasMore = deduped.length > displayedCount;
+              const visible = isServerPaged ? deduped : deduped.slice(0, displayedCount);
+              const hasMore = !isServerPaged && deduped.length > displayedCount;
+              const rangeStart = (page - 1) * PAGE_SIZE + 1;
+              const rangeEnd = Math.min(page * PAGE_SIZE, total);
               return (
                 <>
                   <motion.div
-                    key={`${category}-${sortBy}-${searchQuery}-${priceRange.join("-")}-${selectedColors.join(",")}-${selectedMaterials.join(",")}-${selectedDelivery.join(",")}`}
+                    key={`${filterKey}-${page}`}
                     className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-5 sm:gap-y-14 mt-8"
                     initial="hidden"
                     animate="visible"
@@ -305,8 +298,30 @@ export default function ProductsContent({ initialProducts }: { initialProducts: 
                     ))}
                   </motion.div>
 
-                  {/* Paging */}
-                  {hasMore ? (
+                  {/* Paging: zonder filters echte pagina's (?page=N, server-side);
+                      met filters "Toon meer" op de gefetchte set. */}
+                  {isServerPaged && pageCount > 1 ? (
+                    <nav aria-label="Paginering" className="flex flex-col items-center gap-4 mt-20 lg:mt-24">
+                      <p className="eyebrow-lg tabular-nums">
+                        {rangeStart}–{rangeEnd} van {total}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        {page > 1 ? (
+                          <Link href={page === 2 ? "/products" : `/products?page=${page - 1}`} rel="prev" className="btn-ghost">
+                            Vorige
+                          </Link>
+                        ) : null}
+                        <span className="eyebrow-lg tabular-nums" aria-current="page">
+                          Pagina {page} van {pageCount}
+                        </span>
+                        {page < pageCount ? (
+                          <Link href={`/products?page=${page + 1}`} rel="next" className="btn-ghost">
+                            Volgende
+                          </Link>
+                        ) : null}
+                      </div>
+                    </nav>
+                  ) : hasMore ? (
                     <div className="flex flex-col items-center gap-3 mt-20 lg:mt-24">
                       <p className="eyebrow-lg tabular-nums">
                         {visible.length} van {deduped.length}

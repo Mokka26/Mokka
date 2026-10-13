@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
-import { captureError } from "@/lib/sentry";
+import { captureError } from "@/lib/sentry-client";
 
 // Foutpagina voor /checkout/**: stelt gerust over de betaling (elke betaling
 // wordt via Mollie-webhook + reconcile gecontroleerd; een geslaagde betaling

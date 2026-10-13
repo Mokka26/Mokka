@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
-import { captureError } from "@/lib/sentry";
+import { captureError } from "@/lib/sentry-client";
 
 // Route-niveau foutpagina (binnen de root layout, dus navbar/footer blijven).
 // Geen technische details naar de bezoeker; die staan in Sentry.

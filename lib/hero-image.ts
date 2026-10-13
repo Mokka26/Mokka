@@ -1,6 +1,7 @@
 // Bron-URL van de homepage-hero-foto (Vanilla Loop boxspring, kamer-shot).
 // Zonder transformaties: components/Hero.tsx bouwt via cldOptimize +
-// cloudinaryLoader een responsive srcSet (640–1920px, f_auto, q_auto:good).
+// cloudinaryLoader twee responsive srcSets (mobiel 4:5, desktop 16:9;
+// 640–1920px, f_auto, q_auto:good) in één <picture>.
 export const HERO_IMAGE_SOURCE =
   "https://res.cloudinary.com/diaksxzey/image/upload/mokka/bedden/vanilla-loop/03_sq.jpg";
 
