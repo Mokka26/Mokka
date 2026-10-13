@@ -188,7 +188,8 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
                 {totalCount} {totalCount === 1 ? "product" : "producten"}
                 {totalPages > 1 && ` · pagina ${page} van ${totalPages}`}
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+              <h2 className="sr-only">Producten met korting</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
                 {pageProducts.map((p, i) => (
                   <ProductCard key={p.id} product={p} priority={i < 2} />
                 ))}

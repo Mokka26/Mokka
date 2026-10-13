@@ -17,7 +17,7 @@ export function Breadcrumbs({ items, className = "" }: Props) {
 
   return (
     <nav aria-label="Kruimelpad" className={className}>
-      <ol className="flex flex-wrap items-center gap-y-1 text-[12px] sm:text-[13px] uppercase tracking-[0.2em] font-medium text-stone">
+      <ol className="flex flex-wrap items-center gap-y-1 text-[13px] uppercase tracking-[0.16em] font-medium text-stone">
         {items.map((item, idx) => (
           <li key={item.url} className="flex items-center min-w-0">
             {idx > 0 && (

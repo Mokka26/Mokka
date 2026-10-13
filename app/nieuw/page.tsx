@@ -128,7 +128,8 @@ export default async function NieuwPage() {
               <p className="text-[13px] uppercase tracking-[0.2em] text-stone mb-8 px-2">
                 {products.length} {products.length === 1 ? "product" : "producten"}
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+              <h2 className="sr-only">Nieuwe producten</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
                 {products.map((p, i) => (
                   <ProductCard key={p.id} product={p} priority={i < 2} />
                 ))}

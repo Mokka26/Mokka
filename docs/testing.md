@@ -156,3 +156,7 @@ Lokaal vóór een commit: `npm run typecheck && npm run lint && npm test`
    item) met een vaste set fixtures.
 5. De `it.failing`-tests omzetten zodra de bijbehorende bugs gefixt zijn
    (zoek op `BUG (gevonden tijdens het testen` in `__tests__/`).
+
+## Mobiele audit
+
+`npm run build` en daarna `node scripts/mobile-audit.cjs <map> --serve`: start een productieserver, maakt per pagina een full-page screenshot op iPhone 13 (390) en iPhone SE (375) en meet horizontale overflow, teksten < 13px, inputs < 16px, vaste balken, touch targets < 32px en consolefouten (`<map>/390-results.json`, `375-results.json`, `390-flows.json` voor menu/filter/winkelwagen/checkout).
