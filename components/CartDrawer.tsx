@@ -13,7 +13,7 @@ import { productUrl } from "@/lib/categories";
 import { Drawer, DialogCloseButton } from "@/components/ui/Dialog";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Price, formatPrice } from "@/components/ui/price";
-import { PaymentIconRow } from "@/components/PaymentIcons";
+import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
 import { cartLineDelivery, cartLineOptions } from "@/components/CartItem";
 
 interface Props {
@@ -124,7 +124,7 @@ export default function CartDrawer({ open, onClose }: Props) {
               </Link>
             </div>
             <div className="hidden sm:block">
-              <PaymentIconRow className="justify-center pt-1" />
+              <PaymentMethodChips className="justify-center pt-1" />
             </div>
           </div>
         ) : undefined

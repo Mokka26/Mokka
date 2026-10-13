@@ -10,7 +10,7 @@ import { useCart, useCartSync, syncCart, announceCartChanges } from "@/context/C
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
-import { PaymentIconRow } from "@/components/PaymentIcons";
+import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
 import { getCookieConsent } from "@/components/CookieBanner";
 import { createCheckout, getPaymentMethods } from "./actions";
 import { MobileOrderSummary, OrderSummaryLines } from "./OrderSummary";
@@ -515,7 +515,8 @@ export default function CheckoutPage() {
                   </li>
                 )}
               </ul>
-              <PaymentIconRow />
+              {/* Chips zoals in de footer; `methods` is de per-bedrag gefilterde lijst van Mollie. */}
+              <PaymentMethodChips methods={methods} />
             </div>
           </form>
         </AnimatedSection>

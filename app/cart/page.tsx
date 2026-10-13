@@ -7,7 +7,7 @@ import { useCart, useCartSync } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
-import { PaymentIconRow } from "@/components/PaymentIcons";
+import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
 import { deliveryLine } from "@/components/product/deliveryTime";
 
 export default function CartPage() {
@@ -109,7 +109,7 @@ export default function CartPage() {
                     </li>
                   )}
                 </ul>
-                <PaymentIconRow className="mt-6" />
+                <PaymentMethodChips className="mt-6" />
                 <Link
                   href="/nieuw"
                   className="inline-flex items-center justify-center w-full mt-6 min-h-11 text-[14px] text-ink underline underline-offset-4 hover:text-accent transition-colors"

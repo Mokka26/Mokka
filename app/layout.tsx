@@ -7,6 +7,7 @@ import { shippingInfo } from "@/lib/shipping-info";
 import { buildOrganizationJsonLd, buildWebSiteJsonLd, jsonLdHtml } from "@/lib/jsonLd";
 import Footer from "@/components/Footer";
 import { getFooterMethods } from "@/lib/mollie";
+import { PaymentMethodsProvider } from "@/components/PaymentMethodsProvider";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
 import MotionProvider from "@/components/MotionProvider";
@@ -103,13 +104,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <MotionProvider>
           <CartProvider>
-            <ToastProvider />
-            <Navbar />
-            <main id="main" className="flex-1">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Footer mollieMethods={footerMethods} />
-            <CookieBanner />
+            {/* Zelfde Mollie-lijst voor footer, winkelwagen, drawer en checkout. */}
+            <PaymentMethodsProvider methods={footerMethods}>
+              <ToastProvider />
+              <Navbar />
+              <main id="main" className="flex-1">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <Footer mollieMethods={footerMethods} />
+              <CookieBanner />
+            </PaymentMethodsProvider>
           </CartProvider>
         </MotionProvider>
         <SpeedInsights />
