@@ -100,12 +100,6 @@ export default function CartPage() {
                 </Link>
                 <ul className="mt-6 space-y-1.5 text-[14px] text-slate">
                   <li>{deliveryLine(null)}</li>
-                  <li>
-                    {shippingInfo.returnWindowDays} dagen bedenktijd —{" "}
-                    <Link href={businessInfo.legal.returnPolicyUrl} className="underline underline-offset-4 hover:text-accent">
-                      zo werkt retourneren
-                    </Link>
-                  </li>
                   {phoneLink && businessInfo.contact.phoneFormatted && (
                     <li>
                       Vragen? Bel{" "}

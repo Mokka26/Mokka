@@ -69,7 +69,7 @@ describe("lib/jsonLd", () => {
 
   describe("buildDescription / buildProductDescription", () => {
     const fallback =
-      "Bed Oslo bestel je bij Mokka Home, alle prijzen incl. btw en 14 dagen bedenktijd. Bekijk meer bedden in onze showroom in Den Haag of online.";
+      "Bed Oslo bestel je bij Mokka Home, alle prijzen incl. btw en gratis verzending vanaf €100. Bekijk meer bedden in onze showroom in Den Haag of online.";
 
     it("vult een korte bron aan tot 140-160 tekens", () => {
       const out = buildDescription("Een rustig bed van eikenhout", fallback);
@@ -96,7 +96,7 @@ describe("lib/jsonLd", () => {
     it("buildProductDescription bouwt een feitelijke fallback uit bedrijfsgegevens", () => {
       const out = buildProductDescription("", "Bed Oslo", "Bedden");
       expect(out).toContain(`bij ${businessInfo.name}`);
-      expect(out).toContain(`${shippingInfo.returnWindowDays} dagen bedenktijd`);
+      expect(out).toContain(`gratis verzending vanaf €${shippingInfo.freeShippingThreshold}`);
       expect(out.length).toBeLessThanOrEqual(160);
     });
   });

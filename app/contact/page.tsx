@@ -104,7 +104,7 @@ export default function ContactPage() {
                     {businessInfo.address.postalCode} {businessInfo.address.city}
                     <span className="sr-only"> (opent in Google Maps, nieuw venster)</span>
                   </a>
-                  <p className="text-base text-slate">Kom langs om proef te zitten.</p>
+                  <p className="text-base text-slate">Kom langs om de collectie te bekijken.</p>
                 </div>
               </li>
 

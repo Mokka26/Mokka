@@ -31,7 +31,7 @@ function countryList(): string {
 }
 
 export default function BezorgingPage() {
-  const { deliveryTime, freeShippingThreshold, rates, returnWindowDays, customMade } = shippingInfo;
+  const { deliveryTime, freeShippingThreshold, rates, customMade } = shippingInfo;
   const standardCost = formatShippingCost(rates.standard);
   const countries = countryList();
   const deliversToBelgium = shippingInfo.freeShippingCountries.includes("BE");
@@ -172,9 +172,9 @@ export default function BezorgingPage() {
         </p>
       </ContentSection>
 
-      <ContentSection heading="Bedenktijd en garantie">
+      <ContentSection heading="Garantie en voorwaarden">
         <p>
-          Je hebt {returnWindowDays} dagen wettelijke bedenktijd, mits het product {shippingInfo.returnCondition}. {customMade.returnNote} Op fabrieks- en materiaalfouten geldt garantie. De precieze voorwaarden staan op de pagina{" "}
+          Op fabrieks- en materiaalfouten geldt garantie. De precieze voorwaarden, ook voor retourneren, staan op de pagina{" "}
           <Link href={businessInfo.legal.returnPolicyUrl} className={contentLinkClass}>
             retourneren
           </Link>{" "}

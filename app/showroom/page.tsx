@@ -16,7 +16,7 @@ import { ogDefaults } from "@/lib/seo";
 const PATH = "/showroom";
 const CITY = businessInfo.address.city;
 const TITLE = `Showroom in ${CITY}: adres en openingstijden`;
-const DESCRIPTION = `Kom proefzitten in de showroom van ${businessInfo.name}, ${businessInfo.address.street} in ${CITY}. Banken, tafels en bedden in het echt, met advies over maten en stoffen.`;
+const DESCRIPTION = `Bezoek de showroom van ${businessInfo.name}, ${businessInfo.address.street} in ${CITY}. Banken, tafels en bedden in het echt, met advies over maten en stoffen.`;
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -176,7 +176,7 @@ export default function ShowroomPage() {
       <ContentSection heading="Wat je in de showroom kunt doen">
         <ul>
           <li>
-            <strong>Proefzitten en proefliggen.</strong> Zit op de hoekbanken en bankstellen, lig op de boxsprings en voel het verschil in zitdiepte en hardheid. Dat zegt meer dan elke productbeschrijving.
+            <strong>Modellen in het echt.</strong> Bekijk de hoekbanken, bankstellen en boxsprings van dichtbij en vergelijk zitdiepte, hardheid en afwerking. Dat zegt meer dan elke productbeschrijving.
           </li>
           <li>
             <strong>Stoffen en kleuren bij daglicht.</strong> Je ziet stoffen, leer en houtsoorten in het echt en kunt de kleur naast een foto of staal van je eigen vloer of muur houden. Vraag vooraf naar de mogelijkheden voor een specifieke stof of kleur.
@@ -216,7 +216,7 @@ export default function ShowroomPage() {
 
       <ContentSection heading="Bestellen in de showroom of online">
         <p>
-          Of je nu in de showroom of in de webshop bestelt: de prijzen zijn inclusief btw, de levertijd staat bij elk product en je hebt {shippingInfo.returnWindowDays} dagen bedenktijd mits het product {shippingInfo.returnCondition}. Vanaf €{shippingInfo.freeShippingThreshold} bezorgen we gratis in Nederland en België. Lees meer over{" "}
+          Of je nu in de showroom of in de webshop bestelt: de prijzen zijn inclusief btw, de levertijd staat bij elk product. Vanaf €{shippingInfo.freeShippingThreshold} bezorgen we gratis in Nederland en België. Lees meer over{" "}
           <Link href="/bezorging" className={contentLinkClass}>
             bezorging en montage
           </Link>{" "}

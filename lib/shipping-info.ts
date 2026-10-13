@@ -131,17 +131,18 @@ export const shippingInfo = {
   ] as ReadonlyArray<Usp>,
 
   // Korte marquee-messages voor TopBanner (max ~40 tekens elk)
+  // Bewust zonder bedenktijd en "proefzitten" (eigenaar, 2026-10-13): die
+  // staan alleen nog op /retourneren en in de algemene voorwaarden.
   marqueeMessages: [
     "Gratis verzending vanaf €100",
-    "14 dagen wettelijke bedenktijd",
     "Persoonlijk advies in onze showroom",
-    "Kom proefzitten in onze showroom",
+    "Veilig betalen",
   ] as ReadonlyArray<string>,
 
   // Footer USP-balk (4 items, korte sub-tekst)
   footerUsps: [
     { title: "Gratis verzending", sub: "Vanaf €100 in NL" },
-    { title: "14 dagen retour", sub: "Wettelijke bedenktijd" },
+    { title: "Persoonlijk advies", sub: "Over maten, stoffen en kleuren" },
     { title: "Garantie", sub: "Op fabrieks- en materiaalfouten" },
     { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
   ] as ReadonlyArray<{ title: string; sub: string }>,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { firstImageUrl } from "@/lib/imageHelpers";
+import { frameMode, parseImages } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
@@ -32,12 +32,12 @@ function deliveryLabel(product: Product): string {
 export default function FeaturedStory({ product }: { product: Product | null }) {
   if (!product) return null;
 
-  const mainImage = firstImageUrl(product.images);
+  const mainImage = parseImages(product.images)[0];
   if (!mainImage) return null;
 
-  // 4:3 met c_pad/b_auto: de bank blijft volledig in beeld (geen portrait-crop
-  // van een liggende bronfoto).
-  const src = cldOptimize(mainImage, { ar: "4:3", w: 1400, mode: "contain" });
+  // 4:3 zonder band: vrijstaande foto opvullen in randkleur, sfeerfoto slim
+  // bijsnijden (zie frameMode in lib/imageHelpers.ts).
+  const src = cldOptimize(mainImage.url, { ar: "4:3", w: 1400, mode: frameMode(mainImage) });
   const href = productUrl(product);
   const categoryLabel = getCategory(product.category)?.label ?? product.category;
   const inStock = product.stock > 0;

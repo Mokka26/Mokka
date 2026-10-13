@@ -104,9 +104,9 @@ export default function HoekbankKiezenPage() {
         </p>
       </ContentSection>
 
-      <ContentSection heading="Kom proefzitten">
+      <ContentSection heading="Bekijk de modellen in de showroom">
         <p>
-          Zitcomfort valt niet uit een productfoto te halen. In de showroom in {businessInfo.address.city} zit je op de modellen, vergelijk je de zitdiepte en de hardheid en zie je de stoffen naast elkaar. Neem de maten van je kamer, deur en trap mee; we rekenen samen uit welke maat en richting bij je ruimte passen.
+          Zitcomfort valt niet uit een productfoto te halen. In de showroom in {businessInfo.address.city} bekijk je de modellen, vergelijk je de zitdiepte en de hardheid en zie je de stoffen naast elkaar. Neem de maten van je kamer, deur en trap mee; we rekenen samen uit welke maat en richting bij je ruimte passen.
         </p>
       </ContentSection>
 

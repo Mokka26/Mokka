@@ -1,9 +1,9 @@
-import { Truck, RotateCcw, ShieldCheck, CreditCard, type LucideIcon } from "lucide-react";
+import { Truck, MessageCircle, ShieldCheck, CreditCard, type LucideIcon } from "lucide-react";
 import { getUspsByKey } from "@/lib/shipping-info";
 
 const ICONS: Record<string, LucideIcon> = {
   shipping: Truck,
-  return: RotateCcw,
+  advice: MessageCircle,
   warranty: ShieldCheck,
   payment: CreditCard,
 };
@@ -11,7 +11,8 @@ const ICONS: Record<string, LucideIcon> = {
 // Server component. USP-teksten komen uitsluitend uit lib/shipping-info.
 // Direct onder de hero: de trust signals staan boven de fold mee.
 export default function TrustBar() {
-  const items = getUspsByKey("shipping", "return", "warranty", "payment");
+  // Geen retour-USP (bedenktijd staat alleen op /retourneren en in de voorwaarden).
+  const items = getUspsByKey("shipping", "advice", "warranty", "payment");
 
   return (
     <section className="py-8 lg:py-10 bg-bone border-b border-line" aria-label="Onze service">

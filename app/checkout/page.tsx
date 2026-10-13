@@ -506,12 +506,6 @@ export default function CheckoutPage() {
               <ul className="flex flex-wrap gap-x-6 gap-y-1.5 text-[14px] text-ink">
                 <li>{freeShipping ? "Gratis verzending" : `${shippingInfo.freeShippingCopyShort}`}</li>
                 <li>Levertijd {shippingInfo.deliveryTime.inStock}</li>
-                <li>
-                  {shippingInfo.returnWindowDays} dagen bedenktijd —{" "}
-                  <Link href={businessInfo.legal.returnPolicyUrl} className="underline underline-offset-4 hover:text-accent">
-                    retourneren
-                  </Link>
-                </li>
                 {phoneLink && businessInfo.contact.phoneFormatted && (
                   <li>
                     Vragen? Bel{" "}

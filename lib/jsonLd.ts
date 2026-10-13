@@ -74,8 +74,8 @@ export function buildProductDescription(
   categoryLabel: string | null,
 ): string {
   const fallback = categoryLabel
-    ? `${productName} bestel je bij ${businessInfo.name}, alle prijzen incl. btw en ${shippingInfo.returnWindowDays} dagen bedenktijd. Bekijk meer ${categoryLabel.toLowerCase()} in onze showroom in ${businessInfo.address.city} of online.`
-    : `${productName} bestel je bij ${businessInfo.name}, alle prijzen incl. btw en ${shippingInfo.returnWindowDays} dagen bedenktijd. Bekijk de collectie in onze showroom in ${businessInfo.address.city} of online.`;
+    ? `${productName} bestel je bij ${businessInfo.name}, alle prijzen incl. btw en gratis verzending vanaf €${shippingInfo.freeShippingThreshold}. Bekijk meer ${categoryLabel.toLowerCase()} in onze showroom in ${businessInfo.address.city} of online.`
+    : `${productName} bestel je bij ${businessInfo.name}, alle prijzen incl. btw en gratis verzending vanaf €${shippingInfo.freeShippingThreshold}. Bekijk de collectie in onze showroom in ${businessInfo.address.city} of online.`;
   return buildDescription(productDescription, fallback);
 }
 

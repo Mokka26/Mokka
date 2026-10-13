@@ -39,7 +39,7 @@ const geist = Geist({
 // Alleen voor routes zónder eigen title; het template "%s | Mokka Home" plakt
 // de merknaam achter alle andere titels, dus hier geen " | Mokka Home" erbij.
 const DEFAULT_TITLE = `${businessInfo.name}: meubels en verlichting, showroom ${businessInfo.address.city}`;
-const DEFAULT_DESCRIPTION = `Banken, eettafels, stoelen, kasten, bedden en verlichting van ${businessInfo.name}. Prijzen incl. btw, ${shippingInfo.returnWindowDays} dagen bedenktijd en een showroom in ${businessInfo.address.city}.`;
+const DEFAULT_DESCRIPTION = `Banken, eettafels, stoelen, kasten, bedden en verlichting van ${businessInfo.name}. Prijzen incl. btw, ${shippingInfo.freeShippingCopyShort.toLowerCase()} en een showroom in ${businessInfo.address.city}.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(businessInfo.siteUrl),

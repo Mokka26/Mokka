@@ -14,7 +14,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export const metadata: Metadata = {
   title: `Over ons: showroom en werkwijze in ${businessInfo.address.city}`,
-  description: `Mokka Home is een meubelwinkel met showroom in ${businessInfo.address.city}: banken, tafels, stoelen, kasten en verlichting. Kom proefzitten, bezorging en montage op afspraak.`,
+  description: `Mokka Home is een meubelwinkel met showroom in ${businessInfo.address.city}: banken, tafels, stoelen, kasten en verlichting. Bezorging en montage op afspraak.`,
   alternates: { canonical: "/about" },
 };
 
@@ -24,7 +24,7 @@ const pillars = [
   {
     number: "01",
     title: "Zien en voelen",
-    text: `Een bank koop je niet van een foto. In onze showroom in ${businessInfo.address.city} zit je op de modellen, voel je de stoffen en zie je de kleuren bij daglicht. Kom langs tijdens openingstijden, een afspraak is niet nodig.`,
+    text: `Een bank koop je niet van een foto. In onze showroom in ${businessInfo.address.city} bekijk je de modellen, voel je de stoffen en zie je de kleuren bij daglicht. Kom langs tijdens openingstijden, een afspraak is niet nodig.`,
   },
   {
     number: "02",
@@ -34,7 +34,7 @@ const pillars = [
   {
     number: "03",
     title: "Bezorging en montage",
-    text: `Grote meubels bezorgen we op afspraak en zetten we op verzoek voor je in elkaar. ${shippingInfo.freeShippingCopyShort} binnen Nederland en België, en je hebt ${shippingInfo.returnWindowDays} dagen bedenktijd.`,
+    text: `Grote meubels bezorgen we op afspraak en zetten we op verzoek voor je in elkaar. ${shippingInfo.freeShippingCopyShort} binnen Nederland en België.`,
   },
 ];
 
@@ -130,7 +130,7 @@ export default function AboutPage() {
           <AnimatedSection className="text-center max-w-3xl mx-auto">
             <p className="eyebrow mb-6">Showroom</p>
             <h2 className="display-lg text-ink mb-6">
-              Kom <span className="italic text-stone">proefzitten</span>
+              Bezoek onze <span className="italic text-stone">showroom</span>
             </h2>
             <p className="body-lg text-slate mb-4">
               {getFullAddress()}

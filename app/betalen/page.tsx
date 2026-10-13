@@ -157,7 +157,7 @@ export default function BetalenPage() {
         <ol>
           <li>Je ontvangt direct een orderbevestiging per e-mail, met je bestelnummer en een overzicht van je bestelling.</li>
           <li>{NEXT_STEP_AFTER_PAYMENT}</li>
-          <li>Op de afgesproken dag bezorgen we je bestelling. Je hebt daarna {shippingInfo.returnWindowDays} dagen bedenktijd, mits het product {shippingInfo.returnCondition}.</li>
+          <li>Op de afgesproken dag bezorgen we je bestelling.</li>
         </ol>
         <p>
           Geen bevestiging ontvangen? Kijk in je spam-map en neem bij twijfel contact met ons op; we controleren dan voor je of de betaling is binnengekomen.

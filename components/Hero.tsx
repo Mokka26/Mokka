@@ -42,7 +42,6 @@ const shared = {
 export default function Hero() {
   const city = businessInfo.address.city;
   const threshold = shippingInfo.freeShippingThreshold;
-  const days = shippingInfo.returnWindowDays;
 
   const { props: mobile } = getImageProps({ ...shared, src: MOBILE_SRC });
   const { props: desktop } = getImageProps({ ...shared, src: DESKTOP_SRC });
@@ -63,7 +62,10 @@ export default function Hero() {
   });
 
   return (
-    <section className="relative h-[72svh] min-h-[600px] md:h-[80svh] md:max-h-[900px] bg-bone overflow-hidden">
+    // Geen vaste hoogte: min-hoogte van 72/80svh (max 900px), en de sectie groeit
+    // mee met de tekst. Met pt-36/44 begint de tekst altijd onder de vaste navbar,
+    // ook op lage schermen (voorheen schoof de kop onder de navbar: overlap).
+    <section className="relative flex items-end min-h-[min(72svh,900px)] md:min-h-[min(80svh,900px)] bg-bone overflow-hidden">
       <picture>
         <source media={MD_QUERY} srcSet={desktop.srcSet} sizes={desktop.sizes} />
         {/* Props (src/srcSet/sizes/style/decoding) komen uit next/image (getImageProps). */}
@@ -76,16 +78,16 @@ export default function Hero() {
         aria-hidden
       />
 
-      <div className="relative z-10 h-full flex items-end">
-        <div className="max-w-[1600px] mx-auto w-full px-6 sm:px-10 lg:px-14 pb-12 sm:pb-16 lg:pb-20">
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-36 lg:pt-44 pb-12 sm:pb-16 lg:pb-20">
+        <div>
           <div className="max-w-2xl text-white">
             <h1 className="font-serif text-[2rem] leading-[1.08] sm:text-5xl lg:text-6xl tracking-[-0.02em] mb-5">
-              Banken, eettafels en bedden die je eerst in de showroom kunt proberen
+              Banken, eettafels en bedden voor elke kamer in huis
             </h1>
             {/* Eén tekstknoop: met losse {city}/{threshold}-knopen viel de spatie
                 na de plaatsnaam weg in de server-HTML ("Den Haagof bestel"). */}
             <p className="text-lg lg:text-xl leading-[1.6] text-white/90 max-w-xl mb-8">
-              {`Kom proefzitten in onze showroom in ${city} of bestel online. Gratis verzending vanaf €${threshold}, ${days} dagen bedenktijd.`}
+              {`Bestel online of bekijk de collectie in onze showroom in ${city}. Gratis verzending vanaf €${threshold}, prijzen incl. btw.`}
             </p>
             <Link
               href="/banken"

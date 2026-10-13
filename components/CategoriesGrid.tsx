@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCategory, type CategorySlug } from "@/lib/categories";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
-import { firstImageUrl } from "@/lib/imageHelpers";
+import { frameMode, parseImages, type ImageBackground } from "@/lib/imageHelpers";
 import { getProductCounts } from "@/lib/product-counts";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
 
@@ -34,7 +34,7 @@ const TILE_LABEL: Partial<Record<CategorySlug, string>> = {
   verlichting: "Verlichting",
 };
 
-type TileImage = { url: string; productName: string };
+type TileImage = { url: string; productName: string; bg?: ImageBackground };
 
 const getCategoryImages = unstable_cache(
   async (slugs: ReadonlyArray<CategorySlug>): Promise<Record<string, TileImage>> => {
@@ -47,8 +47,8 @@ const getCategoryImages = unstable_cache(
           orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
           select: { name: true, images: true },
         });
-        const url = product ? firstImageUrl(product.images) : null;
-        return [slug, url && product ? { url, productName: product.name } : null] as const;
+        const first = product ? parseImages(product.images)[0] : undefined;
+        return [slug, first && product ? { url: first.url, productName: product.name, bg: first.bg } : null] as const;
       }),
     );
     const out: Record<string, TileImage> = {};
@@ -88,7 +88,7 @@ function countLabel(n: number): string {
 function CategoryTile({ tile, primary }: { tile: Tile; primary: boolean }) {
   const ar = primary ? "4:3" : "1:1";
   const src = tile.image
-    ? cldOptimize(tile.image.url, { ar, w: primary ? 1200 : 640, mode: "contain" })
+    ? cldOptimize(tile.image.url, { ar, w: primary ? 1200 : 640, mode: frameMode(tile.image) })
     : null;
 
   return (

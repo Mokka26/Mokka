@@ -22,7 +22,7 @@ const city = businessInfo.address.city;
 // Absolute title (geen template): 60 tekens bij "Den Haag", één keer de
 // merknaam, geen "&". Bij een andere plaatsnaam opnieuw meten (max. 60).
 const title = `Meubels en verlichting kopen, showroom ${city} | ${businessInfo.name}`;
-const description = `Banken, eettafels en bedden. Kom proefzitten in onze showroom in ${city} of bestel online: ${shippingInfo.freeShippingCopyShort.toLowerCase()} en ${shippingInfo.returnWindowDays} dagen bedenktijd.`;
+const description = `Banken, eettafels en bedden. Bestel online of bekijk de collectie in onze showroom in ${city}: ${shippingInfo.freeShippingCopyShort.toLowerCase()} en alle prijzen incl. btw.`;
 
 export const metadata: Metadata = {
   title: { absolute: title },
