@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Package,
+  ListOrdered,
   ShoppingBag,
   MessageSquare,
   Settings,
@@ -19,6 +20,7 @@ import { Drawer } from "@/components/ui/Dialog";
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Producten", icon: Package },
+  { href: "/admin/categories", label: "Categorieën", icon: ListOrdered },
   { href: "/admin/orders", label: "Bestellingen", icon: ShoppingBag },
   { href: "/admin/messages", label: "Berichten", icon: MessageSquare, badge: "messages" as const },
   { href: "/admin/trash", label: "Prullenbak", icon: Trash2 },

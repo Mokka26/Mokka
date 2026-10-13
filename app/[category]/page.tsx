@@ -45,7 +45,9 @@ const getCategoryProducts = unstable_cache(
         colorHex: true,
         specs: true,
       },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      // Handmatige volgorde uit de admin (sortOrder) eerst; producten zonder
+      // positie daarna op favoriet en nieuwste.
+      orderBy: [{ sortOrder: { sort: "asc", nulls: "last" } }, { featured: "desc" }, { createdAt: "desc" }],
     });
     // Payload-trim: de kaart toont alleen foto 1.
     return products.map((p) => ({ ...p, images: firstImageOnly(p.images) }));

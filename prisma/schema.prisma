@@ -33,6 +33,10 @@ model Product {
   voetbankMode    String?
   voetbankPrice   Float?
   featured     Boolean  @default(false)
+  // Handmatige volgorde op de categoriepagina (admin → Categorieën). Laag
+  // nummer = eerst; null = geen handmatige positie (komt na de gesorteerde
+  // producten, in featured/nieuwste-volgorde).
+  sortOrder    Int?
   stock        Int      @default(10)
   deliveryTime String?
   colorGroup   String?
@@ -46,6 +50,7 @@ model Product {
   orderItems   OrderItem[]
 
   @@index([category])
+  @@index([category, sortOrder])
   @@index([colorGroup])
   @@index([hidden])
   @@index([deletedAt])
