@@ -11,6 +11,7 @@ import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
+import { cartDeliverySummary } from "@/components/CartItem";
 import { getCookieConsent } from "@/components/CookieBanner";
 import { createCheckout, getPaymentMethods } from "./actions";
 import { MobileOrderSummary, OrderSummaryLines } from "./OrderSummary";
@@ -505,7 +506,8 @@ export default function CheckoutPage() {
               </p>
               <ul className="flex flex-wrap gap-x-6 gap-y-1.5 text-[14px] text-ink">
                 <li>{freeShipping ? "Gratis verzending" : `${shippingInfo.freeShippingCopyShort}`}</li>
-                <li>Levertijd {shippingInfo.deliveryTime.inStock}</li>
+                {/* Levertijd van de producten in de wagen, geen vaste standaardtekst. */}
+                <li>{cartDeliverySummary(items)}</li>
                 {phoneLink && businessInfo.contact.phoneFormatted && (
                   <li>
                     Vragen? Bel{" "}

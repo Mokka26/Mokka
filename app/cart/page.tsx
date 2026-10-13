@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import CartItem from "@/components/CartItem";
+import CartItem, { cartDeliverySummary } from "@/components/CartItem";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart, useCartSync } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
-import { deliveryLine } from "@/components/product/deliveryTime";
 
 export default function CartPage() {
   const { items, totalPrice, totalItems } = useCart();
@@ -99,7 +98,8 @@ export default function CartPage() {
                   Afrekenen
                 </Link>
                 <ul className="mt-6 space-y-1.5 text-[14px] text-slate">
-                  <li>{deliveryLine(null)}</li>
+                  {/* Levertijd van de producten in de wagen, geen vaste standaardtekst. */}
+                  <li>{cartDeliverySummary(items)}</li>
                   {phoneLink && businessInfo.contact.phoneFormatted && (
                     <li>
                       Vragen? Bel{" "}

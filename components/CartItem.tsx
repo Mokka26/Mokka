@@ -28,6 +28,18 @@ export function cartLineDelivery(item: CartItemType): string {
   return deliveryLine(item.product.deliveryTime);
 }
 
+/**
+ * Levertijd voor de hele winkelwagen (overzicht in cart en checkout): de
+ * levertijd van de producten zelf, nooit een vaste standaardtekst. Hebben alle
+ * artikelen dezelfde levertijd, dan die ene regel; anders verwijzen we naar
+ * de levertijd die bij elk artikel staat.
+ */
+export function cartDeliverySummary(items: ReadonlyArray<CartItemType>): string {
+  const unique = [...new Set(items.map(cartLineDelivery))];
+  if (unique.length === 1) return unique[0];
+  return "Levertijd: verschilt per product, zie bij elk artikel";
+}
+
 export default function CartItem({ item }: Props) {
   const { removeWithUndo, updateQuantity } = useCart();
   // Vierkante thumb zonder band: vrijstaand opvullen in randkleur, sfeerfoto bijsnijden.
