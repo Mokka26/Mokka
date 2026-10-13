@@ -4,6 +4,7 @@ import { shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { PaymentIconRow } from "@/components/PaymentIcons";
+import { deliveryLine } from "@/components/product/deliveryTime";
 
 interface Props {
   price: number;
@@ -45,7 +46,7 @@ export function PurchaseInfo({ price, stock, deliveryTime, category }: Props) {
           <Clock className={iconClass} strokeWidth={1.5} aria-hidden="true" />
           <span>
             {inStock ? (
-              <>Levertijd {deliveryTime?.trim() || shippingInfo.deliveryTime.inStock}.</>
+              <>{deliveryLine(deliveryTime)}.</>
             ) : (
               <>Tijdelijk uitverkocht — bel ons voor de verwachte levertijd.</>
             )}

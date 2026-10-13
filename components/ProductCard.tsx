@@ -3,10 +3,9 @@ import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { parseImages } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
-import { shippingInfo } from "@/lib/shipping-info";
 import { Price } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
-import { ASPECT_AR, CARD_ASPECT_CLASS, orientationOf } from "@/components/product/imageAspect";
+import { deliveryLine } from "@/components/product/deliveryTime";
 import { DIMENSION_KEYS, findSpec, isNewProduct, parseSizeVariants, parseSpecs } from "@/components/product/specs";
 
 /**
@@ -39,35 +38,38 @@ export type ProductCardVariant = {
   colorHex: string | null;
 };
 
+/** Default `sizes` voor een 2-koloms grid op mobiel, 3 kolommen op desktop. */
+export const PRODUCT_CARD_SIZES = "(max-width: 768px) 50vw, 33vw";
+
 interface Props {
   product: ProductCardProduct;
   variants?: ProductCardVariant[];
   /** Eerste card op een listing → priority + eager loading voor LCP */
   priority?: boolean;
   /**
-   * @deprecated De tegelverhouding volgt nu de echte foto (w/h uit het
-   * images-JSON). De prop blijft bestaan zodat bestaande aanroepen werken.
+   * `sizes`-attribuut van de foto; zet 'm per grid (bv. "(max-width: 768px) 50vw, 25vw"
+   * bij vier kolommen). Default: PRODUCT_CARD_SIZES.
+   */
+  sizes?: string;
+  /**
+   * @deprecated Elke kaart heeft nu dezelfde vaste 4:3-beeldbox (object-contain).
+   * De prop blijft bestaan zodat bestaande aanroepen werken; hij doet niets.
    */
   wide?: boolean;
 }
 
-export default function ProductCard({ product, variants, priority = false, wide = false }: Props) {
+export default function ProductCard({ product, variants, priority = false, sizes = PRODUCT_CARD_SIZES }: Props) {
   const parsed = parseImages(product.images);
   const firstImage = parsed[0];
   const firstRaw = firstImage?.url ?? "";
 
-  // Tegelverhouding uit de echte foto: liggend → 4:3 (cover, gecentreerd —
-  // liggende bron laat dan niets wezenlijks weg), staand → 4:5 (contain op
-  // bone), vierkant → 1:1. `wide` dwingt 4:3 af voor oude aanroepen zonder
-  // dimensies in de data.
-  const orientation = wide && (!firstImage?.w || !firstImage?.h) ? "landscape" : orientationOf(firstImage);
-  const isContain = orientation === "portrait";
-  const aspectClass = CARD_ASPECT_CLASS[orientation];
+  // Eén vaste beeldbox (4:3) voor élke kaart, foto met object-contain op bone:
+  // banken blijven volledig in beeld, staande foto's staan gecentreerd in
+  // dezelfde box en rijen in een grid lopen gelijk (naam/prijs op gelijke hoogte).
   // w:1000 is de basis; de cloudinaryLoader overschrijft 'm per srcSet-breedte,
   // zodat mobiel niet onnodig een 1000px-foto laadt.
   const first = firstRaw
     ? cldOptimize(firstRaw, {
-        ...(isContain ? {} : { ar: ASPECT_AR[orientation], mode: "fill" as const }),
         w: 1000,
         upscale: true,
         sourceW: firstImage?.w,
@@ -124,16 +126,16 @@ export default function ProductCard({ product, variants, priority = false, wide 
   const discountPct = hasDiscount && listPrice ? Math.round(((listPrice - displayPrice) / listPrice) * 100) : 0;
 
   // Levertijd: productspecifiek of de standaard uit lib/shipping-info.
-  const deliveryLine = isOutOfStock ? null : `Levertijd ${product.deliveryTime?.trim() || shippingInfo.deliveryTime.inStock}`;
+  const delivery = isOutOfStock ? null : deliveryLine(product.deliveryTime);
 
   // Color swatches: max 4, rest als "+N"
   const colorDots = variants && variants.length > 1 ? variants.slice(0, 4) : [];
   const extraColors = variants && variants.length > 4 ? variants.length - 4 : 0;
 
   return (
-    <article className="product-card group h-full">
-      <Link href={productUrl(product)} className="flex flex-col h-full rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-        <figure className={`relative ${aspectClass} overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]`}>
+    <article className="product-card group h-full min-w-0">
+      <Link href={productUrl(product)} className="flex flex-col h-full min-w-0 rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+        <figure className="relative aspect-[4/3] overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]">
           {first ? (
             <CloudinaryImage
               src={first}
@@ -141,8 +143,8 @@ export default function ProductCard({ product, variants, priority = false, wide 
               fill
               loading={priority ? "eager" : "lazy"}
               priority={priority}
-              className={`${isContain ? "object-contain" : "object-cover object-center"} transition-transform duration-[480ms] ease-out motion-safe:group-hover:scale-[1.03]`}
-              sizes="(max-width: 768px) 50vw, 33vw"
+              className="object-contain transition-transform duration-[480ms] ease-out motion-safe:group-hover:scale-[1.03]"
+              sizes={sizes}
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone">
@@ -171,7 +173,7 @@ export default function ProductCard({ product, variants, priority = false, wide 
 
         {/* Info block — flex-col zodat footer (prijs+voorraad) altijd op
             zelfde Y-positie eindigt ongeacht spec-grid lengte */}
-        <div className="text-left flex flex-col flex-1">
+        <div className="text-left flex flex-col flex-1 min-w-0">
           {eyebrow && (
             <p className="eyebrow-lg mb-1">{eyebrow}</p>
           )}
@@ -232,13 +234,16 @@ export default function ProductCard({ product, variants, priority = false, wide 
           )}
 
           {/* Footer: prijs + voorraad — mt-auto duwt naar onder zodat alle
-              cards in een grid-rij hun prijs op gelijke hoogte hebben */}
-          <div className="flex flex-col gap-2 pt-2.5 sm:pt-3 border-t border-line mt-auto">
-            <div className="flex items-start justify-between gap-3">
-              <Price price={displayPrice} listPrice={listPrice} vat from={hasSizeVariants} size="sm" />
-              <StockBadge stock={product.stock} className="pt-1" />
+              cards in een grid-rij hun prijs op gelijke hoogte hebben.
+              Op mobiel (2 kolommen) gestapeld: prijs, daaronder voorraad;
+              vanaf sm naast elkaar. Kortingspercentage staat al als badge op
+              de foto, dus bij de prijs alleen de doorgestreepte adviesprijs. */}
+          <div className="flex flex-col gap-1.5 pt-2.5 sm:pt-3 border-t border-line mt-auto min-w-0">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+              <Price price={displayPrice} listPrice={listPrice} vat from={hasSizeVariants} size="sm" showSavings={false} />
+              <StockBadge stock={product.stock} className="sm:pt-1" />
             </div>
-            {deliveryLine && <p className="text-[13px] text-stone leading-snug">{deliveryLine}</p>}
+            {delivery && <p className="text-[13px] text-stone leading-snug">{delivery}</p>}
           </div>
         </div>
       </Link>

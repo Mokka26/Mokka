@@ -70,8 +70,10 @@ export default function CartDrawer({ open, onClose }: Props) {
       }
       footer={
         items.length > 0 ? (
-          <div className="px-6 lg:px-8 py-5 space-y-4 bg-paper">
-            <div className="space-y-2 text-base">
+          // Compact op kleine schermen (iPhone SE: 667px hoog): geen voortgangsbalk
+          // en geen betaaliconen onder `sm`, wel safe-area onderaan.
+          <div className="px-6 lg:px-8 py-4 sm:py-5 space-y-3 sm:space-y-4 bg-paper pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="space-y-1.5 sm:space-y-2 text-base">
               <div className="flex justify-between text-slate">
                 <span>Subtotaal</span>
                 <span className="text-ink tabular-nums">{formatPrice(totalPrice)}</span>
@@ -93,7 +95,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={progress}
-                  className="h-1 w-full bg-line rounded-full overflow-hidden"
+                  className="hidden sm:block h-1 w-full bg-line rounded-full overflow-hidden"
                 >
                   <div className={`h-full bg-accent rounded-full transition-[width] duration-[480ms] ${PROGRESS_WIDTH[Math.floor(progress / 10)]}`} />
                 </div>
@@ -120,13 +122,15 @@ export default function CartDrawer({ open, onClose }: Props) {
                 Bekijk winkelwagen
               </Link>
             </div>
-            <PaymentIconRow className="justify-center pt-1" />
+            <div className="hidden sm:block">
+              <PaymentIconRow className="justify-center pt-1" />
+            </div>
           </div>
         ) : undefined
       }
     >
       {items.length === 0 ? (
-        <div className="h-full min-h-[50vh] flex flex-col items-center justify-center px-6 text-center">
+        <div className="h-full min-h-[50dvh] flex flex-col items-center justify-center px-6 text-center">
           <div className="w-16 h-16 border border-line rounded-full flex items-center justify-center mb-8">
             <ShoppingBag className="w-6 h-6 text-stone" strokeWidth={1.5} aria-hidden="true" />
           </div>
@@ -157,7 +161,7 @@ export default function CartDrawer({ open, onClose }: Props) {
 
                 <div className="flex-1 min-w-0 flex flex-col gap-1">
                   <h3 className="font-serif text-base text-ink leading-tight">
-                    <Link href={productUrl(item.product)} onClick={onClose} className="hover:text-accent transition-colors">
+                    <Link href={productUrl(item.product)} onClick={onClose} className="inline-block py-1 hover:text-accent transition-colors">
                       {item.product.name}
                     </Link>
                   </h3>
@@ -175,7 +179,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                     <button
                       type="button"
                       onClick={() => removeWithUndo(item.lineKey)}
-                      className="inline-flex items-center min-h-11 px-1 text-[14px] text-stone underline underline-offset-4 hover:text-error transition-colors"
+                      className="inline-flex items-center min-h-11 px-2 -mr-2 text-[14px] text-stone underline underline-offset-4 hover:text-error transition-colors"
                     >
                       Verwijderen<span className="sr-only">: {item.product.name}</span>
                     </button>

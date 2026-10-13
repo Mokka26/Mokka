@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
+import { Drawer } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { FilterChip, PriceFilter, PRICE_MAX, isDefaultPrice, priceInRange, type PriceRange } from "@/components/FilterBar";
+import { useFooterInView } from "@/components/product/useFooterInView";
 import { getCategory, type Category } from "@/lib/categories";
 
 export type ListingProduct = {
@@ -46,20 +49,41 @@ interface Props {
 
 type SortKey = "newest" | "price-asc" | "price-desc" | "name";
 
-function getMaxPrice(products: Product[]): number {
-  return Math.max(100, ...products.map((p) => p.price));
-}
+const DEFAULT_PRICE: PriceRange = [0, PRICE_MAX];
+const FILTER_DRAWER_ID = "category-filters";
 
 function parseMaterials(specs: string | null): string[] {
   if (!specs) return [];
   try {
-    const s = JSON.parse(specs);
-    const m = s.Materiaal ?? s.materiaal;
-    if (!m || typeof m !== "string") return [];
-    return m.split(/[,/]\s*/).map((x: string) => x.trim()).filter(Boolean);
+    const s: unknown = JSON.parse(specs);
+    if (typeof s !== "object" || s === null) return [];
+    const rec = s as Record<string, unknown>;
+    const m = rec.Materiaal ?? rec.materiaal;
+    if (typeof m !== "string") return [];
+    return m.split(/[,/]\s*/).map((x) => x.trim()).filter(Boolean);
   } catch {
     return [];
   }
+}
+
+/** Pagina-URL zoals app/[category]/page.tsx die bouwt: pagina 1 = basis-URL (geen ?page=1). */
+function pageHref(slug: string, n: number): string {
+  return n <= 1 ? `/${slug}` : `/${slug}?page=${n}`;
+}
+
+/**
+ * Genummerde paginalijst: 1 … (p-1) p (p+1) … n. `null` = weglatingsteken.
+ */
+function pageNumbers(page: number, totalPages: number): Array<number | null> {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const set = new Set<number>([1, totalPages, page - 1, page, page + 1]);
+  const nums = Array.from(set).filter((n) => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+  const out: Array<number | null> = [];
+  for (let i = 0; i < nums.length; i++) {
+    if (i > 0 && nums[i] - nums[i - 1] > 1) out.push(null);
+    out.push(nums[i]);
+  }
+  return out;
 }
 
 export default function CategoryListing({
@@ -74,21 +98,13 @@ export default function CategoryListing({
   nextHref,
 }: Props) {
   const [sortBy, setSortBy] = useState<SortKey>("newest");
-  const maxPrice = useMemo(() => getMaxPrice(products), [products]);
-  const [maxFilter, setMaxFilter] = useState(maxPrice);
+  const [priceRange, setPriceRange] = useState<PriceRange>(DEFAULT_PRICE);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set());
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
-
-  // Lock body scroll wanneer mobile sheet open
-  useEffect(() => {
-    if (!mobileSheetOpen) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileSheetOpen]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  // Filterknop verbergen zodra de footer in beeld is (bedekt anders de footerlinks).
+  const footerInView = useFooterInView();
 
   const availableMaterials = useMemo(() => {
     const counts = new Map<string, number>();
@@ -101,6 +117,8 @@ export default function CategoryListing({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
   }, [products]);
+
+  const inStockCount = useMemo(() => products.filter((p) => (p.stock ?? 0) > 0).length, [products]);
 
   const toggleMaterial = (m: string) =>
     setSelectedMaterials((prev) => {
@@ -133,7 +151,7 @@ export default function CategoryListing({
   // paginering zelf is server-side (?page=N) zodat elke pagina echt in de
   // HTML staat.
   const filtered = useMemo(() => {
-    let arr = products.filter((p) => p.price <= maxFilter);
+    let arr = products.filter((p) => priceInRange(p.price, priceRange));
     if (inStockOnly) arr = arr.filter((p) => (p.stock ?? 0) > 0);
     if (selectedTypes.size > 0) arr = arr.filter((p) => selectedTypes.has(p.category));
     if (selectedMaterials.size > 0) {
@@ -152,30 +170,33 @@ export default function CategoryListing({
       default:
         return arr;
     }
-  }, [products, maxFilter, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
+  }, [products, priceRange, inStockOnly, selectedTypes, selectedMaterials, sortBy]);
 
   const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, totalCount);
 
   const activeFilterCount =
-    (maxFilter < maxPrice ? 1 : 0) +
+    (isDefaultPrice(priceRange) ? 0 : 1) +
     (inStockOnly ? 1 : 0) +
     selectedTypes.size +
     selectedMaterials.size;
 
   const resetFilters = () => {
-    setMaxFilter(maxPrice);
+    setPriceRange(DEFAULT_PRICE);
     setInStockOnly(false);
     setSelectedTypes(new Set());
     setSelectedMaterials(new Set());
   };
 
-  const filterControls = (
+  const resultLabel = `${filtered.length} ${filtered.length === 1 ? "product" : "producten"}`;
+
+  const filterControls = (idPrefix: string) => (
     <FilterControls
-      maxPrice={maxPrice}
-      maxFilter={maxFilter}
-      setMaxFilter={setMaxFilter}
+      idPrefix={idPrefix}
+      priceRange={priceRange}
+      setPriceRange={setPriceRange}
       inStockOnly={inStockOnly}
+      inStockCount={inStockCount}
       setInStockOnly={setInStockOnly}
       availableTypes={availableTypes}
       selectedTypes={selectedTypes}
@@ -193,32 +214,34 @@ export default function CategoryListing({
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* DESKTOP FILTER-BALK — boven het grid */}
         <div className="hidden lg:block border-y border-line bg-paper/60 backdrop-blur-sm mb-10">
-          <div className="px-6 py-5">
-            {filterControls}
-          </div>
+          <div className="px-6 py-5">{filterControls("desktop")}</div>
         </div>
 
         {/* Resultaten + sort (mobile + desktop) */}
-        <div className="flex items-center justify-between mb-8 px-2">
-          <p className="eyebrow-lg">
+        <div className="flex items-center justify-between gap-4 mb-8 px-2">
+          <p className="eyebrow-lg" aria-live="polite" aria-atomic="true">
             {activeFilterCount > 0
               ? `${filtered.length} van ${products.length} op deze pagina`
               : `${rangeStart}–${rangeEnd} van ${totalCount} producten`}
           </p>
           <label className="flex items-center gap-3 eyebrow-lg">
             <span className="hidden sm:inline">Sorteer</span>
+            <span className="sr-only sm:hidden">Sorteer</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="min-h-11 bg-transparent border border-line-strong rounded-[8px] px-3 py-2 text-ink text-sm normal-case tracking-normal focus:border-ink"
+              className="min-h-11 bg-transparent border border-line-strong rounded-[8px] px-3 py-2 text-ink text-base normal-case tracking-normal focus:border-ink"
             >
               <option value="newest">Aanbevolen</option>
-              <option value="price-asc">Prijs ↑</option>
-              <option value="price-desc">Prijs ↓</option>
+              <option value="price-asc">Prijs oplopend</option>
+              <option value="price-desc">Prijs aflopend</option>
               <option value="name">Naam A–Z</option>
             </select>
           </label>
         </div>
+
+        {/* Kop voor het grid (H1 → H2 → H3 kaartnamen), alleen voor screenreaders. */}
+        <h2 className="sr-only">Producten</h2>
 
         {/* Product grid */}
         {filtered.length === 0 ? (
@@ -232,129 +255,144 @@ export default function CategoryListing({
                 : "Pas je filters aan om meer producten te zien."}
             </p>
             {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="btn-link mt-6"
-              >
+              <button type="button" onClick={resetFilters} className="btn-link mt-6">
                 Filters wissen
               </button>
             )}
           </div>
         ) : (
-          <>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
             {filtered.map((p, i) => (
               <ProductCard
                 key={p.id}
                 product={p}
                 priority={i < 2}
-                wide={p.category === "hoekbanken" || p.category === "bankstellen" || p.category === "slaapkamers" || p.category === "jeugdkamers"}
                 variants={p.colorGroup ? variants[p.colorGroup] : undefined}
               />
             ))}
           </div>
-          </>
         )}
 
         {totalPages > 1 && (
-          <nav aria-label="Paginering" className="mt-16 flex items-center justify-between gap-6 border-t border-line pt-8">
-            {prevHref ? (
-              <Link href={prevHref} rel="prev" className="btn-ghost text-center">
-                Vorige
-              </Link>
-            ) : (
-              <span aria-hidden="true" />
-            )}
-            <p className="eyebrow-lg">
-              Pagina {page} van {totalPages}
-            </p>
-            {nextHref ? (
-              <Link href={nextHref} rel="next" className="btn-primary text-center">
-                Volgende
-              </Link>
-            ) : (
-              <span aria-hidden="true" />
-            )}
+          <nav aria-label="Paginering" className="mt-16 border-t border-line pt-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {prevHref ? (
+                <Link href={prevHref} rel="prev" className="btn-ghost text-center">
+                  Vorige
+                </Link>
+              ) : (
+                <span aria-hidden="true" />
+              )}
+
+              <ol className="flex items-center gap-1 list-none m-0 p-0 order-last w-full justify-center sm:order-none sm:w-auto">
+                {pageNumbers(page, totalPages).map((n, i) =>
+                  n === null ? (
+                    <li key={`gap-${i}`} aria-hidden="true" className="inline-flex items-center justify-center min-w-8 min-h-11 text-stone">
+                      …
+                    </li>
+                  ) : (
+                    <li key={n}>
+                      {n === page ? (
+                        <span
+                          aria-current="page"
+                          className="inline-flex items-center justify-center min-w-11 min-h-11 px-2 rounded-[8px] bg-ink text-paper text-base tabular-nums"
+                        >
+                          <span className="sr-only">Pagina </span>
+                          {n}
+                        </span>
+                      ) : (
+                        <Link
+                          href={pageHref(category.slug, n)}
+                          className="inline-flex items-center justify-center min-w-11 min-h-11 px-2 rounded-[8px] text-ink text-base tabular-nums hover:bg-bone transition-colors"
+                        >
+                          <span className="sr-only">Pagina </span>
+                          {n}
+                        </Link>
+                      )}
+                    </li>
+                  ),
+                )}
+              </ol>
+
+              {nextHref ? (
+                <Link href={nextHref} rel="next" className="btn-primary text-center">
+                  Volgende
+                </Link>
+              ) : (
+                <span aria-hidden="true" />
+              )}
+            </div>
           </nav>
         )}
       </div>
 
-      {/* MOBILE FILTER — sticky bottom bar (knop) */}
-      <div className="lg:hidden fixed bottom-4 inset-x-4 z-30 flex justify-center pointer-events-none">
+      {/* Ruimte voor de zwevende filterknop (mobiel), incl. safe-area. */}
+      <div className="lg:hidden h-[calc(5rem+env(safe-area-inset-bottom))]" aria-hidden="true" />
+
+      {/* MOBILE FILTER — zwevende knop; schuift boven de cookiebanner uit
+          (--cookie-banner-h) en verdwijnt zodra de footer in beeld is. */}
+      <div
+        aria-hidden={footerInView || undefined}
+        inert={footerInView || undefined}
+        className={`lg:hidden fixed inset-x-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--cookie-banner-h,0px))] z-30 flex justify-center pointer-events-none transition-[transform,opacity,bottom] duration-[280ms] ${
+          footerInView ? "translate-y-[150%] opacity-0" : ""
+        }`}
+      >
         <button
           type="button"
-          onClick={() => setMobileSheetOpen(true)}
-          className="pointer-events-auto flex items-center gap-2.5 min-h-11 bg-ink text-white px-6 py-3 rounded-[10px] text-sm font-medium uppercase tracking-[0.1em] shadow-[0_12px_30px_-8px_rgba(20,17,13,0.4)] hover:bg-accent transition-colors"
+          onClick={() => setDrawerOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={drawerOpen}
+          aria-controls={FILTER_DRAWER_ID}
+          className="pointer-events-auto flex items-center gap-2.5 min-h-12 bg-ink text-paper px-6 py-3 rounded-full text-[15px] font-medium shadow-[0_12px_30px_-8px_rgba(20,17,13,0.4)] hover:bg-accent-dark transition-colors"
         >
-          <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
-          <span>Filters & sortering</span>
+          <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
+          <span>Filters</span>
           {activeFilterCount > 0 && (
-            <span className="ml-1 min-w-6 h-6 inline-flex items-center justify-center rounded-full bg-accent text-sm tabular-nums px-1.5">
+            <span className="min-w-6 h-6 inline-flex items-center justify-center rounded-full bg-paper text-ink text-[13px] font-medium tabular-nums px-1.5">
               {activeFilterCount}
+              <span className="sr-only"> actieve filters</span>
             </span>
           )}
         </button>
       </div>
 
-      {/* MOBILE FILTER — bottom-sheet (modal) */}
-      <AnimatePresence>
-        {mobileSheetOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 z-40 bg-ink/40 backdrop-blur-sm"
-            onClick={() => setMobileSheetOpen(false)}
-          >
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-x-0 bottom-0 bg-paper border-t border-line max-h-[85vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-label="Filters"
-            >
-              <div className="sticky top-0 bg-paper border-b border-line px-6 py-4 flex items-center justify-between">
-                <p className="font-serif text-xl text-ink">Filters</p>
-                <button
-                  type="button"
-                  onClick={() => setMobileSheetOpen(false)}
-                  aria-label="Sluiten"
-                  className="w-11 h-11 inline-flex items-center justify-center rounded-full text-stone hover:text-ink hover:bg-bone"
-                >
-                  <X className="w-5 h-5" aria-hidden="true" />
-                </button>
-              </div>
-              <div className="px-6 py-6">
-                {filterControls}
-              </div>
-              <div className="sticky bottom-0 bg-paper border-t border-line px-6 py-4">
-                <button
-                  type="button"
-                  onClick={() => setMobileSheetOpen(false)}
-                  className="btn-primary w-full"
-                >
-                  Toon {filtered.length} resultaten
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* MOBILE FILTER — bottom-sheet op het native <dialog>-element */}
+      <Drawer
+        id={FILTER_DRAWER_ID}
+        side="bottom"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={activeFilterCount > 0 ? `Filters (${activeFilterCount})` : "Filters"}
+        className="rounded-t-2xl"
+        footer={
+          <div className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-3">
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="underline underline-offset-4">
+                Wissen
+              </Button>
+            )}
+            <Button onClick={() => setDrawerOpen(false)} className="flex-1">
+              Toon {resultLabel}
+            </Button>
+          </div>
+        }
+      >
+        <div className="px-6 py-6">{filterControls("sheet")}</div>
+      </Drawer>
     </div>
   );
 }
 
-// Filter-controls component — gedeeld tussen desktop top-bar en mobile sheet
+// Filter-controls — gedeeld tussen desktop top-bar en mobiele sheet. Bouwstenen
+// (PriceFilter, FilterChip) komen uit components/FilterBar.tsx zodat /products
+// en de categoriepagina's identiek werken.
 function FilterControls({
-  maxPrice,
-  maxFilter,
-  setMaxFilter,
+  idPrefix,
+  priceRange,
+  setPriceRange,
   inStockOnly,
+  inStockCount,
   setInStockOnly,
   availableTypes,
   selectedTypes,
@@ -365,10 +403,11 @@ function FilterControls({
   activeFilterCount,
   resetFilters,
 }: {
-  maxPrice: number;
-  maxFilter: number;
-  setMaxFilter: (n: number) => void;
+  idPrefix: string;
+  priceRange: PriceRange;
+  setPriceRange: (r: PriceRange) => void;
   inStockOnly: boolean;
+  inStockCount: number;
   setInStockOnly: (b: boolean) => void;
   availableTypes: Array<{ cat: string; label: string; count: number }>;
   selectedTypes: Set<string>;
@@ -380,99 +419,46 @@ function FilterControls({
   resetFilters: () => void;
 }) {
   return (
-    <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
+    <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
       {/* Type (alleen umbrella, bv. Tafels) */}
       {availableTypes.length > 1 && (
         <div className="lg:flex-shrink-0">
-          <p className="eyebrow-lg mb-2">Type</p>
-          <div className="flex flex-wrap gap-2">
-            {availableTypes.map(({ cat, label, count }) => {
-              const active = selectedTypes.has(cat);
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => toggleType(cat)}
-                  className={`inline-flex items-center min-h-11 px-4 py-2 text-sm border rounded-full transition-colors ${
-                    active
-                      ? "bg-ink text-white border-ink"
-                      : "bg-transparent text-ink border-line hover:border-ink"
-                  }`}
-                >
-                  {label} <span className="ml-1 tabular-nums">({count})</span>
-                </button>
-              );
-            })}
+          <p className="eyebrow-lg mb-2" id={`${idPrefix}-type-label`}>Type</p>
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby={`${idPrefix}-type-label`}>
+            {availableTypes.map(({ cat, label, count }) => (
+              <FilterChip key={cat} label={label} count={count} active={selectedTypes.has(cat)} onClick={() => toggleType(cat)} />
+            ))}
           </div>
         </div>
       )}
 
-      {/* Prijs */}
-      <div className="lg:min-w-[200px] lg:flex-1 lg:max-w-xs">
-        <p className="eyebrow-lg mb-2">
-          Prijs (max)
-        </p>
-        <input
-          type="range"
-          min={100}
-          max={maxPrice}
-          step={50}
-          value={maxFilter}
-          onChange={(e) => setMaxFilter(Number(e.target.value))}
-          className="w-full accent-accent"
-          aria-label="Maximum prijs"
-        />
-        <p className="text-sm text-stone mt-1 tabular-nums">tot €{maxFilter.toFixed(0)}</p>
+      {/* Prijs — zelfde klassen en velden als /products */}
+      <div className="lg:flex-1 lg:max-w-xl">
+        <p className="eyebrow-lg mb-2">Prijs</p>
+        <PriceFilter priceRange={priceRange} onPriceRangeChange={setPriceRange} idPrefix={`${idPrefix}-price`} />
       </div>
 
       {/* Voorraad */}
       <div className="lg:flex-shrink-0">
-        <label className="flex items-center gap-2.5 min-h-11 cursor-pointer text-base">
-          <input
-            type="checkbox"
-            checked={inStockOnly}
-            onChange={(e) => setInStockOnly(e.target.checked)}
-            className="w-5 h-5 accent-accent"
-          />
-          <span className="text-ink">Alleen op voorraad</span>
-        </label>
+        <p className="eyebrow-lg mb-2">Voorraad</p>
+        <FilterChip label="Op voorraad" count={inStockCount} dot active={inStockOnly} onClick={() => setInStockOnly(!inStockOnly)} />
       </div>
 
       {/* Materiaal-chips */}
       {availableMaterials.length > 0 && (
         <div className="lg:flex-1">
-          <p className="eyebrow-lg mb-2 lg:sr-only">
-            Materiaal
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {availableMaterials.map(([m, count]) => {
-              const active = selectedMaterials.has(m);
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => toggleMaterial(m)}
-                  className={`inline-flex items-center min-h-11 px-4 py-2 text-sm border rounded-full transition-colors ${
-                    active
-                      ? "bg-ink text-white border-ink"
-                      : "bg-transparent text-ink border-line hover:border-ink"
-                  }`}
-                >
-                  {m} <span className="ml-1 tabular-nums">({count})</span>
-                </button>
-              );
-            })}
+          <p className="eyebrow-lg mb-2" id={`${idPrefix}-material-label`}>Materiaal</p>
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby={`${idPrefix}-material-label`}>
+            {availableMaterials.map(([m, count]) => (
+              <FilterChip key={m} label={m} count={count} active={selectedMaterials.has(m)} onClick={() => toggleMaterial(m)} />
+            ))}
           </div>
         </div>
       )}
 
-      {/* Reset */}
+      {/* Reset — desktop (de sheet heeft 'm in de voet) */}
       {activeFilterCount > 0 && (
-        <button
-          type="button"
-          onClick={resetFilters}
-          className="btn-link lg:flex-shrink-0 self-start lg:self-end"
-        >
+        <button type="button" onClick={resetFilters} className="btn-link hidden lg:inline-flex lg:flex-shrink-0 self-start">
           Wissen ({activeFilterCount})
         </button>
       )}

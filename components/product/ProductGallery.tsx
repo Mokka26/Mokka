@@ -115,27 +115,29 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                     sizes="(max-width: 1024px) 100vw, 60vw"
                     className="object-contain"
                   />
+                  {/* Vergroot-hint: op mobiel alleen het icoon (rechtsonder), op
+                      desktop met tekst bij hover/focus. De teller staat rechtsboven. */}
                   <span
                     aria-hidden="true"
-                    className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 bg-white/90 text-ink text-sm px-3 py-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover/zoom:opacity-100 lg:group-focus-visible/zoom:opacity-100 transition-opacity"
+                    className="absolute bottom-3 right-3 inline-flex items-center justify-center gap-1.5 bg-white/90 text-ink text-sm w-10 h-10 lg:w-auto lg:h-auto lg:px-3 lg:py-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover/zoom:opacity-100 lg:group-focus-visible/zoom:opacity-100 transition-opacity"
                   >
-                    <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-                    Vergroten
+                    <Maximize2 className="w-4 h-4 lg:w-3.5 lg:h-3.5" strokeWidth={1.75} />
+                    <span className="hidden lg:inline">Vergroten</span>
                   </span>
                 </button>
               </div>
             ))}
           </div>
           {total > 1 && (
-            <div className="lg:hidden absolute bottom-3 left-3 bg-white/90 px-3 py-1.5 text-sm text-ink rounded-full tabular-nums" aria-hidden="true">
+            <div className="lg:hidden absolute top-3 right-3 bg-white/90 px-3 py-1.5 text-[13px] text-ink rounded-full tabular-nums" aria-hidden="true">
               {active + 1} / {total}
             </div>
           )}
         </div>
 
-        {/* Dots — mobiel, 24px klikgebied */}
+        {/* Dots — mobiel: visueel klein, klikgebied 44×44px */}
         {total > 1 && (
-          <div className="lg:hidden flex justify-center gap-1 mt-3" role="group" aria-label="Foto kiezen">
+          <div className="lg:hidden flex justify-center flex-wrap mt-1" role="group" aria-label="Foto kiezen">
             {images.map((img, i) => (
               <button
                 key={`${img.url}-dot-${i}`}
@@ -143,7 +145,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                 onClick={() => scrollTo(i)}
                 aria-label={`Ga naar foto ${i + 1} van ${total}`}
                 aria-current={active === i ? "true" : undefined}
-                className="inline-flex items-center justify-center w-6 h-6 min-w-6 focus-visible:outline-2 focus-visible:outline-accent rounded-full"
+                className="inline-flex items-center justify-center w-11 h-11 min-w-11 focus-visible:outline-2 focus-visible:outline-accent rounded-full"
               >
                 <span
                   aria-hidden="true"

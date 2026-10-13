@@ -56,7 +56,7 @@ export default function ProductLightbox({ images, productName, startIndex, onClo
       className="bg-ink text-paper"
       header={
         <div className="flex items-center justify-between gap-4 px-4 sm:px-6 min-h-16 shrink-0 text-paper">
-          <p className="text-sm tabular-nums" aria-live="polite">
+          <p className="text-[15px] tabular-nums" aria-live="polite">
             <span className="sr-only">Foto </span>
             {index + 1} / {total}
           </p>
@@ -66,14 +66,14 @@ export default function ProductLightbox({ images, productName, startIndex, onClo
         </div>
       }
     >
-      <div className="relative h-full min-h-[70vh]">
+      <div className="relative h-full min-h-[70dvh]">
         <div className="h-full overflow-hidden" ref={emblaRef}>
           <div className="flex h-full">
             {images.map((img, i) => {
               const isNear = total <= 3 || Math.abs(i - index) <= 1 || (index === 0 && i === total - 1) || (index === total - 1 && i === 0);
               return (
                 <div key={`${img.url}-${i}`} className="relative flex-[0_0_100%] min-w-0 h-full p-4 sm:p-8 lg:p-16">
-                  <div className="relative w-full h-full min-h-[60vh]">
+                  <div className="relative w-full h-full min-h-[60dvh]">
                     <Image
                       src={cldOptimize(img.url, { w: 2400, upscale: true, sourceW: img.w, quality: "auto:best" })}
                       alt={galleryAlt(productName, img, i, total)}

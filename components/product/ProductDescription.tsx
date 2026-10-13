@@ -32,7 +32,8 @@ function splitAtSentence(text: string): [string, string] {
 }
 
 /**
- * "Over de <productnaam>" — volledige beschrijving, met een toegankelijke
+ * "Over dit product" (productnaam alleen voor screenreaders) — volledige
+ * beschrijving, met een toegankelijke
  * "Lees meer" (aria-expanded/aria-controls) als de tekst lang is. Het
  * verborgen deel staat wél in de HTML (SEO), maar is voor iedereen verborgen
  * tot de knop is ingedrukt.
@@ -63,7 +64,8 @@ export function ProductDescription({ name, description }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
           <div className="lg:col-span-4">
             <h2 id={`${id}-title`} className="font-serif text-3xl lg:text-4xl text-ink leading-[1.1] mb-6">
-              Over de <span className="italic text-accent">{name}</span>
+              Over dit product
+              <span className="sr-only">: {name}</span>
             </h2>
             <div className="w-10 h-px bg-accent" aria-hidden="true" />
           </div>

@@ -15,23 +15,13 @@ export function orientationOf(img: ProductImage | undefined): Orientation {
   return "square";
 }
 
-/** Kaart-tegel: liggend 4:3 (cover, center), staand 4:5 (contain), anders 1:1. */
-export const CARD_ASPECT_CLASS: Record<Orientation, string> = {
-  landscape: "aspect-[4/3]",
-  portrait: "aspect-[4/5]",
-  square: "aspect-square",
-};
-
-/** Galerij-frame op de productpagina: zelfde verhouding voor alle slides. */
+/**
+ * Galerij-frame op de productpagina: zelfde verhouding voor alle slides.
+ * (De ProductCard gebruikt sinds de mobiele sweep één vaste 4:3-box met
+ * object-contain, zodat rijen in een grid gelijk lopen.)
+ */
 export const GALLERY_ASPECT_CLASS: Record<Orientation, string> = {
   landscape: "aspect-[4/3]",
   portrait: "aspect-[4/5]",
   square: "aspect-square",
-};
-
-/** Cloudinary-ar die bij de tegel past (voor c_fill/c_pad). */
-export const ASPECT_AR: Record<Orientation, string> = {
-  landscape: "4:3",
-  portrait: "4:5",
-  square: "1:1",
 };

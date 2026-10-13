@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Source_Serif_4, Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -59,6 +59,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "nl_NL",
   },
+};
+
+// viewportFit "cover": safe-area-insets (iPhone-notch/home-bar) werken voor de
+// vaste balken onderaan. themeColor = de paper-token (--color-paper in globals.css).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#F4F0E8",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

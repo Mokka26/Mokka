@@ -52,16 +52,18 @@ export default function DarkNewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="jouw@email.nl"
-          className="flex-1 bg-transparent border-b border-white/40 text-white placeholder-white/60 py-3 px-0 focus-visible:outline-none focus:border-white transition-colors text-base"
+          // Zichtbare focus: de onderlijn (altijd 2px, dus geen verspringen)
+          // wordt wit bij focus — vervangt de standaard outline.
+          className="flex-1 min-h-11 bg-transparent border-b-2 border-white/40 text-white placeholder-white/60 py-3 px-0 focus-visible:outline-none focus-visible:border-white transition-colors text-base"
         />
         <button
           type="submit"
           disabled={status === "sending"}
-          className="bg-white text-ink px-8 py-3 rounded-[10px] text-sm uppercase tracking-[0.08em] font-medium hover:bg-accent hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors disabled:opacity-60"
+          className="min-h-11 bg-white text-ink px-8 py-3 rounded-[10px] text-sm uppercase tracking-[0.08em] font-medium hover:bg-accent hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors disabled:opacity-60"
         >
           {status === "sending" ? "Bezig…" : "Aanmelden"}
         </button>
-        {status === "error" && <p className="text-red-300 text-sm w-full sm:w-auto" role="alert">{msg}</p>}
+        {status === "error" && <p className="text-error-light text-sm w-full sm:w-auto" role="alert">{msg}</p>}
       </form>
       {/* Zelfde frequentie-belofte als de footer (components/Footer.tsx). */}
       <p className="text-sm text-white/70 mt-6 max-w-md mx-auto text-center leading-[1.6]">

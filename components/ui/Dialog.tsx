@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { X } from "lucide-react";
 
 /**
@@ -107,8 +107,10 @@ function BaseDialog({
     }, CLOSE_ANIMATION_MS);
   }, [onClose]);
 
-  // open-prop synchroniseren met het native element.
-  useEffect(() => {
+  // open-prop synchroniseren met het native element. useLayoutEffect: showModal()
+  // vóór de eerste paint, zodat er geen frame zonder [open] (en dus zonder
+  // top-layer/backdrop) flitst.
+  useLayoutEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
 
@@ -139,7 +141,9 @@ function BaseDialog({
     <dialog
       ref={ref}
       id={id}
-      className={`mk-dialog ${open ? "flex flex-col" : "hidden"} bg-paper text-ink shadow-[0_24px_60px_-20px_rgba(20,17,13,0.35)] ${className}`}
+      // Zichtbaarheid volgt het native [open]-attribuut (niet de React-prop):
+      // zonder [open] altijd display:none, dus nooit een niet-modaal frame.
+      className={`mk-dialog flex flex-col [&:not([open])]:hidden bg-paper text-ink shadow-[0_24px_60px_-20px_rgba(20,17,13,0.35)] ${className}`}
       data-variant={variant}
       data-closing={closing ? "" : undefined}
       aria-labelledby={titleId}

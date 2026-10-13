@@ -50,7 +50,16 @@ const PRICE_BUCKETS: ReadonlyArray<{ label: string; range: [number, number] }> =
 
 const eur = (n: number) => `€ ${n.toLocaleString("nl-NL")}`;
 
-const isDefaultPrice = (r: [number, number]) => r[0] <= 0 && r[1] >= PRICE_MAX;
+/** Prijsbereik zoals de chips/velden het leveren: [min, max], max = PRICE_MAX betekent "geen bovengrens". */
+export type PriceRange = [number, number];
+
+export const isDefaultPrice = (r: PriceRange) => r[0] <= 0 && r[1] >= PRICE_MAX;
+
+/** Valt `price` binnen het bereik? Boven PRICE_MAX telt alles mee ("€ 2.000 en meer"). */
+export function priceInRange(price: number, r: PriceRange): boolean {
+  if (price < r[0]) return false;
+  return r[1] >= PRICE_MAX || price <= r[1];
+}
 
 function priceSummary(r: [number, number]): string | undefined {
   if (isDefaultPrice(r)) return undefined;
@@ -184,6 +193,39 @@ const toggleIn = (arr: string[], val: string) =>
   arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
 
 /* ─── Bouwstenen ─────────────────────────────────────────────────── */
+
+/**
+ * Toggle-chip (aria-pressed) met optionele teller — gedeeld met de
+ * categoriepagina's (app/[category]/CategoryListing.tsx) zodat materiaal-,
+ * type- en voorraadfilters er overal hetzelfde uitzien en werken.
+ */
+export function FilterChip({
+  label, count, active, onClick, dot = false,
+}: {
+  label: string; count?: number; active: boolean; onClick: () => void;
+  /** Groen bolletje vóór het label (voorraad-chip). */
+  dot?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex items-center gap-2 min-h-11 px-4 rounded-full border text-sm font-medium transition-colors duration-[280ms] ${
+        active ? "border-ink bg-ink text-paper" : "border-line-strong text-ink hover:border-ink hover:bg-bone"
+      }`}
+    >
+      {dot && <span aria-hidden="true" className={`w-2 h-2 rounded-full ${active ? "bg-accent-light" : "bg-success"}`} />}
+      <span>{label}</span>
+      {typeof count === "number" && (
+        <span className={`tabular-nums ${active ? "text-paper/85" : "text-stone"}`}>
+          {count}
+          <span className="sr-only"> producten</span>
+        </span>
+      )}
+    </button>
+  );
+}
 
 // Universele filter-rij: een toggle-knop met aria-pressed en teller.
 function FilterRow({
@@ -358,10 +400,14 @@ function CategoryTree({
   );
 }
 
-// Prijs: klassen als chips + optioneel eigen min/max.
-function PriceFilter({ priceRange, onPriceRangeChange, idPrefix }: {
-  priceRange: [number, number];
-  onPriceRangeChange: (r: [number, number]) => void;
+/**
+ * Prijs: klassen als chips (aria-pressed) + optioneel eigen min/max.
+ * Gedeeld met de categoriepagina's; `idPrefix` maakt de input-id's uniek
+ * per plek (drawer, chip-paneel, categoriepagina).
+ */
+export function PriceFilter({ priceRange, onPriceRangeChange, idPrefix }: {
+  priceRange: PriceRange;
+  onPriceRangeChange: (r: PriceRange) => void;
   idPrefix: string;
 }) {
   const [minText, setMinText] = useState(priceRange[0] > 0 ? String(priceRange[0]) : "");
@@ -644,7 +690,7 @@ function DesktopChipBar(props: ChipBarProps) {
                       </span>
                     )}
                     {chip.count > 1 && (
-                      <span className={`flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs tabular-nums font-medium ${
+                      <span className={`flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-[13px] tabular-nums font-medium ${
                         isOpen ? "bg-paper text-ink" : "bg-ink text-paper"
                       }`}>
                         {chip.count}
@@ -666,7 +712,7 @@ function DesktopChipBar(props: ChipBarProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.18, ease: [0.25, 0.4, 0.25, 1] }}
-                        className="absolute left-0 top-full mt-2 bg-paper border border-line rounded-[12px] shadow-xl z-40 w-[360px] max-h-[60vh] overflow-y-auto"
+                        className="absolute left-0 top-full mt-2 bg-paper border border-line rounded-[12px] shadow-xl z-40 w-[360px] max-h-[60dvh] overflow-y-auto"
                       >
                         <div className="px-5 py-4">
                           {chip.key === "categorie" && (
@@ -838,7 +884,7 @@ export default function FilterBar(props: Props) {
       />
 
       {/* Mobiel: vaste balk onderaan */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 backdrop-blur-md border-t border-line pb-[env(safe-area-inset-bottom)]">
+      <div className="lg:hidden fixed inset-x-0 bottom-[var(--cookie-banner-h,0px)] z-40 bg-paper/95 backdrop-blur-md border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-stretch gap-px bg-line">
           <button
             type="button"
@@ -851,7 +897,7 @@ export default function FilterBar(props: Props) {
             <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
             Filter
             {hasActiveFilters && (
-              <span className="flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-ink text-paper text-xs font-medium tabular-nums">
+              <span className="flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-ink text-paper text-[13px] font-medium tabular-nums">
                 {activeCount}
                 <span className="sr-only"> actieve filters</span>
               </span>
@@ -906,7 +952,7 @@ export default function FilterBar(props: Props) {
         title="Sorteer"
         className="rounded-t-2xl"
       >
-        <div className="py-2 pb-[env(safe-area-inset-bottom)]" role="group" aria-label="Sorteervolgorde">
+        <div className="py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]" role="group" aria-label="Sorteervolgorde">
           {sortOptions.map((opt) => {
             const pressed = sortBy === opt.value;
             return (

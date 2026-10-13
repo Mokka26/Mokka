@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useCart, type CartItemType } from "@/context/CartContext";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { productUrl } from "@/lib/categories";
-import { shippingInfo } from "@/lib/shipping-info";
 import { Price, formatPrice } from "@/components/ui/price";
+import { deliveryLine } from "@/components/product/deliveryTime";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 
 interface Props {
@@ -22,8 +22,9 @@ export function cartLineOptions(item: CartItemType): string[] {
   return parts;
 }
 
+/** "Levertijd: binnen 5 werkdagen" — zelfde helper als ProductCard en PDP. */
 export function cartLineDelivery(item: CartItemType): string {
-  return `Levertijd ${item.product.deliveryTime?.trim() || shippingInfo.deliveryTime.inStock}`;
+  return deliveryLine(item.product.deliveryTime);
 }
 
 export default function CartItem({ item }: Props) {
@@ -58,7 +59,7 @@ export default function CartItem({ item }: Props) {
           <button
             type="button"
             onClick={() => removeWithUndo(item.lineKey)}
-            className="inline-flex items-center min-h-11 text-sm text-stone underline underline-offset-4 hover:text-error transition-colors"
+            className="inline-flex items-center min-h-11 -ml-2 px-2 text-sm text-stone underline underline-offset-4 hover:text-error transition-colors"
           >
             Verwijderen<span className="sr-only">: {item.product.name}</span>
           </button>

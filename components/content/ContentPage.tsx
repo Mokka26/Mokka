@@ -169,7 +169,14 @@ export function ContentSummary({ heading = "Samengevat", items }: { heading?: st
   );
 }
 
-/** Eenvoudige tabel met kop en caption; cellen zijn tekst. */
+/**
+ * Eenvoudige tabel met kop en caption; cellen zijn tekst.
+ *
+ * Op mobiel (< sm) geen horizontale scroll: elke rij wordt een gestapeld
+ * blok — de rijkop als titel, daaronder per cel "kolomkop · waarde"
+ * (kolomkop via `data-label` + ::before). De semantiek (table/th/td) blijft
+ * intact voor screenreaders; de kopregel is daar `sr-only`.
+ */
 export function ContentTable({
   caption,
   head,
@@ -180,37 +187,39 @@ export function ContentTable({
   rows: ReadonlyArray<ReadonlyArray<string>>;
 }) {
   return (
-    <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0">
-      <table className="w-full min-w-[480px] border-collapse text-base sm:text-[17px] leading-[1.6]">
-        <caption className="text-left text-sm text-stone mb-3">{caption}</caption>
-        <thead>
-          <tr className="border-b border-line-strong">
-            {head.map((cell) => (
-              <th key={cell} scope="col" className="text-left font-medium text-ink py-3 pr-6">
-                {cell}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.join("|")} className="border-b border-line">
-              {row.map((cell, idx) =>
-                idx === 0 ? (
-                  <th key={cell} scope="row" className="text-left font-medium text-ink py-3 pr-6 tabular-nums">
-                    {cell}
-                  </th>
-                ) : (
-                  <td key={`${idx}-${cell}`} className="text-graphite py-3 pr-6 tabular-nums">
-                    {cell}
-                  </td>
-                ),
-              )}
-            </tr>
+    <table className="block sm:table w-full border-collapse text-base sm:text-[17px] leading-[1.6]">
+      <caption className="block sm:table-caption text-left text-sm text-stone mb-3">{caption}</caption>
+      <thead className="sr-only sm:not-sr-only sm:table-header-group">
+        <tr className="sm:border-b sm:border-line-strong">
+          {head.map((cell) => (
+            <th key={cell} scope="col" className="text-left font-medium text-ink py-3 pr-6">
+              {cell}
+            </th>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      </thead>
+      <tbody className="block sm:table-row-group border-t border-line-strong sm:border-t-0">
+        {rows.map((row) => (
+          <tr key={row.join("|")} className="block sm:table-row py-3 sm:py-0 border-b border-line">
+            {row.map((cell, idx) =>
+              idx === 0 ? (
+                <th key={cell} scope="row" className="block sm:table-cell text-left font-medium text-ink pb-1 sm:py-3 sm:pr-6 tabular-nums">
+                  {cell}
+                </th>
+              ) : (
+                <td
+                  key={`${idx}-${cell}`}
+                  data-label={head[idx]}
+                  className="flex justify-between gap-4 py-0.5 sm:table-cell sm:py-3 sm:pr-6 text-graphite tabular-nums before:content-[attr(data-label)] before:text-stone before:shrink-0 sm:before:hidden"
+                >
+                  <span className="text-right sm:text-left">{cell}</span>
+                </td>
+              ),
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

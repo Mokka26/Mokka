@@ -18,6 +18,7 @@ import { ColorSwatches, type ColorVariant } from "@/components/product/ColorSwat
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { orientationOf } from "@/components/product/imageAspect";
+import { useFooterInView } from "@/components/product/useFooterInView";
 import { trackAddToCart, trackViewItem, variantLabelOf } from "@/lib/analytics";
 import {
   DELIVERY_KEY_RE,
@@ -135,6 +136,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const [added, setAdded] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const { addToCart } = useCart();
+  // Sticky koopbalk verbergen zodra de footer in beeld komt (bedekt anders de footerlinks).
+  const footerInView = useFooterInView();
 
   useEffect(() => {
     if (!added) return;
@@ -180,13 +183,16 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       quantity,
       variantLabelOf({ variantLabel, nachtkast, voetbank }),
     );
+    // Korte titel, één regel beschrijving (productnaam + opties + aantal; de
+    // ToastProvider kapt lange namen af).
     const extras = [
-      variantLabel ? `Maat ${variantLabel}` : null,
+      product.name,
+      variantLabel ? `maat ${variantLabel}` : null,
       nachtkast > 0 ? `${nachtkast} nachtkast${nachtkast > 1 ? "en" : ""}` : null,
       voetbank > 0 ? "voetbank" : null,
-      `Aantal: ${quantity}`,
+      `${quantity}×`,
     ].filter(Boolean);
-    toast.success(`${product.name} ligt in je winkelwagen`, {
+    toast.success("Toegevoegd aan je winkelwagen", {
       description: extras.join(" · "),
       duration: 5000,
       action: { label: "Bekijk winkelwagen", onClick: openCart },
@@ -208,7 +214,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         {/* Product — magazine-spread: beeld links, sticky info rechts */}
         <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] lg:gap-12 items-start">
           <div className="hidden lg:block absolute left-6 top-6 z-10 pointer-events-none" aria-hidden="true">
-            <span className="block origin-top-left rotate-90 translate-x-[2px] eyebrow text-stone whitespace-nowrap">
+            <span className="block origin-top-left rotate-90 translate-x-[2px] eyebrow-lg text-stone whitespace-nowrap">
               <span className="text-accent">— </span>
               {categoryLabel}
             </span>
@@ -425,11 +431,18 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
           </section>
         )}
 
-        {/* Sticky mobile CTA */}
-        <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+        {/* Sticky mobile CTA — schuift boven de cookiebanner (--cookie-banner-h,
+            gezet door CookieBanner) en verdwijnt zodra de footer in beeld is. */}
+        <div
+          aria-hidden={footerInView || undefined}
+          inert={footerInView || undefined}
+          className={`lg:hidden fixed inset-x-0 bottom-[var(--cookie-banner-h,0px)] bg-white/95 backdrop-blur-md border-t border-line z-40 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] transition-[transform,opacity,bottom] duration-[280ms] ${
+            footerInView ? "translate-y-full opacity-0 pointer-events-none" : ""
+          }`}
+        >
           <div className="flex items-center gap-4">
             <div className="shrink-0 min-w-0">
-              <Price price={lineUnitPrice} listPrice={hasOptions ? null : activeListPrice} vat size="sm" inline />
+              <Price price={lineUnitPrice} listPrice={hasOptions ? null : activeListPrice} vat size="sm" inline showSavings={false} />
               {activeVariant && <p className="text-[13px] text-stone leading-none mt-1">Maat {activeVariant.label}</p>}
             </div>
             {priceOnRequest ? (
@@ -448,7 +461,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             )}
           </div>
         </div>
-        <div className="lg:hidden h-24" aria-hidden="true" />
+        <div className="lg:hidden h-[calc(6rem+env(safe-area-inset-bottom))]" aria-hidden="true" />
       </div>
 
       {lightbox !== null && (

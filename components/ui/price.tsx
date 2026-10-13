@@ -9,6 +9,7 @@ import { shippingInfo } from "@/lib/shipping-info";
  * - Hele bedragen tonen geen decimalen, anders twee (nl-komma)
  * - `vat` toont het "incl. btw"-label (verplicht op kaart + PDP), ≥13px
  * - `listPrice` > `price` → "Adviesprijs € X" doorgestreept + besparing in %
+ *   (`showSavings={false}` laat het percentage weg, bv. op de kaart)
  * - `from` → "vanaf" (producten met maatvarianten)
  * - `price` ≤ 0 → "Prijs op aanvraag" (nooit "€ 0" met btw-label)
  */
@@ -72,6 +73,11 @@ interface PriceProps {
   vatClassName?: string;
   /** Richting van de stapel: kolom (default) of op één regel. */
   inline?: boolean;
+  /**
+   * Toon "-16%" naast de doorgestreepte adviesprijs. ProductCard zet dit uit:
+   * daar staat het percentage al als badge op de foto.
+   */
+  showSavings?: boolean;
 }
 
 export function Price({
@@ -84,6 +90,7 @@ export function Price({
   className = "",
   vatClassName = "",
   inline = false,
+  showSavings = true,
 }: PriceProps) {
   const amount = price ?? value ?? 0;
   const priceClass = `font-serif text-ink tabular-nums tracking-[-0.015em] ${SIZE_CLASS[size]} ${className}`.trim();
@@ -103,11 +110,13 @@ export function Price({
   return (
     <span className={inline ? "inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5" : "inline-flex flex-col gap-0.5"}>
       {hasDiscount && (
-        <span className={`inline-flex items-baseline gap-2 ${LIST_SIZE_CLASS[size]} text-stone`}>
+        <span className={`inline-flex flex-wrap items-baseline gap-x-2 ${LIST_SIZE_CLASS[size]} text-stone`}>
           <s className="tabular-nums">Adviesprijs {formatPrice(listPrice)}</s>
-          <span className="font-medium text-success whitespace-nowrap">
-            -{pct}%<span className="sr-only"> korting</span>
-          </span>
+          {showSavings && (
+            <span className="font-medium text-success whitespace-nowrap">
+              -{pct}%<span className="sr-only"> korting</span>
+            </span>
+          )}
         </span>
       )}
       <span className="inline-flex items-baseline gap-2">
