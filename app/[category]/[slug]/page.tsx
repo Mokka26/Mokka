@@ -23,6 +23,7 @@ import {
   type BreadcrumbItem,
 } from "@/lib/jsonLd";
 import { findRedirectTarget } from "@/lib/slug-redirect";
+import { getFooterMethods } from "@/lib/mollie";
 
 interface Props {
   params: Promise<{ category: string; slug: string }>;
@@ -193,6 +194,8 @@ export default async function ProductPageInCategory({ params }: Props) {
   const breadcrumbs: BreadcrumbItem[] = [...categoryBreadcrumbs(category), { name: product.name, url }];
   const productSchema = buildProductJsonLd(product, { url: `${businessInfo.siteUrl}${url}` });
   const breadcrumbSchema = buildBreadcrumbJsonLd(breadcrumbs);
+  // Zelfde gecachte lijst (6 uur) als de footer, dus geen extra Mollie-call per PDP.
+  const mollieMethods = await getFooterMethods();
 
   return (
     <>
@@ -212,6 +215,7 @@ export default async function ProductPageInCategory({ params }: Props) {
         relatedProducts={relatedProducts}
         complementaryProducts={complementaryProducts}
         colorVariants={colorVariants}
+        mollieMethods={mollieMethods}
       />
       <RecentlyViewed currentSlug={product.slug} />
     </>

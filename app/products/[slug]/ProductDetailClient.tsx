@@ -16,6 +16,7 @@ import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ColorSwatches, type ColorVariant } from "@/components/product/ColorSwatches";
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
+import type { CheckoutMethod } from "@/lib/mollie";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { orientationOf } from "@/components/product/imageAspect";
 import { useFooterInView } from "@/components/product/useFooterInView";
@@ -63,6 +64,8 @@ interface Props {
   colorVariants: ColorVariant[];
   /** "Past goed bij" — aanvullende producten uit andere categorieën (optioneel). */
   complementaryProducts?: ProductCardProduct[];
+  /** Live Mollie-betaalmethoden voor het koopblok (zelfde chips als de footer). */
+  mollieMethods?: CheckoutMethod[];
 }
 
 /** Event waarmee de Navbar de winkelwagen-drawer kan openen (cancelable). */
@@ -89,7 +92,7 @@ const OPTION_BTN = "inline-flex items-center justify-center px-4 py-2.5 min-h-11
 const OPTION_ACTIVE = "bg-ink text-paper border-ink";
 const OPTION_IDLE = "bg-transparent text-ink border-line hover:border-ink";
 
-export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [] }: Props) {
+export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [], mollieMethods = [] }: Props) {
   const router = useRouter();
   const images = parseImages(product.images);
   const orientation = orientationOf(images[0]);
@@ -361,7 +364,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </div>
             )}
 
-            <PurchaseInfo price={lineUnitPrice} stock={stock} deliveryTime={product.deliveryTime ?? null} category={product.category} />
+            <PurchaseInfo price={lineUnitPrice} stock={stock} deliveryTime={product.deliveryTime ?? null} category={product.category} mollieMethods={mollieMethods} />
 
             {specEntries.length > 0 && (
               <details className="group border-t border-line">

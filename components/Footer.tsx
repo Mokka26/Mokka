@@ -11,7 +11,7 @@ import {
 } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { CATEGORIES, GROUP_ORDER, categoryUrl } from "@/lib/categories";
-import { PaymentIcon } from "@/components/PaymentIcons";
+import { MolliePaymentChips, PaymentIcon } from "@/components/PaymentIcons";
 import { FooterNewsletterForm } from "@/components/FooterNewsletterForm";
 import { FooterGate } from "@/components/FooterGate";
 import type { CheckoutMethod } from "@/lib/mollie";
@@ -208,21 +208,9 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
             <div>
               <h2 className={footerHeading}>Veilig betalen met</h2>
               {mollieMethods.length > 0 ? (
-                // Live uit Mollie — dezelfde methoden als op de checkout, kleuriconen
-                // op witte chips zodat ze leesbaar zijn op de donkere footer.
-                <ul className="flex flex-wrap items-center gap-2 list-none m-0 p-0">
-                  {mollieMethods.map((m) => (
-                    <li key={m.id}>
-                      {m.image ? (
-                        <span className="bg-white rounded-md h-8 px-2 inline-flex items-center" title={m.description}>
-                          <Image src={m.image} alt={m.description} width={40} height={24} unoptimized className="h-5 w-auto" />
-                        </span>
-                      ) : (
-                        <span className="text-sm font-semibold text-white/85">{m.description}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                // Live uit Mollie — dezelfde methoden als op de checkout; dezelfde
+                // chips staan in het koopblok op de productpagina.
+                <MolliePaymentChips methods={mollieMethods} />
               ) : (
                 // Fallback (bv. zonder Mollie-key): vaste witte wordmarks.
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
