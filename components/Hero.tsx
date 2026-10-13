@@ -82,9 +82,10 @@ export default function Hero() {
             <h1 className="font-serif text-[2rem] leading-[1.08] sm:text-5xl lg:text-6xl tracking-[-0.02em] mb-5">
               Banken, eettafels en bedden die je eerst in de showroom kunt proberen
             </h1>
+            {/* Eén tekstknoop: met losse {city}/{threshold}-knopen viel de spatie
+                na de plaatsnaam weg in de server-HTML ("Den Haagof bestel"). */}
             <p className="text-lg lg:text-xl leading-[1.6] text-white/90 max-w-xl mb-8">
-              Kom proefzitten in onze showroom in {city} of bestel online. Gratis
-              verzending vanaf &euro;{threshold}, {days} dagen bedenktijd.
+              {`Kom proefzitten in onze showroom in ${city} of bestel online. Gratis verzending vanaf €${threshold}, ${days} dagen bedenktijd.`}
             </p>
             <Link
               href="/banken"
