@@ -90,6 +90,17 @@ describe("lib/specs", () => {
       }
       expect(isCanonicalDimensions("120x60x45")).toBe(false);
     });
+
+    it("leest x/X/* alleen als maal-teken tussen getallen (of vóór een maat-letter), niet in woorden", () => {
+      expect(parseDimensions("Box 120 x 60 cm")).toBeNull(); // losse tekst → geen eenduidige maat
+      expect(parseDimensions("120 X 60 x 45")).toEqual({ w: 120, d: 60, h: 45 });
+      expect(parseDimensions("120*60 cm")).toEqual({ w: 120, d: 60 });
+      expect(parseDimensions("B120xD60xH45")).toEqual({ w: 120, d: 60, h: 45 });
+      expect(parseDimensions("B 120 x D 60 x H 45 cm")).toEqual({ w: 120, d: 60, h: 45 });
+      // "Luxe" bevat een x maar géén maal-teken: de letters L/B/H blijven leidend.
+      expect(parseDimensions("Luxe L 200 B 100 H 76")).toEqual({ w: 200, d: 100, h: 76 });
+      expect(parseDimensions("max 110")).toBeNull();
+    });
   });
 
   describe("plausibleDimensions", () => {

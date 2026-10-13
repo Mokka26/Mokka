@@ -1,8 +1,8 @@
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
 import { CATEGORIES } from "@/lib/categories";
 import { revalidateProduct, revalidateAllProducts, PRODUCTS_TAG } from "@/lib/revalidate";
 
-jest.mock("next/cache", () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
+jest.mock("next/cache", () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn(), updateTag: jest.fn() }));
 
 function revalidatedPaths(): string[] {
   return jest.mocked(revalidatePath).mock.calls.map((call) => call[0]);
@@ -27,8 +27,18 @@ describe("lib/revalidate", () => {
           "/admin/products/hoekbank-milano",
         ]),
       );
-      expect(revalidateTag).toHaveBeenCalledWith(PRODUCTS_TAG, "max");
+      // Server Action (default): updateTag = direct vervallen, read-your-own-writes.
+      expect(updateTag).toHaveBeenCalledWith(PRODUCTS_TAG);
+      expect(revalidateTag).not.toHaveBeenCalled();
       expect(PRODUCTS_TAG).toBe("products");
+    });
+
+    it("laat de tag in background-modus (webhook/cron) direct vervallen, niet stale-while-revalidate", () => {
+      revalidateProduct({ slug: "x", category: "bedden" }, undefined, { mode: "background" });
+      expect(revalidateTag).toHaveBeenCalledWith(PRODUCTS_TAG, { expire: 0 });
+      expect(revalidateTag).not.toHaveBeenCalledWith(PRODUCTS_TAG, "max");
+      expect(updateTag).not.toHaveBeenCalled();
+      expect(revalidatedPaths()).toContain("/bedden/x");
     });
 
     it("ververst elk pad precies één keer", () => {
@@ -64,7 +74,13 @@ describe("lib/revalidate", () => {
       for (const c of CATEGORIES) expect(paths).toContain(`/${c.slug}`);
       expect(revalidatePath).toHaveBeenCalledWith("/[category]/[slug]", "page");
       expect(paths).toEqual(expect.arrayContaining(["/", "/sitemap.xml", "/feed/google-shopping.xml"]));
-      expect(revalidateTag).toHaveBeenCalledWith(PRODUCTS_TAG, "max");
+      expect(updateTag).toHaveBeenCalledWith(PRODUCTS_TAG);
+    });
+
+    it("gebruikt in background-modus revalidateTag met expire 0", () => {
+      revalidateAllProducts({ mode: "background" });
+      expect(revalidateTag).toHaveBeenCalledWith(PRODUCTS_TAG, { expire: 0 });
+      expect(updateTag).not.toHaveBeenCalled();
     });
   });
 });

@@ -175,7 +175,7 @@ describe("lib/jsonLd", () => {
       expect(offers.shippingDetails).not.toHaveProperty("deliveryTime.transitTime");
     });
 
-    it("bouwt een AggregateOffer bij maatvarianten", () => {
+    it("bouwt één Offer per maatvariant (eigen sku, prijs en ?maat=-URL), geen AggregateOffer", () => {
       const schema = buildProductJsonLd(
         makeProduct({
           price: 599,
@@ -187,7 +187,18 @@ describe("lib/jsonLd", () => {
         }),
         { url },
       );
-      expect(offersOf(schema)).toMatchObject({ "@type": "AggregateOffer", lowPrice: "599.00", highPrice: "799.00", offerCount: 3 });
+      const offers = schema.offers as Array<Record<string, unknown>>;
+      expect(Array.isArray(offers)).toBe(true);
+      expect(offers).toHaveLength(3);
+      expect(offers[1]).toMatchObject({
+        "@type": "Offer",
+        name: "160 × 200",
+        sku: "bed-oslo-160×200",
+        price: "699.00",
+        url: `${url}?maat=${encodeURIComponent("160 × 200")}`,
+        hasMerchantReturnPolicy: { returnFees: "https://schema.org/ReturnFeesCustomerResponsibility" },
+      });
+      expect(offers.map((o) => o.price)).toEqual(["599.00", "699.00", "799.00"]);
     });
 
     it("neemt alleen een echte EAN-13 op als gtin13 en laat het merk dan weg", () => {
@@ -223,13 +234,15 @@ describe("lib/jsonLd", () => {
       expect(schema).toMatchObject({
         "@type": ["LocalBusiness", "FurnitureStore"],
         "@id": `${businessInfo.siteUrl}/#organization`,
-        name: businessInfo.legalName,
-        alternateName: businessInfo.name,
+        name: businessInfo.name,
+        legalName: businessInfo.legalName,
         address: { streetAddress: businessInfo.address.street, postalCode: businessInfo.address.postalCode },
       });
+      expect(schema).not.toHaveProperty("priceRange");
+      expect(schema).not.toHaveProperty("taxID");
       if (businessInfo.btw) expect(schema.vatID).toBe(businessInfo.btw);
       else expect(schema).not.toHaveProperty("vatID");
-      if (businessInfo.kvk) expect(schema.taxID).toBe(businessInfo.kvk);
+      if (businessInfo.kvk) expect(schema.identifier).toEqual({ "@type": "PropertyValue", propertyID: "KvK", value: businessInfo.kvk });
       if (businessInfo.contact.phone) expect(schema.telephone).toBe(businessInfo.contact.phone);
       expect(Array.isArray(schema.openingHoursSpecification)).toBe(true);
       expect(schema.openingHoursSpecification).toEqual(

@@ -1,7 +1,8 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import { businessInfo, getFullAddress } from "@/lib/business-info";
-import { shippingInfo } from "@/lib/shipping-info";
+import { NEXT_STEP_AFTER_PAYMENT, shippingInfo } from "@/lib/shipping-info";
 import { captureError } from "@/lib/sentry";
+import { formatCents, toCents } from "@/lib/money";
 
 /**
  * E-mail via SMTP (server-only). Afzender en interne ontvanger zijn
@@ -22,6 +23,10 @@ import { captureError } from "@/lib/sentry";
 
 let transporter: Transporter | null | undefined;
 
+// Een hangende SMTP-verbinding mag een serverless-functie (webhook, cron,
+// server action) nooit tot de harde timeout vasthouden.
+const SMTP_TIMEOUT_MS = 10_000;
+
 function getTransporter(): Transporter | null {
   if (transporter !== undefined) return transporter;
   const host = process.env.SMTP_HOST;
@@ -37,6 +42,9 @@ function getTransporter(): Transporter | null {
     port,
     secure: port === 465, // 465 = impliciete SSL; 587 gebruikt STARTTLS
     auth: { user, pass },
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
   });
   return transporter;
 }
@@ -105,7 +113,8 @@ export function maskEmail(email: string): string {
   return `${local.slice(0, 1)}***@${domain}`;
 }
 
-const eur = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
+/** Bedrag in euro's → "€ 1.299,00" via centen (geen float-afronding in de mail). */
+const eur = (n: number) => formatCents(toCents(n));
 
 const phoneLine = businessInfo.contact.phoneFormatted ? ` of bel ${businessInfo.contact.phoneFormatted}` : "";
 
@@ -144,9 +153,9 @@ const button = (href: string, label: string) =>
 const h1 = (text: string) => `<h1 style="font-size:26px;line-height:1.3;font-weight:normal;color:#14110D;margin:0 0 20px 0;">${escapeHtml(text)}</h1>`;
 const p = (html: string) => `<p style="margin:0 0 16px 0;">${html}</p>`;
 
-// Concrete vervolgstap na betaling — één bron, gebruikt in mail en bedankpagina.
-export const NEXT_STEP_AFTER_PAYMENT =
-  "We bellen of mailen je binnen 2 werkdagen om de bezorging in te plannen.";
+// Vervolgstap na betaling staat in lib/shipping-info.ts (bron van waarheid);
+// hier opnieuw geëxporteerd voor bestaande imports (bedankpagina).
+export { NEXT_STEP_AFTER_PAYMENT };
 
 // ─── Templates ──────────────────────────────────────────────────────
 
@@ -201,8 +210,10 @@ function addressHtml(order: OrderMailData): string {
 
 /**
  * Orderbevestiging naar de klant + interne kopie naar info@.
- * Retourneert true als de KLANT-mail is verstuurd (de interne kopie is
- * best-effort en telt niet mee voor confirmationSentAt).
+ * Retourneert true als de KLANT-mail is verstuurd. De interne kopie gaat
+ * alléén na een geslaagde klantmail (best-effort, telt niet mee voor
+ * confirmationSentAt) — anders krijgt de winkel bij elke retry van de cron
+ * een nieuwe "Nieuwe bestelling"-mail terwijl de klant niets ontving.
  */
 export async function sendOrderConfirmation(order: OrderMailData): Promise<boolean> {
   const lines = orderLinesText(order);
@@ -248,8 +259,9 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     text,
     html,
   });
+  if (!sent) return false;
 
-  // Interne notificatie (best-effort, apart van het klantresultaat).
+  // Interne notificatie (best-effort, alleen na een geslaagde klantmail).
   await sendMail({
     to: INFO_EMAIL,
     subject: `Nieuwe bestelling ${order.orderNumber} — ${eur(order.total)}`,
@@ -265,7 +277,7 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     ].join("\n"),
     replyTo: order.email,
   });
-  return sent;
+  return true;
 }
 
 export type ShippingMailData = {

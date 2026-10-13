@@ -45,6 +45,11 @@ export default function PasswordForm() {
         </p>
       )}
 
+      <p className="text-base text-stone leading-relaxed">
+        Na het wijzigen word je direct uitgelogd en log je opnieuw in met je nieuwe wachtwoord. Ook sessies op andere
+        apparaten vervallen.
+      </p>
+
       <div className="flex items-center gap-3">
         <button
           type="submit"

@@ -1,11 +1,12 @@
 import type { MollieClient } from "@mollie/api-client";
+import { Prisma } from "@prisma/client";
 import { headers, cookies } from "next/headers";
 import { asPrismaMock } from "@/__tests__/helpers/prisma-mock";
 import { makeProduct, makeCustomer } from "@/__tests__/helpers/fixtures";
 import { prisma } from "@/lib/prisma";
 import { getMollie } from "@/lib/mollie";
 import { rateLimitIp } from "@/lib/rate-limit";
-import { captureError } from "@/lib/sentry";
+import { captureError, captureWarning } from "@/lib/sentry";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { toCents } from "@/lib/money";
@@ -32,7 +33,9 @@ jest.mock("@/lib/sentry", () => ({ captureError: jest.fn(), captureWarning: jest
 
 const db = asPrismaMock(prisma);
 const paymentsCreate = jest.fn();
+const paymentsGet = jest.fn();
 const CHECKOUT_URL = "https://www.mollie.com/checkout/select-method/abc123";
+const IDEMPOTENCY_KEY = "7f1c2a4e-5b6d-4c8e-9f0a-1b2c3d4e5f60";
 const ORIGINAL_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const bed = makeProduct({ id: "bed", name: "Bed Oslo", price: 599, stock: 5 });
@@ -57,8 +60,9 @@ describe("app/checkout/actions · createCheckout", () => {
     jest.mocked(headers).mockResolvedValue(new Headers({ host: "localhost:3000" }) as unknown as Awaited<ReturnType<typeof headers>>);
     jest.mocked(cookies).mockResolvedValue({ get: () => undefined } as unknown as Awaited<ReturnType<typeof cookies>>);
     jest.mocked(rateLimitIp).mockResolvedValue({ ok: true, retryAfter: 0 });
-    jest.mocked(getMollie).mockReturnValue({ payments: { create: paymentsCreate } } as unknown as MollieClient);
+    jest.mocked(getMollie).mockReturnValue({ payments: { create: paymentsCreate, get: paymentsGet } } as unknown as MollieClient);
     paymentsCreate.mockResolvedValue({ id: "tr_abc123", getCheckoutUrl: () => CHECKOUT_URL });
+    db.order.findUnique.mockResolvedValue(null);
     db.product.findMany.mockResolvedValue([bed, lamp]);
     db.order.create.mockResolvedValue({ id: "order_1", orderNumber: "MOK-261012-ABCDE", publicToken: "tok123" });
     db.order.update.mockResolvedValue({});
@@ -252,6 +256,94 @@ describe("app/checkout/actions · createCheckout", () => {
     expect(await createCheckout(validInput())).toEqual({ ok: true, url: CHECKOUT_URL });
     expect(captureError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ scope: "createCheckout.savePaymentId" }));
     expect(db.order.updateMany).not.toHaveBeenCalled();
+  });
+
+  describe("idempotentie, cookie-akkoord en honeypot", () => {
+    it("slaat idempotencyKey en analyticsConsent op de order op (consent default false)", async () => {
+      await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY, analyticsConsent: true }));
+      expect((db.order.create.mock.calls[0][0] as { data: Record<string, unknown> }).data).toMatchObject({
+        idempotencyKey: IDEMPOTENCY_KEY,
+        analyticsConsent: true,
+      });
+      await createCheckout(validInput());
+      expect((db.order.create.mock.calls[1][0] as { data: Record<string, unknown> }).data).toMatchObject({ idempotencyKey: null, analyticsConsent: false });
+    });
+
+    it("weigert een idempotencyKey die geen uuid is", async () => {
+      expect(await createCheckout(validInput({ idempotencyKey: "abc" }))).toMatchObject({ ok: false });
+      expect(db.order.create).not.toHaveBeenCalled();
+    });
+
+    it("geeft bij een herhaalde submit met dezelfde sleutel de bestaande open Mollie-checkout terug, zonder nieuwe order", async () => {
+      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "open", molliePaymentId: "tr_old" });
+      paymentsGet.mockResolvedValue({ status: "open", getCheckoutUrl: () => "https://www.mollie.com/checkout/select-method/old" });
+      const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
+      expect(result).toEqual({ ok: true, url: "https://www.mollie.com/checkout/select-method/old" });
+      expect(db.order.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { idempotencyKey: IDEMPOTENCY_KEY } }));
+      expect(paymentsGet).toHaveBeenCalledWith("tr_old");
+      expect(db.order.create).not.toHaveBeenCalled();
+      expect(paymentsCreate).not.toHaveBeenCalled();
+    });
+
+    it("maakt een nieuwe order als de bestaande niet meer open is en geeft de sleutel vrij", async () => {
+      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "expired", molliePaymentId: "tr_old" });
+      const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
+      expect(result).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(paymentsGet).not.toHaveBeenCalled();
+      expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "order_old", idempotencyKey: IDEMPOTENCY_KEY }, data: { idempotencyKey: null } });
+      expect((db.order.create.mock.calls[0][0] as { data: Record<string, unknown> }).data.idempotencyKey).toBe(IDEMPOTENCY_KEY);
+    });
+
+    it("maakt ook een nieuwe order als de oude Mollie-checkout niet meer open is", async () => {
+      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "open", molliePaymentId: "tr_old" });
+      paymentsGet.mockResolvedValue({ status: "expired", getCheckoutUrl: () => null });
+      expect(await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }))).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(db.order.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("vangt de race van twee gelijktijdige submits (P2002 op idempotencyKey) op zonder tweede order", async () => {
+      const unique = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+        meta: { target: ["idempotencyKey"] },
+      });
+      db.order.create.mockRejectedValue(unique);
+      // Eerste lookup: nog geen order (de andere submit is net bezig); na de botsing wél.
+      db.order.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: "order_other", orderNumber: "MOK-OTHER", status: "open", molliePaymentId: "tr_other" });
+      paymentsGet.mockResolvedValue({ status: "open", getCheckoutUrl: () => "https://www.mollie.com/checkout/select-method/other" });
+      const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
+      expect(result).toEqual({ ok: true, url: "https://www.mollie.com/checkout/select-method/other" });
+      expect(db.order.create).toHaveBeenCalledTimes(1); // géén retry op idempotencyKey-botsing
+      expect(paymentsCreate).not.toHaveBeenCalled();
+      expect(captureError).not.toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ scope: "createCheckout.order" }));
+    });
+
+    it("vraagt de klant even te wachten als de andere submit nog geen Mollie-betaling heeft", async () => {
+      db.order.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002", clientVersion: "test", meta: { target: ["idempotencyKey"] } }),
+      );
+      db.order.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: "o", orderNumber: "MOK-O", status: "open", molliePaymentId: null });
+      expect(await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }))).toMatchObject({ ok: false, message: expect.stringContaining("al verwerkt") });
+    });
+
+    it("weigert bij een gevulde honeypot zonder order of betaling, en logt dat", async () => {
+      expect(await createCheckout(validInput({ website: "https://spam.example" }))).toEqual({ ok: false, error: "Ongeldige gegevens", message: "Ongeldige gegevens" });
+      expect(db.order.create).not.toHaveBeenCalled();
+      expect(paymentsCreate).not.toHaveBeenCalled();
+      expect(captureWarning).toHaveBeenCalledWith(expect.stringContaining("honeypot"), expect.anything());
+    });
+
+    it("weigert NIET op een snelle of ontbrekende elapsedMs (betaalpad), maar logt het", async () => {
+      expect(await createCheckout(validInput({ elapsedMs: 500 }))).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(captureWarning).toHaveBeenCalledWith(expect.stringContaining("snelle submit"), { elapsedMs: 500 });
+      expect(await createCheckout(validInput())).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(captureWarning).toHaveBeenCalledWith(expect.stringContaining("elapsedMs ontbreekt"), { hasStartedAt: false });
+      jest.mocked(captureWarning).mockClear();
+      expect(await createCheckout(validInput({ elapsedMs: 15_000, website: "" }))).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(captureWarning).not.toHaveBeenCalled();
+    });
   });
 
   it("neemt de Google Ads click-id uit het formulier of de conversion-linker-cookie", async () => {

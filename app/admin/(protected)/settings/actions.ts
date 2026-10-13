@@ -3,7 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { auth, invalidatePasswordCache, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -105,6 +105,7 @@ export async function changePassword(
     return { fieldErrors: { current: "Huidig wachtwoord klopt niet" } };
   }
 
+  // Cost 12 — gelijk aan DUMMY_HASH in auth.ts en scripts/seed-admin.ts.
   const newHash = await bcrypt.hash(parsed.data.next, 12);
   try {
     await prisma.adminUser.update({
@@ -116,5 +117,10 @@ export async function changePassword(
     return { error: "Opslaan mislukt" };
   }
 
+  // De huidige sessie is nu óók ongeldig (pwdAt in het token < passwordChangedAt).
+  // Netjes uitloggen met uitleg i.p.v. een onverklaarde 401 bij de volgende
+  // klik; de cache in auth.ts legen zodat deze instance het meteen weet.
+  invalidatePasswordCache(userId);
+  await signOut({ redirectTo: "/admin/login?reason=password-changed" });
   return { ok: true };
 }

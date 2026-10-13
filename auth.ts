@@ -13,10 +13,50 @@ const credentialsSchema = z.object({
 });
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_EMAIL_MAX_FAILURES = 5;
 
 // Dummy-hash zodat een onbekend e-mailadres net zo lang duurt als een fout
-// wachtwoord (geen user-enumeratie via timing).
-const DUMMY_HASH = "$2b$10$XMq/yCZpNoiiZZb07mlqD.CXJLKgEMOXrlV6hjau.lsjYxcTFXmCC";
+// wachtwoord (geen user-enumeratie via timing). Zelfde cost (12) als de echte
+// hashes (settings/actions.ts, scripts/seed-admin.ts) — anders verraadt de
+// duur alsnog of het account bestaat.
+const DUMMY_HASH = "$2b$12$PnEKjsVsVeyiw8YzNvN9fuljIpMrHUTwsYaQrlYI0tovdb/kf9IBi";
+
+// ─── Mislukte inlogpogingen per e-mailadres ────────────────────────
+//
+// Alleen MISLUKTE pogingen tellen mee (een geslaagde login reset de teller),
+// zodat een beheerder die gewoon vaak inlogt zichzelf niet buitensluit. De
+// IP-bucket (rateLimitIp "auth") telt wél elke poging: die vangt floods.
+
+const emailFailKey = (email: string) => `auth:email-fail:${email.toLowerCase()}`;
+
+/**
+ * Is dit adres geblokkeerd door te veel mislukte pogingen? Leest alleen (telt
+ * niets op). Fail closed: zonder bereikbare database geen login.
+ */
+export async function isLoginEmailBlocked(email: string): Promise<boolean> {
+  try {
+    const row = await prisma.rateLimit.findUnique({ where: { key: emailFailKey(email) }, select: { count: true, resetAt: true } });
+    if (!row) return false;
+    return row.resetAt.getTime() > Date.now() && row.count >= LOGIN_EMAIL_MAX_FAILURES;
+  } catch (e) {
+    captureError(e, { scope: "auth.isLoginEmailBlocked" });
+    return true;
+  }
+}
+
+/** Telt een mislukte poging mee in de e-mailbucket (venster 15 min). */
+export async function recordFailedLogin(email: string): Promise<void> {
+  await rateLimit(emailFailKey(email), LOGIN_EMAIL_MAX_FAILURES, LOGIN_WINDOW_MS, { failClosed: true });
+}
+
+/** Geslaagde login: de teller van mislukte pogingen voor dit adres wissen. */
+export async function resetFailedLogins(email: string): Promise<void> {
+  try {
+    await prisma.rateLimit.deleteMany({ where: { key: emailFailKey(email) } });
+  } catch (e) {
+    captureError(e, { scope: "auth.resetFailedLogins" });
+  }
+}
 
 /**
  * passwordChangedAt per admin, kort gecached per serverless-instance zodat
@@ -25,6 +65,11 @@ const DUMMY_HASH = "$2b$10$XMq/yCZpNoiiZZb07mlqD.CXJLKgEMOXrlV6hjau.lsjYxcTFXmCC
  */
 const pwdCache = new Map<string, { at: number; value: number }>();
 const PWD_CACHE_MS = 30_000;
+
+/** Na een wachtwoordwijziging: de cache voor deze admin (op deze instance) legen. */
+export function invalidatePasswordCache(userId: string): void {
+  pwdCache.delete(userId);
+}
 
 async function passwordChangedAtMs(userId: string): Promise<number | null> {
   const cached = pwdCache.get(userId);
@@ -61,15 +106,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Bruteforce-bescherming ÍN authorize zelf: een directe POST op
         // /api/auth/callback/credentials omzeilt anders de limiet in de
         // login-action. Fail closed: zonder werkende limiter geen login.
-        const [byIp, byEmail] = await Promise.all([
+        const [byIp, emailBlocked] = await Promise.all([
           rateLimitIp("auth", 10, LOGIN_WINDOW_MS, { failClosed: true, headers: request.headers }),
-          rateLimit(`auth:email:${email}`, 5, LOGIN_WINDOW_MS, { failClosed: true }),
+          isLoginEmailBlocked(email),
         ]);
-        if (!byIp.ok || !byEmail.ok) return null;
+        if (!byIp.ok || emailBlocked) return null;
 
         const user = await prisma.adminUser.findUnique({ where: { email } });
         const ok = await bcrypt.compare(parsed.data.password, user?.passwordHash ?? DUMMY_HASH);
-        if (!user || !ok) return null;
+        if (!user || !ok) {
+          await recordFailedLogin(email);
+          return null;
+        }
+        await resetFailedLogins(email);
 
         return {
           id: user.id,

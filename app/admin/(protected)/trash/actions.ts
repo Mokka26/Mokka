@@ -5,9 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
-import { extractPublicId } from "@/lib/cloudinary-helpers";
-import { parseImages } from "@/lib/imageHelpers";
+import { collectReferencedCloudinaryIds, destroyCloudinaryAssets, publicIdsFromImages } from "@/lib/cloudinary-purge";
 import { revalidateAllProducts, revalidateProduct } from "@/lib/revalidate";
 import { logAdminError } from "../_lib/log";
 import { parseAdminImages } from "../_lib/images";
@@ -20,14 +18,9 @@ function isNotFound(e: unknown): boolean {
   return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
 }
 
-/** Cloudinary-asset weggooien; een fout is niet blokkerend maar wordt wél gelogd. */
-async function destroyAsset(publicId: string, context: string): Promise<void> {
-  try {
-    await cloudinary.uploader.destroy(publicId, { invalidate: true });
-  } catch (e) {
-    logAdminError(`${context}:cloudinary.destroy`, e, { publicId });
-  }
-}
+// Cloudinary-assets gaan ALTIJD via lib/cloudinary-purge.ts: eerst de DB-rij
+// weg, dan de assets, en nooit een asset die nog door een ander product
+// (kleurvariant, herstelbaar prullenbak-item) wordt gebruikt.
 
 // ─── Product: herstellen uit prullenbak ──────────────────────────────
 export async function restoreProduct(input: z.infer<typeof idSchema>): Promise<Result> {
@@ -78,17 +71,16 @@ export async function permanentlyDeleteProduct(input: z.infer<typeof idSchema>):
     };
   }
 
-  for (const img of parseImages(product.images)) {
-    const pid = extractPublicId(img.url);
-    if (pid) await destroyAsset(pid, "permanentlyDeleteProduct");
-  }
-
   try {
     await prisma.product.delete({ where: { id: product.id } });
   } catch (e) {
+    if (isNotFound(e)) return { ok: false, error: "Product niet gevonden" };
     logAdminError("permanentlyDeleteProduct", e, { id: product.id });
     return { ok: false, error: "Definitief verwijderen mislukt. Probeer het opnieuw." };
   }
+
+  // Rij is weg; nu de assets (gedeelde foto's van kleurvarianten blijven staan).
+  await destroyCloudinaryAssets(publicIdsFromImages(product.images), { context: "permanentlyDeleteProduct" });
 
   revalidatePath("/admin/products");
   revalidatePath("/admin/trash");
@@ -148,35 +140,26 @@ export async function emptyTrash(): Promise<EmptyResult> {
   if (!session?.user) return { ok: false, error: "Niet ingelogd" };
 
   try {
-    // Public-ids die nog door een NIET-verwijderd product gebruikt worden →
-    // nooit weggooien (gedeelde assets).
-    const live = await prisma.product.findMany({ where: { deletedAt: null }, select: { images: true } });
-    const liveIds = new Set<string>();
-    for (const p of live) {
-      for (const img of parseImages(p.images)) {
-        const pid = extractPublicId(img.url);
-        if (pid) liveIds.add(pid);
-      }
-    }
-
-    const destroy = async (pid: string | null) => {
-      if (!pid || liveIds.has(pid)) return;
-      await destroyAsset(pid, "emptyTrash");
-    };
-
-    // 1) Verwijderde producten + hun foto's. Producten mét bestelgeschiedenis
-    //    blijven soft-deleted (onDelete: Restrict beschermt de orderregels).
+    // 1) Verwijderde producten. Producten mét bestelgeschiedenis blijven
+    //    soft-deleted (onDelete: Restrict beschermt de orderregels).
     const purgeWhere = { deletedAt: { not: null }, orderItems: { none: {} } } as const;
-    const trashed = await prisma.product.findMany({ where: purgeWhere, select: { images: true } });
-    for (const p of trashed) {
-      for (const img of parseImages(p.images)) await destroy(extractPublicId(img.url));
-    }
-    const delProducts = await prisma.product.deleteMany({ where: purgeWhere });
+    const trashed = await prisma.product.findMany({ where: purgeWhere, select: { id: true, images: true } });
+    const trashedIds = trashed.map((p) => p.id);
+    const assetIds = trashed.flatMap((p) => publicIdsFromImages(p.images));
 
     // 2) Losse verwijderde foto's (DeletedImage-tabel)
     const dImgs = await prisma.deletedImage.findMany({ select: { publicId: true } });
-    for (const d of dImgs) await destroy(d.publicId);
-    const delImages = await prisma.deletedImage.deleteMany({});
+    for (const d of dImgs) assetIds.push(d.publicId);
+
+    // Eerst de rijen weg …
+    const [delProducts, delImages] = await prisma.$transaction([
+      prisma.product.deleteMany({ where: { id: { in: trashedIds } } }),
+      prisma.deletedImage.deleteMany({}),
+    ]);
+
+    // … dan de assets, behalve wat een overgebleven product nog gebruikt.
+    const referenced = await collectReferencedCloudinaryIds();
+    await destroyCloudinaryAssets(assetIds, { context: "emptyTrash", referenced });
 
     revalidatePath("/admin/trash");
     revalidateAllProducts();
@@ -197,14 +180,16 @@ export async function permanentlyDeleteImage(input: z.infer<typeof idSchema>): P
   const di = await prisma.deletedImage.findUnique({ where: { id: parsed.data.id } });
   if (!di) return { ok: false, error: "Niet gevonden" };
 
-  await destroyAsset(di.publicId, "permanentlyDeleteImage");
-
   try {
     await prisma.deletedImage.delete({ where: { id: di.id } });
   } catch (e) {
+    if (isNotFound(e)) return { ok: false, error: "Niet gevonden" };
     logAdminError("permanentlyDeleteImage", e, { id: di.id });
     return { ok: false, error: "Verwijderen mislukt. Probeer het opnieuw." };
   }
+
+  // Rij is weg; asset alleen weg als geen product (bv. een kleurvariant) 'm nog gebruikt.
+  await destroyCloudinaryAssets([di.publicId], { context: "permanentlyDeleteImage" });
 
   revalidatePath("/admin/trash");
   return { ok: true };

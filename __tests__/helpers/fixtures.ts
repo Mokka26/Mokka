@@ -113,6 +113,9 @@ export type DbOrder = {
   shippedAt: Date | null;
   adminNote: string | null;
   gclid: string | null;
+  idempotencyKey: string | null;
+  analyticsConsent: boolean;
+  archivedAt: Date | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -145,6 +148,9 @@ export function makeOrder(overrides: Partial<DbOrder> = {}): DbOrder {
     shippedAt: null,
     adminNote: null,
     gclid: null,
+    idempotencyKey: null,
+    analyticsConsent: false,
+    archivedAt: null,
     firstName: "Jan",
     lastName: "Jansen",
     email: "jan@example.com",

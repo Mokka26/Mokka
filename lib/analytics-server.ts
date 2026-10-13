@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { after } from "next/server";
 import { captureError } from "@/lib/sentry";
+import { shippingInfo } from "@/lib/shipping-info";
 
 // Server-side purchase naar GA4 via het Measurement Protocol — het vangnet
 // voor conversies die de browser mist (adblocker, bedankpagina niet geladen,
@@ -11,6 +12,10 @@ import { captureError } from "@/lib/sentry";
 //
 // Zonder GA4_API_SECRET of NEXT_PUBLIC_GA4_ID: no-op. Fouten gaan naar Sentry
 // (captureError) en breken nooit de betaalverwerking.
+//
+// Toestemming: de klant heeft bij het bestellen wel of niet de cookies
+// geaccepteerd (`Order.analyticsConsent`). Zonder akkoord sturen we NIETS —
+// ook geen server-side purchase; dat zou de cookiekeuze omzeilen.
 //
 // Beperking — client_id: GA4 ontdubbelt purchase-events op transaction_id
 // alleen binnen dezelfde client_id. De browser-purchase (PurchaseConversion)
@@ -40,6 +45,8 @@ export type ServerPurchaseOrder = {
   shipping: number;
   paymentMethod: string | null;
   paidAt: Date | null;
+  /** Cookie-akkoord op het moment van bestellen; zonder akkoord geen event. */
+  analyticsConsent: boolean;
   /** Bekend GA-client-id (uit de `_ga`-cookie) als dat ooit op de Order komt. */
   gaClientId?: string | null;
   items: ReadonlyArray<{ productId: string; productName: string; variantLabel: string | null; quantity: number; price: number }>;
@@ -69,7 +76,7 @@ export function buildPurchasePayload(order: ServerPurchaseOrder): Record<string,
     quantity: Math.max(1, Math.floor(it.quantity)),
   }));
   const value = items.length > 0 ? round2(items.reduce((s, it) => s + it.price * it.quantity, 0)) : round2(order.total - order.shipping);
-  const tax = round2(order.total - order.total / 1.21);
+  const tax = round2(order.total - order.total / (1 + shippingInfo.vatRatePercent / 100));
   const clientId = order.gaClientId?.trim() || deterministicClientId(order.publicToken || order.orderNumber);
   const eventName = order.gaClientId?.trim() ? "purchase" : SERVER_PURCHASE_EVENT;
   const at = order.paidAt ?? new Date();
@@ -97,11 +104,17 @@ export function buildPurchasePayload(order: ServerPurchaseOrder): Record<string,
   };
 }
 
+/** Alleen met cookie-akkoord én geconfigureerde GA4-koppeling versturen we iets. */
+export function shouldSendServerPurchase(order: Pick<ServerPurchaseOrder, "analyticsConsent">): boolean {
+  return order.analyticsConsent === true && isServerAnalyticsEnabled();
+}
+
 /**
  * Verstuurt de purchase naar GA4. Gooit nooit; retourneert of het gelukt is.
+ * Zonder cookie-akkoord (analyticsConsent) wordt niets verstuurd.
  */
 export async function sendServerPurchase(order: ServerPurchaseOrder): Promise<boolean> {
-  if (!isServerAnalyticsEnabled()) return false;
+  if (!shouldSendServerPurchase(order)) return false;
   try {
     const url = `${MP_ENDPOINT}?measurement_id=${encodeURIComponent(GA4_ID!)}&api_secret=${encodeURIComponent(API_SECRET!)}`;
     const res = await fetch(url, {
@@ -127,7 +140,7 @@ export async function sendServerPurchase(order: ServerPurchaseOrder): Promise<bo
  * een directe, niet-afgewachte aanroep.
  */
 export function queueServerPurchase(order: ServerPurchaseOrder): void {
-  if (!isServerAnalyticsEnabled()) return;
+  if (!shouldSendServerPurchase(order)) return;
   try {
     after(() => sendServerPurchase(order));
   } catch {

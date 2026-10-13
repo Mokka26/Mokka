@@ -17,7 +17,8 @@ type Props = {
 
 /**
  * Verwijderknop met bevestiging in de pagina (geen window.confirm). Voor een
- * betaalde bestelling moet het ordernummer getypt worden.
+ * betaalde bestelling moet het ordernummer getypt worden; die wordt dan
+ * gearchiveerd (bewaarplicht), niet verwijderd.
  */
 export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, variant = "icon" }: Props) {
   const [open, setOpen] = useState(false);
@@ -49,7 +50,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
         setError(res.error);
         return;
       }
-      toast.success(`Bestelling ${orderNumber} verwijderd`);
+      toast.success(res.archived ? `Bestelling ${orderNumber} gearchiveerd` : `Bestelling ${orderNumber} verwijderd`);
       if (redirectTo) router.push(redirectTo);
       else router.refresh();
       setOpen(false);
@@ -62,8 +63,8 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label={`Bestelling ${orderNumber} verwijderen`}
-          title="Verwijderen"
+          aria-label={paid ? `Bestelling ${orderNumber} archiveren` : `Bestelling ${orderNumber} verwijderen`}
+          title={paid ? "Archiveren" : "Verwijderen"}
           className="inline-flex items-center justify-center w-11 h-11 text-stone hover:text-error hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error transition-colors"
         >
           <Trash2 className="w-4 h-4" />
@@ -75,7 +76,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
           className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
-          Bestelling verwijderen
+          {paid ? "Bestelling archiveren" : "Bestelling verwijderen"}
         </button>
       )}
 
@@ -88,11 +89,11 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
         >
           <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="bg-white border border-line max-w-md w-full p-6 sm:p-8">
             <h3 id={titleId} className="font-serif text-2xl text-ink mb-3">
-              Bestelling {orderNumber} verwijderen?
+              Bestelling {orderNumber} {paid ? "archiveren" : "verwijderen"}?
             </h3>
             <p className="text-base text-stone leading-relaxed mb-5">
               {paid
-                ? "Dit is een betaalde bestelling. De bestelling en alle orderregels worden definitief verwijderd; de betaling bij Mollie blijft bestaan. Dit kan niet ongedaan gemaakt worden."
+                ? "Betaalde bestellingen worden gearchiveerd (bewaarplicht), niet verwijderd. De bestelling verdwijnt uit de lijst maar blijft bewaard; de betaling bij Mollie blijft bestaan."
                 : "De bestelling en alle orderregels worden definitief verwijderd. Dit kan niet ongedaan gemaakt worden."}
             </p>
 
@@ -135,7 +136,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
                 disabled={pending || !canConfirm}
                 className="flex-1 min-h-11 px-6 py-3 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-opacity disabled:opacity-50"
               >
-                {pending ? "Verwijderen…" : "Definitief verwijderen"}
+                {pending ? (paid ? "Archiveren…" : "Verwijderen…") : paid ? "Archiveren" : "Definitief verwijderen"}
               </button>
             </div>
           </div>

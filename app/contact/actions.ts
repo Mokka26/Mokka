@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimitIp } from "@/lib/rate-limit";
 import { sendMail, INFO_EMAIL } from "@/lib/email";
-import { captureError } from "@/lib/sentry";
+import { captureError, captureWarning } from "@/lib/sentry";
 
 // Geen regeleindes in velden die in een mail-header belanden (subject/naam):
 // voorkomt header-injectie.
@@ -12,12 +12,18 @@ const noCrlf = (s: string) => !/[\r\n]/.test(s);
 
 /**
  * Spam-bescherming zonder captcha (doelgroep 27-70: geen puzzels):
- *   - honeypot `website`: verborgen veld, moet leeg blijven;
- *   - `startedAt`: ms-epoch van het moment dat het formulier verscheen;
- *     een inzending binnen 3 s is een bot.
- * Beide velden zijn optioneel totdat de UI ze meestuurt.
+ *   - honeypot `website`: verborgen veld, moet leeg blijven → gevuld = bot;
+ *   - `elapsedMs`: door de CLIENT gemeten tijd (performance.now() sinds mount)
+ *     tussen tonen en versturen; onder 2,5 s is een bot. Bewust geen
+ *     vergelijking met de serverklok: een afwijkende klantklok (het oude
+ *     `startedAt`-epoch) liet echte berichten stil verdwijnen.
+ *   - `startedAt` wordt nog geaccepteerd als legacy-veld maar is géén bron
+ *     van waarheid meer.
+ * Ontbreekt `elapsedMs`, dan loggen we dat als verdacht (captureWarning) maar
+ * weigeren we niet. Een bot krijgt "ok" terug zonder opslag of mail — en dat
+ * wordt altijd gelogd, nooit stil.
  */
-const MIN_FILL_MS = 3000;
+const MIN_FILL_MS = 2500;
 
 const schema = z.object({
   name: z.string().trim().min(2, "Vul je naam in").max(80).refine(noCrlf, "Ongeldige naam"),
@@ -34,13 +40,17 @@ const schema = z.object({
   subject: z.string().trim().max(60).refine(noCrlf, "Ongeldig onderwerp").optional(),
   message: z.string().trim().min(5, "Schrijf een bericht").max(2000),
   website: z.string().max(200).optional(),
+  elapsedMs: z.number().finite().nonnegative().optional(),
   startedAt: z.number().int().nonnegative().optional(),
 });
 
-function looksLikeBot(input: { website?: string; startedAt?: number }): boolean {
-  if (input.website && input.website.trim() !== "") return true;
-  if (typeof input.startedAt === "number" && Date.now() - input.startedAt < MIN_FILL_MS) return true;
-  return false;
+type SpamSignals = { website?: string; elapsedMs?: number; startedAt?: number };
+
+/** Reden waarom de inzending als bot geldt, of null als ze er menselijk uitziet. */
+function botReason(input: SpamSignals): string | null {
+  if (input.website && input.website.trim() !== "") return "honeypot";
+  if (typeof input.elapsedMs === "number" && input.elapsedMs < MIN_FILL_MS) return "too-fast";
+  return null;
 }
 
 export async function submitContact(input: unknown): Promise<{ ok: boolean; error?: string }> {
@@ -48,8 +58,17 @@ export async function submitContact(input: unknown): Promise<{ ok: boolean; erro
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Controleer je gegevens" };
 
   // Bots krijgen een "ok" terug (geen signaal dat ze ontdekt zijn) — zonder
-  // opslag of mail.
-  if (looksLikeBot(parsed.data)) return { ok: true };
+  // opslag of mail. Nooit stil: elke drop staat in Sentry.
+  const reason = botReason(parsed.data);
+  if (reason) {
+    captureWarning("Contactformulier: inzending als bot genegeerd", { reason, elapsedMs: parsed.data.elapsedMs ?? null });
+    return { ok: true };
+  }
+  if (parsed.data.elapsedMs === undefined) {
+    captureWarning("Contactformulier: elapsedMs ontbreekt (verdacht, wel verwerkt)", {
+      hasStartedAt: parsed.data.startedAt !== undefined,
+    });
+  }
 
   const rl = await rateLimitIp("contact", 5, 10 * 60 * 1000);
   if (!rl.ok) return { ok: false, error: "Te veel berichten verstuurd. Probeer het later opnieuw." };

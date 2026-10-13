@@ -114,29 +114,53 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
 
   // Server-side GA4-purchase (Measurement Protocol) — zelfde voorwaarde als de
   // bevestigingsmail: alleen de claimende invocatie komt hier, dus precies één
-  // keer per order. Fire-and-forget; fouten gaan naar Sentry, nooit naar de
-  // klant. Bewust NIET gekoppeld aan confirmationSentAt/resend: een mislukte
-  // mail mag geen tweede conversie opleveren.
-  queueServerPurchase({ ...order, paidAt, paymentMethod });
+  // keer per order. Uitsluitend met cookie-akkoord van de klant
+  // (Order.analyticsConsent); zonder akkoord geen event. Fire-and-forget;
+  // fouten gaan naar Sentry, nooit naar de klant. Bewust NIET gekoppeld aan
+  // confirmationSentAt/resend: een mislukte mail mag geen tweede conversie
+  // opleveren.
+  if (order.analyticsConsent === true) queueServerPurchase({ ...order, paidAt, paymentMethod });
 
   // Bevestiging NA de transactie — precies één keer (alleen de claimende
-  // invocatie komt hier). Mislukt de mail, dan blijft confirmationSentAt null
-  // en probeert resendPendingConfirmations() het later opnieuw.
-  await sendConfirmationAndMark({ ...order, status: "paid", paidAt, paymentMethod });
+  // invocatie komt hier). Mislukt de mail, dan gaat confirmationSentAt terug
+  // naar null en probeert resendPendingConfirmations() het later opnieuw.
+  await claimAndSendConfirmation({ ...order, status: "paid", paidAt, paymentMethod });
   return "paid";
 }
 
 type OrderWithItems = Prisma.OrderGetPayload<{ include: { items: true } }>;
 
-async function sendConfirmationAndMark(order: OrderWithItems): Promise<boolean> {
+/**
+ * Verstuurt de bevestiging precies één keer: eerst een atomaire claim op
+ * confirmationSentAt (alleen de aanroep die de kolom van null naar nu flipt,
+ * count === 1, mailt), dan de mail. Mislukt de mail, dan wordt de claim
+ * teruggedraaid zodat de reconcile-cron het later opnieuw probeert.
+ */
+async function claimAndSendConfirmation(order: OrderWithItems): Promise<boolean> {
+  let claimed = false;
   try {
+    const claim = await prisma.order.updateMany({
+      where: { id: order.id, confirmationSentAt: null },
+      data: { confirmationSentAt: new Date() },
+    });
+    if (claim.count !== 1) return false;
+    claimed = true;
     const sent = await sendOrderConfirmation(order);
-    if (!sent) return false;
-    await prisma.order.update({ where: { id: order.id }, data: { confirmationSentAt: new Date() } });
-    return true;
+    if (sent) return true;
+    await releaseConfirmationClaim(order.id);
+    return false;
   } catch (e) {
     captureError(e, { scope: "orderConfirmation", orderNumber: order.orderNumber });
+    if (claimed) await releaseConfirmationClaim(order.id);
     return false;
+  }
+}
+
+async function releaseConfirmationClaim(orderId: string): Promise<void> {
+  try {
+    await prisma.order.updateMany({ where: { id: orderId }, data: { confirmationSentAt: null } });
+  } catch (e) {
+    captureError(e, { scope: "orderConfirmation.release", orderId });
   }
 }
 
@@ -146,7 +170,9 @@ async function revalidateStockPages(productIds: string[]): Promise<void> {
       where: { id: { in: [...new Set(productIds)] } },
       select: { slug: true, category: true },
     });
-    for (const p of products) revalidateProduct(p);
+    // Webhook/cron: geen Server Action, dus de tag direct laten vervallen via
+    // revalidateTag(…, { expire: 0 }) i.p.v. updateTag.
+    for (const p of products) revalidateProduct(p, undefined, { mode: "background" });
   } catch (e) {
     captureError(e, { scope: "revalidateStockPages", productIds });
   }
@@ -225,23 +251,30 @@ export async function reconcileOpenOrders(olderThanMinutes: number): Promise<Rec
   return result;
 }
 
+/** Pas na deze wachttijd neemt de cron een order over van de live sync (die is dan zeker klaar). */
+const RESEND_GRACE_MS = 10 * 60 * 1000;
+
 /**
  * Verstuurt alsnog de bevestiging voor betaalde orders zonder
  * confirmationSentAt (SMTP was even stuk, of de run brak af na de transactie).
- * Max 20 per run. Alleen orders die ná de invoering van paidAt betaald zijn en
- * hooguit 7 dagen oud — oudere/legacy-orders kregen hun mail al via het oude pad.
+ * Max 20 per run. Alleen orders die minstens 10 minuten geleden betaald zijn
+ * (zodat de webhook/retourpagina-sync niet tegelijk dezelfde mail stuurt) en
+ * hooguit 7 dagen oud — oudere/legacy-orders kregen hun mail al via het oude
+ * pad. De claim op confirmationSentAt is atomair: één mail per order.
  */
 export async function resendPendingConfirmations(): Promise<{ attempted: number; sent: number }> {
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const now = Date.now();
+  const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+  const graceCutoff = new Date(now - RESEND_GRACE_MS);
   const orders = await prisma.order.findMany({
-    where: { status: "paid", confirmationSentAt: null, paidAt: { gte: weekAgo } },
+    where: { status: "paid", confirmationSentAt: null, paidAt: { gte: weekAgo, lt: graceCutoff } },
     include: { items: true },
     orderBy: { paidAt: "asc" },
     take: 20,
   });
   let sent = 0;
   for (const order of orders) {
-    if (await sendConfirmationAndMark(order)) sent += 1;
+    if (await claimAndSendConfirmation(order)) sent += 1;
   }
   return { attempted: orders.length, sent };
 }

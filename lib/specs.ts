@@ -162,9 +162,12 @@ function round1(n: number): number {
  */
 export function parseDimensions(text: string | null | undefined, category?: string): Dimensions | null {
   if (!text) return null;
+  // "x", "X" en "*" alleen als maal-teken lezen: direct na een getal en vóór
+  // een getal of een maat-letter (B/D/H/L/W/Ø). Zo blijft de x in woorden
+  // ("Box", "max", "Luxe") staan en wordt "120x60" of "B120xD60" wel begrepen.
   let s = text
     .replace(/(\d),(\d)/g, "$1.$2")
-    .replace(/[×xX*]/g, "×")
+    .replace(/(\d)\s*[xX*]\s*(?=\d|[⌀∅øØ]|[BDHLWbdhlw](?![a-z]))/g, "$1×")
     .replace(/[⌀∅ø]/g, "Ø")
     .replace(/cm/gi, " ")
     .replace(/\s+/g, " ")

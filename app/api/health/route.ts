@@ -15,8 +15,12 @@ export const revalidate = 0;
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
-const CLOUDINARY_PROBE =
-  `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "diaksxzey"}/image/upload/w_10,q_auto/v1/mokka/health-probe.jpg`;
+// Geen hardcoded cloud-naam als fallback: zonder env-var is Cloudinary niet
+// geconfigureerd en meldt de check dat (i.p.v. stil een andere account te pingen).
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_PROBE = CLOUD_NAME
+  ? `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_10,q_auto/v1/mokka/health-probe.jpg`
+  : null;
 
 async function timed<T>(fn: () => Promise<T>): Promise<{ ok: boolean; ms: number; value?: T }> {
   const t0 = Date.now();
@@ -29,11 +33,25 @@ async function timed<T>(fn: () => Promise<T>): Promise<{ ok: boolean; ms: number
   }
 }
 
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("timeout")), ms);
-    p.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("timeout")), ms);
   });
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+type CloudinaryProbe = { configured: boolean; status?: number; reachable: boolean };
+
+async function probeCloudinary(): Promise<CloudinaryProbe> {
+  if (!CLOUDINARY_PROBE) return { configured: false, reachable: false };
+  const r = await fetch(CLOUDINARY_PROBE, { method: "HEAD", signal: AbortSignal.timeout(5000) });
+  // 404 is OK — betekent Cloudinary bereikbaar, alleen probe niet bestaand
+  return { configured: true, status: r.status, reachable: r.status < 500 };
 }
 
 export async function GET(req: NextRequest) {
@@ -45,14 +63,11 @@ export async function GET(req: NextRequest) {
 
   const [productCount, cloudinary] = await Promise.all([
     timed(() => prisma.product.count({ where: { hidden: false, deletedAt: null } })),
-    timed(async () => {
-      const r = await fetch(CLOUDINARY_PROBE, { method: "HEAD", signal: AbortSignal.timeout(5000) });
-      // 404 is OK — betekent Cloudinary bereikbaar, alleen probe niet bestaand
-      return { status: r.status, reachable: r.status < 500 };
-    }),
+    timed(probeCloudinary),
   ]);
 
-  const allOk = db.ok && productCount.ok && cloudinary.ok && cloudinary.value?.reachable === true;
+  const cloudinaryOk = cloudinary.ok && cloudinary.value?.reachable === true;
+  const allOk = db.ok && productCount.ok && cloudinaryOk;
 
   return NextResponse.json(
     {
@@ -62,7 +77,8 @@ export async function GET(req: NextRequest) {
         db: { ok: db.ok, ms: db.ms },
         products: { ok: productCount.ok, ms: productCount.ms, count: productCount.value },
         cloudinary: {
-          ok: cloudinary.ok && cloudinary.value?.reachable === true,
+          ok: cloudinaryOk,
+          configured: cloudinary.value?.configured ?? Boolean(CLOUD_NAME),
           ms: cloudinary.ms,
           status: cloudinary.value?.status,
         },

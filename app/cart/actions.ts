@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { priceLine } from "@/lib/orders";
 import { firstImageUrl } from "@/lib/imageHelpers";
+import { rateLimitIp } from "@/lib/rate-limit";
 import { captureError } from "@/lib/sentry";
 
 /**
@@ -31,10 +32,12 @@ export type CartSnapshotInput = z.input<typeof inputSchema>;
 export type CartSnapshotLine = {
   /** Zoals meegestuurd — om de regel in de client terug te vinden. */
   key: { productId?: string; slug?: string; variantLabel: string | null; nachtkast: number; voetbank: number };
-  /** false = product bestaat niet (meer), is verborgen of verwijderd → regel verwijderen. */
+  /**
+   * false = product bestaat niet (meer), is verborgen of verwijderd → regel
+   * verwijderen. Alle andere velden zijn dan null/0: een verborgen product
+   * lekt geen naam, slug of foto via deze actie.
+   */
   available: boolean;
-  hidden: boolean;
-  deleted: boolean;
   /** false = de gekozen maat bestaat niet meer → klant moet opnieuw kiezen. */
   variantValid: boolean;
   productId: string | null;
@@ -55,14 +58,19 @@ export type CartSnapshotLine = {
 /**
  * `getCartSnapshot(items)` → actuele prijs/voorraad/zichtbaarheid per regel,
  * in dezelfde volgorde als de input. Verborgen of verwijderde producten komen
- * terug met available:false (nooit met prijs), zodat de UI de regel kan
- * verwijderen of markeren.
+ * terug als `{ key, available: false }` (zonder naam, slug, foto of prijs),
+ * zodat de UI de regel kan verwijderen zonder dat de actie iets verraadt
+ * over niet-gepubliceerde producten.
  */
 export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSnapshotLine[]> {
   const parsed = inputSchema.safeParse(items);
   if (!parsed.success) return [];
   const input = parsed.data;
   if (input.length === 0) return [];
+
+  // Elke aanroep is een DB-query met tot 50 producten: begrensd per IP.
+  const rl = await rateLimitIp("cart-snapshot", 60, 60_000);
+  if (!rl.ok) return [];
 
   const ids = [...new Set(input.flatMap((i) => (i.productId ? [i.productId] : [])))];
   const slugs = [...new Set(input.flatMap((i) => (!i.productId && i.slug ? [i.slug] : [])))];
@@ -97,29 +105,23 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
       nachtkast: i.nachtkast ?? 0,
       voetbank: i.voetbank ?? 0,
     };
-    const p = (i.productId ? byId.get(i.productId) : undefined) ?? (i.slug ? bySlug.get(i.slug) : undefined);
-    const empty: CartSnapshotLine = {
-      key, available: false, hidden: false, deleted: false, variantValid: false,
+    const unavailable: CartSnapshotLine = {
+      key, available: false, variantValid: false,
       productId: null, slug: null, name: null, category: null, image: null,
       price: null, basePrice: null, listPrice: null, stock: 0, label: null,
     };
-    if (!p) return empty;
+    const p = (i.productId ? byId.get(i.productId) : undefined) ?? (i.slug ? bySlug.get(i.slug) : undefined);
+    // Onbekend, verborgen of verwijderd: alléén { key, available: false }.
+    if (!p || p.hidden || p.deletedAt !== null) return unavailable;
 
-    const deleted = p.deletedAt !== null;
-    const available = !p.hidden && !deleted;
-    const base = { ...empty, productId: p.id, slug: p.slug, name: p.name, category: p.category, image: firstImageUrl(p.images), hidden: p.hidden, deleted, stock: p.stock };
-    if (!available) return base;
-
-    const priced = priceLine(p, i);
-    if (!priced.ok) return { ...base, available: true, variantValid: false, basePrice: p.price, listPrice: p.listPrice };
-    return {
-      ...base,
+    const base: CartSnapshotLine = {
+      ...unavailable,
       available: true,
-      variantValid: true,
-      price: priced.unitCents / 100,
-      basePrice: p.price,
-      listPrice: p.listPrice,
-      label: priced.fullLabel,
+      productId: p.id, slug: p.slug, name: p.name, category: p.category, image: firstImageUrl(p.images),
+      stock: p.stock, basePrice: p.price, listPrice: p.listPrice,
     };
+    const priced = priceLine(p, i);
+    if (!priced.ok) return base;
+    return { ...base, variantValid: true, price: priced.unitCents / 100, label: priced.fullLabel };
   });
 }

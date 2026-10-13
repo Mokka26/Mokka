@@ -6,25 +6,30 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
 import { sendNewsletterConfirmation } from "@/lib/email";
 import { businessInfo } from "@/lib/business-info";
-import { captureError } from "@/lib/sentry";
+import { captureError, captureWarning } from "@/lib/sentry";
 
 /**
  * Nieuwsbrief-aanmelding met double opt-in:
- *   1. aanmelding → confirmToken + bevestigingsmail met link naar
- *      /nieuwsbrief/bevestigen?token=…
- *   2. klik → confirmedAt gezet, welkomstmail + melding naar info@
- *      (app/nieuwsbrief/bevestigen/page.tsx).
- * Niet-bevestigde aanmeldingen worden na 7 dagen opgeruimd (cron/cleanup).
+ *   1. aanmelding → confirmToken (+ confirmTokenAt) + bevestigingsmail met
+ *      link naar /nieuwsbrief/bevestigen?token=…
+ *   2. de klant klikt op die pagina op "Bevestig mijn aanmelding" (POST,
+ *      app/nieuwsbrief/bevestigen/actions.ts) → confirmedAt gezet,
+ *      welkomstmail + melding naar info@.
+ * Niet-bevestigde aanmeldingen en verlopen tokens worden na 7 dagen
+ * opgeruimd (cron/cleanup).
  *
- * Spam-bescherming: honeypot `website` (moet leeg zijn) en `startedAt`
- * (ms-epoch; inzending < 3 s = bot). Beide optioneel totdat de UI ze stuurt.
+ * Spam-bescherming: honeypot `website` (moet leeg zijn) en `elapsedMs`
+ * (client-gemeten ms sinds het formulier verscheen; < 2,5 s = bot). Het
+ * oude `startedAt`-epoch wordt nog geaccepteerd maar niet meer tegen de
+ * serverklok gehouden. Ontbreekt `elapsedMs` → loggen, niet weigeren.
  * Compatibel: `subscribeNewsletter("mail@…")` blijft werken.
  */
-const MIN_FILL_MS = 3000;
+const MIN_FILL_MS = 2500;
 
 const inputSchema = z.object({
   email: z.string().trim().email("Ongeldig e-mailadres").max(120),
   website: z.string().max(200).optional(),
+  elapsedMs: z.number().finite().nonnegative().optional(),
   startedAt: z.number().int().nonnegative().optional(),
 });
 
@@ -35,11 +40,17 @@ const GENERIC_ERROR = "Er ging iets mis. Probeer het later opnieuw.";
 export async function subscribeNewsletter(input: NewsletterInput): Promise<{ ok: boolean; error?: string }> {
   const parsed = inputSchema.safeParse(typeof input === "string" ? { email: input } : input);
   if (!parsed.success) return { ok: false, error: "Vul een geldig e-mailadres in" };
-  const { email, website, startedAt } = parsed.data;
+  const { email, website, elapsedMs, startedAt } = parsed.data;
 
-  // Bots krijgen "ok" (geen signaal), zonder opslag of mail.
-  if (website && website.trim() !== "") return { ok: true };
-  if (typeof startedAt === "number" && Date.now() - startedAt < MIN_FILL_MS) return { ok: true };
+  // Bots krijgen "ok" (geen signaal), zonder opslag of mail — altijd gelogd.
+  const botReason = website && website.trim() !== "" ? "honeypot" : typeof elapsedMs === "number" && elapsedMs < MIN_FILL_MS ? "too-fast" : null;
+  if (botReason) {
+    captureWarning("Nieuwsbrief: aanmelding als bot genegeerd", { reason: botReason, elapsedMs: elapsedMs ?? null });
+    return { ok: true };
+  }
+  if (elapsedMs === undefined) {
+    captureWarning("Nieuwsbrief: elapsedMs ontbreekt (verdacht, wel verwerkt)", { hasStartedAt: startedAt !== undefined });
+  }
 
   const addr = email.toLowerCase();
   // Per IP én per adres: voorkomt dat iemand een ander adres bestookt met
@@ -57,10 +68,11 @@ export async function subscribeNewsletter(input: NewsletterInput): Promise<{ ok:
     if (existing?.confirmedAt && !existing.unsubscribedAt) return { ok: true };
 
     const confirmToken = randomBytes(24).toString("hex");
+    const confirmTokenAt = new Date();
     await prisma.newsletterSubscriber.upsert({
       where: { email: addr },
-      create: { email: addr, confirmToken },
-      update: { confirmToken },
+      create: { email: addr, confirmToken, confirmTokenAt },
+      update: { confirmToken, confirmTokenAt },
     });
 
     const base = (process.env.NEXT_PUBLIC_BASE_URL || businessInfo.siteUrl).replace(/\/$/, "");

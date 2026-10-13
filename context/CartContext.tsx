@@ -274,23 +274,34 @@ export function applyCartSnapshot(snapshot: ReadonlyArray<CartSnapshotLine>, req
   return changes;
 }
 
-/** Haalt de actuele server-staat op en past die toe. Faalt stil (netwerk). */
+let inflightSync: Promise<CartSyncChange[]> | null = null;
+
+/**
+ * Haalt de actuele server-staat op en past die toe. Faalt stil (netwerk).
+ * Gelijktijdige aanroepen (twee effects, StrictMode) delen één request.
+ */
 export async function syncCart(): Promise<CartSyncChange[]> {
   if (items.length === 0) return [];
+  if (inflightSync) return inflightSync;
   const requested = items;
-  try {
-    const snapshot = await getCartSnapshot(
-      requested.map((i) => ({
-        productId: i.productId,
-        variantLabel: i.variantLabel,
-        nachtkast: i.nachtkast,
-        voetbank: i.voetbank,
-      })),
-    );
-    return applyCartSnapshot(snapshot, requested);
-  } catch {
-    return [];
-  }
+  inflightSync = (async () => {
+    try {
+      const snapshot = await getCartSnapshot(
+        requested.map((i) => ({
+          productId: i.productId,
+          variantLabel: i.variantLabel,
+          nachtkast: i.nachtkast,
+          voetbank: i.voetbank,
+        })),
+      );
+      return applyCartSnapshot(snapshot, requested);
+    } catch {
+      return [];
+    } finally {
+      inflightSync = null;
+    }
+  })();
+  return inflightSync;
 }
 
 /** Toont de sync-meldingen als toasts (één per wijziging). */
@@ -304,7 +315,11 @@ export function announceCartChanges(changes: CartSyncChange[]) {
 /**
  * Synchroniseert de winkelwagen één keer per pagina-bezoek met de server
  * (gebruik op /cart en /checkout). Wacht tot de wagen uit localStorage is
- * gehydrateerd.
+ * gehydrateerd. De meldingen worden óók getoond als de component intussen
+ * ontkoppeld is (bv. snelle navigatie cart → checkout): de wagen is dan wél
+ * aangepast en de klant moet dat weten. De ran-vlag gaat in de cleanup terug
+ * zodat een volgende mount opnieuw synct; dubbele requests (StrictMode) delen
+ * via syncCart één aanroep.
  */
 export function useCartSync(enabled = true) {
   const currentItems = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -312,12 +327,13 @@ export function useCartSync(enabled = true) {
   useEffect(() => {
     if (!enabled || ran.current || currentItems.length === 0) return;
     ran.current = true;
-    let active = true;
-    syncCart().then((changes) => {
-      if (active) announceCartChanges(changes);
-    });
+    const run = async () => {
+      const changes = await syncCart();
+      announceCartChanges(changes);
+    };
+    void run();
     return () => {
-      active = false;
+      ran.current = false;
     };
   }, [enabled, currentItems.length]);
 }

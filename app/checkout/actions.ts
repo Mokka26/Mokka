@@ -10,7 +10,7 @@ import { computeOrder, generateOrderNumber, generatePublicToken, type CheckoutLi
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { rateLimitIp } from "@/lib/rate-limit";
-import { captureError } from "@/lib/sentry";
+import { captureError, captureWarning } from "@/lib/sentry";
 
 // ─── Validatie ──────────────────────────────────────────────────────
 
@@ -45,8 +45,25 @@ const customerSchema = z
     }
   });
 
+// Spam-signalen (zelfde contract als contact/nieuwsbrief): honeypot
+// `website` moet leeg zijn; `elapsedMs` is de door de client gemeten tijd
+// (performance.now() sinds mount). Bij de checkout weigeren we alleen op de
+// honeypot — een te snelle submit wordt gelogd maar niet geweigerd, zodat
+// een klant met autofill nooit geblokkeerd raakt op het betaalpad.
+const MIN_FILL_MS = 2500;
+
 const checkoutSchema = z.object({
   customer: customerSchema,
+  // Door de client per checkout-poging gegenereerde uuid. Een herhaalde submit
+  // (dubbelklik, retry na netwerkfout) met dezelfde sleutel hergebruikt de
+  // open order en de bestaande Mollie-checkout i.p.v. een tweede order.
+  idempotencyKey: z.string().uuid().optional(),
+  // Cookie-akkoord op het moment van bestellen; bepaalt of de server-side
+  // GA4-purchase verstuurd mag worden (lib/analytics-server.ts).
+  analyticsConsent: z.boolean().default(false),
+  website: z.string().max(200).optional(),
+  elapsedMs: z.number().finite().nonnegative().optional(),
+  startedAt: z.number().int().nonnegative().optional(),
   // Het bedrag dat de klant op het scherm zag (subtotaal excl. verzending) —
   // puur ter controle. De server rekent zelf het echte totaal uit.
   expectedTotal: z.number().nonnegative().optional(),
@@ -147,7 +164,15 @@ type OrderDraft = {
   customer: z.infer<typeof customerSchema>;
   computed: Awaited<ReturnType<typeof computeOrder>>;
   gclid: string | null;
+  idempotencyKey: string | null;
+  analyticsConsent: boolean;
 };
+
+function isUniqueViolation(e: unknown, field: string): boolean {
+  if (!(e instanceof Prisma.PrismaClientKnownRequestError) || e.code !== "P2002") return false;
+  const target = (e.meta as { target?: unknown } | undefined)?.target;
+  return Array.isArray(target) ? target.includes(field) : typeof target === "string" && target.includes(field);
+}
 
 /** Order + regels opslaan; bij een ordernummer-/token-botsing (P2002) één retry. */
 async function createOrderRecord(draft: OrderDraft) {
@@ -162,6 +187,8 @@ async function createOrderRecord(draft: OrderDraft) {
           status: "open",
           ...draft.customer,
           gclid: draft.gclid,
+          idempotencyKey: draft.idempotencyKey,
+          analyticsConsent: draft.analyticsConsent,
           items: {
             create: draft.computed.lines.map((l) => ({
               productId: l.productId,
@@ -174,12 +201,41 @@ async function createOrderRecord(draft: OrderDraft) {
         },
       });
     } catch (e) {
+      // Botsing op ordernummer/token: één keer opnieuw met verse waarden. Een
+      // botsing op idempotencyKey is géén toeval (tweede submit won de race)
+      // en wordt door de aanroeper afgehandeld.
       const unique = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
-      if (unique && attempt === 0) continue;
+      if (unique && attempt === 0 && !isUniqueViolation(e, "idempotencyKey")) continue;
       throw e;
     }
   }
   throw new Error("createOrderRecord: onbereikbaar");
+}
+
+/**
+ * Bestaande open order met deze idempotencyKey waarvan de Mollie-checkout nog
+ * open is → de bestaande betaal-URL. Anders null (dan maken we een nieuwe
+ * order; een oude, niet meer herbruikbare order raakt zijn sleutel kwijt).
+ */
+async function findReusableCheckout(key: string): Promise<{ orderId: string; url: string } | null> {
+  const existing = await prisma.order.findUnique({
+    where: { idempotencyKey: key },
+    select: { id: true, orderNumber: true, status: true, molliePaymentId: true },
+  });
+  if (!existing) return null;
+  if (existing.status === "open" && existing.molliePaymentId) {
+    try {
+      const payment = await getMollie().payments.get(existing.molliePaymentId);
+      const url = payment.getCheckoutUrl();
+      if (payment.status === "open" && url) return { orderId: existing.id, url };
+    } catch (e) {
+      captureError(e, { scope: "createCheckout.reuse", orderNumber: existing.orderNumber });
+    }
+  }
+  // Niet herbruikbaar (betaald, mislukt, verlopen, of zonder betaling): de
+  // sleutel vrijgeven zodat de nieuwe order hem kan dragen.
+  await prisma.order.updateMany({ where: { id: existing.id, idempotencyKey: key }, data: { idempotencyKey: null } });
+  return null;
 }
 
 export async function createCheckout(input: unknown): Promise<CheckoutResult> {
@@ -192,7 +248,29 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   const rl = await rateLimitIp("checkout", 15, 10 * 60 * 1000);
   if (!rl.ok) return fail("Te veel pogingen. Wacht even en probeer opnieuw.");
 
-  const { customer, items, expectedTotal, method } = parsed.data;
+  const { customer, items, expectedTotal, method, idempotencyKey, analyticsConsent } = parsed.data;
+
+  // Honeypot gevuld = bot: geen order, geen Mollie-betaling. Nooit stil.
+  if (parsed.data.website && parsed.data.website.trim() !== "") {
+    captureWarning("Checkout: honeypot gevuld, geweigerd", { items: items.length });
+    return fail("Ongeldige gegevens");
+  }
+  if (typeof parsed.data.elapsedMs === "number" && parsed.data.elapsedMs < MIN_FILL_MS) {
+    captureWarning("Checkout: verdacht snelle submit (wel verwerkt)", { elapsedMs: parsed.data.elapsedMs });
+  } else if (parsed.data.elapsedMs === undefined) {
+    captureWarning("Checkout: elapsedMs ontbreekt (verdacht, wel verwerkt)", { hasStartedAt: parsed.data.startedAt !== undefined });
+  }
+
+  // Idempotentie: dezelfde sleutel nogmaals (dubbelklik, retry) → de
+  // bestaande open order en Mollie-checkout teruggeven, geen tweede order.
+  if (idempotencyKey) {
+    try {
+      const reusable = await findReusableCheckout(idempotencyKey);
+      if (reusable) return { ok: true, url: reusable.url };
+    } catch (e) {
+      captureError(e, { scope: "createCheckout.idempotency" });
+    }
+  }
 
   // Totaal SERVER-SIDE herberekenen uit de database (incl. verzendland).
   let computed;
@@ -219,8 +297,26 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   // Order + regels opslaan (status open tot Mollie de betaling bevestigt).
   let order;
   try {
-    order = await createOrderRecord({ customer, computed, gclid: await resolveGclid(parsed.data.gclid) });
+    order = await createOrderRecord({
+      customer,
+      computed,
+      gclid: await resolveGclid(parsed.data.gclid),
+      idempotencyKey: idempotencyKey ?? null,
+      analyticsConsent,
+    });
   } catch (e) {
+    if (idempotencyKey && isUniqueViolation(e, "idempotencyKey")) {
+      // Twee gelijktijdige submits: de andere heeft de order al aangemaakt.
+      // Als die al een open Mollie-checkout heeft, die teruggeven; anders
+      // de klant even laten wachten (de eerste submit is nog bezig).
+      try {
+        const reusable = await findReusableCheckout(idempotencyKey);
+        if (reusable) return { ok: true, url: reusable.url };
+      } catch (inner) {
+        captureError(inner, { scope: "createCheckout.idempotencyRace" });
+      }
+      return fail("Je bestelling wordt al verwerkt. Wacht een moment en probeer het dan opnieuw.");
+    }
     captureError(e, { scope: "createCheckout.order", items: items.length });
     return fail(ORDER_SAVE_FAILED);
   }

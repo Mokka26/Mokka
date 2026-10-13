@@ -71,6 +71,9 @@ model NewsletterSubscriber {
   createdAt    DateTime  @default(now())
   // Double opt-in: token in de bevestigingsmail; confirmedAt gezet na klik.
   confirmToken String?   @unique
+  // Wanneer het huidige confirmToken is uitgegeven; tokens ouder dan 7 dagen
+  // worden door /api/cron/cleanup ongeldig gemaakt (ook bij her-aanmelding).
+  confirmTokenAt DateTime?
   confirmedAt  DateTime?
   unsubscribedAt DateTime?
 }
@@ -120,6 +123,16 @@ model Order {
   adminNote       String?   @db.Text
   // Google Ads click-id voor server-side conversies.
   gclid           String?
+  // Door de checkout meegestuurde sleutel (uuid): een herhaalde submit met
+  // dezelfde sleutel hergebruikt de open order + Mollie-checkout i.p.v. een
+  // tweede order aan te maken.
+  idempotencyKey  String?   @unique
+  // Cookie-akkoord op het moment van bestellen; alleen dan sturen we de
+  // server-side GA4-purchase (Measurement Protocol).
+  analyticsConsent Boolean  @default(false)
+  // Betaalde bestellingen worden nooit hard verwijderd (bewaarplicht) maar
+  // gearchiveerd: uit de lijst, wel bewaard.
+  archivedAt      DateTime?
   firstName  String
   lastName   String
   email      String
@@ -137,6 +150,7 @@ model Order {
   @@index([fulfillmentStatus])
   @@index([createdAt])
   @@index([email])
+  @@index([archivedAt])
 }
 
 // Oude product-slugs blijven werken na een hernoeming (301 naar het product).

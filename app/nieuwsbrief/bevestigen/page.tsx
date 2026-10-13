@@ -1,21 +1,27 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { sendNewsletterWelcome, sendMail, INFO_EMAIL } from "@/lib/email";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { captureError } from "@/lib/sentry";
+import { confirmNewsletterSubscription, type ConfirmOutcome } from "./actions";
+
+// Zelfde regex als in actions.ts (48 hex-tekens = randomBytes(24)).
+const CONFIRM_TOKEN_RE = /^[a-f0-9]{48}$/;
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Aanmelding bevestigen — Mokka Home Interior",
+  title: `Aanmelding bevestigen — ${businessInfo.name}`,
   robots: { index: false, follow: false },
 };
 
-const TOKEN_RE = /^[a-f0-9]{48}$/;
+type View = ConfirmOutcome | "pending";
 
-type Outcome = "confirmed" | "already" | "invalid" | "error";
-
-const COPY: Record<Outcome, { eyebrow: string; title: string; body: string }> = {
+const COPY: Record<View, { eyebrow: string; title: string; body: string }> = {
+  pending: {
+    eyebrow: "Nieuwsbrief",
+    title: "Nog één klik",
+    body: "Klik op de knop om je aanmelding voor de nieuwsbrief te bevestigen. Zonder bevestiging ontvang je niets van ons.",
+  },
   confirmed: {
     eyebrow: "Welkom",
     title: "Je aanmelding is bevestigd",
@@ -38,29 +44,28 @@ const COPY: Record<Outcome, { eyebrow: string; title: string; body: string }> = 
   },
 };
 
-async function confirm(token: string | undefined): Promise<Outcome> {
-  if (!token || !TOKEN_RE.test(token)) return "invalid";
+const OUTCOMES: ReadonlyArray<ConfirmOutcome> = ["confirmed", "already", "invalid", "error"];
+
+function isOutcome(v: string | undefined): v is ConfirmOutcome {
+  return v !== undefined && (OUTCOMES as ReadonlyArray<string>).includes(v);
+}
+
+/**
+ * GET wijzigt niets (alleen kijken of het token bestaat); de bevestiging zelf
+ * gaat via de knop (POST → confirmNewsletterSubscription).
+ */
+async function lookup(token: string | undefined): Promise<View> {
+  if (!token || !CONFIRM_TOKEN_RE.test(token)) return "invalid";
   try {
-    const sub = await prisma.newsletterSubscriber.findUnique({ where: { confirmToken: token } });
+    const sub = await prisma.newsletterSubscriber.findUnique({
+      where: { confirmToken: token },
+      select: { confirmedAt: true, unsubscribedAt: true },
+    });
     if (!sub) return "invalid";
     if (sub.confirmedAt && !sub.unsubscribedAt) return "already";
-
-    // Token is eenmalig: na bevestiging wissen.
-    await prisma.newsletterSubscriber.update({
-      where: { email: sub.email },
-      data: { confirmedAt: new Date(), unsubscribedAt: null, confirmToken: null },
-    });
-
-    // Welkomstmail + interne melding — best-effort, de bevestiging zelf staat al.
-    await sendNewsletterWelcome(sub.email);
-    await sendMail({
-      to: INFO_EMAIL,
-      subject: "Nieuwe nieuwsbrief-aanmelding (bevestigd)",
-      text: `Bevestigde aanmelding voor de nieuwsbrief: ${sub.email}`,
-    });
-    return "confirmed";
+    return "pending";
   } catch (e) {
-    captureError(e, { scope: "newsletterConfirm" });
+    captureError(e, { scope: "newsletterConfirm.lookup" });
     return "error";
   }
 }
@@ -68,11 +73,11 @@ async function confirm(token: string | undefined): Promise<Outcome> {
 export default async function NewsletterConfirmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; done?: string }>;
 }) {
-  const { token } = await searchParams;
-  const outcome = await confirm(token);
-  const copy = COPY[outcome];
+  const { token, done } = await searchParams;
+  const view: View = isOutcome(done) ? done : await lookup(token);
+  const copy = COPY[view];
   const phoneLink = getPhoneLink();
 
   return (
@@ -81,10 +86,26 @@ export default async function NewsletterConfirmPage({
         <p className="eyebrow mb-6">{copy.eyebrow}</p>
         <h1 className="display-md text-ink mb-6">{copy.title}</h1>
         <p className="body-lg text-slate mb-10">{copy.body}</p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link href="/products" className="btn-primary">Bekijk de collectie</Link>
-          <Link href="/" className="btn-link">Naar home</Link>
-        </div>
+        {view === "pending" && token ? (
+          <form action={confirmNewsletterSubscription} className="flex flex-wrap items-center justify-center gap-4">
+            <input type="hidden" name="token" value={token} />
+            <button type="submit" className="btn-primary">
+              Bevestig mijn aanmelding
+            </button>
+            <Link href="/" className="btn-link">
+              Liever niet
+            </Link>
+          </form>
+        ) : (
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link href="/products" className="btn-primary">
+              Bekijk de collectie
+            </Link>
+            <Link href="/" className="btn-link">
+              Naar home
+            </Link>
+          </div>
+        )}
         {phoneLink && businessInfo.contact.phoneFormatted && (
           <p className="text-stone text-sm mt-10">
             Vragen? Bel ons op{" "}

@@ -6,19 +6,24 @@
 // Aanroepen:
 //   POST /api/cron/purge-trash       (vanaf Vercel cron of handmatig met secret)
 //
-// Cloudinary destroy gebeurt best-effort; faalt destroy, dan blijft asset op
-// Cloudinary maar DB-record wordt wel verwijderd zodat de prullenbak schoon is.
+// Volgorde: eerst de DB-rijen weg, dán de Cloudinary-assets — en alleen assets
+// die geen enkel ander product (kleurvariant, nog niet verlopen prullenbak-
+// item) meer gebruikt (lib/cloudinary-purge.ts). Faalt een destroy, dan
+// blijft hooguit een wees-asset staan (gelogd); de prullenbak is wel schoon.
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
-import { extractPublicId } from "@/lib/cloudinary-helpers";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { captureError } from "@/lib/sentry";
+import { collectReferencedCloudinaryIds, destroyCloudinaryAssets, publicIdsFromImages } from "@/lib/cloudinary-purge";
 
 const RETENTION_DAYS = 30;
+// Per run begrensd: één Cloudinary-destroy kost ~100-300 ms; binnen maxDuration blijven.
+const MAX_PRODUCTS_PER_RUN = 100;
+const MAX_IMAGES_PER_RUN = 200;
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   if (!isCronAuthorized(req)) {
@@ -30,66 +35,72 @@ export async function POST(req: NextRequest) {
     productsPurged: 0,
     productImagesDestroyed: 0,
     deletedImagesPurged: 0,
+    assetsSkippedReferenced: 0,
     cloudinaryFailures: 0,
   };
 
   // ─── Producten in prullenbak >RETENTION_DAYS ───
-  const expiredProducts = await prisma.product.findMany({
-    // Producten mét bestelgeschiedenis nooit hard-verwijderen (orderregels
-    // beschermd via onDelete: Restrict) — ze blijven soft-deleted.
-    where: { deletedAt: { lt: cutoff, not: null }, orderItems: { none: {} } },
-    select: { id: true, slug: true, images: true },
-  });
+  let expiredProducts: Array<{ id: string; slug: string; images: string }>;
+  let expiredImages: Array<{ id: string; publicId: string }>;
+  try {
+    [expiredProducts, expiredImages] = await Promise.all([
+      prisma.product.findMany({
+        // Producten mét bestelgeschiedenis nooit hard-verwijderen (orderregels
+        // beschermd via onDelete: Restrict) — ze blijven soft-deleted.
+        where: { deletedAt: { lt: cutoff, not: null }, orderItems: { none: {} } },
+        select: { id: true, slug: true, images: true },
+        orderBy: { deletedAt: "asc" },
+        take: MAX_PRODUCTS_PER_RUN,
+      }),
+      prisma.deletedImage.findMany({
+        where: { deletedAt: { lt: cutoff } },
+        select: { id: true, publicId: true },
+        orderBy: { deletedAt: "asc" },
+        take: MAX_IMAGES_PER_RUN,
+      }),
+    ]);
+  } catch (e) {
+    captureError(e, { scope: "purgeTrash.query" });
+    return NextResponse.json({ ok: false, error: "query failed" }, { status: 500 });
+  }
 
+  // 1) Rijen verwijderen; assets van geslaagde verwijderingen verzamelen.
+  const assetIds: string[] = [];
+  const purgedProductIds: string[] = [];
   for (const p of expiredProducts) {
-    // Destroy Cloudinary assets
-    try {
-      const raw = JSON.parse(p.images);
-      if (Array.isArray(raw)) {
-        for (const item of raw) {
-          const url = typeof item === "string" ? item : item?.url;
-          const pid = url ? extractPublicId(url) : null;
-          if (!pid) continue;
-          try {
-            await cloudinary.uploader.destroy(pid, { invalidate: true });
-            result.productImagesDestroyed += 1;
-          } catch (e) {
-            result.cloudinaryFailures += 1;
-            captureError(e, { scope: "purgeTrash.cloudinary", publicId: pid });
-          }
-        }
-      }
-    } catch {
-      // images-JSON corrupt → geen assets te verwijderen; product zelf wel.
-    }
-
     try {
       await prisma.product.delete({ where: { id: p.id } });
       result.productsPurged += 1;
+      purgedProductIds.push(p.id);
+      assetIds.push(...publicIdsFromImages(p.images));
     } catch (e) {
       captureError(e, { scope: "purgeTrash.product", slug: p.slug });
     }
   }
-
-  // ─── DeletedImages >RETENTION_DAYS ───
-  const expiredImages = await prisma.deletedImage.findMany({
-    where: { deletedAt: { lt: cutoff } },
-    select: { id: true, publicId: true },
-  });
-
   for (const di of expiredImages) {
-    try {
-      await cloudinary.uploader.destroy(di.publicId, { invalidate: true });
-    } catch (e) {
-      result.cloudinaryFailures += 1;
-      captureError(e, { scope: "purgeTrash.deletedImage", publicId: di.publicId });
-    }
     try {
       await prisma.deletedImage.delete({ where: { id: di.id } });
       result.deletedImagesPurged += 1;
+      assetIds.push(di.publicId);
     } catch (e) {
       captureError(e, { scope: "purgeTrash.deletedImageRow", id: di.id });
     }
+  }
+
+  // 2) Assets opruimen — nooit die nog door een overgebleven product gebruikt worden.
+  if (assetIds.length > 0) {
+    let referenced: Set<string>;
+    try {
+      referenced = await collectReferencedCloudinaryIds(purgedProductIds);
+    } catch (e) {
+      captureError(e, { scope: "purgeTrash.referenced" });
+      result.cloudinaryFailures += assetIds.length;
+      return NextResponse.json({ ok: false, ...result }, { status: 500 });
+    }
+    const purge = await destroyCloudinaryAssets(assetIds, { context: "purgeTrash", referenced });
+    result.productImagesDestroyed = purge.destroyed;
+    result.assetsSkippedReferenced = purge.skippedReferenced;
+    result.cloudinaryFailures = purge.failed;
   }
 
   return NextResponse.json({ ok: true, ...result });

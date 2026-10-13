@@ -8,7 +8,8 @@ Unit- en integratietests draaien met **Jest 29** via `next/jest` (SWC-transform,
 __tests__/
   helpers/     fixtures (makeProduct, makeOrder, …) en de getypte Prisma-mock
   lib/         één bestand per module in lib/
-  app/         server actions en route handlers (checkout, Mollie-webhook)
+  app/         server actions en route handlers (checkout, cart, contact,
+               nieuwsbrief, admin-producten/-bestellingen, Mollie-webhook)
 ```
 
 ## Draaien
@@ -43,8 +44,13 @@ die een DOM nodig heeft zet bovenaan het bestand:
    - `@/lib/mollie` → `getMollie: jest.fn()` (eventueel met `jest.requireActual`
      voor de pure helpers zoals `toMollieAmountCents`)
    - `@/lib/email`, `@/lib/sentry`, `@/lib/analytics-server`
-   - `next/cache` (`revalidatePath`, `revalidateTag`, `unstable_cache`) en
-     `next/headers` (`headers`, `cookies`) waar de module ze importeert
+   - `next/cache` (`revalidatePath`, `revalidateTag`, `updateTag`,
+     `unstable_cache`) en `next/headers` (`headers`, `cookies`) waar de
+     module ze importeert
+   - `@/auth` (`auth: jest.fn()`) voor admin-acties; NextAuth's `auth` is
+     overbelast getypeerd, cast daarom één keer:
+     `const authMock = auth as unknown as jest.Mock`
+   - `@/lib/cloudinary` (`cloudinary.uploader.destroy` / `utils.api_sign_request`)
 2. **Getypte mocks, geen `any`.** Gebruik `jest.mocked(fn)` voor geïmporteerde
    functies en `asPrismaMock(prisma)` voor de Prisma-client. Waar een
    Next-type niet te construeren is (bv. `ReadonlyHeaders`), cast via
@@ -86,8 +92,10 @@ it("…", async () => {
 `jest.*` en `jest.requireActual` gebruiken, geen variabelen uit het bestand.
 
 Voor `prisma.$transaction(async (tx) => …)` is er `createTxMock()` +
-`useTransaction(db, tx)`; `tx.order.updateMany` / `tx.product.updateMany` zijn
-dan losse mocks (zie `__tests__/lib/order-sync.test.ts`).
+`useTransaction(db, tx)`; `tx.order.updateMany`, `tx.product.update(Many)` en
+`tx.slugRedirect.*` zijn dan losse mocks (zie `__tests__/lib/order-sync.test.ts`
+en `__tests__/app/admin/products-actions.test.ts`). Een `$transaction([...])`
+met een array mock je met `db.$transaction.mockResolvedValue([])`.
 
 ## Wat gedekt is
 
@@ -98,14 +106,21 @@ dan losse mocks (zie `__tests__/lib/order-sync.test.ts`).
 | `lib/specs.ts`                  | afmetingen parsen/formatteren (alle notaties), spec-sleutels normaliseren, maatcontext, materiaal, productcodes, slugs, kleuren |
 | `lib/categories.ts`             | route-slugs, product-URL's, aanvullende categorieën                                               |
 | `lib/orders.ts`                 | `computeOrder` (voorraad, varianten, opties, verzending, centen tellen exact op), ordernummer, token |
-| `lib/order-sync.ts`             | idempotente betaalsync (claim/geen claim, geen downgrade, authorized, mailfout, overselling), bedankpagina, reconcile-cron, mail opnieuw |
+| `lib/order-sync.ts`             | idempotente betaalsync (claim/geen claim, geen downgrade, authorized, overselling), atomaire mail-claim op `confirmationSentAt` (+ vrijgave bij mailfout), consent-gate voor de server-purchase, background-revalidate, bedankpagina, reconcile-cron, resend met 10 min wachttijd |
+| `lib/analytics-server.ts`       | GA4-payload-mapping (regels, btw uit shipping-info, client_id), `server_purchase` vs `purchase`, consent-gate (`analyticsConsent`), fouten naar Sentry |
+| `lib/cloudinary-purge.ts`       | gedeelde-asset-guard (nooit een asset vernietigen die een ander product nog gebruikt), fail-safe zonder referenced-set, foutentelling |
 | `lib/rate-limit.ts`             | onder/boven limiet, fail-open/fail-closed, IP-herleiding, anonieme bucket                          |
 | `lib/slug-redirect.ts`          | redirect naar zichtbaar product, verborgen/zelfverwijzend/onbekende categorie → null              |
-| `lib/revalidate.ts`             | alle paden incl. umbrella's, vorige slug/categorie, tag                                            |
-| `lib/google-shopping.ts`        | feed-items: filters, titel, identificatie, varianten, verzending per land, custom labels          |
+| `lib/revalidate.ts`             | alle paden incl. umbrella's, vorige slug/categorie; `updateTag` (server action) vs `revalidateTag(…, { expire: 0 })` (webhook/cron) |
+| `lib/google-shopping.ts`        | feed-items: filters, titel, identificatie, varianten, verzending per land, custom labels; XML-validiteit (control-tekens, `&amp;` als laatste gedecodeerd) |
 | `lib/jsonLd.ts`                 | Product/AggregateOffer, gtin13, titel ≤ 60, description 140-160, Organization, Breadcrumb, FAQ    |
 | `lib/cloudinary-url.ts` e.a.    | URL-transformaties, next/image-loader, publicId; `imageHelpers`, `safePath`, `cron-auth`, `shipping-info`, `business-info` |
-| `app/checkout/actions.ts`       | zod-validatie (postcodes NL/BE), rate-limit, PRICE_CHANGED, orderaanmaak, Mollie-payload (incl. Klarna-regels), generieke foutmeldingen |
+| `app/checkout/actions.ts`       | zod-validatie (postcodes NL/BE), rate-limit, PRICE_CHANGED, orderaanmaak, Mollie-payload (incl. Klarna-regels), generieke foutmeldingen, idempotencyKey (hergebruik open checkout, race via P2002), analyticsConsent, honeypot |
+| `app/cart/actions.ts`           | `getCartSnapshot`: actuele prijs/opties/voorraad, verborgen product → alleen `{ key, available: false }`, rate-limit |
+| `app/contact/actions.ts`        | anti-spam-contract (`website`, `elapsedMs`; ontbrekend = loggen, niet weigeren; `startedAt` geen bron van waarheid meer), opslag + mail |
+| `app/newsletter/actions.ts`     | double opt-in token + `confirmTokenAt`, bots, bestaande/uitgeschreven adressen, limieten        |
+| `app/admin/…/products/actions`  | publicatieblokkade (prijs 0 / laatste foto op zichtbaar product, bulkprijs), optimistic lock, SlugRedirect bij slug-wijziging, veldfouten |
+| `app/admin/…/orders/actions`    | betaalde bestelling archiveren i.p.v. verwijderen, conditionele overgang naar "verzonden" (één mail) |
 | `app/api/webhooks/mollie`       | 400 bij ongeldig id/body, 200 bij onbekend, 500 bij fout                                          |
 
 Niet gedekt (bewust): `lib/email.ts` (nodemailer-templates), `lib/analytics.ts`

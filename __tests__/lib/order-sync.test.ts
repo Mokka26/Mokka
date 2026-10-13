@@ -85,6 +85,7 @@ describe("lib/order-sync · syncOrderByPaymentId", () => {
   it("boekt voorraad af, stuurt de bevestiging en markeert confirmationSentAt als de claim slaagt", async () => {
     const payment = mockPayment();
     const order = makeOrder({
+      analyticsConsent: true,
       items: [makeOrderItem({ productId: "prod_1", quantity: 2 }), makeOrderItem({ id: "item_2", productId: "prod_2", quantity: 1 })],
     });
     db.order.findUnique.mockResolvedValue(order);
@@ -108,15 +109,35 @@ describe("lib/order-sync · syncOrderByPaymentId", () => {
 
     expect(sendMail).toHaveBeenCalledTimes(1);
     expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ id: "order_1", status: "paid", paymentMethod: "ideal" }));
-    expect(db.order.update).toHaveBeenCalledWith({
-      where: { id: "order_1" },
+    // Atomaire claim op confirmationSentAt VÓÓR het mailen (count === 1 → mailen).
+    expect(db.order.updateMany).toHaveBeenCalledWith({
+      where: { id: "order_1", confirmationSentAt: null },
       data: { confirmationSentAt: expect.any(Date) },
     });
-    expect(revalidateProduct).toHaveBeenCalledWith({ slug: "bed-oslo", category: "bedden" });
-    // Server-side GA4-purchase: precies één keer, alleen door de claimende aanroep.
+    expect(db.order.updateMany).toHaveBeenCalledTimes(1); // geen release: mail gelukt
+    // Webhook/cron-context: tag direct laten vervallen (background), niet via updateTag.
+    expect(revalidateProduct).toHaveBeenCalledWith({ slug: "bed-oslo", category: "bedden" }, undefined, { mode: "background" });
+    // Server-side GA4-purchase: precies één keer, alleen door de claimende aanroep
+    // én alleen met cookie-akkoord (analyticsConsent: true).
     expect(queueServerPurchase).toHaveBeenCalledTimes(1);
-    expect(queueServerPurchase).toHaveBeenCalledWith(expect.objectContaining({ id: "order_1", paymentMethod: "ideal" }));
+    expect(queueServerPurchase).toHaveBeenCalledWith(expect.objectContaining({ id: "order_1", paymentMethod: "ideal", analyticsConsent: true }));
     expect(captureWarning).not.toHaveBeenCalled();
+  });
+
+  it("stuurt GEEN server-side purchase zonder cookie-akkoord (analyticsConsent false)", async () => {
+    mockPayment();
+    db.order.findUnique.mockResolvedValue(makeOrder({ analyticsConsent: false }));
+    expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
+    expect(queueServerPurchase).not.toHaveBeenCalled();
+    expect(sendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it("mailt niet als de bevestiging al door een andere aanroep geclaimd is", async () => {
+    mockPayment();
+    db.order.findUnique.mockResolvedValue(makeOrder());
+    db.order.updateMany.mockResolvedValue({ count: 0 });
+    expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
+    expect(sendMail).not.toHaveBeenCalled();
   });
 
   it("boekt NIET af en mailt NIET als een andere aanroep de claim al won (count 0)", async () => {
@@ -167,23 +188,23 @@ describe("lib/order-sync · syncOrderByPaymentId", () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it("laat een mailfout de sync niet breken en laat confirmationSentAt leeg", async () => {
+  it("laat een mailfout de sync niet breken en geeft de claim op confirmationSentAt weer vrij", async () => {
     mockPayment();
     db.order.findUnique.mockResolvedValue(makeOrder());
     sendMail.mockRejectedValue(new Error("SMTP down"));
 
     expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
     expect(tx.product.updateMany).toHaveBeenCalledTimes(1);
-    expect(db.order.update).not.toHaveBeenCalled();
+    expect(db.order.updateMany).toHaveBeenLastCalledWith({ where: { id: "order_1" }, data: { confirmationSentAt: null } });
     expect(captureError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ scope: "orderConfirmation" }));
   });
 
-  it("markeert niet als verzonden wanneer de mailer false teruggeeft", async () => {
+  it("geeft de claim vrij wanneer de mailer false teruggeeft", async () => {
     mockPayment();
     db.order.findUnique.mockResolvedValue(makeOrder());
     sendMail.mockResolvedValue(false);
     expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
-    expect(db.order.update).not.toHaveBeenCalled();
+    expect(db.order.updateMany).toHaveBeenLastCalledWith({ where: { id: "order_1" }, data: { confirmationSentAt: null } });
     expect(captureError).not.toHaveBeenCalled();
   });
 
@@ -305,15 +326,35 @@ describe("lib/order-sync · reconcileOpenOrders", () => {
 });
 
 describe("lib/order-sync · resendPendingConfirmations", () => {
-  it("verstuurt alsnog en markeert alleen geslaagde mails", async () => {
+  it("claimt atomair, verstuurt alsnog en geeft de claim bij een mislukte mail weer vrij", async () => {
     db.order.findMany.mockResolvedValue([makeOrder({ id: "a", status: "paid" }), makeOrder({ id: "b", status: "paid" })]);
     sendMail.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
-    db.order.update.mockResolvedValue({});
+    db.order.updateMany.mockResolvedValue({ count: 1 });
     expect(await resendPendingConfirmations()).toEqual({ attempted: 2, sent: 1 });
-    expect(db.order.update).toHaveBeenCalledTimes(1);
-    expect(db.order.update).toHaveBeenCalledWith({ where: { id: "a" }, data: { confirmationSentAt: expect.any(Date) } });
-    expect(db.order.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ status: "paid", confirmationSentAt: null }), take: 20 }),
-    );
+    expect(sendMail).toHaveBeenCalledTimes(2);
+    expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "a", confirmationSentAt: null }, data: { confirmationSentAt: expect.any(Date) } });
+    expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "b", confirmationSentAt: null }, data: { confirmationSentAt: expect.any(Date) } });
+    expect(db.order.updateMany).toHaveBeenLastCalledWith({ where: { id: "b" }, data: { confirmationSentAt: null } });
+    expect(db.order.update).not.toHaveBeenCalled();
+  });
+
+  it("pakt alleen orders die minstens 10 minuten geleden betaald zijn (en hooguit 7 dagen)", async () => {
+    const before = Date.now();
+    db.order.findMany.mockResolvedValue([]);
+    expect(await resendPendingConfirmations()).toEqual({ attempted: 0, sent: 0 });
+    const args = db.order.findMany.mock.calls[0][0] as { where: { status: string; confirmationSentAt: null; paidAt: { gte: Date; lt: Date } }; take: number };
+    expect(args.where).toMatchObject({ status: "paid", confirmationSentAt: null });
+    expect(args.take).toBe(20);
+    const { gte, lt } = args.where.paidAt;
+    expect(before - lt.getTime()).toBeGreaterThanOrEqual(10 * 60 * 1000 - 1000);
+    expect(before - lt.getTime()).toBeLessThan(10 * 60 * 1000 + 5000);
+    expect(before - gte.getTime()).toBeGreaterThanOrEqual(7 * 24 * 60 * 60 * 1000 - 1000);
+  });
+
+  it("mailt niet als een andere run de claim al won (count 0)", async () => {
+    db.order.findMany.mockResolvedValue([makeOrder({ id: "a", status: "paid" })]);
+    db.order.updateMany.mockResolvedValue({ count: 0 });
+    expect(await resendPendingConfirmations()).toEqual({ attempted: 1, sent: 0 });
+    expect(sendMail).not.toHaveBeenCalled();
   });
 });

@@ -11,20 +11,12 @@ import { extractPublicId } from "@/lib/cloudinary-helpers";
 import { parseImages } from "@/lib/imageHelpers";
 import { parsePrice, parseRequiredPrice } from "@/lib/parse-price";
 import { revalidateAllProducts, revalidateProduct } from "@/lib/revalidate";
+import { parseSpecs as parseSpecsJson, slugify } from "@/lib/specs";
 import { logAdminError } from "../_lib/log";
 import { VALID_DB_CATEGORIES } from "../_lib/db-categories";
 import { parseAdminImages, type AdminImage } from "../_lib/images";
 
 const CONFLICT_ERROR = "Dit product is intussen elders gewijzigd. Herlaad de pagina.";
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 function isNotFound(e: unknown): boolean {
   return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
@@ -103,13 +95,25 @@ export async function updateProductInline(input: InlineUpdateInput): Promise<Inl
 
   const product = await prisma.product.findUnique({
     where: { id, deletedAt: null },
-    select: { id: true, name: true, slug: true, category: true, colorGroup: true, price: true, images: true, sizeVariants: true },
+    select: { id: true, name: true, slug: true, category: true, colorGroup: true, price: true, images: true, sizeVariants: true, hidden: true },
   });
   if (!product) return { ok: false, error: "Product niet gevonden" };
 
-  if (data.hidden === false) {
+  // Publiceerbaarheid na de mutatie: zichtbaar (worden of blijven) vereist
+  // prijs én foto. Zo kan een prijs van 0 een zichtbaar product niet alsnog
+  // onverkoopbaar in de winkel zetten.
+  const visibleAfter = data.hidden === false || (data.hidden === undefined && !product.hidden);
+  if (visibleAfter) {
     const reasons = publishBlockers({ ...product, price: data.price ?? product.price });
-    if (reasons.length > 0) return { ok: false, error: blockersMessage([{ name: product.name, reasons }]) };
+    if (reasons.length > 0) {
+      return {
+        ok: false,
+        error:
+          data.hidden === false
+            ? blockersMessage([{ name: product.name, reasons }])
+            : `${product.name} is zichtbaar in de winkel en kan niet zonder geldige prijs. Verberg het product eerst, of kies een prijs groter dan 0.`,
+      };
+    }
   }
 
   try {
@@ -174,7 +178,7 @@ export async function bulkUpdateProducts(input: BulkInput): Promise<BulkResult> 
 
   const products = await prisma.product.findMany({
     where: { id: { in: data.ids }, deletedAt: null },
-    select: { id: true, name: true, price: true, images: true, sizeVariants: true },
+    select: { id: true, name: true, price: true, images: true, sizeVariants: true, hidden: true },
   });
   if (products.length === 0) return { ok: false, error: "Geen (actieve) producten gevonden voor deze selectie" };
   const ids = products.map((p) => p.id);
@@ -233,6 +237,12 @@ export async function bulkUpdateProducts(input: BulkInput): Promise<BulkResult> 
           const next = applyPriceChange(p.price, data.mode, data.amount);
           if (!(next >= 0) || next > 999999) {
             refused.push({ name: p.name, reasons: ["ongeldige nieuwe prijs"] });
+            continue;
+          }
+          // Een zichtbaar product mag niet op 0 (of anderszins onverkoopbaar)
+          // gezet worden: verberg het eerst.
+          if (!p.hidden && publishBlockers({ ...p, price: next }).length > 0) {
+            refused.push({ name: p.name, reasons: ["zichtbaar product: prijs zou 0 worden"] });
             continue;
           }
           updates.push(prisma.product.update({ where: { id: p.id }, data: { price: next } }));
@@ -341,19 +351,11 @@ function parseAddonPrice(raw: FormDataEntryValue | null): { value: number | null
   return { value: r.value && r.value > 0 ? r.value : null };
 }
 
+/** Specs uit het formulier (JSON-string) → object, of null als leeg/onleesbaar. Parser: lib/specs.ts. */
 function parseSpecs(raw: FormDataEntryValue | null): Record<string, string> | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
-  try {
-    const obj: unknown = JSON.parse(raw);
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
-    const filtered: Record<string, string> = {};
-    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-      if (typeof v === "string" && k.trim() && v.trim()) filtered[k.trim()] = v.trim();
-    }
-    return Object.keys(filtered).length > 0 ? filtered : null;
-  } catch {
-    return null;
-  }
+  const specs = parseSpecsJson(raw);
+  return Object.keys(specs).length > 0 ? specs : null;
 }
 
 function trimOrNull(v: FormDataEntryValue | null): string | null {
@@ -578,6 +580,15 @@ export async function updateProductImages(
 
   const parsed = imagesUpdateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Ongeldige invoer" };
+
+  // Een zichtbaar product moet minstens één foto houden (publiceerbaarheid).
+  if (parsed.data.images.length === 0) {
+    const current = await prisma.product.findUnique({ where: { id: parsed.data.id }, select: { name: true, hidden: true } });
+    if (!current) return { ok: false, error: "Product niet gevonden" };
+    if (!current.hidden) {
+      return { ok: false, error: `${current.name} is zichtbaar in de winkel en moet minstens één foto houden. Verberg het product eerst.` };
+    }
+  }
 
   let updated: { slug: string; category: string };
   try {
@@ -813,7 +824,7 @@ export async function softDeleteProductImage(
 
   const product = await prisma.product.findUnique({
     where: { id: parsed.data.productId },
-    select: { id: true, slug: true, category: true, images: true },
+    select: { id: true, name: true, slug: true, category: true, images: true, hidden: true },
   });
   if (!product) return { ok: false, error: "Product niet gevonden" };
 
@@ -825,6 +836,13 @@ export async function softDeleteProductImage(
   if (!publicId) return { ok: false, error: "Geen Cloudinary-foto; kan niet naar de prullenbak" };
 
   const remaining = imgs.filter((i) => i.url !== parsed.data.url);
+  // De laatste foto van een zichtbaar product mag niet weg (publiceerbaarheid).
+  if (remaining.length === 0 && !product.hidden) {
+    return {
+      ok: false,
+      error: `Dit is de laatste foto van ${product.name}, dat zichtbaar is in de winkel. Verberg het product eerst of voeg eerst een andere foto toe.`,
+    };
+  }
 
   try {
     await prisma.$transaction([

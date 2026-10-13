@@ -125,13 +125,32 @@ describe("lib/google-shopping", () => {
   });
 
   describe("identificatie (brand / gtin / mpn)", () => {
-    it("zet gtin + mpn zonder eigen merk bij een EAN-13", () => {
+    it("zet gtin + mpn én de winkelnaam als brand bij een EAN-13 zonder specs.Merk", () => {
       const p = makeProduct({ ...table, specs: JSON.stringify({ EAN: "8712345678906", Artikelnummer: "ZB-5635" }) });
       const item = buildItems(p)[0];
       expect(tag(item, "g:gtin")).toBe("8712345678906");
       expect(tag(item, "g:mpn")).toBe("ZB-5635");
-      expect(tag(item, "g:brand")).toBeNull();
+      expect(tag(item, "g:brand")).toBe(businessInfo.name);
       expect(tag(item, "g:identifier_exists")).toBeNull();
+    });
+
+    it("voegt het artikelnummer aan de titel toe als er na het strippen van de code niets onderscheidends overblijft", () => {
+      const p = makeProduct({ ...table, name: "Plafondlamp Zilver QL10675", category: "plafondlampen", colorName: null, specs: JSON.stringify({ Artikelnummer: "QL10675" }) });
+      expect(tag(buildItems(p)[0], "g:title")).toBe("Plafondlamp Zilver – QL10675");
+    });
+
+    it("bouwt een feitelijke g:description als de productbeschrijving leeg is", () => {
+      const p = makeProduct({ ...table, description: "" });
+      const d = tag(buildItems(p)[0], "g:description") ?? "";
+      expect(d).toContain("Rousseau uit de categorie eettafels");
+      expect(d).toContain("B 200 × D 100 × H 76 cm");
+    });
+
+    it("zet tv-meubels in de feed onder Opbergen en poefs onder Zitten (feedGroup)", () => {
+      const tv = makeProduct({ ...table, category: "tv-meubels" });
+      expect(tag(buildItems(tv)[0], "g:product_type")).toBe("Meubels &gt; Opbergen &gt; TV-meubels");
+      const poef = makeProduct({ ...table, category: "poefs" });
+      expect(tag(buildItems(poef)[0], "g:product_type")).toBe("Meubels &gt; Zitten &gt; Poefs");
     });
 
     it("zet winkelnaam als brand en identifier_exists=no zonder (geldige) EAN", () => {
