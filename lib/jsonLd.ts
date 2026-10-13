@@ -1,6 +1,7 @@
 import { businessInfo, getActiveSocials } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { parseImages } from "@/lib/imageHelpers";
+import { parsePricedSizeVariants, parseSpecs } from "@/lib/specs";
 
 /**
  * Serialiseer een JSON-LD object veilig voor inline <script type="application/ld+json">.
@@ -76,41 +77,6 @@ export function buildProductDescription(
     ? `${productName} bestel je bij ${businessInfo.name}, alle prijzen incl. btw en ${shippingInfo.returnWindowDays} dagen bedenktijd. Bekijk meer ${categoryLabel.toLowerCase()} in onze showroom in ${businessInfo.address.city} of online.`
     : `${productName} bestel je bij ${businessInfo.name}, alle prijzen incl. btw en ${shippingInfo.returnWindowDays} dagen bedenktijd. Bekijk de collectie in onze showroom in ${businessInfo.address.city} of online.`;
   return buildDescription(productDescription, fallback);
-}
-
-// ─── Specs-helpers ──────────────────────────────────────────────────
-
-function parseSpecs(raw: string | null | undefined): Record<string, string> {
-  if (!raw) return {};
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(parsed)) {
-      if (typeof v === "string" && v.trim()) out[k] = v.trim();
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-type SizeVariant = { label: string; price: number };
-
-function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
-  if (!raw) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.flatMap((v): SizeVariant[] => {
-      if (!v || typeof v !== "object") return [];
-      const { label, price } = v as Record<string, unknown>;
-      if (typeof label !== "string" || typeof price !== "number" || price <= 0) return [];
-      return [{ label, price }];
-    });
-  } catch {
-    return [];
-  }
 }
 
 /** Alleen een echte EAN-13 (13 cijfers) wordt als gtin13 opgenomen. */
@@ -231,7 +197,7 @@ export function buildProductJsonLd(product: JsonLdProduct, opts: { url: string }
     hasMerchantReturnPolicy: buildReturnPolicy(),
   };
 
-  const variants = parseSizeVariants(product.sizeVariants);
+  const variants = parsePricedSizeVariants(product.sizeVariants);
   if (variants.length > 0) {
     schema.offers = variants.map((v) => ({
       "@type": "Offer",

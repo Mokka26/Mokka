@@ -16,6 +16,7 @@ import {
   formatDimensions,
   nameHasType,
   parseDimensions,
+  parsePricedSizeVariants,
   parseSpecs,
   productTypeLabel,
   stripProductCode,
@@ -120,24 +121,6 @@ const MAX_MATERIAL = 200;
 const TITLE_SEPARATOR = " – ";
 const NEW_PRODUCT_DAYS = 30;
 const FAST_DELIVERY_MAX_DAYS = 5;
-
-type SizeVariant = { label: string; price: number; listPrice?: number };
-
-function parseSizeVariants(raw: string | null): SizeVariant[] {
-  if (!raw) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.flatMap((v): SizeVariant[] => {
-      if (!v || typeof v !== "object") return [];
-      const { label, price, listPrice } = v as Record<string, unknown>;
-      if (typeof label !== "string" || typeof price !== "number" || price <= 0) return [];
-      return [{ label, price, listPrice: typeof listPrice === "number" ? listPrice : undefined }];
-    });
-  } catch {
-    return [];
-  }
-}
 
 /** EAN/GTIN: 8, 12, 13 of 14 cijfers. Anders weglaten (Google keurt anders af). */
 function validGtin(value: string | undefined): string | null {
@@ -368,7 +351,7 @@ function buildItem(product: FeedProduct, offer: Offer): string {
 /** Alleen zichtbare, niet-verwijderde producten met voorraad en een prijs. */
 export function isFeedEligible(product: FeedProduct): boolean {
   if (product.hidden || product.deletedAt !== null || product.stock <= 0) return false;
-  return product.price > 0 || parseSizeVariants(product.sizeVariants).length > 0;
+  return product.price > 0 || parsePricedSizeVariants(product.sizeVariants).length > 0;
 }
 
 /**
@@ -379,7 +362,7 @@ export function isFeedEligible(product: FeedProduct): boolean {
 export function buildItems(product: FeedProduct): string[] {
   if (!isFeedEligible(product)) return [];
   const link = `${businessInfo.siteUrl}${productUrl(product)}`;
-  const variants = parseSizeVariants(product.sizeVariants);
+  const variants = parsePricedSizeVariants(product.sizeVariants);
   if (variants.length === 0) {
     return [buildItem(product, { id: product.id, price: product.price, listPrice: product.listPrice, link })];
   }

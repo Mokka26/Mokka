@@ -9,6 +9,7 @@ import SizePriceEditor, { type SizeVariant } from "@/components/admin/SizePriceE
 import { subscribeProductUpdated } from "@/components/admin/productUpdated";
 import { productUrl } from "@/lib/categories";
 import { parsePrice } from "@/lib/parse-price";
+import { slugify } from "@/lib/specs";
 import { updateProductFull, type FullUpdateState } from "../actions";
 
 const initial: FullUpdateState = {};
@@ -70,15 +71,6 @@ const FIELD_ORDER = [
   "colorName",
   "colorHex",
 ] as const;
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 function money(n: number | null): string {
   return n == null ? "" : n.toFixed(2).replace(".", ",");

@@ -148,7 +148,7 @@ export default function AboutPage() {
               )}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button href="/products">Bekijk de collectie</Button>
+              <Button href="/banken">Bekijk de collectie</Button>
               <Button href="/contact" variant="secondary">Neem contact op</Button>
             </div>
           </AnimatedSection>

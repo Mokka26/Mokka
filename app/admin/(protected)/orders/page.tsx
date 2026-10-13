@@ -3,7 +3,7 @@ import { Download, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/components/ui/price";
 import { Pagination } from "@/components/admin/Pagination";
-import { FulfillmentBadge, OrderStatusBadge } from "@/components/admin/StatusBadge";
+import { FulfillmentBadge, OrderStatusBadge, StatusPill } from "@/components/admin/StatusBadge";
 import DeleteOrderButton from "./DeleteOrderButton";
 import {
   ORDER_PAGE_SIZE,
@@ -63,6 +63,7 @@ export default async function AdminOrdersPage({
         email: true,
         city: true,
         country: true,
+        archivedAt: true,
         _count: { select: { items: true } },
       },
     }),
@@ -72,7 +73,7 @@ export default async function AdminOrdersPage({
   const revenue = paidAgg._sum.total ?? 0;
   const exportHref = `/api/admin/orders/export${orderListQuery(params) ? `?${orderListQuery(params)}` : ""}`;
   const hasFilter =
-    params.status || params.fulfillment || params.period !== "all" || params.q || params.from || params.to;
+    params.status || params.fulfillment || params.period !== "all" || params.q || params.from || params.to || params.archived;
 
   return (
     <div>
@@ -116,6 +117,15 @@ export default async function AdminOrdersPage({
           }`}
         >
           Te verwerken
+        </Link>
+        <Link
+          href={orderListHref({ ...params, archived: !params.archived, page: 1 })}
+          aria-pressed={params.archived}
+          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            params.archived ? "bg-ink text-white border-ink" : "bg-white text-ink border-line hover:border-accent"
+          }`}
+        >
+          Archief
         </Link>
         {hasFilter && (
           <Link
@@ -178,7 +188,18 @@ export default async function AdminOrdersPage({
             <label htmlFor="f-to" className={labelCls}>Tot en met (datum)</label>
             <input id="f-to" name="to" type="date" defaultValue={params.to ?? ""} className={selectCls} />
           </div>
-          <div className="sm:col-span-2 flex items-end">
+          <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-end gap-4">
+            <label htmlFor="f-archived" className="inline-flex items-center gap-3 min-h-11 text-base text-ink cursor-pointer">
+              <input
+                id="f-archived"
+                name="archived"
+                type="checkbox"
+                value="1"
+                defaultChecked={params.archived}
+                className="w-5 h-5 accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              />
+              Alleen archief tonen
+            </label>
             <button
               type="submit"
               className="w-full sm:w-auto min-h-11 bg-ink text-white px-6 py-2.5 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
@@ -195,10 +216,14 @@ export default async function AdminOrdersPage({
       {orders.length === 0 ? (
         <div className="bg-white border border-line p-12 text-center">
           <p className="font-serif text-2xl text-ink mb-2">
-            {hasFilter ? "Geen bestellingen voor dit filter" : "Nog geen bestellingen"}
+            {params.archived ? "Geen gearchiveerde bestellingen" : hasFilter ? "Geen bestellingen voor dit filter" : "Nog geen bestellingen"}
           </p>
           <p className="text-base text-stone">
-            {hasFilter ? "Pas het filter aan of wis het." : "Zodra een klant afrekent verschijnt de bestelling hier."}
+            {params.archived
+              ? "Betaalde bestellingen die je archiveert verschijnen hier."
+              : hasFilter
+                ? "Pas het filter aan of wis het."
+                : "Zodra een klant afrekent verschijnt de bestelling hier."}
           </p>
         </div>
       ) : (
@@ -217,6 +242,7 @@ export default async function AdminOrdersPage({
                       </Link>
                       <OrderStatusBadge status={o.status} />
                       <FulfillmentBadge status={o.fulfillmentStatus} />
+                      {o.archivedAt && <StatusPill label="Gearchiveerd" className="bg-stone/10 text-stone" />}
                     </div>
                     <p className="text-sm text-stone">
                       {dt.format(o.createdAt)} · {o._count.items} artikel{o._count.items === 1 ? "" : "en"} ·{" "}
@@ -239,7 +265,7 @@ export default async function AdminOrdersPage({
                   >
                     Details
                   </Link>
-                  <DeleteOrderButton id={o.id} orderNumber={o.orderNumber} paid={o.status === "paid"} />
+                  {!o.archivedAt && <DeleteOrderButton id={o.id} orderNumber={o.orderNumber} paid={o.status === "paid"} />}
                 </div>
               </div>
             </li>

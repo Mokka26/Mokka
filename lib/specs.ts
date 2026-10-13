@@ -45,6 +45,46 @@ export function parseSpecs(json: string | null | undefined): Record<string, stri
   }
 }
 
+// ─── Maatvarianten (Product.sizeVariants: JSON-array) ──────────────
+
+export type SizeVariant = { label: string; price?: number; listPrice?: number };
+
+/** Maatvariant mét verkoopprijs (JSON-LD-offers, Shopping-feed). */
+export type PricedSizeVariant = { label: string; price: number; listPrice?: number };
+
+/**
+ * Alle maatvarianten met een niet-lege label; prijs en adviesprijs alleen
+ * als ze een positief getal zijn. Gebruikt door ProductCard en de PDP.
+ */
+export function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
+  if (!raw) return [];
+  try {
+    const arr: unknown = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.flatMap((v: unknown): SizeVariant[] => {
+      if (!v || typeof v !== "object") return [];
+      const rec = v as Record<string, unknown>;
+      if (typeof rec.label !== "string" || !rec.label.trim()) return [];
+      return [
+        {
+          label: rec.label.trim(),
+          ...(typeof rec.price === "number" && rec.price > 0 ? { price: rec.price } : {}),
+          ...(typeof rec.listPrice === "number" && rec.listPrice > 0 ? { listPrice: rec.listPrice } : {}),
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** Alleen de varianten met een verkoopprijs — zonder prijs is er geen aanbod. */
+export function parsePricedSizeVariants(raw: string | null | undefined): PricedSizeVariant[] {
+  return parseSizeVariants(raw).flatMap((v): PricedSizeVariant[] =>
+    v.price === undefined ? [] : [{ label: v.label, price: v.price, ...(v.listPrice !== undefined ? { listPrice: v.listPrice } : {}) }],
+  );
+}
+
 /** Vaste weergavevolgorde; onbekende sleutels komen vóór Artikelnummer/EAN. */
 export const SPEC_KEY_ORDER: ReadonlyArray<string> = [
   "Serie",

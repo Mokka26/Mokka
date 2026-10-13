@@ -6,6 +6,7 @@ import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import {
+  categoryBreadcrumbs,
   complementaryCategoryFor,
   dbCategoryToRouteSlug,
   getCategory,
@@ -187,11 +188,9 @@ export default async function ProductPageInCategory({ params }: Props) {
   for (const p of complementaryProducts) p.images = firstImageOnly(p.images);
 
   const url = `/${category.slug}/${product.slug}`;
-  const breadcrumbs: BreadcrumbItem[] = [
-    { name: "Home", url: "/" },
-    { name: category.label, url: `/${category.slug}` },
-    { name: product.name, url },
-  ];
+  // Home > [Banken >] Hoekbanken > Product — dezelfde keten als de categoriepagina,
+  // voor het zichtbare kruimelpad én het (enige) BreadcrumbList-schema hieronder.
+  const breadcrumbs: BreadcrumbItem[] = [...categoryBreadcrumbs(category), { name: product.name, url }];
   const productSchema = buildProductJsonLd(product, { url: `${businessInfo.siteUrl}${url}` });
   const breadcrumbSchema = buildBreadcrumbJsonLd(breadcrumbs);
 

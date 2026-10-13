@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { subscribeNewsletter } from "@/app/newsletter/actions";
 import { businessInfo } from "@/lib/business-info";
@@ -9,15 +9,21 @@ export default function DarkNewsletterForm() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [msg, setMsg] = useState("");
-  // Spam-bescherming: `website` moet leeg blijven, `startedAt` = moment van
-  // tonen (te snelle inzendingen zijn bots). Beide worden server-side gecheckt.
-  const [startedAt] = useState(() => Date.now());
+  // Spam-bescherming: `website` moet leeg blijven en `elapsedMs` is de tijd
+  // tussen mount en verzenden (te snelle inzendingen zijn bots). Zelfde
+  // aanpak als components/FooterNewsletterForm.tsx: performance.now() is een
+  // monotone klok, onafhankelijk van de systeemtijd van de bezoeker.
   const [website, setWebsite] = useState("");
+  const mountedAt = useRef<number | null>(null);
+  useEffect(() => {
+    mountedAt.current = performance.now();
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("sending");
-    const r = await subscribeNewsletter({ email, website, startedAt });
+    const elapsedMs = mountedAt.current === null ? undefined : Math.round(performance.now() - mountedAt.current);
+    const r = await subscribeNewsletter({ email, website, elapsedMs });
     if (r.ok) { setStatus("done"); setMsg("Check je mail om je aanmelding te bevestigen."); setEmail(""); }
     else { setStatus("error"); setMsg(r.error ?? "Er ging iets mis."); }
   }

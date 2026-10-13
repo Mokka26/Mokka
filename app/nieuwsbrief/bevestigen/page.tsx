@@ -98,7 +98,7 @@ export default async function NewsletterConfirmPage({
           </form>
         ) : (
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/products" className="btn-primary">
+            <Link href="/banken" className="btn-primary">
               Bekijk de collectie
             </Link>
             <Link href="/" className="btn-link">

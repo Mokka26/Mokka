@@ -14,6 +14,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacybeleid"
+      path="/privacy"
       intro="We gaan zorgvuldig om met je persoonsgegevens en verwerken ze conform de Algemene Verordening Gegevensbescherming (AVG)."
     >
       <LegalSection heading="Verwerkingsverantwoordelijke">

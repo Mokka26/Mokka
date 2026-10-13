@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/components/ui/price";
-import { FulfillmentBadge, OrderStatusBadge } from "@/components/admin/StatusBadge";
+import { FulfillmentBadge, OrderStatusBadge, StatusPill } from "@/components/admin/StatusBadge";
 import DeleteOrderButton from "../DeleteOrderButton";
 import FulfillmentForm from "./FulfillmentForm";
+import { orderListHref } from "../../_lib/order-filters";
 import { countryLabel, paymentMethodLabel } from "../../_lib/order-status";
 
 export const dynamic = "force-dynamic";
@@ -46,17 +47,31 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <div className="flex flex-wrap items-center gap-2">
             <OrderStatusBadge status={order.status} />
             <FulfillmentBadge status={order.fulfillmentStatus} />
+            {order.archivedAt && <StatusPill label="Gearchiveerd" className="bg-stone/10 text-stone" />}
             <span className="text-sm text-stone">{dt.format(order.createdAt)}</span>
           </div>
         </div>
-        <DeleteOrderButton
-          id={order.id}
-          orderNumber={order.orderNumber}
-          paid={order.status === "paid"}
-          redirectTo="/admin/orders"
-          variant="full"
-        />
+        {!order.archivedAt && (
+          <DeleteOrderButton
+            id={order.id}
+            orderNumber={order.orderNumber}
+            paid={order.status === "paid"}
+            redirectTo="/admin/orders"
+            variant="full"
+          />
+        )}
       </header>
+
+      {order.archivedAt && (
+        <p role="status" className="mb-8 bg-stone/10 border border-line px-5 py-4 text-base text-ink leading-relaxed">
+          Deze bestelling is gearchiveerd op {dt.format(order.archivedAt)}. Ze staat niet meer in de gewone lijst en
+          telt niet mee in het dashboard, maar blijft bewaard voor de administratie.{" "}
+          <Link href={orderListHref({ archived: true })} className="underline underline-offset-4 hover:text-accent">
+            Naar het archief
+          </Link>
+          .
+        </p>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

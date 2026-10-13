@@ -49,7 +49,7 @@ export default function CartPage() {
           <p className="body-lg text-slate max-w-md mx-auto mb-12">
             Bekijk de collectie en voeg toe wat je mooi vindt.
           </p>
-          <Link href="/products" className="btn-primary min-h-12">
+          <Link href="/banken" className="btn-primary min-h-12">
             Bekijk collectie
           </Link>
         </AnimatedSection>
@@ -117,7 +117,7 @@ export default function CartPage() {
                 </ul>
                 <PaymentIconRow className="mt-6" />
                 <Link
-                  href="/products"
+                  href="/nieuw"
                   className="inline-flex items-center justify-center w-full mt-6 min-h-11 text-[14px] text-ink underline underline-offset-4 hover:text-accent transition-colors"
                 >
                   Verder winkelen

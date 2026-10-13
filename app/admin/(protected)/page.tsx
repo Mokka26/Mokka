@@ -20,9 +20,14 @@ export default async function AdminDashboard() {
 
   const [paid30, orders30, toProcess, productTotal, hiddenCount, noPhotoCount, noPriceCount, outOfStock, messages7, recentOrders] =
     await Promise.all([
-      prisma.order.aggregate({ where: { status: "paid", createdAt: { gte: since30 } }, _count: { _all: true }, _sum: { total: true } }),
-      prisma.order.count({ where: { createdAt: { gte: since30 } } }),
-      prisma.order.count({ where: { status: "paid", fulfillmentStatus: "pending" } }),
+      // Gearchiveerde bestellingen (archivedAt) tellen nergens mee.
+      prisma.order.aggregate({
+        where: { archivedAt: null, status: "paid", createdAt: { gte: since30 } },
+        _count: { _all: true },
+        _sum: { total: true },
+      }),
+      prisma.order.count({ where: { archivedAt: null, createdAt: { gte: since30 } } }),
+      prisma.order.count({ where: { archivedAt: null, status: "paid", fulfillmentStatus: "pending" } }),
       prisma.product.count({ where: { deletedAt: null } }),
       prisma.product.count({ where: { deletedAt: null, ...productStatusWhere("hidden") } }),
       prisma.product.count({ where: { deletedAt: null, ...productStatusWhere("no-photo") } }),
@@ -30,6 +35,7 @@ export default async function AdminDashboard() {
       prisma.product.count({ where: { deletedAt: null, ...productStatusWhere("out-of-stock") } }),
       prisma.contactMessage.count({ where: { createdAt: { gte: since7 } } }),
       prisma.order.findMany({
+        where: { archivedAt: null },
         orderBy: { createdAt: "desc" },
         take: 6,
         select: { id: true, orderNumber: true, status: true, total: true, createdAt: true, firstName: true, lastName: true },

@@ -13,6 +13,7 @@ export default function CookiesPage() {
   return (
     <LegalPage
       title="Cookiebeleid"
+      path="/cookies"
       intro="We gebruiken cookies om de website te laten werken en, met jouw toestemming, om het gebruik te meten. Je bepaalt zelf wat je toestaat."
     >
       <LegalSection heading="Functionele cookies">

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useId } from "react";
 import { ChevronDown, SlidersHorizontal, ArrowUpDown } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { CATEGORIES, GROUP_ORDER } from "@/lib/categories";
 import { Drawer } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -172,8 +172,8 @@ function useFacets(productsForFacets: ProductForFilter[] = []) {
       if (!specs) continue;
       const mat = specs.Materiaal;
       if (typeof mat === "string") {
-        for (const m of mat.split(/[,/]\s*/)) {
-          const key = m.trim();
+        for (const part of mat.split(/[,/]\s*/)) {
+          const key = part.trim();
           if (key) materials.set(key, (materials.get(key) ?? 0) + 1);
         }
       }
@@ -294,7 +294,7 @@ function Section({
       </button>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
+          <m.div
             id={panelId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -303,7 +303,7 @@ function Section({
             className="overflow-hidden"
           >
             <div className="pt-2 pl-3">{children}</div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -370,7 +370,7 @@ function CategoryTree({
             </button>
             <AnimatePresence initial={false}>
               {isExp && (
-                <motion.div
+                <m.div
                   id={panelId}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -390,7 +390,7 @@ function CategoryTree({
                       />
                     ))}
                   </div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>
@@ -706,7 +706,7 @@ function DesktopChipBar(props: ChipBarProps) {
 
                   <AnimatePresence>
                     {isOpen && (
-                      <motion.div
+                      <m.div
                         id={panelId}
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -729,7 +729,7 @@ function DesktopChipBar(props: ChipBarProps) {
                           {chip.key === "materiaal" && <MaterialList {...props} />}
                           {chip.key === "levertijd" && <DeliveryList {...props} />}
                         </div>
-                      </motion.div>
+                      </m.div>
                     )}
                   </AnimatePresence>
                 </div>
@@ -780,7 +780,7 @@ function DesktopChipBar(props: ChipBarProps) {
               </button>
               <AnimatePresence>
                 {sortOpen && (
-                  <motion.div
+                  <m.div
                     id="sort-menu"
                     role="group"
                     aria-label="Sorteervolgorde"
@@ -806,7 +806,7 @@ function DesktopChipBar(props: ChipBarProps) {
                         </button>
                       );
                     })}
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>

@@ -1,26 +1,15 @@
 /**
- * Gedeelde parsers voor productdata (specs-JSON, maatvarianten, afmetingen).
- * Eén keer parsen, met try/catch en type guards — gebruikt door ProductCard
- * en de productpagina zodat beide dezelfde lezing van de data hebben.
+ * Gedeelde helpers voor productdata op ProductCard en de productpagina.
+ * De parsers zelf (specs-JSON, maatvarianten) leven in lib/specs.ts en
+ * worden hier opnieuw geëxporteerd, zodat kaart, PDP, JSON-LD en
+ * Shopping-feed exact dezelfde lezing van de data hebben.
  */
 
-export type SpecMap = Record<string, string>;
+import { parseSizeVariants, parseSpecs, type SizeVariant } from "@/lib/specs";
 
-export function parseSpecs(raw: string | null | undefined): SpecMap {
-  if (!raw) return {};
-  try {
-    const obj: unknown = JSON.parse(raw);
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return {};
-    const out: SpecMap = {};
-    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-      if (typeof v === "string" && v.trim()) out[k] = v.trim();
-      else if (typeof v === "number" && Number.isFinite(v)) out[k] = String(v);
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
+export { parseSizeVariants, parseSpecs, type SizeVariant };
+
+export type SpecMap = Record<string, string>;
 
 /** Zoekt een spec op sleutel, hoofdletterongevoelig, eerste match wint. */
 export function findSpec(specs: SpecMap, ...keys: string[]): string | undefined {
@@ -36,30 +25,6 @@ export function findSpec(specs: SpecMap, ...keys: string[]): string | undefined 
 
 export const DIMENSION_KEYS = ["Afmetingen", "Afmeting", "Maten", "Maat", "Size", "Dimensions"] as const;
 export const DELIVERY_KEY_RE = /^\s*(levertijd|levering|leverdatum|levertermijn)\s*$/i;
-
-export type SizeVariant = { label: string; price?: number; listPrice?: number };
-
-export function parseSizeVariants(raw: string | null | undefined): SizeVariant[] {
-  if (!raw) return [];
-  try {
-    const arr: unknown = JSON.parse(raw);
-    if (!Array.isArray(arr)) return [];
-    return arr.flatMap((v: unknown): SizeVariant[] => {
-      if (!v || typeof v !== "object") return [];
-      const rec = v as Record<string, unknown>;
-      if (typeof rec.label !== "string" || !rec.label.trim()) return [];
-      return [
-        {
-          label: rec.label.trim(),
-          ...(typeof rec.price === "number" && rec.price > 0 ? { price: rec.price } : {}),
-          ...(typeof rec.listPrice === "number" && rec.listPrice > 0 ? { listPrice: rec.listPrice } : {}),
-        },
-      ];
-    });
-  } catch {
-    return [];
-  }
-}
 
 /**
  * Grootste van de eerste twee maten in een afmetingen-string (cm). Bij

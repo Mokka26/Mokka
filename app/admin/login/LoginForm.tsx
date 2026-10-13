@@ -5,12 +5,18 @@ import { loginAction, type LoginState } from "./actions";
 
 const initial: LoginState = {};
 
-export default function LoginForm({ from }: { from?: string }) {
+export default function LoginForm({ from, notice }: { from?: string; notice?: string }) {
   const [state, action, pending] = useActionState(loginAction, initial);
 
   return (
     <form action={action} className="space-y-5 bg-white p-8 border border-line">
       {from && <input type="hidden" name="from" value={from} />}
+
+      {notice && (
+        <p role="status" className="text-base text-ink bg-success/10 border border-success/30 px-3 py-2 leading-relaxed">
+          {notice}
+        </p>
+      )}
 
       <div>
         <label htmlFor="email" className="block eyebrow-lg mb-2">

@@ -14,6 +14,7 @@ export default function VoorwaardenPage() {
   return (
     <LegalPage
       title="Algemene voorwaarden"
+      path="/algemene-voorwaarden"
       intro="Deze voorwaarden zijn van toepassing op elke bestelling die je bij Mokka Home plaatst."
     >
       <LegalSection heading="1. Identiteit van de onderneming">

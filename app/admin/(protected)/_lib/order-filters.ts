@@ -23,6 +23,8 @@ export type OrderListParams = {
   from?: string; // YYYY-MM-DD
   to?: string; // YYYY-MM-DD
   q?: string;
+  /** true = alleen gearchiveerde (betaalde, "verwijderde") bestellingen; anders alleen actieve. */
+  archived: boolean;
   page: number;
 };
 
@@ -66,6 +68,7 @@ export function parseOrderListParams(sp: ParamSource): OrderListParams {
     from: from && YMD.test(from) ? from : undefined,
     to: to && YMD.test(to) ? to : undefined,
     q: get("q")?.slice(0, 100),
+    archived: get("archived") === "1",
     page: Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1,
   };
 }
@@ -117,7 +120,9 @@ export function orderDateRange(p: OrderListParams): { gte?: Date; lt?: Date } {
 }
 
 export function orderListWhere(p: OrderListParams): Prisma.OrderWhereInput {
-  const and: Prisma.OrderWhereInput[] = [];
+  // Gearchiveerde (betaalde, door de beheerder "verwijderde") bestellingen
+  // blijven standaard buiten beeld; het Archief-filter toont uitsluitend die.
+  const and: Prisma.OrderWhereInput[] = [{ archivedAt: p.archived ? { not: null } : null }];
   if (p.status) and.push({ status: p.status });
   if (p.fulfillment) and.push({ fulfillmentStatus: p.fulfillment });
   const range = orderDateRange(p);
@@ -142,7 +147,7 @@ export function orderListWhere(p: OrderListParams): Prisma.OrderWhereInput {
     }
     and.push({ OR: or });
   }
-  return and.length > 0 ? { AND: and } : {};
+  return { AND: and };
 }
 
 export function orderListQuery(p: Partial<OrderListParams>): string {
@@ -153,6 +158,7 @@ export function orderListQuery(p: Partial<OrderListParams>): string {
   if (p.from) sp.set("from", p.from);
   if (p.to) sp.set("to", p.to);
   if (p.q) sp.set("q", p.q);
+  if (p.archived) sp.set("archived", "1");
   if (p.page && p.page > 1) sp.set("page", String(p.page));
   return sp.toString();
 }

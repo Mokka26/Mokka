@@ -276,7 +276,7 @@ export default function CheckoutPage() {
         <AnimatedSection className="text-center max-w-xl">
           <h1 className="display-md text-ink mb-6">Niets om af te rekenen</h1>
           <p className="body-lg text-slate mb-12">Je winkelwagen is leeg.</p>
-          <button type="button" onClick={() => router.push("/products")} className="btn-primary">Bekijk collectie</button>
+          <button type="button" onClick={() => router.push("/banken")} className="btn-primary">Bekijk collectie</button>
         </AnimatedSection>
       </div>
     );

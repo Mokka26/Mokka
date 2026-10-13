@@ -3,18 +3,10 @@
 import { useActionState, useId, useState } from "react";
 import ImageManager from "@/components/admin/ImageManager";
 import type { AdminImage } from "../../_lib/images";
+import { slugify } from "@/lib/specs";
 import { createProduct, type CreateProductState } from "../actions";
 
 const initial: CreateProductState = {};
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 const inputCls =
   "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";

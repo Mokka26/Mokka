@@ -30,6 +30,7 @@ export default function RetourPage() {
   return (
     <LegalPage
       title="Retourneren"
+      path="/retourneren"
       intro={`Je hebt het wettelijke recht je aankoop binnen ${days} dagen na ontvangst te herroepen, zonder opgave van reden. Je mag het product in die tijd uitpakken en beoordelen. Hieronder lees je hoe het werkt, wat het kost en welke uitzonderingen gelden.`}
     >
       <LegalSection heading="Tip: kom eerst proefzitten">

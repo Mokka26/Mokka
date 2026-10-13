@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import FilterBar from "@/components/FilterBar";
@@ -48,6 +48,9 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
+  // Foutmelding van /api/products (400 ongeldige parameters, 429 te veel
+  // verzoeken, netwerkfout); de vorige kaarten blijven dan gewoon staan.
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [sortBy, setSortBy] = useState("newest");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
@@ -112,20 +115,37 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
       firstRun.current = false;
       if (isServerDefault) return;
     }
+    // Een snel opeenvolgende filterwissel annuleert de vorige fetch, zodat een
+    // traag antwoord nooit een nieuwer resultaat overschrijft.
+    const controller = new AbortController();
     const fetchProducts = async () => {
       setLoading(true);
+      setFetchError(null);
       const params = new URLSearchParams();
       if (category) params.set("category", category);
       if (searchQuery) params.set("q", searchQuery);
       params.set("sort", sortBy);
       params.set("minPrice", priceRange[0].toString());
       params.set("maxPrice", priceRange[1].toString());
-      const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store" });
-      const data = await res.json();
-      setProducts(data.products || []);
-      setLoading(false);
+      try {
+        const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store", signal: controller.signal });
+        const data: unknown = await res.json().catch(() => null);
+        const body = data && typeof data === "object" ? (data as { products?: unknown; error?: unknown }) : {};
+        if (!res.ok) {
+          const message = typeof body.error === "string" && body.error ? body.error : "Het laden van de collectie is mislukt.";
+          setFetchError(res.status === 429 ? `${message} Wacht even en probeer het dan opnieuw.` : message);
+          return;
+        }
+        setProducts(Array.isArray(body.products) ? (body.products as Product[]) : []);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setFetchError("Het laden van de collectie is mislukt. Controleer je verbinding en probeer het opnieuw.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
     };
     fetchProducts();
+    return () => controller.abort();
   }, [category, sortBy, priceRange, searchQuery, isServerDefault]);
 
   // Client-side filter: kleur / materiaal / levertijd / voorraad toepassen op fetched products
@@ -237,6 +257,11 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
       />
 
       <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pb-24 lg:pb-0">
+        {fetchError && (
+          <p role="alert" className="mb-8 border border-error/30 bg-error/10 px-5 py-4 text-base text-ink leading-relaxed">
+            {fetchError}
+          </p>
+        )}
         <div>
             {loading ? (
               <div aria-busy="true" aria-label="Collectie laden" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
@@ -278,7 +303,7 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
               const rangeEnd = Math.min(page * PAGE_SIZE, total);
               return (
                 <>
-                  <motion.div
+                  <m.div
                     key={`${filterKey}-${page}`}
                     className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-5 sm:gap-y-14 mt-8"
                     initial="hidden"
@@ -286,7 +311,7 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
                     variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.03 } } }}
                   >
                     {visible.map((product, i) => (
-                      <motion.div
+                      <m.div
                         key={product.id}
                         variants={{
                           hidden: { opacity: 0, y: 20 },
@@ -294,9 +319,9 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
                         }}
                       >
                         <ProductCard product={product} variants={product.variants} priority={i < 2} />
-                      </motion.div>
+                      </m.div>
                     ))}
-                  </motion.div>
+                  </m.div>
 
                   {/* Paging: zonder filters echte pagina's (?page=N, server-side);
                       met filters "Toon meer" op de gefetchte set. */}

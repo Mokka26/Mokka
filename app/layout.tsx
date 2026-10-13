@@ -36,7 +36,9 @@ const geist = Geist({
   display: "swap",
 });
 
-const DEFAULT_TITLE = `${businessInfo.name} | Meubels en verlichting, showroom ${businessInfo.address.city}`;
+// Alleen voor routes zónder eigen title; het template "%s | Mokka Home" plakt
+// de merknaam achter alle andere titels, dus hier geen " | Mokka Home" erbij.
+const DEFAULT_TITLE = `${businessInfo.name}: meubels en verlichting, showroom ${businessInfo.address.city}`;
 const DEFAULT_DESCRIPTION = `Banken, eettafels, stoelen, kasten, bedden en verlichting van ${businessInfo.name}. Prijzen incl. btw, ${shippingInfo.returnWindowDays} dagen bedenktijd en een showroom in ${businessInfo.address.city}.`;
 
 export const metadata: Metadata = {
@@ -82,9 +84,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             zodat images direct van Cloudinary komen, niet via Next-proxy. */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        {/* De hero-preload zit op de homepage zelf (app/page.tsx via
-            ReactDOM.preload) — niet hier: de root layout draait op élke route
-            en zou anders overal ~200KB ongebruikt beeld ophalen. */}
       </head>
       <body className="min-h-screen flex flex-col bg-paper">
         {/* Skip-link: eerste focusbare element, zichtbaar zodra 'ie focus krijgt. */}

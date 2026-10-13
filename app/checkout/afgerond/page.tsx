@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { getOrderForReturnPage, type ReturnOrderView } from "@/lib/order-sync";
 import { prisma } from "@/lib/prisma";
 import { rateLimitIp } from "@/lib/rate-limit";
-import { maskEmail, NEXT_STEP_AFTER_PAYMENT } from "@/lib/email";
+import { maskEmail } from "@/lib/email";
+import { NEXT_STEP_AFTER_PAYMENT } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import ClearCart from "./ClearCart";
@@ -97,7 +98,7 @@ export default async function CheckoutDonePage({
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
-      {copy.tone === "ok" && <ClearCart />}
+      {copy.tone === "ok" && <ClearCart orderNumber={order?.orderNumber} />}
       {order && trusted && status === "paid" && (
         <PurchaseConversion
           orderNumber={order.orderNumber}
@@ -161,7 +162,7 @@ export default async function CheckoutDonePage({
           {(copy.tone === "bad" || copy.tone === "wait") && (
             <Link href="/checkout" className="btn-primary">Opnieuw proberen</Link>
           )}
-          <Link href="/products" className={copy.tone === "ok" ? "btn-primary" : "btn-link"}>
+          <Link href="/nieuw" className={copy.tone === "ok" ? "btn-primary" : "btn-link"}>
             Verder winkelen
           </Link>
         </div>

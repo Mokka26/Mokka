@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { businessInfo } from "@/lib/business-info";
 import { Button } from "@/components/ui/Button";
@@ -91,7 +91,7 @@ export default function CookieBanner() {
   return (
     <AnimatePresence>
       {open && (
-        <motion.section
+        <m.section
           ref={panelRef}
           role="region"
           aria-label="Cookievoorkeuren"
@@ -124,7 +124,7 @@ export default function CookieBanner() {
               </div>
             </div>
           </div>
-        </motion.section>
+        </m.section>
       )}
     </AnimatePresence>
   );
