@@ -5,7 +5,6 @@ import CartItem, { cartDeliverySummary } from "@/components/CartItem";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart, useCartSync } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
-import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
 
@@ -18,7 +17,6 @@ export default function CartPage() {
   const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
   const remaining = Math.max(0, shippingInfo.freeShippingThreshold - totalPrice);
-  const phoneLink = getPhoneLink();
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
@@ -100,14 +98,6 @@ export default function CartPage() {
                 <ul className="mt-6 space-y-1.5 text-[14px] text-slate">
                   {/* Levertijd van de producten in de wagen, geen vaste standaardtekst. */}
                   <li>{cartDeliverySummary(items)}</li>
-                  {phoneLink && businessInfo.contact.phoneFormatted && (
-                    <li>
-                      Vragen? Bel{" "}
-                      <a href={phoneLink} className="underline underline-offset-4 hover:text-accent whitespace-nowrap">
-                        {businessInfo.contact.phoneFormatted}
-                      </a>
-                    </li>
-                  )}
                 </ul>
                 <PaymentMethodChips className="mt-6" />
                 <Link
