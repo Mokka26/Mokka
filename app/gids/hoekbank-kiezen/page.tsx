@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentSection, ContentSummary, ContentTable, contentLinkClass } from "@/components/content/ContentPage";
 import { businessInfo } from "@/lib/business-info";
-import { categoryUrl } from "@/lib/categories";
+import { GUIDELINES as G, categoryUrl, cmRange } from "@/lib/categories";
+import { ogDefaults } from "@/lib/seo";
 import { GuideShell } from "../GuideShell";
 import { getGuide, guidePath } from "../guides";
 
@@ -15,15 +16,14 @@ export const metadata: Metadata = {
   title: guide.metaTitle,
   description: guide.description,
   alternates: { canonical: PATH },
-  openGraph: {
+  ...ogDefaults({
     title: `${guide.metaTitle} | ${businessInfo.name}`,
     description: guide.description,
     type: "article",
     url: PATH,
-    locale: "nl_NL",
     publishedTime: guide.datePublished,
     modifiedTime: guide.dateModified,
-  },
+  }),
 };
 
 const faq = [
@@ -33,11 +33,11 @@ const faq = [
   },
   {
     q: "Past een hoekbank door mijn deur?",
-    a: "Hoekbanken worden in losse delen geleverd. Het grootste deel is meestal 90 tot 100 cm diep en past gekanteld door een standaard deur van 83 cm. Meet ook de gang, de trap en bochten; de maten per deel staan bij de specificaties.",
+    a: `Hoekbanken worden in losse delen geleverd. Het grootste deel is meestal 90 tot 100 cm diep en past gekanteld door een standaard deur van ${G.doorWidthCm} cm. Meet ook de gang, de trap en bochten; de maten per deel staan bij de specificaties.`,
   },
   {
     q: "Welke zitdiepte is prettig?",
-    a: "55 tot 60 cm zit rechtop en is prettig voor een televisieavond. 70 cm of meer is een loungediepte: je zit half liggend, vaak met extra kussens in de rug.",
+    a: `${cmRange(G.sofaSeatDepthCm)} zit rechtop en is prettig voor een televisieavond. ${G.sofaLoungeDepthCm} cm of meer is een loungediepte: je zit half liggend, vaak met extra kussens in de rug.`,
   },
 ];
 
@@ -51,7 +51,7 @@ export default function HoekbankKiezenPage() {
     >
       <ContentSection heading="L-vorm of U-vorm?">
         <p>
-          Een <strong>L-vormige hoekbank</strong> bestaat uit een recht deel en een korter deel in een hoek van negentig graden, vaak een chaise longue waarop je je benen kwijt kunt. Dit is de meest gekozen vorm: hij past in de meeste woonkamers, staat goed in een hoek of vrij in de ruimte, en biedt plaats aan drie tot vijf personen.
+          Een <strong>L-vormige hoekbank</strong> bestaat uit een recht deel en een korter deel in een hoek van negentig graden, vaak een chaise longue waarop je je benen kwijt kunt. Deze vorm past in de meeste woonkamers, staat goed in een hoek of vrij in de ruimte, en biedt plaats aan drie tot vijf personen.
         </p>
         <p>
           Een <strong>U-vormige hoekbank</strong> heeft aan beide uiteinden een hoekdeel. Je zit tegenover elkaar, wat gezellig is met een groot gezin of als je vaak mensen over de vloer hebt. Een U-bank vraagt wel een grote ruimte: reken op minstens 300 cm breed en 200 cm diep voor de bank zelf, plus loopruimte. In een kleine kamer wordt een U-vorm al snel een barrière.
@@ -69,10 +69,10 @@ export default function HoekbankKiezenPage() {
 
       <ContentSection heading="Welke maat past in je kamer?">
         <p>
-          Begin met de ruimte, niet met de bank. Meet de muur waar de bank komt en de diepte van de kamer, en trek daar de loopruimte van af. Een algemeen aanvaarde vuistregel: houd <strong>80 cm loopruimte</strong> langs de open zijden van de bank en <strong>40 tot 45 cm</strong> tussen de bank en de salontafel. Zo kun je er langs en er met je benen bij.
+          Begin met de ruimte, niet met de bank. Meet de muur waar de bank komt en de diepte van de kamer, en trek daar de loopruimte van af. Een algemeen aanvaarde vuistregel: houd <strong>{G.sofaWalkwayCm} cm loopruimte</strong> langs de open zijden van de bank en <strong>{cmRange(G.sofaToCoffeeTableCm)}</strong> tussen de bank en de salontafel. Zo kun je er langs en er met je benen bij.
         </p>
         <ContentTable
-          caption="Richtlijn: bankmaat ten opzichte van de woonkamer, met 80 cm loopruimte langs de open zijden."
+          caption={`Richtlijn: bankmaat ten opzichte van de woonkamer, met ${G.sofaWalkwayCm} cm loopruimte langs de open zijden.`}
           head={["Hoekbank (breedte x diepte)", "Zitplaatsen", "Minimale kamermaat"]}
           rows={[
             ["240 x 160 cm", "3 - 4", "ca. 3,5 x 3,5 m"],
@@ -82,13 +82,13 @@ export default function HoekbankKiezenPage() {
           ]}
         />
         <p>
-          Let naast de buitenmaten op de <strong>zitdiepte</strong>: 55 tot 60 cm zit rechtop, 70 cm of meer is een loungediepte waarbij je half ligt. En op de <strong>zithoogte</strong>: 42 tot 45 cm is prettig om op te staan, lager voelt losser maar is voor lange avonden en stijvere knieën minder comfortabel. Vergelijk die maten in de specificaties; ze verschillen per serie meer dan je denkt.
+          Let naast de buitenmaten op de <strong>zitdiepte</strong>: {cmRange(G.sofaSeatDepthCm)} zit rechtop, {G.sofaLoungeDepthCm} cm of meer is een loungediepte waarbij je half ligt. En op de <strong>zithoogte</strong>: 42 tot 45 cm is prettig om op te staan, lager voelt losser maar is voor lange avonden en stijvere knieën minder comfortabel. Vergelijk die maten in de specificaties; ze verschillen per serie meer dan je denkt.
         </p>
       </ContentSection>
 
       <ContentSection heading="Meet de doorgang">
         <p>
-          Een hoekbank komt in losse delen, maar die delen zijn fors. Meet de breedte van je voordeur (standaard 83 cm), de gang, de trap en de bochten daarin. Het grootste deel is meestal 90 tot 100 cm diep en 70 tot 90 cm hoog en past gekanteld door een standaard deur. Woon je op een etage met een smalle trap, kijk dan naar de maat per deel in de specificaties of vraag het ons na voordat je bestelt.
+          Een hoekbank komt in losse delen, maar die delen zijn fors. Meet de breedte van je voordeur (standaard {G.doorWidthCm} cm), de gang, de trap en de bochten daarin. Het grootste deel is meestal 90 tot 100 cm diep en 70 tot 90 cm hoog en past gekanteld door een standaard deur. Woon je op een etage met een smalle trap, kijk dan naar de maat per deel in de specificaties of vraag het ons na voordat je bestelt.
         </p>
       </ContentSection>
 
@@ -100,7 +100,7 @@ export default function HoekbankKiezenPage() {
           <strong>Leer</strong> is glad, laat haren en kruimels niet vasthouden en is met een vochtige doek schoon te maken. Het voelt in de winter koeler aan en krijgt in de loop van de jaren een gebruikspatina: kleine krasjes en plooien horen erbij. Onderhoud: een paar keer per jaar voeden met een leerverzorgingsmiddel en uit direct zonlicht houden, omdat leer anders verkleurt en uitdroogt.
         </p>
         <p>
-          Twijfel je? Neem een staal mee naar huis of kom de stoffen en het leer voelen in de showroom. Een kleur die online grijs lijkt, kan bij daglicht groen of blauw uitvallen.
+          Twijfel je? Kom de stoffen en het leer voelen in de showroom en vraag naar de mogelijkheden om een kleur naast je eigen vloer of muur te zien. Een kleur die online grijs lijkt, kan bij daglicht groen of blauw uitvallen.
         </p>
       </ContentSection>
 
@@ -114,9 +114,9 @@ export default function HoekbankKiezenPage() {
         items={[
           "L-vorm past in de meeste kamers; een U-vorm vraagt minstens 4,5 x 4,5 m.",
           "Links of rechts bepaal je met je gezicht naar de bank: het hoekdeel aan je linkerhand is een linkse uitvoering.",
-          "Houd 80 cm loopruimte langs de open zijden en 40 tot 45 cm tot de salontafel.",
+          `Houd ${G.sofaWalkwayCm} cm loopruimte langs de open zijden en ${cmRange(G.sofaToCoffeeTableCm)} tot de salontafel.`,
           "Een hoekbank van 280 x 200 cm vraagt een kamer van ongeveer 4 x 4 m.",
-          "Zitdiepte 55 tot 60 cm zit rechtop, 70 cm of meer is lounge; zithoogte 42 tot 45 cm is prettig om op te staan.",
+          `Zitdiepte ${cmRange(G.sofaSeatDepthCm)} zit rechtop, ${G.sofaLoungeDepthCm} cm of meer is lounge; zithoogte 42 tot 45 cm is prettig om op te staan.`,
           "Stof is warm en kleurrijk, leer is glad en makkelijk schoon te houden; beide vragen eigen onderhoud.",
           "Meet de doorgang: deur, gang, trap en bochten.",
         ]}

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentSection, ContentSummary, ContentTable, contentLinkClass } from "@/components/content/ContentPage";
 import { businessInfo } from "@/lib/business-info";
-import { categoryUrl } from "@/lib/categories";
+import { GUIDELINES as G, categoryUrl, cmRange } from "@/lib/categories";
+import { ogDefaults } from "@/lib/seo";
 import { GuideShell } from "../GuideShell";
 import { getGuide, guidePath } from "../guides";
 
@@ -15,25 +16,24 @@ export const metadata: Metadata = {
   title: guide.metaTitle,
   description: guide.description,
   alternates: { canonical: PATH },
-  openGraph: {
+  ...ogDefaults({
     title: `${guide.metaTitle} | ${businessInfo.name}`,
     description: guide.description,
     type: "article",
     url: PATH,
-    locale: "nl_NL",
     publishedTime: guide.datePublished,
     modifiedTime: guide.dateModified,
-  },
+  }),
 };
 
 const faq = [
   {
     q: "Hoeveel personen passen aan een tafel van 180 cm?",
-    a: "Zes personen, met per persoon 60 cm aan de lange zijden. Zet je er ook iemand aan de kopse kanten, dan passen er acht, maar dan zit je wat krapper.",
+    a: `Zes personen, met per persoon ${G.seatWidthCm} cm aan de lange zijden. Zet je er ook iemand aan de kopse kanten, dan passen er acht, maar dan zit je wat krapper.`,
   },
   {
     q: "Hoe hoog is een eettafel?",
-    a: "De meeste eettafels zijn 75 tot 78 cm hoog. Kies daar stoelen bij met een zithoogte van 45 tot 48 cm, zodat je ongeveer 28 tot 30 cm ruimte overhoudt tussen zitting en tafelblad.",
+    a: `De meeste eettafels zijn ${cmRange(G.tableHeightCm)} hoog. Kies daar stoelen bij met een zithoogte van ${cmRange(G.chairSeatHeightCm)}, zodat je ongeveer 28 tot 30 cm ruimte overhoudt tussen zitting en tafelblad.`,
   },
   {
     q: "Welke ruimte heb ik nodig voor een ronde tafel van 120 cm?",
@@ -45,22 +45,22 @@ export default function EettafelMaatKiezenPage() {
   return (
     <GuideShell
       guide={guide}
-      intro="Een eettafel kies je op het aantal mensen dat er dagelijks aan zit én op de ruimte eromheen. Met twee vuistregels, 60 cm per zitplaats en 70 tot 80 cm loopruimte rond de tafel, reken je in een paar minuten uit welke maat bij je eetkamer past."
+      intro={`Een eettafel kies je op het aantal mensen dat er dagelijks aan zit én op de ruimte eromheen. Met twee vuistregels, ${G.seatWidthCm} cm per zitplaats en ${cmRange(G.tableClearanceCm)} loopruimte rond de tafel, reken je in een paar minuten uit welke maat bij je eetkamer past.`}
       faq={faq}
       productsHeading="Eettafels uit de collectie"
     >
-      <ContentSection heading="Vuistregel 1: 60 cm per zitplaats">
+      <ContentSection heading={`Vuistregel 1: ${G.seatWidthCm} cm per zitplaats`}>
         <p>
-          Een algemeen aanvaarde vuistregel is dat iedere persoon aan tafel ongeveer <strong>60 cm breedte</strong> nodig heeft. Dan heb je ruimte voor een bord, een glas en je ellebogen zonder dat je je buurman aanstoot. Wil je ruim zitten, of heb je brede stoelen met armleuningen, reken dan 65 tot 70 cm per persoon.
+          Een algemeen aanvaarde vuistregel is dat iedere persoon aan tafel ongeveer <strong>{G.seatWidthCm} cm breedte</strong> nodig heeft. Dan heb je ruimte voor een bord, een glas en je ellebogen zonder dat je je buurman aanstoot. Wil je ruim zitten, of heb je brede stoelen met armleuningen, reken dan {cmRange(G.seatWidthWideCm)} per persoon.
         </p>
         <p>
           Bij een rechthoekige tafel tel je de zitplaatsen aan de lange zijden; aan de kopse kanten past bij een tafelbreedte van 90 tot 100 cm nog één persoon per kant. Een tafel van 180 cm biedt zo plaats aan zes personen, en aan acht als je de kopse kanten meerekent.
         </p>
       </ContentSection>
 
-      <ContentSection heading="Vuistregel 2: 70 tot 80 cm loopruimte rondom">
+      <ContentSection heading={`Vuistregel 2: ${cmRange(G.tableClearanceCm)} loopruimte rondom`}>
         <p>
-          Minstens zo belangrijk is de ruimte rond de tafel. Om een stoel naar achteren te schuiven en op te staan heb je <strong>70 tot 80 cm</strong> nodig, gemeten vanaf de tafelrand tot de muur of het volgende meubel. Loopt er een route langs de tafel, bijvoorbeeld van de keuken naar de woonkamer, houd dan aan die kant 90 tot 100 cm aan zodat iemand achter de stoelen langs kan terwijl er mensen zitten.
+          Minstens zo belangrijk is de ruimte rond de tafel. Om een stoel naar achteren te schuiven en op te staan heb je <strong>{cmRange(G.tableClearanceCm)}</strong> nodig, gemeten vanaf de tafelrand tot de muur of het volgende meubel. Loopt er een route langs de tafel, bijvoorbeeld van de keuken naar de woonkamer, houd dan aan die kant {cmRange(G.walkwayCm)} aan zodat iemand achter de stoelen langs kan terwijl er mensen zitten.
         </p>
         <p>
           Een rekenvoorbeeld: een tafel van 200 x 100 cm met 80 cm rondom vraagt een vrije ruimte van 3,6 x 2,6 m. Is je eetkamer 3 m breed, dan past die tafel dus alleen in de lengte van de ruimte, niet dwars.
@@ -72,7 +72,7 @@ export default function EettafelMaatKiezenPage() {
           Met beide vuistregels kom je op onderstaande tabel. De lengtes gaan uit van een rechthoekige tafel van 90 tot 100 cm breed, met zitplaatsen aan de lange zijden.
         </p>
         <ContentTable
-          caption="Richtlijn: tafellengte per aantal personen, met 60 cm per zitplaats en 70 tot 80 cm loopruimte."
+          caption={`Richtlijn: tafellengte per aantal personen, met ${G.seatWidthCm} cm per zitplaats en ${cmRange(G.tableClearanceCm)} loopruimte.`}
           head={["Personen", "Tafellengte", "Vrije ruimte (lengte x breedte)"]}
           rows={[
             ["4", "120 - 140 cm", "ca. 2,8 x 2,5 m"],
@@ -109,7 +109,7 @@ export default function EettafelMaatKiezenPage() {
 
       <ContentSection heading="Stoelen en tafelhoogte">
         <p>
-          De standaard tafelhoogte is 75 tot 78 cm. Daar horen stoelen bij met een zithoogte van 45 tot 48 cm, zodat er ongeveer 28 tot 30 cm overblijft tussen zitting en blad. Heeft de stoel armleuningen, controleer dan of die onder het blad passen; anders kun je de stoel niet aanschuiven en heb je meer loopruimte nodig. Bekijk de{" "}
+          De standaard tafelhoogte is {cmRange(G.tableHeightCm)}. Daar horen stoelen bij met een zithoogte van {cmRange(G.chairSeatHeightCm)}, zodat er ongeveer 28 tot 30 cm overblijft tussen zitting en blad. Heeft de stoel armleuningen, controleer dan of die onder het blad passen; anders kun je de stoel niet aanschuiven en heb je meer loopruimte nodig. Bekijk de{" "}
           <Link href={categoryUrl("eetkamerstoelen")} className={contentLinkClass}>
             eetkamerstoelen
           </Link>{" "}
@@ -119,12 +119,12 @@ export default function EettafelMaatKiezenPage() {
 
       <ContentSummary
         items={[
-          "Reken 60 cm tafelbreedte per persoon; 65 tot 70 cm als je ruim wilt zitten.",
-          "Houd 70 tot 80 cm vrij rond de tafel om stoelen naar achteren te schuiven; 90 tot 100 cm bij een looproute.",
+          `Reken ${G.seatWidthCm} cm tafelbreedte per persoon; ${cmRange(G.seatWidthWideCm)} als je ruim wilt zitten.`,
+          `Houd ${cmRange(G.tableClearanceCm)} vrij rond de tafel om stoelen naar achteren te schuiven; ${cmRange(G.walkwayCm)} bij een looproute.`,
           "Vier personen: 120 tot 140 cm. Zes: 160 tot 180 cm. Acht: 200 tot 240 cm.",
           "Rond past goed in een vierkante ruimte tot zes personen; rechthoekig benut een langwerpige ruimte beter.",
           "Kies een uitschuifbare tafel als je af en toe gasten hebt, een vaste maat als je dagelijks met velen eet.",
-          "Tafelhoogte 75 tot 78 cm, zithoogte stoelen 45 tot 48 cm.",
+          `Tafelhoogte ${cmRange(G.tableHeightCm)}, zithoogte stoelen ${cmRange(G.chairSeatHeightCm)}.`,
         ]}
       />
 
@@ -139,6 +139,10 @@ export default function EettafelMaatKiezenPage() {
             eetkamerstoelen
           </Link>
           . Twijfel je over de maat van je woonkamerbank, lees dan ook de gids{" "}
+          <Link href={guidePath("hoekbank-kiezen")} className={contentLinkClass}>
+            een hoekbank kiezen
+          </Link>
+          ; voor de tafel ervoor de gids{" "}
           <Link href={guidePath("salontafel-afmetingen")} className={contentLinkClass}>
             salontafel afmetingen
           </Link>

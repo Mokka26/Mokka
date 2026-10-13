@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentSection, ContentSummary, ContentTable, contentLinkClass } from "@/components/content/ContentPage";
 import { businessInfo } from "@/lib/business-info";
-import { categoryUrl } from "@/lib/categories";
+import { GUIDELINES as G, categoryUrl, cmRange } from "@/lib/categories";
+import { ogDefaults } from "@/lib/seo";
 import { GuideShell } from "../GuideShell";
 import { getGuide, guidePath } from "../guides";
 
@@ -15,21 +16,20 @@ export const metadata: Metadata = {
   title: guide.metaTitle,
   description: guide.description,
   alternates: { canonical: PATH },
-  openGraph: {
+  ...ogDefaults({
     title: `${guide.metaTitle} | ${businessInfo.name}`,
     description: guide.description,
     type: "article",
     url: PATH,
-    locale: "nl_NL",
     publishedTime: guide.datePublished,
     modifiedTime: guide.dateModified,
-  },
+  }),
 };
 
 const faq = [
   {
     q: "Welke maat salontafel past bij een bank van 240 cm?",
-    a: "Neem ongeveer twee derde van de zitlengte: bij 240 cm komt dat op een tafel van 140 tot 160 cm lang. Houd daarnaast 40 tot 45 cm ruimte tussen bank en tafel.",
+    a: `Neem ongeveer ${G.coffeeTableRatio} van de zitlengte: bij 240 cm komt dat op een tafel van 140 tot 160 cm lang. Houd daarnaast ${cmRange(G.sofaToCoffeeTableCm)} ruimte tussen bank en tafel.`,
   },
   {
     q: "Mag een salontafel hoger zijn dan de bank?",
@@ -51,28 +51,28 @@ export default function SalontafelAfmetingenPage() {
     >
       <ContentSection heading="Hoogte: ongeveer de zithoogte van de bank">
         <p>
-          Een algemeen aanvaarde vuistregel is dat het tafelblad <strong>op dezelfde hoogte ligt als de zitting van de bank, of iets lager</strong>. De meeste banken hebben een zithoogte van 40 tot 45 cm; een salontafel van 35 tot 45 cm hoog past daar goed bij. Je pakt dan een kop koffie zonder te bukken of te reiken, en de tafel oogt in verhouding met de bank.
+          Een algemeen aanvaarde vuistregel is dat het tafelblad <strong>op dezelfde hoogte ligt als de zitting van de bank, of iets lager</strong>. De meeste banken hebben een zithoogte van {cmRange(G.sofaSeatHeightCm)}; een salontafel van 35 tot 45 cm hoog past daar goed bij. Je pakt dan een kop koffie zonder te bukken of te reiken, en de tafel oogt in verhouding met de bank.
         </p>
         <p>
           Heb je een lage loungebank van 38 cm, kies dan ook een lage tafel van 30 tot 38 cm. Bij een hoge bank van 48 cm mag de tafel 45 cm zijn. Een tafel die hoger is dan de zitting zit in de weg bij het gaan zitten en maakt de zithoek visueel zwaar.
         </p>
       </ContentSection>
 
-      <ContentSection heading="Afstand tot de bank: 40 tot 45 cm">
+      <ContentSection heading={`Afstand tot de bank: ${cmRange(G.sofaToCoffeeTableCm)}`}>
         <p>
-          Tussen de voorkant van de bank en de rand van de tafel houd je <strong>40 tot 45 cm</strong> aan. Dat is genoeg om je benen te strekken en om langs de tafel te lopen zonder je schenen te stoten, en dichtbij genoeg om iets van tafel te pakken zonder op te staan. Bij een hoekbank geldt dezelfde afstand aan beide zijden van de hoek.
+          Tussen de voorkant van de bank en de rand van de tafel houd je <strong>{cmRange(G.sofaToCoffeeTableCm)}</strong> aan. Dat is genoeg om je benen te strekken en om langs de tafel te lopen zonder je schenen te stoten, en dichtbij genoeg om iets van tafel te pakken zonder op te staan. Bij een hoekbank geldt dezelfde afstand aan beide zijden van de hoek.
         </p>
         <p>
-          Staat de tafel in een looproute, bijvoorbeeld tussen de bank en de deur naar de keuken, reken dan aan die kant op 80 cm vrije ruimte. Zo komt niemand klem te zitten als er mensen op de bank zitten.
+          Staat de tafel in een looproute, bijvoorbeeld tussen de bank en de deur naar de keuken, reken dan aan die kant op {G.sofaWalkwayCm} cm vrije ruimte. Zo komt niemand klem te zitten als er mensen op de bank zitten.
         </p>
       </ContentSection>
 
-      <ContentSection heading="Lengte: ongeveer twee derde van de bank">
+      <ContentSection heading={`Lengte: ongeveer ${G.coffeeTableRatio} van de bank`}>
         <p>
-          Een tafel die te klein is, verdwijnt visueel; een tafel die te groot is, blokkeert de zithoek. De vuistregel is een tafellengte van <strong>ongeveer twee derde van de zitlengte van de bank</strong>. Meet daarvoor de zitting, zonder de armleuningen.
+          Een tafel die te klein is, verdwijnt visueel; een tafel die te groot is, blokkeert de zithoek. De vuistregel is een tafellengte van <strong>ongeveer {G.coffeeTableRatio} van de zitlengte van de bank</strong>. Meet daarvoor de zitting, zonder de armleuningen.
         </p>
         <ContentTable
-          caption="Richtlijn: tafellengte van ongeveer twee derde van de zitlengte van de bank."
+          caption={`Richtlijn: tafellengte van ongeveer ${G.coffeeTableRatio} van de zitlengte van de bank.`}
           head={["Zitlengte bank", "Tafellengte (rechthoekig)", "Doorsnede (rond)"]}
           rows={[
             ["180 cm (tweezits)", "110 - 120 cm", "80 - 90 cm"],
@@ -111,17 +111,17 @@ export default function SalontafelAfmetingenPage() {
       <ContentSection heading="Zo meet je het uit">
         <ol>
           <li>Meet de zithoogte van je bank (van de vloer tot de bovenkant van de zitting) en de zitlengte zonder armleuningen.</li>
-          <li>Neem twee derde van de zitlengte als richtlijn voor de tafellengte.</li>
-          <li>Leg een krant of tape op de vloer in de maat van de tafel, 40 tot 45 cm van de bank, en loop er een dag omheen.</li>
+          <li>Neem {G.coffeeTableRatio} van de zitlengte als richtlijn voor de tafellengte.</li>
+          <li>Leg een krant of tape op de vloer in de maat van de tafel, {cmRange(G.sofaToCoffeeTableCm)} van de bank, en loop er een dag omheen.</li>
           <li>Controleer de hoogte in de specificaties: gelijk aan de zithoogte of iets lager.</li>
         </ol>
       </ContentSection>
 
       <ContentSummary
         items={[
-          "Bladhoogte ongeveer gelijk aan de zithoogte van de bank (40 tot 45 cm) of iets lager.",
-          "Houd 40 tot 45 cm tussen bank en tafel; 80 cm aan de kant van een looproute.",
-          "Tafellengte ongeveer twee derde van de zitlengte: bij een bank van 240 cm een tafel van 150 tot 160 cm.",
+          `Bladhoogte ongeveer gelijk aan de zithoogte van de bank (${cmRange(G.sofaSeatHeightCm)}) of iets lager.`,
+          `Houd ${cmRange(G.sofaToCoffeeTableCm)} tussen bank en tafel; ${G.sofaWalkwayCm} cm aan de kant van een looproute.`,
+          `Tafellengte ongeveer ${G.coffeeTableRatio} van de zitlengte: bij een bank van 240 cm een tafel van 150 tot 160 cm.`,
           "Rond of ovaal in kleine ruimtes en bij een hoekbank; rechthoekig bij een rechte bank in een lange kamer.",
           "Bij een hoekbank zijn twee kleinere tafels vaak handiger dan één grote.",
           "Bijzettafels zijn iets hoger (45 tot 60 cm) en staan naast de bank, binnen handbereik.",

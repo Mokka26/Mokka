@@ -26,7 +26,8 @@ export async function GuideShell({
 }) {
   const path = guidePath(guide.slug);
   const primary = getCategory(guide.categories[0]);
-  const primaryHref = primary ? categoryUrl(primary.slug) : "/products";
+  // /products is noindex; zonder gekoppelde categorie naar de banken.
+  const primaryHref = primary ? categoryUrl(primary.slug) : categoryUrl("banken");
   const primaryLabel = primary ? primary.label : "de collectie";
   const products = await getGuideProducts(guide.productCategories);
 
@@ -67,7 +68,7 @@ export async function GuideShell({
       footer={
         <ContentCta
           heading="Liever even zien en voelen?"
-          text={`In de showroom in ${businessInfo.address.city} staan de modellen opgesteld en rekenen we samen uit wat in jouw ruimte past. Neem de maten van je kamer mee; een afspraak is niet nodig.`}
+          text={`In de showroom in ${businessInfo.address.city} zit je proef en rekenen we samen uit wat in jouw ruimte past. Neem de maten van je kamer mee; een afspraak is niet nodig. Wil je een specifiek model zien, vraag dan vooraf naar de mogelijkheden.`}
           primary={{ href: primaryHref, label: `Bekijk ${primaryLabel.toLowerCase()}` }}
           secondary={{ href: "/showroom", label: "Naar de showroom" }}
         />

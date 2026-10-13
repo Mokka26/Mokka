@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { getCategory } from "@/lib/categories";
+import { ogDefaults } from "@/lib/seo";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
 
 // ISR: alle homepage-data zit in unstable_cache op PRODUCTS_TAG, dus een
@@ -18,20 +19,16 @@ import { PRODUCTS_TAG } from "@/lib/revalidate";
 export const revalidate = 3600;
 
 const city = businessInfo.address.city;
-const title = `${businessInfo.name} — Banken, eettafels & bedden, showroom ${city}`;
+// Absolute title (geen template): 60 tekens bij "Den Haag", één keer de
+// merknaam, geen "&". Bij een andere plaatsnaam opnieuw meten (max. 60).
+const title = `Meubels en verlichting kopen, showroom ${city} | ${businessInfo.name}`;
 const description = `Banken, eettafels en bedden. Kom proefzitten in onze showroom in ${city} of bestel online: ${shippingInfo.freeShippingCopyShort.toLowerCase()} en ${shippingInfo.returnWindowDays} dagen bedenktijd.`;
 
 export const metadata: Metadata = {
-  title,
+  title: { absolute: title },
   description,
   alternates: { canonical: "/" },
-  openGraph: {
-    title,
-    description,
-    type: "website",
-    url: "/",
-    locale: "nl_NL",
-  },
+  ...ogDefaults({ title, description, url: "/" }),
 };
 
 // Alleen de velden die ProductCard toont; slug/description voor FeaturedStory.

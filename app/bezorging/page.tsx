@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentCta, ContentPage, ContentSection, ContentTable, contentLinkClass } from "@/components/content/ContentPage";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
-import { NEXT_STEP_AFTER_PAYMENT } from "@/lib/email";
-import { formatShippingCost, getUspsByKey, shippingInfo } from "@/lib/shipping-info";
+import { NEXT_STEP_AFTER_PAYMENT, formatShippingCost, getUspsByKey, shippingInfo } from "@/lib/shipping-info";
 import type { BreadcrumbItem } from "@/lib/jsonLd";
+import { ogDefaults } from "@/lib/seo";
 
 const PATH = "/bezorging";
 const TITLE = "Bezorging en montage: levertijd en kosten";
@@ -14,13 +14,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: PATH },
-  openGraph: {
-    title: `${TITLE} | ${businessInfo.name}`,
-    description: DESCRIPTION,
-    type: "website",
-    url: PATH,
-    locale: "nl_NL",
-  },
+  ...ogDefaults({ title: `${TITLE} | ${businessInfo.name}`, description: DESCRIPTION, url: PATH }),
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -37,7 +31,7 @@ function countryList(): string {
 }
 
 export default function BezorgingPage() {
-  const { deliveryTime, freeShippingThreshold, rates, returnWindowDays } = shippingInfo;
+  const { deliveryTime, freeShippingThreshold, rates, returnWindowDays, customMade } = shippingInfo;
   const standardCost = formatShippingCost(rates.standard);
   const countries = countryList();
   const deliversToBelgium = shippingInfo.freeShippingCountries.includes("BE");
@@ -48,7 +42,7 @@ export default function BezorgingPage() {
   const faq = [
     {
       q: "Hoe snel heb ik mijn bestelling in huis?",
-      a: `Producten die op voorraad zijn leveren we binnen ${deliveryTime.inStock}. Bestelwerk duurt ${deliveryTime.backorder}, maatwerk ${deliveryTime.custom}. De levertijd staat altijd bij het product, vóórdat je afrekent.`,
+      a: `Producten die op voorraad zijn leveren we binnen ${deliveryTime.inStock}. Producten op bestelling duren ${deliveryTime.backorder}, maatwerk (${customMade.definition}) ${deliveryTime.custom}. De levertijd staat altijd bij het product, vóórdat je afrekent.`,
     },
     {
       q: "Wat kost bezorging?",
@@ -68,7 +62,7 @@ export default function BezorgingPage() {
     },
     {
       q: "Kan ik mijn bestelling ook afhalen in de showroom?",
-      a: `Dat kan in overleg. Laat het weten als we je bellen om de bezorging in te plannen, dan spreken we een moment af in onze showroom in ${businessInfo.address.city}.`,
+      a: `Vraag naar de mogelijkheden als we je bellen om de bezorging in te plannen; afhalen in de showroom in ${businessInfo.address.city} is op afspraak soms mogelijk.`,
     },
   ];
 
@@ -98,7 +92,7 @@ export default function BezorgingPage() {
             </>
           }
           primary={{ href: "/contact", label: "Neem contact op" }}
-          secondary={{ href: "/products", label: "Bekijk de collectie" }}
+          secondary={{ href: "/banken", label: "Bekijk de banken" }}
         />
       }
     >
@@ -110,13 +104,13 @@ export default function BezorgingPage() {
           caption="Levertijd per voorraadstatus, gerekend vanaf de betaling."
           head={["Status", "Levertijd", "Wat het betekent"]}
           rows={[
-            ["Op voorraad", deliveryTime.inStock, "Het product ligt bij ons of bij de fabrikant klaar."],
-            ["Op bestelling", deliveryTime.backorder, "Het product wordt voor je besteld bij de fabrikant."],
-            ["Maatwerk", deliveryTime.custom, "Het product wordt speciaal voor je gemaakt, bijvoorbeeld in een gekozen stof of maat."],
+            ["Op voorraad", deliveryTime.inStock, "Het product is direct leverbaar."],
+            ["Op bestelling", deliveryTime.backorder, "Het product wordt in standaarduitvoering voor je besteld. Dit is geen maatwerk."],
+            [customMade.label, deliveryTime.custom, `Het product wordt ${customMade.definition}.`],
           ]}
         />
         <p>
-          Staat er bij een product een afwijkende levertijd, dan geldt die. Loopt een levering onverhoopt uit, dan hoor je dat van ons, niet pas op de bezorgdag.
+          Staat er bij een product een afwijkende levertijd, dan geldt die. Verandert er iets aan de verwachte leverdatum, dan houden we je op de hoogte.
         </p>
       </ContentSection>
 
@@ -157,7 +151,7 @@ export default function BezorgingPage() {
           Denk aan boxsprings, kledingkasten en hoekbanken die in losse delen geleverd worden. Geef het aan bij je bestelling of in het telefoongesprek, dan hoor je wat de mogelijkheden zijn en wat het eventueel kost.
         </p>
         <p>
-          Wil je zelf monteren? Zorg dat je met twee personen bent en dat je de verpakking pas openmaakt als je zeker weet dat je het product houdt: retour kan alleen in de originele, ongeopende verpakking. Lees daarover meer op de pagina{" "}
+          Wil je zelf monteren? Zorg dat je met twee personen bent en bewaar de verpakking tot je zeker weet dat je het product houdt: dan kun je het bij een retour weer goed inpakken. Lees daarover meer op de pagina{" "}
           <Link href={businessInfo.legal.returnPolicyUrl} className={contentLinkClass}>
             retourneren
           </Link>
@@ -180,7 +174,7 @@ export default function BezorgingPage() {
 
       <ContentSection heading="Bedenktijd en garantie">
         <p>
-          Je hebt {returnWindowDays} dagen wettelijke bedenktijd, mits het product {shippingInfo.returnCondition} is. Op fabrieks- en materiaalfouten geldt garantie. De precieze voorwaarden staan op de pagina{" "}
+          Je hebt {returnWindowDays} dagen wettelijke bedenktijd, mits het product {shippingInfo.returnCondition}. {customMade.returnNote} Op fabrieks- en materiaalfouten geldt garantie. De precieze voorwaarden staan op de pagina{" "}
           <Link href={businessInfo.legal.returnPolicyUrl} className={contentLinkClass}>
             retourneren
           </Link>{" "}

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentSection, ContentSummary, ContentTable, contentLinkClass } from "@/components/content/ContentPage";
 import { businessInfo } from "@/lib/business-info";
-import { categoryUrl } from "@/lib/categories";
+import { GUIDELINES as G, categoryUrl, cmRange } from "@/lib/categories";
+import { ogDefaults } from "@/lib/seo";
 import { GuideShell } from "../GuideShell";
 import { getGuide, guidePath } from "../guides";
 
@@ -15,25 +16,24 @@ export const metadata: Metadata = {
   title: guide.metaTitle,
   description: guide.description,
   alternates: { canonical: PATH },
-  openGraph: {
+  ...ogDefaults({
     title: `${guide.metaTitle} | ${businessInfo.name}`,
     description: guide.description,
     type: "article",
     url: PATH,
-    locale: "nl_NL",
     publishedTime: guide.datePublished,
     modifiedTime: guide.dateModified,
-  },
+  }),
 };
 
 const faq = [
   {
     q: "Welke bedmaat past in mijn slaapkamer?",
-    a: "Tel bij de bedmaat 60 tot 70 cm loopruimte op aan elke vrije zijde. Een bed van 160 x 200 cm vraagt zo een ruimte van ongeveer 3 x 3,5 m, een bed van 180 x 200 cm minstens 3,2 x 3,5 m.",
+    a: `Tel bij de bedmaat ${cmRange(G.bedClearanceCm)} loopruimte op aan elke vrije zijde. Een bed van 160 x 200 cm vraagt zo een ruimte van ongeveer 3 x 3,5 m, een bed van 180 x 200 cm minstens 3,2 x 3,5 m.`,
   },
   {
     q: "Hoe lang moet mijn bed zijn?",
-    a: "Een vuistregel: je lichaamslengte plus 20 cm. Tot 1,80 m volstaat een matras van 200 cm; ben je 1,90 m of langer, kies dan 210 of 220 cm als de serie dat biedt.",
+    a: `Een vuistregel: je lichaamslengte plus ${G.bedLengthExtraCm} cm. Tot 1,80 m volstaat een matras van ${G.mattressLengthCm} cm; ben je 1,90 m of langer, kies dan 210 of 220 cm als de serie dat biedt.`,
   },
   {
     q: "Kan ik twee losse matrassen in een tweepersoonsbed leggen?",
@@ -49,12 +49,12 @@ export default function BedEnMatrasKiezenPage() {
       faq={faq}
       productsHeading="Bedden uit de collectie"
     >
-      <ContentSection heading="Matrasmaten: van 90 x 200 tot 180 x 200 cm">
+      <ContentSection heading={`Matrasmaten: van ${G.mattressWidthsCm[0]} x ${G.mattressLengthCm} tot ${G.mattressWidthsCm[G.mattressWidthsCm.length - 1]} x ${G.mattressLengthCm} cm`}>
         <p>
-          In de collectie vind je bedden en matrassen in de gangbare maten van 90 x 200 cm (eenpersoons) tot 180 x 200 cm (tweepersoons). Als vuistregel heeft een volwassene <strong>80 tot 90 cm breedte</strong> nodig om vrij te kunnen draaien zonder de ander te storen. Bij een tweepersoonsbed van 140 cm heeft ieder dus 70 cm, bij 180 cm ieder 90 cm, net zo veel als in een eenpersoonsbed.
+          De gangbare matrasmaten lopen van {G.mattressWidthsCm[0]} x {G.mattressLengthCm} cm (eenpersoons) tot {G.mattressWidthsCm[G.mattressWidthsCm.length - 1]} x {G.mattressLengthCm} cm (tweepersoons); welke maten een serie biedt, staat bij het product. Als vuistregel heeft een volwassene <strong>80 tot 90 cm breedte</strong> nodig om vrij te kunnen draaien zonder de ander te storen. Bij een tweepersoonsbed van 140 cm heeft ieder dus 70 cm, bij 180 cm ieder 90 cm, net zo veel als in een eenpersoonsbed.
         </p>
         <ContentTable
-          caption="Richtlijn: matrasmaat, gebruik en benodigde slaapkamer met 60 tot 70 cm loopruimte aan de vrije zijden."
+          caption={`Richtlijn: matrasmaat, gebruik en benodigde slaapkamer met ${cmRange(G.bedClearanceCm)} loopruimte aan de vrije zijden.`}
           head={["Matrasmaat", "Geschikt voor", "Breedte per persoon", "Minimale kamermaat"]}
           rows={[
             ["90 x 200 cm", "1 persoon", "90 cm", "ca. 2,2 x 3,3 m"],
@@ -64,13 +64,13 @@ export default function BedEnMatrasKiezenPage() {
           ]}
         />
         <p>
-          De kamermaat gaat uit van een bed met het hoofdeinde tegen de muur en 60 tot 70 cm loopruimte aan beide lange zijden en aan het voeteneinde. Staat het bed met één zijde tegen de muur, dan heb je aan die kant geen loopruimte nodig, maar instappen en opmaken wordt wel lastiger.
+          De kamermaat gaat uit van een bed met het hoofdeinde tegen de muur en {cmRange(G.bedClearanceCm)} loopruimte aan beide lange zijden en aan het voeteneinde. Staat het bed met één zijde tegen de muur, dan heb je aan die kant geen loopruimte nodig, maar instappen en opmaken wordt wel lastiger.
         </p>
       </ContentSection>
 
-      <ContentSection heading="Bedlengte: lichaamslengte plus 20 cm">
+      <ContentSection heading={`Bedlengte: lichaamslengte plus ${G.bedLengthExtraCm} cm`}>
         <p>
-          Een algemeen aanvaarde vuistregel voor de lengte van het matras is <strong>je lichaamslengte plus 20 cm</strong>: ruimte voor je hoofd op het kussen en voor je voeten zonder dat ze tegen het voeteneinde komen. Tot 1,80 m volstaat de standaardlengte van 200 cm. Ben je 1,90 m of langer, kijk dan naar 210 of 220 cm. Niet elke serie biedt die lengtes; in de specificaties en bij de maatkeuze op de productpagina zie je welke maten er zijn.
+          Een algemeen aanvaarde vuistregel voor de lengte van het matras is <strong>je lichaamslengte plus {G.bedLengthExtraCm} cm</strong>: ruimte voor je hoofd op het kussen en voor je voeten zonder dat ze tegen het voeteneinde komen. Tot 1,80 m volstaat de standaardlengte van {G.mattressLengthCm} cm. Ben je 1,90 m of langer, kijk dan naar 210 of 220 cm. Niet elke serie biedt die lengtes; in de specificaties en bij de maatkeuze op de productpagina zie je welke maten er zijn.
         </p>
         <p>
           Let op het verschil tussen de matrasmaat en de buitenmaat van het bed. Een boxspring van 180 x 200 cm is door het hoofdbord en de omranding al snel 190 tot 200 cm breed en 215 tot 225 cm lang. De buitenmaat staat bij de specificaties; die maat gebruik je om te bepalen of het in de kamer past.
@@ -100,15 +100,15 @@ export default function BedEnMatrasKiezenPage() {
 
       <ContentSection heading="Meet de doorgang en de kamer">
         <p>
-          Teken de slaapkamer uit met het bed, de nachtkastjes, de kledingkast en de deuren die open moeten kunnen. Houd 60 tot 70 cm loopruimte aan de vrije zijden en zorg dat een kastdeur niet tegen het bed aan komt. Meet ook de route naar binnen: een standaard deur is 83 cm breed, een boxspring-onderbox is meestal 90 cm breed per helft en past gekanteld. Een smalle trap met een bocht is het grootste risico; de maten per deel staan bij de specificaties.
+          Teken de slaapkamer uit met het bed, de nachtkastjes, de kledingkast en de deuren die open moeten kunnen. Houd {cmRange(G.bedClearanceCm)} loopruimte aan de vrije zijden en zorg dat een kastdeur niet tegen het bed aan komt. Meet ook de route naar binnen: een standaard deur is {G.doorWidthCm} cm breed, een boxspring-onderbox is meestal 90 cm breed per helft en past gekanteld. Een smalle trap met een bocht is het grootste risico; de maten per deel staan bij de specificaties.
         </p>
       </ContentSection>
 
       <ContentSummary
         items={[
           "Reken 80 tot 90 cm breedte per volwassene; 160 x 200 cm is de gangbare tweepersoonsmaat, 180 x 200 cm geeft ieder 90 cm.",
-          "Matraslengte is lichaamslengte plus 20 cm; vanaf 1,90 m kies je 210 of 220 cm.",
-          "Houd 60 tot 70 cm loopruimte aan de vrije zijden; een bed van 160 x 200 cm vraagt ongeveer 3 x 3,5 m.",
+          `Matraslengte is lichaamslengte plus ${G.bedLengthExtraCm} cm; vanaf 1,90 m kies je 210 of 220 cm.`,
+          `Houd ${cmRange(G.bedClearanceCm)} loopruimte aan de vrije zijden; een bed van 160 x 200 cm vraagt ongeveer 3 x 3,5 m.`,
           "Een boxspring is compleet en hoog (ca. 60 cm), een bedframe is lager en laat je het matras zelf kiezen.",
           "Tel nachtkastjes (40 tot 60 cm per stuk) op bij de breedte van de wand.",
           "Gebruik de buitenmaat van het bed, niet de matrasmaat, om te bepalen of het past.",

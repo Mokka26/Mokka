@@ -35,6 +35,22 @@ export const shippingInfo = {
     custom: "6-8 weken",
   },
 
+  // Concrete vervolgstap na betaling — één bron, gebruikt in de orderbevestiging
+  // (lib/email.ts), de bedankpagina en de pagina's bezorging en betalen.
+  nextStepAfterPayment: "We bellen of mailen je binnen 2 werkdagen om de bezorging in te plannen.",
+
+  // ─── Maatwerk ─────────────────────────────────────────────────
+  // Eén definitie voor bezorging, retourneren en de productpagina. "Op
+  // bestelling" (standaarduitvoering, besteld bij de fabrikant) is GÉÉN
+  // maatwerk en valt gewoon onder de bedenktijd.
+  customMade: {
+    label: "Maatwerk",
+    definition: "speciaal voor jou gemaakt, bijvoorbeeld in een door jou gekozen stof, kleur of maat",
+    // Juridisch toetsen door de eigenaar: art. 6:230p BW (uitzonderingen herroepingsrecht).
+    returnNote:
+      "Maatwerk is wettelijk uitgesloten van het herroepingsrecht. Dat staat bij het product vermeld vóórdat je bestelt.",
+  },
+
   // ─── Garantie ─────────────────────────────────────────────────
   // Default-garantie in jaren; per categorie te overschrijven (zie
   // warrantyByCategory + warrantyYearsFor()).
@@ -48,12 +64,27 @@ export const shippingInfo = {
   warrantyCopyLong: "Op fabrieks- en materiaalfouten.",
 
   // ─── Retour ───────────────────────────────────────────────────
-  // Wettelijk herroepingsrecht (14 dagen). Voorwaarde: product ongebruikt en in
-  // de originele, ongeopende verpakking (anders niet als nieuw verkoopbaar).
+  // Wettelijk herroepingsrecht (art. 6:230o BW): 14 dagen bedenktijd, de klant
+  // mag het product uitpakken en beoordelen zoals in een winkel. Alleen bij
+  // gebruik of beschadiging die verder gaat dan beoordelen mag waardevermindering
+  // worden verrekend. "Alleen ongeopende verpakking" is in Nederland niet
+  // houdbaar en staat hier daarom niet meer.
+  // Juridisch toetsen door de eigenaar: de teksten hieronder zijn een
+  // voorstel; laat ze nakijken vóór de live-gang.
   returnWindowDays: 14,
   returnCopyShort: "14 dagen retour",
-  returnCopyLong: "14 dagen bedenktijd — mits ongebruikt en in originele verpakking.",
-  returnCondition: "ongebruikt en in de originele, ongeopende verpakking",
+  returnCopyLong: "14 dagen bedenktijd. Retourkosten voor eigen rekening, maatwerk uitgezonderd.",
+  /** Past in "mits het product <returnCondition>". */
+  returnCondition: "compleet is en niet verder gebruikt dan nodig om het te beoordelen",
+  returnInspectionCopy:
+    "Je mag het product uitpakken, bekijken en beoordelen zoals je dat in een winkel zou doen. Is het daarna gebruikt of beschadigd, dan kunnen we de waardevermindering verrekenen met het bedrag dat je terugkrijgt.",
+  /** Wie de kosten van de retourzending draagt (schema.org MerchantReturnPolicy.returnFees). */
+  returnFeesPaidBy: "customer" as "customer" | "merchant",
+  returnFeesCopy: "De kosten voor het terugsturen zijn voor jouw rekening; terugbrengen naar de showroom is gratis.",
+  /** Landen waarvoor het retourbeleid geldt (los van de gratis-verzendlanden). */
+  returnCountries: ["NL", "BE"] as ReadonlyArray<string>,
+  /** Hoe snel een retouraanmelding wordt bevestigd; bewust zonder harde termijn. */
+  returnConfirmationCopy: "Je ontvangt zo snel mogelijk een bevestiging met instructies.",
 
   // ─── BTW ──────────────────────────────────────────────────────
   vatRatePercent: 21,
@@ -75,7 +106,7 @@ export const shippingInfo = {
     {
       key: "return",
       title: "14 dagen retour",
-      description: "Wettelijke bedenktijd — mits ongebruikt en in de originele verpakking.",
+      description: "Wettelijke bedenktijd; retourkosten voor eigen rekening, maatwerk uitgezonderd.",
     },
     {
       key: "warranty",
@@ -95,7 +126,7 @@ export const shippingInfo = {
     {
       key: "advice",
       title: "Persoonlijk advies",
-      description: "Ons atelier staat klaar voor stijlvragen.",
+      description: "Bel of mail ons voor advies over maten, stoffen en kleuren.",
     },
   ] as ReadonlyArray<Usp>,
 
@@ -110,13 +141,16 @@ export const shippingInfo = {
   // Footer USP-balk (4 items, korte sub-tekst)
   footerUsps: [
     { title: "Gratis verzending", sub: "Vanaf €100 in NL" },
-    { title: "14 dagen retour", sub: "Originele verpakking" },
+    { title: "14 dagen retour", sub: "Wettelijke bedenktijd" },
     { title: "Garantie", sub: "Op fabrieks- en materiaalfouten" },
     { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
   ] as ReadonlyArray<{ title: string; sub: string }>,
 } as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────
+
+/** Vervolgstap na betaling; alias van `shippingInfo.nextStepAfterPayment`. */
+export const NEXT_STEP_AFTER_PAYMENT = shippingInfo.nextStepAfterPayment;
 
 export function formatShippingCost(cost: number): string {
   if (cost === 0) return "Gratis";

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
@@ -6,27 +7,14 @@ import { firstImageOnly } from "@/lib/imageHelpers";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
 import { productUrl } from "@/lib/categories";
 import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/jsonLd";
+import { ogDefaults } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
 
-export const revalidate = 3600;
-
+const PATH = "/nieuw";
 const LIMIT = 48;
 const TITLE = "Nieuw in de collectie: de laatste meubels";
 const DESCRIPTION = `De ${LIMIT} nieuwste producten bij ${businessInfo.name}: banken, tafels, stoelen, kasten, bedden en verlichting die recent aan de collectie zijn toegevoegd. Prijzen incl. btw.`;
-
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: { canonical: "/nieuw" },
-  openGraph: {
-    title: `${TITLE} | ${businessInfo.name}`,
-    description: DESCRIPTION,
-    type: "website",
-    url: "/nieuw",
-    locale: "nl_NL",
-  },
-};
 
 const getNewProducts = unstable_cache(
   async () => {
@@ -59,19 +47,31 @@ const getNewProducts = unstable_cache(
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
 );
 
+export async function generateMetadata(): Promise<Metadata> {
+  const products = await getNewProducts();
+  return {
+    title: TITLE,
+    description: DESCRIPTION,
+    alternates: { canonical: PATH },
+    // Zonder producten is dit een lege pagina: niet indexeren, wel volgen.
+    robots: products.length === 0 ? { index: false, follow: true } : { index: true, follow: true },
+    ...ogDefaults({ title: `${TITLE} | ${businessInfo.name}`, description: DESCRIPTION, url: PATH }),
+  };
+}
+
 export default async function NieuwPage() {
   const products = await getNewProducts();
 
   const breadcrumbs: BreadcrumbItem[] = [
     { name: "Home", url: "/" },
-    { name: "Nieuw", url: "/nieuw" },
+    { name: "Nieuw", url: PATH },
   ];
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: `Nieuw — ${businessInfo.name}`,
     description: DESCRIPTION,
-    url: `${businessInfo.siteUrl}/nieuw`,
+    url: `${businessInfo.siteUrl}${PATH}`,
     mainEntity: {
       "@type": "ItemList",
       numberOfItems: products.length,
@@ -100,7 +100,14 @@ export default async function NieuwPage() {
           <p className="eyebrow mb-4">Collectie</p>
           <h1 className="display-lg text-ink mb-6">Nieuw</h1>
           <p className="body-lg text-slate max-w-2xl">
-            De laatste producten die aan de collectie zijn toegevoegd, nieuwste eerst.
+            De laatste producten die aan de collectie zijn toegevoegd, nieuwste eerst. Bekijk ook de{" "}
+            <Link
+              href="/aanbiedingen"
+              className="inline-flex items-center min-h-11 text-accent-dark underline underline-offset-2 hover:text-ink focus-visible:text-ink"
+            >
+              aanbiedingen
+            </Link>
+            .
           </p>
         </header>
 
@@ -108,7 +115,13 @@ export default async function NieuwPage() {
           {products.length === 0 ? (
             <div className="text-center py-32">
               <p className="font-serif text-2xl text-ink mb-4">Nog geen producten</p>
-              <p className="text-[16px] text-slate">Bekijk de categorieën via het menu.</p>
+              <p className="text-[16px] text-slate">
+                Bekijk de{" "}
+                <Link href="/banken" className="underline underline-offset-2 text-ink hover:text-accent">
+                  banken
+                </Link>{" "}
+                of de categorieën via het menu.
+              </p>
             </div>
           ) : (
             <>

@@ -81,8 +81,8 @@ const GOOGLE_PRODUCT_CATEGORY: Record<string, number> = {
   hoekbanken: 460,
   bankstellen: 460,
   fauteuils: 6499, // Meubelen > Stoelen > Armstoelen, relaxstoelen en slaapbanken
-  stoelen: 5886, // Meubelen > Stoelen > Keuken- en eetkamerstoelen
-  eetkamerstoelen: 5886,
+  stoelen: 443, // Meubelen > Stoelen (umbrella: eetkamerstoelen + fauteuils)
+  eetkamerstoelen: 5886, // Meubelen > Stoelen > Keuken- en eetkamerstoelen
   poefs: 458, // Meubelen > Poefs
   bedden: 505764, // Meubelen > Bedden en accessoires > Bedden en ledikanten
   matrassen: 2696, // Meubelen > Bedden en accessoires > Matrassen
@@ -90,8 +90,11 @@ const GOOGLE_PRODUCT_CATEGORY: Record<string, number> = {
   jeugdkamers: 6346,
   kasten: 6356, // Meubelen > Kasten en opbergmeubelen
   kledingkasten: 4063, // Meubelen > Kasten en opbergmeubelen > Grote kledingkasten
-  dressoirs: 447, // Meubelen > Kasten en opbergmeubelen > Glazenkasten en buffetten
-  ladekasten: 4195, // Meubelen > Kasten en opbergmeubelen > Dressoirs (= ladekasten/commodes)
+  // Let op de vertaling: Google's "Dressoirs" (4195) is het Amerikaanse
+  // "Dressers" = ladekasten/commodes; een Nederlands dressoir (lage kast met
+  // deuren voor de woon-/eetkamer) is "Glazenkasten en buffetten" (447).
+  dressoirs: 447, // Meubelen > Kasten en opbergmeubelen > Glazenkasten en buffetten (Buffets & Sideboards)
+  ladekasten: 4195, // Meubelen > Kasten en opbergmeubelen > Dressoirs (Dressers = ladekasten/commodes)
   nachtkastjes: 462, // Meubelen > Tafels > Nachtkastjes
   kapstokken: 5708, // Huis en tuin > Decoratie > Kapstokken voor jassen en hoeden
   schoenenkasten: 5559, // Huis en tuin > … > Rekken en opbergsystemen voor schoenen
@@ -99,7 +102,7 @@ const GOOGLE_PRODUCT_CATEGORY: Record<string, number> = {
   eettafels: 4355, // Meubelen > Tafels > Keuken- en eetkamertafels
   salontafels: 1395, // Meubelen > Tafels > Accenttafels > Salontafels
   bijzettafels: 1549, // Meubelen > Tafels > Accenttafels > Bijzettafels
-  "tv-meubels": 457, // Meubelen > Entertainment- en mediasystemen
+  "tv-meubels": 457, // Meubelen > Entertainment- en mediasystemen (Entertainment Centers & TV Stands)
   verlichting: 594, // Huis en tuin > Verlichting
   plafondlampen: 2524, // Huis en tuin > Verlichting > Lichtarmaturen > Plafondverlichting
   vloerlampen: 4636, // Huis en tuin > Verlichting > Lampen
@@ -172,8 +175,14 @@ export function deliveryLabel(handling: { min: number; max: number } | null): st
   return handling && handling.max <= FAST_DELIVERY_MAX_DAYS ? "snel-leverbaar" : "langere-levertijd";
 }
 
+// Tekens die in XML 1.0 niet mogen voorkomen (C0-controls behalve tab/LF/CR,
+// losse surrogaten, U+FFFE/FFFF): Merchant Center weigert anders het hele
+// bestand. Ze komen voor in geplakte leveranciersteksten.
+const INVALID_XML_CHARS = /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu;
+
 export function xmlEscape(value: string): string {
   return value
+    .replace(INVALID_XML_CHARS, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -181,17 +190,21 @@ export function xmlEscape(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-/** HTML-tags en entiteiten eruit, witruimte samengevoegd. */
+/**
+ * HTML-tags en entiteiten eruit, witruimte samengevoegd. `&amp;` wordt als
+ * LAATSTE gedecodeerd: anders wordt "&amp;lt;" eerst "&lt;" en daarna "<" —
+ * dubbel decoderen dat tekst als markup laat lezen.
+ */
 export function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>|<\/p>|<\/li>|<\/h\d>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;|&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
     .replace(/[ \t]+/g, " ")
     .replace(/\s*\n\s*/g, "\n")
     .trim();
@@ -226,18 +239,43 @@ function containsWord(haystack: string, needle: string | null | undefined): bool
 }
 
 /**
- * "<producttype> <naam zonder code> – <materiaal> – <kleur> – <afmeting>",
- * zonder herhalingen, afgekapt op 150 tekens.
+ * "<producttype> <naam zonder code> – <model/serie> – <materiaal> – <kleur> – <afmeting>",
+ * zonder herhalingen, afgekapt op 150 tekens. Blijft er na het weghalen van de
+ * leverancierscode niets onderscheidends over (geen model, materiaal of
+ * afmeting; bv. "Plafondlamp zilver" ×15), dan gaat het artikelnummer mee,
+ * zodat titels binnen de feed uniek blijven.
  */
 export function buildTitle(product: FeedProduct, specs: Record<string, string>, dimensionLabel: string | null): string {
   const baseName = stripProductCode(product.name);
   const type = nameHasType(product.category, baseName) ? null : productTypeLabel(product.category);
   const head = [type, baseName].filter(Boolean).join(" ");
+  const model = specs.Serie ?? specs.Model ?? null;
+  const modelPart = model && !containsWord(head, model) ? model : null;
   const material = specs.Materiaal && !containsWord(head, specs.Materiaal) ? specs.Materiaal : null;
   const color = product.colorName ?? specs.Kleur ?? null;
   const colorPart = color && !containsWord(head, color) ? color : null;
   const dims = dimensionLabel && !containsWord(head, dimensionLabel) ? dimensionLabel : null;
-  return truncate([head, material, colorPart, dims].filter(Boolean).join(TITLE_SEPARATOR), MAX_TITLE);
+  const codeStripped = baseName !== product.name.trim();
+  const distinguishing = modelPart || material || dims;
+  const codePart = codeStripped && !distinguishing && specs.Artikelnummer ? specs.Artikelnummer : null;
+  return truncate([head, modelPart, material, colorPart, dims, codePart].filter(Boolean).join(TITLE_SEPARATOR), MAX_TITLE);
+}
+
+/**
+ * Beschrijving: productbeschrijving zonder HTML; ontbreekt die, dan een
+ * feitelijke regel uit naam, categorie en afmetingen (Google eist het veld).
+ */
+export function buildDescription(product: FeedProduct, specs: Record<string, string>, dimensionLabel: string | null): string {
+  const text = stripHtml(product.description ?? "");
+  if (text) return text.slice(0, MAX_DESCRIPTION);
+  const category = getCategory(product.category);
+  const parts = [
+    `${stripProductCode(product.name)}${category ? ` uit de categorie ${category.name}` : ""} van ${businessInfo.name}.`,
+    dimensionLabel ? `Afmetingen: ${dimensionLabel}.` : null,
+    specs.Materiaal ? `Materiaal: ${specs.Materiaal}.` : null,
+    `Prijzen incl. btw.`,
+  ];
+  return parts.filter(Boolean).join(" ");
 }
 
 /** Maatvariant-label ("160 × 200") → afmetingen; anders specs.Afmetingen. */
@@ -272,23 +310,24 @@ function buildItem(product: FeedProduct, offer: Offer): string {
   // adviesprijs als doorgestreepte `price` gebruikt en de verkoopprijs `sale_price`.
   const showReference = USE_LIST_PRICE_AS_REFERENCE && offer.listPrice !== null && offer.listPrice > offer.price;
 
-  // Identificatie (Google: geen eigen merk bij andermans GTIN):
-  //  - specs.Merk aanwezig → brand + gtin + mpn
-  //  - EAN aanwezig, geen merk → gtin (+ mpn), géén brand
-  //  - geen EAN → brand = winkelnaam, identifier_exists = no (dan ook geen mpn)
-  const brand = specs.Merk ?? null;
+  // Identificatie: `brand` is verplicht voor Merchant Center en gaat altijd
+  // mee (specs.Merk = de fabrikant, anders de winkelnaam).
+  //  - EAN aanwezig → brand + gtin + mpn
+  //  - geen EAN → brand + identifier_exists = no (dan ook geen mpn: brand +
+  //    mpn geldt als identificatie en spreekt identifier_exists tegen)
+  // Geeft Merchant Center "GTIN-mismatch" op items met EAN maar zonder
+  // specs.Merk, vul dan per leverancier de echte fabrikant in specs.Merk.
+  const brand = specs.Merk ?? businessInfo.name;
   const gtin = validGtin(specs.EAN);
   const mpn = specs.Artikelnummer ?? null;
-  const identifierParts = brand
-    ? [tag("g:brand", brand), gtin ? tag("g:gtin", gtin) : "", mpn ? tag("g:mpn", mpn) : ""]
-    : gtin
-      ? [tag("g:gtin", gtin), mpn ? tag("g:mpn", mpn) : ""]
-      : [tag("g:brand", businessInfo.name), tag("g:identifier_exists", "no")];
+  const identifierParts = gtin
+    ? [tag("g:brand", brand), tag("g:gtin", gtin), mpn ? tag("g:mpn", mpn) : ""]
+    : [tag("g:brand", brand), tag("g:identifier_exists", "no")];
 
   const parts = [
     tag("g:id", offer.id),
     tag("g:title", buildTitle(product, specs, dimensionLabel)),
-    tag("g:description", stripHtml(product.description).slice(0, MAX_DESCRIPTION)),
+    tag("g:description", buildDescription(product, specs, dimensionLabel)),
     tag("g:link", offer.link),
     tag("g:image_link", images[0]),
     ...images.slice(1, 1 + MAX_ADDITIONAL_IMAGES).map((url) => tag("g:additional_image_link", url)),
@@ -298,7 +337,8 @@ function buildItem(product: FeedProduct, offer: Offer): string {
     ...identifierParts,
     tag("g:condition", "new"),
     tag("g:google_product_category", GOOGLE_PRODUCT_CATEGORY[product.category] ?? FALLBACK_GOOGLE_CATEGORY),
-    category ? tag("g:product_type", `Meubels > ${category.group} > ${category.label}`) : "",
+    // Semantische groep: tv-meubels onder Opbergen, poefs onder Zitten (feedGroup).
+    category ? tag("g:product_type", `Meubels > ${category.feedGroup ?? category.group} > ${category.label}`) : "",
     tag("g:color", product.colorName ?? specs.Kleur ?? null),
     tag("g:material", specs.Materiaal?.slice(0, MAX_MATERIAL) ?? null),
     offer.itemGroupId ? tag("g:item_group_id", offer.itemGroupId) : "",

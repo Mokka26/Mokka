@@ -5,6 +5,7 @@ import { ContentCta, ContentPage, ContentSection, contentLinkClass } from "@/com
 import { businessInfo } from "@/lib/business-info";
 import { categoryUrl, getCategory } from "@/lib/categories";
 import type { BreadcrumbItem } from "@/lib/jsonLd";
+import { ogDefaults } from "@/lib/seo";
 import { GIDS_PATH, GUIDES, guidePath } from "./guides";
 
 const TITLE = "Woongids: maten en keuzehulp voor meubels";
@@ -14,13 +15,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: GIDS_PATH },
-  openGraph: {
-    title: `${TITLE} | ${businessInfo.name}`,
-    description: DESCRIPTION,
-    type: "website",
-    url: GIDS_PATH,
-    locale: "nl_NL",
-  },
+  ...ogDefaults({ title: `${TITLE} | ${businessInfo.name}`, description: DESCRIPTION, url: GIDS_PATH }),
 };
 
 const breadcrumbs: BreadcrumbItem[] = [

@@ -177,19 +177,28 @@ function buildShippingDetails(price: number, deliveryTime: string | null | undef
 }
 
 function buildReturnPolicy() {
+  const customerPays = shippingInfo.returnFeesPaidBy === "customer";
   return {
     "@type": "MerchantReturnPolicy",
-    applicableCountry: [...shippingInfo.freeShippingCountries],
+    applicableCountry: [...shippingInfo.returnCountries],
     returnPolicyCategory: `${SCHEMA}/MerchantReturnFiniteReturnWindow`,
     merchantReturnDays: shippingInfo.returnWindowDays,
-    returnMethod: `${SCHEMA}/ReturnByMail`,
+    returnMethod: [`${SCHEMA}/ReturnByMail`, `${SCHEMA}/ReturnInStore`],
+    returnFees: `${SCHEMA}/${customerPays ? "ReturnFeesCustomerResponsibility" : "FreeReturn"}`,
   };
+}
+
+/** `?maat=<label>` zoals de Shopping-feed en de PDP hem lezen. */
+function variantUrl(baseUrl: string, label: string): string {
+  return `${baseUrl}?maat=${encodeURIComponent(label)}`;
 }
 
 /**
  * Product-schema voor de PDP. Zonder `offers` als de prijs 0 of negatief is
- * (prijs nog niet bevestigd); met `AggregateOffer` zodra er maatvarianten
- * met eigen prijs zijn.
+ * (prijs nog niet bevestigd). Bij maatvarianten met eigen prijs wordt
+ * `offers` een array van één `Offer` per maat (eigen sku, prijs en
+ * `?maat=`-URL), zodat Google elke maat als aanbieding ziet; geen
+ * AggregateOffer ernaast (dubbel).
  */
 export function buildProductJsonLd(product: JsonLdProduct, opts: { url: string }): Record<string, unknown> {
   const specs = parseSpecs(product.specs);
@@ -197,12 +206,13 @@ export function buildProductJsonLd(product: JsonLdProduct, opts: { url: string }
   const ean = gtin13(specs.EAN);
   const brandName = specs.Merk ?? (ean ? null : businessInfo.name);
 
+  const baseSku = specs.Artikelnummer ?? product.slug;
   const schema: Record<string, unknown> = {
     "@context": SCHEMA,
     "@type": "Product",
     name: collapseWhitespace(product.name),
     description: truncateAtWord(product.description, 300),
-    sku: specs.Artikelnummer ?? product.slug,
+    sku: baseSku,
     url: opts.url,
   };
   if (images.length > 0) schema.image = images;
@@ -217,26 +227,31 @@ export function buildProductJsonLd(product: JsonLdProduct, opts: { url: string }
     priceCurrency: "EUR",
     availability,
     itemCondition: `${SCHEMA}/NewCondition`,
-    url: opts.url,
     seller: { "@type": "Organization", name: businessInfo.legalName },
     hasMerchantReturnPolicy: buildReturnPolicy(),
-    shippingDetails: buildShippingDetails(product.price, product.deliveryTime, inStock),
   };
 
   const variants = parseSizeVariants(product.sizeVariants);
   if (variants.length > 0) {
-    const prices = [product.price, ...variants.map((v) => v.price)].filter((p) => p > 0);
-    schema.offers = {
-      "@type": "AggregateOffer",
-      lowPrice: Math.min(...prices).toFixed(2),
-      highPrice: Math.max(...prices).toFixed(2),
-      offerCount: variants.length,
+    schema.offers = variants.map((v) => ({
+      "@type": "Offer",
+      name: collapseWhitespace(v.label),
+      sku: `${baseSku}-${v.label.replace(/\s+/g, "")}`,
+      price: v.price.toFixed(2),
+      url: variantUrl(opts.url, v.label),
+      shippingDetails: buildShippingDetails(v.price, product.deliveryTime, inStock),
       ...shared,
-    };
+    }));
     return schema;
   }
 
-  schema.offers = { "@type": "Offer", price: product.price.toFixed(2), ...shared };
+  schema.offers = {
+    "@type": "Offer",
+    price: product.price.toFixed(2),
+    url: opts.url,
+    shippingDetails: buildShippingDetails(product.price, product.deliveryTime, inStock),
+    ...shared,
+  };
   return schema;
 }
 
@@ -291,8 +306,8 @@ export function buildOrganizationJsonLd(): Record<string, unknown> {
     "@type": ["LocalBusiness", "FurnitureStore"],
     "@id": `${siteUrl}/#organization`,
     url: siteUrl,
-    name: legalName,
-    alternateName: name,
+    name,
+    legalName,
     description: businessInfo.tagline,
     logo: `${siteUrl}/images/logo.png`,
     image: `${siteUrl}/images/logo.png`,
@@ -304,12 +319,12 @@ export function buildOrganizationJsonLd(): Record<string, unknown> {
       addressLocality: address.city,
       addressCountry: address.country,
     },
-    priceRange: "€€",
   };
   if (contact.email) schema.email = contact.email;
   if (contact.phone) schema.telephone = contact.phone;
   if (btw) schema.vatID = btw;
-  if (kvk) schema.taxID = kvk;
+  // KvK-nummer is geen belastingnummer (taxID): als PropertyValue-identifier.
+  if (kvk) schema.identifier = { "@type": "PropertyValue", propertyID: "KvK", value: kvk };
   const hours = buildOpeningHours();
   if (hours.length > 0) schema.openingHoursSpecification = hours;
   // `geo` bewust weggelaten: lib/business-info.ts heeft (nog) geen
@@ -356,18 +371,22 @@ export type ArticleJsonLdInput = {
   datePublished: string;
   /** ISO-datum (YYYY-MM-DD); valt terug op datePublished. */
   dateModified?: string;
-  /** Absoluut of relatief pad naar een beeld; weggelaten als leeg. */
+  /** Absoluut of relatief pad naar een beeld; zonder waarde het root-OG-beeld. */
   image?: string | null;
 };
+
+/** Root-OG-beeld (app/opengraph-image.tsx); fallback voor Article.image. */
+const DEFAULT_ARTICLE_IMAGE = "/opengraph-image";
 
 function absoluteUrl(path: string): string {
   return path.startsWith("http") ? path : `${businessInfo.siteUrl}${path}`;
 }
 
 /**
- * Article-schema voor adviesgidsen. Auteur en uitgever verwijzen naar het
- * Organization-schema uit de root-layout (`#organization`), zodat er geen
- * tweede organisatie-entiteit ontstaat.
+ * Article-schema voor adviesgidsen. Auteur en uitgever zijn de organisatie
+ * (met `@type` en `name`, en `@id` naar het Organization-schema uit de
+ * root-layout zodat er geen tweede entiteit ontstaat). `image` is verplicht
+ * voor rich results; zonder eigen beeld het root-OG-beeld.
  */
 export function buildArticleJsonLd(input: ArticleJsonLdInput): Record<string, unknown> {
   const url = absoluteUrl(input.url);
@@ -381,9 +400,9 @@ export function buildArticleJsonLd(input: ArticleJsonLdInput): Record<string, un
     inLanguage: "nl-NL",
     datePublished: input.datePublished,
     dateModified: input.dateModified ?? input.datePublished,
-    author: { "@id": `${businessInfo.siteUrl}/#organization` },
-    publisher: { "@id": `${businessInfo.siteUrl}/#organization` },
+    author: { "@type": "Organization", "@id": `${businessInfo.siteUrl}/#organization`, name: businessInfo.name },
+    publisher: { "@type": "Organization", "@id": `${businessInfo.siteUrl}/#organization`, name: businessInfo.name },
+    image: absoluteUrl(input.image || DEFAULT_ARTICLE_IMAGE),
   };
-  if (input.image) schema.image = absoluteUrl(input.image);
   return schema;
 }

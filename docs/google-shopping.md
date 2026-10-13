@@ -34,12 +34,18 @@ URL: `https://mokkahomeinteriors.nl/feed/google-shopping.xml`
 
 ### Titel, beschrijving, attributen
 
-- `g:title` = `<producttype> <naam zonder leverancierscode> – <materiaal> – <kleur> – <afmeting>`,
+- `g:title` = `<producttype> <naam zonder leverancierscode> – <serie/model> – <materiaal> – <kleur> – <afmeting>`,
   zonder herhalingen, afgekapt op 150 tekens (op een scheidingsteken). Het
   producttype (enkelvoud, uit `lib/specs.ts`) wordt alleen toegevoegd als de
-  naam het nog niet bevat ("Nora Eettafel" blijft "Nora Eettafel").
-- `g:description` = beschrijving zonder HTML, max. 5000 tekens.
-- `g:product_type` = `Meubels > <groep> > <categorielabel>`.
+  naam het nog niet bevat ("Nora Eettafel" blijft "Nora Eettafel"). Blijft er
+  na het weghalen van de code niets onderscheidends over (geen serie, materiaal
+  of afmeting), dan gaat `specs.Artikelnummer` mee ("Plafondlamp Zilver – QL10675"),
+  zodat titels in de feed uniek blijven.
+- `g:description` = beschrijving zonder HTML, max. 5000 tekens. Zonder
+  beschrijving een feitelijke regel: naam, categorie, afmetingen, materiaal.
+- `g:product_type` = `Meubels > <groep> > <categorielabel>`; de groep is
+  `feedGroup` uit `lib/categories.ts` als die afwijkt van de navigatiegroep
+  (tv-meubels → Opbergen, poefs → Zitten).
 - `g:product_width/length/height` in cm uit `specs.Afmetingen`
   (`parseDimensions`); rond → breedte = lengte = Ø. Bij een maatvariant uit het label.
 - `g:color` = `colorName` of `specs.Kleur`; `g:material` = `specs.Materiaal`.
@@ -57,18 +63,19 @@ URL: `https://mokkahomeinteriors.nl/feed/google-shopping.xml`
 
 ### Identificatie (merk, GTIN, MPN)
 
-Google-regel: geen eigen merk bij andermans GTIN (anders "GTIN-mismatch").
+`g:brand` is verplicht in Merchant Center en gaat altijd mee: `specs.Merk`
+(de fabrikant), anders de winkelnaam.
 
 | Situatie | brand | gtin | mpn | identifier_exists |
 |---|---|---|---|---|
-| `specs.Merk` aanwezig | Merk | EAN | Artikelnummer | (standaard: ja) |
-| EAN aanwezig, geen Merk | — | EAN | Artikelnummer | (standaard: ja) |
-| geen EAN | `Mokka Home` | — | — | `no` |
+| EAN aanwezig, `specs.Merk` aanwezig | Merk | EAN | Artikelnummer | (standaard: ja) |
+| EAN aanwezig, geen Merk | `Mokka Home` | EAN | Artikelnummer | (standaard: ja) |
+| geen EAN | `specs.Merk` of `Mokka Home` | — | — | `no` |
 
-Zonder EAN wordt ook geen `mpn` gestuurd: brand + mpn geldt als identificatie
-en spreekt `identifier_exists = no` tegen. Merchant Center kan bij items met
-GTIN maar zonder merk een waarschuwing "ontbrekende waarde: brand" geven; vul
-dan per leverancier `specs.Merk` (de echte fabrikant — nooit `source`, dat is
+Zonder EAN wordt geen `mpn` gestuurd: brand + mpn geldt als identificatie en
+spreekt `identifier_exists = no` tegen. Geeft Merchant Center "GTIN-mismatch"
+of een merk-waarschuwing op items met EAN en de winkelnaam als brand, vul dan
+per leverancier `specs.Merk` (de echte fabrikant — nooit `source`, dat is
 intern). Op 2026-10-12: 367 items met GTIN, 1.030 met `identifier_exists = no`.
 
 ### Verzending en levertijd
@@ -81,6 +88,20 @@ intern). Op 2026-10-12: 367 items met GTIN, 1.030 met `identifier_exists = no`.
   (≤ 5 werkdagen) of `langere-levertijd`; dat label moet in Merchant Center →
   Verzending aan een transit-tijd gekoppeld worden, anders wordt het genegeerd.
 - Geen `availability_date`.
+
+#### transit_time_label koppelen (eenmalig, handmatig in Merchant Center)
+
+1. Merchant Center → Instellingen → **Verzending en retouren** → verzendservice
+   voor Nederland (en België) openen of aanmaken.
+2. Bij **Bezorgtijd** kies je "Transittijd per label" (transit time labels) en
+   voeg je twee labels toe, exact zoals in de feed: `snel-leverbaar` → 1-3
+   werkdagen, `langere-levertijd` → 10-40 werkdagen (bestelwerk 2-4 weken,
+   maatwerk 6-8 weken; zie `lib/shipping-info.ts`).
+3. Handling time niet in de service invullen: die komt per item uit
+   `g:min_handling_time`/`g:max_handling_time`.
+4. Na de volgende feed-ophaalactie: Producten → Diagnostiek controleren op
+   "ongeldig transit_time_label" (label niet gekoppeld) en op de getoonde
+   bezorgdatum bij een snel- en een langzaam-leverbaar item.
 
 ### Custom labels (campagne-segmentatie)
 
@@ -97,11 +118,14 @@ De leverancier (`source`) staat **nooit** in de feed.
 ### Google-productcategorieën
 
 `GOOGLE_PRODUCT_CATEGORY` in `lib/google-shopping.ts`; alle ID's zijn op
-2026-10-12 geverifieerd tegen de Nederlandse taxonomie
+2026-10-12 (tweemaal) geverifieerd tegen de Nederlandse taxonomie
 (https://www.google.com/basepages/producttype/taxonomy-with-ids.nl-NL.txt).
-Eén correctie: `kasten` (umbrella) → 6356 "Meubelen > Kasten en opbergmeubelen"
-(was 436 "Meubelen"). Let op: Google's "Dressoirs" (4195) zijn ladekasten/commodes;
-onze `dressoirs` horen bij 447 "Glazenkasten en buffetten". Nieuwe categorie in
+Correcties: `kasten` (umbrella) → 6356 "Meubelen > Kasten en opbergmeubelen"
+(was 436 "Meubelen"); `stoelen` (umbrella) → 443 "Meubelen > Stoelen" (was
+5886, alleen eetkamerstoelen). Let op de vertaling: Google's "Dressoirs"
+(4195) is het Amerikaanse "Dressers" = ladekasten/commodes, dus `ladekasten`
+→ 4195; een Nederlands dressoir is "Glazenkasten en buffetten" (447, "Buffets &
+Sideboards"), dus `dressoirs` → 447. Beide bevestigd. Nieuwe categorie in
 `lib/categories.ts`? Voeg hier ook een ID toe.
 
 ## 2. Merchant Center inrichten (eenmalig, handmatig)

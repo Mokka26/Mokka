@@ -11,6 +11,7 @@ import {
 } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import type { BreadcrumbItem } from "@/lib/jsonLd";
+import { ogDefaults } from "@/lib/seo";
 
 const PATH = "/showroom";
 const CITY = businessInfo.address.city;
@@ -21,13 +22,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: PATH },
-  openGraph: {
-    title: `${TITLE} | ${businessInfo.name}`,
-    description: DESCRIPTION,
-    type: "website",
-    url: PATH,
-    locale: "nl_NL",
-  },
+  ...ogDefaults({ title: `${TITLE} | ${businessInfo.name}`, description: DESCRIPTION, url: PATH }),
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,7 +55,7 @@ export default function ShowroomPage() {
     },
     {
       q: "Staat alles uit de webshop in de showroom?",
-      a: "Niet alles: de webshop is groter dan de showroom. Van de meeste series staat een model opgesteld en hebben we stof- en kleurstalen. Wil je een specifiek product zien, vraag dan vooraf even of het er staat.",
+      a: "Niet alles: de webshop is groter dan de showroom. Wil je een specifiek product, een stof of een kleur zien, vraag dan vooraf even naar de mogelijkheden; dan weet je zeker dat je niet voor niets komt.",
     },
     {
       q: "Kan ik in de showroom bestellen en betalen?",
@@ -102,7 +97,7 @@ export default function ShowroomPage() {
             </>
           }
           primary={{ href: "/contact", label: "Maak een afspraak" }}
-          secondary={{ href: "/products", label: "Bekijk de collectie" }}
+          secondary={{ href: "/banken", label: "Bekijk de banken" }}
         />
       }
     >
@@ -184,7 +179,7 @@ export default function ShowroomPage() {
             <strong>Proefzitten en proefliggen.</strong> Zit op de hoekbanken en bankstellen, lig op de boxsprings en voel het verschil in zitdiepte en hardheid. Dat zegt meer dan elke productbeschrijving.
           </li>
           <li>
-            <strong>Stoffen en kleuren bij daglicht.</strong> Van de meeste series hebben we stalen van de stoffen, het leer en de houtsoorten, zodat je de kleur naast je eigen vloer- of muurkleur kunt houden.
+            <strong>Stoffen en kleuren bij daglicht.</strong> Je ziet stoffen, leer en houtsoorten in het echt en kunt de kleur naast een foto of staal van je eigen vloer of muur houden. Vraag vooraf naar de mogelijkheden voor een specifieke stof of kleur.
           </li>
           <li>
             <strong>Maten doorrekenen.</strong> Neem de maten van je kamer, deur en trap mee. We rekenen samen uit welke bank, tafel of bedmaat past en hoeveel loopruimte je overhoudt.
@@ -221,7 +216,7 @@ export default function ShowroomPage() {
 
       <ContentSection heading="Bestellen in de showroom of online">
         <p>
-          Of je nu in de showroom of in de webshop bestelt: de prijzen zijn inclusief btw, de levertijd staat bij elk product en je hebt {shippingInfo.returnWindowDays} dagen bedenktijd mits het product {shippingInfo.returnCondition} is. Vanaf €{shippingInfo.freeShippingThreshold} bezorgen we gratis in Nederland en België. Lees meer over{" "}
+          Of je nu in de showroom of in de webshop bestelt: de prijzen zijn inclusief btw, de levertijd staat bij elk product en je hebt {shippingInfo.returnWindowDays} dagen bedenktijd mits het product {shippingInfo.returnCondition}. Vanaf €{shippingInfo.freeShippingThreshold} bezorgen we gratis in Nederland en België. Lees meer over{" "}
           <Link href="/bezorging" className={contentLinkClass}>
             bezorging en montage
           </Link>{" "}

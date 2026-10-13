@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getCategory, isCategorySlug, productUrl, type Category } from "@/lib/categories";
+import { categoryBreadcrumbs, getCategory, isCategorySlug, productUrl, type Category } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { firstImageOnly } from "@/lib/imageHelpers";
-import {
-  buildBreadcrumbJsonLd,
-  buildDescription,
-  buildFaqJsonLd,
-  jsonLdHtml,
-  type BreadcrumbItem,
-} from "@/lib/jsonLd";
+import { buildBreadcrumbJsonLd, buildFaqJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/jsonLd";
+import { categoryDescription, categoryTitle, ogDefaults } from "@/lib/seo";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
+import { getGuide, guidePath } from "@/app/gids/guides";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import CategoryListing, { type ListingProduct, type ListingVariant } from "./CategoryListing";
 
@@ -92,49 +88,50 @@ function collapseColorGroups(products: CategoryProduct[]): {
   return { collapsed, variants };
 }
 
-function parsePage(raw: string | string[] | undefined): number | null {
+/**
+ * `?page=`: ontbreekt → 1; "0" of "1" → "redirect" (permanent naar de basis-URL,
+ * zodat er één canonieke eerste pagina is); ongeldig → null (404).
+ */
+function parsePage(raw: string | string[] | undefined): number | "redirect" | null {
   if (raw === undefined) return 1;
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (!/^\d+$/.test(value)) return null;
   const n = Number(value);
-  return n >= 1 ? n : null;
+  return n <= 1 ? "redirect" : n;
 }
 
 function pageUrl(slug: string, page: number): string {
   return page <= 1 ? `/${slug}` : `/${slug}?page=${page}`;
 }
 
-function categoryDescription(category: Category): string {
-  if (category.metaDescription) return category.metaDescription;
-  return buildDescription(
-    category.seoIntro ?? category.intro,
-    `Bekijk alle ${category.label.toLowerCase()} van ${businessInfo.name}, prijzen incl. btw, te zien in onze showroom in ${businessInfo.address.city}.`,
-  );
-}
-
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ category: categorySlug }, { page: rawPage }] = await Promise.all([params, searchParams]);
   const category = getCategory(categorySlug);
-  const page = parsePage(rawPage);
-  if (!category || page === null) {
+  const parsed = parsePage(rawPage);
+  if (!category || parsed === null) {
     return { title: "Categorie niet gevonden", robots: { index: false, follow: false } };
   }
+  const page = parsed === "redirect" ? 1 : parsed;
+
+  // Lege categorie (nog geen zichtbare producten) niet laten indexeren.
+  const products = await getCategoryProducts([...category.dbCategories]);
+  const isEmpty = products.length === 0;
 
   const url = pageUrl(category.slug, page);
-  const title = page > 1 ? `${category.label} kopen – pagina ${page}` : `${category.label} kopen`;
-  const description = categoryDescription(category);
+  const title = categoryTitle(category, page);
+  const description = categoryDescription(category, page);
   return {
     title,
     description,
     alternates: { canonical: url },
-    robots: { index: true, follow: true },
-    openGraph: {
-      title: `${category.label} kopen | ${businessInfo.name}`,
+    robots: isEmpty ? { index: false, follow: true } : { index: true, follow: true },
+    ...ogDefaults({
+      title: `${title} | ${businessInfo.name}`,
       description,
-      type: "website",
       url,
-      locale: "nl_NL",
-    },
+      // Eigen OG-beeld per categorie: app/[category]/opengraph-image.tsx.
+      image: { url: `/${category.slug}/opengraph-image`, width: 1200, height: 630, alt: category.label },
+    }),
   };
 }
 
@@ -145,8 +142,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (!isCategorySlug(categorySlug)) notFound();
   const category = getCategory(categorySlug);
   if (!category) notFound();
-  const page = parsePage(rawPage);
-  if (page === null) notFound();
+  const parsed = parsePage(rawPage);
+  if (parsed === null) notFound();
+  if (parsed === "redirect") permanentRedirect(`/${category.slug}`);
+  const page = parsed;
 
   const all = applyTypeOrder(await getCategoryProducts([...category.dbCategories]), category);
   const { collapsed, variants } = collapseColorGroups(all);
@@ -165,16 +164,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   // Umbrella: subcategorieën met aantal zichtbare producten (alleen die met ≥1).
   const subcategories = category.isUmbrella ? buildSubcategoryLinks(category, all) : [];
 
-  const breadcrumbs: BreadcrumbItem[] = [
-    { name: "Home", url: "/" },
-    { name: category.label, url: `/${category.slug}` },
-  ];
+  // Home > [umbrella >] categorie; dezelfde items voor HTML en BreadcrumbList.
+  const breadcrumbs: BreadcrumbItem[] = categoryBreadcrumbs(category);
+  const guide = category.guide ? getGuide(category.guide) : null;
 
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: `${category.label} — ${businessInfo.name}`,
-    description: categoryDescription(category),
+    description: categoryDescription(category, page),
     url: `${businessInfo.siteUrl}${pageUrl(category.slug, page)}`,
     mainEntity: {
       "@type": "ItemList",
@@ -220,6 +218,17 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             {page > 1 && <span className="sr-only"> – pagina {page}</span>}
           </h1>
           <p className="body-lg text-slate max-w-2xl">{category.intro}</p>
+          {guide && (
+            <p className="mt-4 text-[16px] text-graphite">
+              Gids:{" "}
+              <Link
+                href={guidePath(guide.slug)}
+                className="inline-flex items-center min-h-11 text-accent-dark underline underline-offset-2 hover:text-ink focus-visible:text-ink"
+              >
+                {guide.title}
+              </Link>
+            </p>
+          )}
         </header>
 
         {subcategories.length > 0 && (
@@ -239,6 +248,14 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  href="/nieuw"
+                  className="inline-flex items-center min-h-11 px-4 border border-line bg-white text-ink text-[15px] hover:border-ink focus-visible:border-ink transition-colors"
+                >
+                  Nieuw binnen
+                </Link>
+              </li>
             </ul>
           </nav>
         )}
@@ -260,7 +277,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             <div className="max-w-3xl">
               {category.seoIntro && (
                 <>
-                  <h2 className="display-sm text-ink mb-5">Over {category.label.toLowerCase()}</h2>
+                  <h2 className="display-sm text-ink mb-5">Over {category.name}</h2>
                   <p className="body-lg text-graphite">{category.seoIntro}</p>
                 </>
               )}

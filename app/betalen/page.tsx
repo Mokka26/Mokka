@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ContentCta, ContentPage, ContentSection, contentLinkClass } from "@/components/content/ContentPage";
 import { PaymentIconRow } from "@/components/PaymentIcons";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
-import { NEXT_STEP_AFTER_PAYMENT } from "@/lib/email";
-import { shippingInfo } from "@/lib/shipping-info";
+import { NEXT_STEP_AFTER_PAYMENT, shippingInfo } from "@/lib/shipping-info";
 import type { BreadcrumbItem } from "@/lib/jsonLd";
+import { ogDefaults } from "@/lib/seo";
 
 const PATH = "/betalen";
 const TITLE = "Veilig betalen: iDEAL, creditcard en Klarna";
@@ -15,13 +15,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: PATH },
-  openGraph: {
-    title: `${TITLE} | ${businessInfo.name}`,
-    description: DESCRIPTION,
-    type: "website",
-    url: PATH,
-    locale: "nl_NL",
-  },
+  ...ogDefaults({ title: `${TITLE} | ${businessInfo.name}`, description: DESCRIPTION, url: PATH }),
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -77,7 +71,7 @@ export default function BetalenPage() {
     },
     {
       q: "Mijn betaling is mislukt of ik ben niet teruggekeerd op de site. Wat nu?",
-      a: "Controleer eerst of je een orderbevestiging hebt ontvangen. Zo niet, dan is er niets afgeschreven en kun je het opnieuw proberen. Twijfel je, neem dan contact met ons op met de datum en het bedrag; we zoeken het voor je uit.",
+      a: "Controleer eerst of je een orderbevestiging hebt ontvangen. Zo niet, dan is je bestelling niet verwerkt en kun je het opnieuw proberen. Zie je wel een afschrijving of twijfel je, neem dan contact met ons op met de datum en het bedrag; we zoeken het voor je uit.",
     },
   ];
 
@@ -106,7 +100,7 @@ export default function BetalenPage() {
               . We leggen graag uit hoe het afrekenen werkt.
             </>
           }
-          primary={{ href: "/products", label: "Bekijk de collectie" }}
+          primary={{ href: "/banken", label: "Bekijk de banken" }}
           secondary={{ href: "/contact", label: "Neem contact op" }}
         />
       }
@@ -163,10 +157,10 @@ export default function BetalenPage() {
         <ol>
           <li>Je ontvangt direct een orderbevestiging per e-mail, met je bestelnummer en een overzicht van je bestelling.</li>
           <li>{NEXT_STEP_AFTER_PAYMENT}</li>
-          <li>Op de afgesproken dag bezorgen we je bestelling. Je hebt daarna {shippingInfo.returnWindowDays} dagen bedenktijd, mits het product {shippingInfo.returnCondition} is.</li>
+          <li>Op de afgesproken dag bezorgen we je bestelling. Je hebt daarna {shippingInfo.returnWindowDays} dagen bedenktijd, mits het product {shippingInfo.returnCondition}.</li>
         </ol>
         <p>
-          Geen bevestiging ontvangen? Kijk in je spam-map en neem anders contact met ons op. Zonder bevestiging is er geen betaling verwerkt.
+          Geen bevestiging ontvangen? Kijk in je spam-map en neem bij twijfel contact met ons op; we controleren dan voor je of de betaling is binnengekomen.
         </p>
       </ContentSection>
     </ContentPage>

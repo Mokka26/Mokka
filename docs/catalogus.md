@@ -78,14 +78,34 @@ Let op: 9 producten hadden alleen `Categorie` in specs; hun specs zijn nu leeg
 ### `scripts/rename-greathome-products.ts` (dry-run / `--apply`)
 
 Kandidaten: producten met een leverancierscode in naam of slug (Great Home,
-Mokka catalogus). Hernoemt naar `<Type> <Model> <kleur/uitvoering>`:
+Mokka catalogus). Hernoemt naar `<Type> <Model/Code> <kleur> <maat>`:
 
 - eetkamerstoelen: `Londen ZB-5635 Eetkamerstoel Crème` → `Eetkamerstoel Londen crème`;
   `Alenya ZB-5620 Eetkamerstoel Zwart onderstel Taupe` → `Eetkamerstoel Alenya taupe, zwart onderstel`
-  (twee kleuren zonder "onderstel" alleen als de slug `<kleur>-legs` bevestigt);
-- lampen: `Plafondlamp Ø 45 Wit` → `Plafondlamp wit Ø 45 cm`, `Plafondlamp 60×60×110 Goud` → `Plafondlamp goud 60 × 60 × 110 cm`;
-- spiegels: `Wandspiegel Spiegel 120×120 Goud` (slug `…mt-97-gold-line…`) → `Spiegel met verlichting Gold Line 120 × 120 cm`;
+  (twee kleuren zonder "onderstel" alleen als de slug `<kleur>-legs` bevestigt;
+  de onderstelkleur komt uit de slug als die preciezer is: `l-brown-legs` = lichtbruin);
+- lampen: `Plafondlamp Ø 45 Goud GH1106` → `Plafondlamp GH1106 goud Ø 45 cm`;
+  `Plafondlamp Bruin QL1090` (slug `…rond-orbits`) → `Plafondlamp Orbits QL1090 bruin`;
+- spiegels: `Wandspiegel Spiegel 120×120 Goud` (slug `…mt-97-gold-line…`) → `Wandspiegel met verlichting Gold Line 120 × 120 cm`;
   modelnaam uit de slug, vorm (ovaal/vierkant) als uitvoering.
+
+Naamconventie (vastgelegd 2026-10-12, tweede ronde):
+
+1. Zou een naam dubbel worden, of delen meerdere producten dezelfde code
+   (zelfde model in meerdere kleuren), dan komt de leverancierscode als
+   onderscheider achter het type/model: `Plafondlamp QL10675 zilver`.
+2. `Wandspiegel Spiegel …` → type `Wandspiegel` (`Wandspiegel met verlichting` bij led).
+3. De slug is `slugify(naam)` en begint dus altijd met het Nederlandse type
+   (`ceiling-lamp-…` → `plafondlamp-…`, `wall-decoration-…`/`mirror-…` →
+   `wandspiegel-…`, `table-lamp-…` → `tafellamp-…`, `floor-lamp-…` →
+   `vloerlamp-…`, `chair-…` → `eetkamerstoel-…`).
+4. Kleur in kleine letters, na type en model/code.
+5. Ontbreekt de kleur in naam en specs, dan uit de slug-tokens
+   (`gold`/`black`/`silver`/`white`/`brown`/`smoke`/`clear` → goud/zwart/zilver/wit/bruin/rookglas/helder).
+6. `Feather Lamp …` (slug `…wall-led-lamp…`) → `Wandlamp Feather <kleur>`;
+   `Baron stoel` → `Eetkamerstoel Baron <kleur uit slug>`.
+7. Een lamp zonder kleur maar met modelnaam krijgt altijd de code
+   (`Plafondlamp Nova GH1016`, `Tafellamp Travertine ART1026 32 × 25 cm`).
 
 Per hernoemd product: nieuwe slug (`slugify(naam)`, bij botsing suffix met de
 code), `SlugRedirect` oude slug → product, code naar `specs.Artikelnummer`
@@ -95,13 +115,20 @@ Voor **alle** kandidaten, ook twijfelgevallen, wordt `specs.Artikelnummer`
 gevuld (dat is de `g:mpn` in de feed).
 
 Conservatief: niet hernoemd als type of kleur niet eenduidig is of als de
-nieuwe naam dubbel zou worden. Resultaat 2026-10-12: 230 kandidaten,
-**91 hernoemd** (+ 91 SlugRedirect-rijen), **230× Artikelnummer gevuld**,
-139 twijfelgevallen (lijst onderaan). Beide scripts melden bij een tweede run
-0 wijzigingen.
+nieuwe naam ook mét code dubbel zou worden. Namen en slugs die al aan de
+conventie voldoen worden overgeslagen ("al conform").
 
-**Nog nodig buiten deze bestanden:** de PDP-route moet `SlugRedirect` opzoeken
-en 301-redirecten naar de nieuwe slug (nu alleen een tabel), en `?maat=` lezen.
+Resultaat ronde 1 (2026-10-12): 230 kandidaten, **91 hernoemd** (+ 91
+SlugRedirect-rijen), **230× Artikelnummer gevuld**, 139 twijfelgevallen.
+Resultaat ronde 2 (2026-10-12, naamconventie hierboven): 139 kandidaten,
+**124 hernoemd** (+ 124 SlugRedirect-rijen, 123 daarvan met code als
+onderscheider), 0 specs-aanvullingen (al gevuld in ronde 1), **15
+twijfelgevallen** (lijst onderaan). Een derde run meldt 0 wijzigingen
+(123 al conform, 15 twijfel).
+
+`SlugRedirect` wordt door de PDP-route gelezen (`lib/slug-redirect.ts`,
+`findRedirectTarget`): een oude slug geeft een 308 naar de canonieke
+`/<categorie>/<nieuwe slug>`; verborgen of verwijderde producten redirecten niet.
 
 ## Vóór / ná (zichtbaar · verborgen)
 
@@ -148,9 +175,33 @@ Het overgebleven afwijkende formaat is `tafel-tavira-120-cm-rond-cement-ecru`
 
 ## Twijfelgevallen hernoeming (niet aangepast)
 
-Reden "naam zou dubbel zijn" = na hernoemen zouden meerdere producten dezelfde
-naam krijgen (bv. 15× "Plafondlamp zilver"); daar is een modelnaam of
-afmeting nodig die de bron niet levert. Eigenaar kiest in de admin.
+Stand na ronde 2 (2026-10-12), 15 producten. Eigenaar kiest in de admin.
+
+### 6× naam zou dubbel zijn, ook met code (zelfde naam én code op twee slugs)
+
+- Plafondlamp Zilver QL10638 (`ceiling-lamp-ql10638-3160-600-silver` en `…-ql10638-1-3160-600-silver`)
+- Plafondlamp Goud QL10637 (`ceiling-lamp-ql10637-3160-600-gold` en `…-ql10637-1-3160-600-gold`)
+- Baroni ZB-5686 Eetkamerstoel Grijs (`chair-baroni-zb-5686-grey` en `…-grey-fy2415-10`)
+
+### 4× kleur ontbreekt (geen kleur in naam, specs of slug)
+
+- Plafondlamp GH1115 (`ceiling-lamp-gh1115-80-80-39`), Plafondlamp GH1114 (`ceiling-lamp-gh1114-60-60-39`)
+- Plafondlamp QL10617 (`ceiling-lamp-ql10617-6083-d600`), Plafondlamp QL10618 (`ceiling-lamp-ql10618-6083-d1000-430`)
+
+### 2× maat in naam onleesbaar
+
+- Wandspiegel Spiegel 5×90×2 Goud / Zwart (`mirror-rosa-gold-mt71-157-5x90x2`, `mirror-rosa-black-mt72-157-5x90x2`): 157,5 × 90 × 2?
+
+### 2× uitvoering (aantal × maat?) niet eenduidig
+
+- Plafondlamp 3×30 Crème GH1007 / GH1008 (`ceiling-lamp-organic-cream-resin-gh100[78]-[lr]-3x30`)
+
+### 1× alleen onderstelkleur bekend; stofkleur ontbreekt
+
+- Dubai ZB-5576 Eetkamerstoel Bruin onderstel (`chair-dubai-zb-5576-brown-legs-fy2415-8-brown`)
+
+Historie ronde 1 (ter referentie; de meeste hieronder zijn in ronde 2 alsnog
+hernoemd met de code als onderscheider):
 
 
 ### 111× naam zou dubbel zijn: … (modelnaam/afmeting nodig)
