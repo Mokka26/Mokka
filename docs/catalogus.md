@@ -75,6 +75,28 @@ Resultaat 2026-10-12 (1.467 producten, 1.425 rijen bijgewerkt):
 Let op: 9 producten hadden alleen `Categorie` in specs; hun specs zijn nu leeg
 (`{}`) en tellen in de audit als "zonderSpecs". Dat is geen dataverlies.
 
+### `scripts/sync-stock-status.ts` (dry-run / `--apply`, herhaalbaar)
+
+Controleert bij de bron welke **zichtbare** producten uitverkocht zijn en zet die
+op `stock = 0` (de shop toont "Uitverkocht"; niets wordt verborgen, prijzen
+blijven staan). Bronnen: Great Home (live app4sales-API, `StockColor red`;
+matching op Artikelnummer/EAN, slug, oude slug, Cloudinary-mapnaam en als
+laatste een voorzichtige fuzzy match die in het rapport gemarkeerd staat) en
+Rousseau (detailpagina per Artikelnummer, alle categoriepaden; een leverdatum
+telt als niet op voorraad, een pagina die nergens meer bestaat ook).
+LivingFurn, NIVE, Saltanat, MUMZA, One World, Bambi/BSS, Twenty Bedding en
+Mokka HOME hebben geen online voorraadbron en worden alleen geteld.
+
+```
+npx tsx scripts/sync-stock-status.ts                      # rapport
+npx tsx scripts/sync-stock-status.ts --source=greathome   # één bron
+npx tsx scripts/sync-stock-status.ts --apply              # stock 0 wegschrijven
+```
+
+Producten die bij de bron weer op voorraad zijn maar in de shop op 0 staan,
+worden gerapporteerd en niet gewijzigd (voorraad verhogen doet de eigenaar).
+Uitgevoerd 2026-10-13: Great Home 81, Rousseau 55 op uitverkocht gezet.
+
 ### `scripts/classify-image-backgrounds.ts` (dry-run / `--apply`, herhaalbaar)
 
 Zet per foto `bg: "plain" | "scene"` in `Product.images`. De shop vult daarmee
