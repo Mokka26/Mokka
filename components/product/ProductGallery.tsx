@@ -5,8 +5,8 @@ import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import { Maximize2 } from "lucide-react";
 import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
-import type { ProductImage } from "@/lib/imageHelpers";
-import { GALLERY_ASPECT_CLASS, type Orientation } from "@/components/product/imageAspect";
+import { frameMode, type ProductImage } from "@/lib/imageHelpers";
+import { GALLERY_ASPECT_CLASS, GALLERY_ASPECT_RATIO, type Orientation } from "@/components/product/imageAspect";
 
 interface Props {
   images: ProductImage[];
@@ -25,8 +25,9 @@ export function galleryAlt(productName: string, img: ProductImage | undefined, i
  * Eén galerij voor alle schermformaten: embla-carrousel met het hoofdbeeld
  * (swipen op mobiel; op desktop uitgeschakeld en gestuurd via thumbnails),
  * daardoor staat elke foto maar één keer in de DOM en heeft alleen de eerste
- * foto `priority`. De verhouding volgt de echte foto (object-contain op bone)
- * zodat banken volledig in beeld staan.
+ * foto `priority`. De verhouding volgt de echte foto; Cloudinary brengt elke
+ * foto op die verhouding (zie frameMode in lib/imageHelpers.ts) zodat het
+ * kader gevuld is zonder zichtbare band.
  */
 export function ProductGallery({ images, productName, orientation, onOpen }: Props) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -78,12 +79,12 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                   }`}
                 >
                   <Image
-                    src={cldOptimize(img.url, { ar: "1:1", w: 160, mode: "pad", quality: "auto:good" })}
+                    src={cldOptimize(img.url, { ar: "1:1", w: 160, mode: frameMode(img), quality: "auto:good" })}
                     alt=""
                     fill
                     loading="lazy"
                     unoptimized
-                    className="object-contain"
+                    className="object-cover"
                     sizes="80px"
                   />
                 </button>
@@ -105,7 +106,9 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                   className={`group/zoom relative block w-full ${aspect} cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent`}
                 >
                   <Image
-                    src={cldOptimize(img.url, { w: 1600, upscale: true, sourceW: img.w, quality: "auto:good" })}
+                    // Cloudinary brengt de foto zelf op de galerijverhouding (vrijstaand:
+                    // opvullen in randkleur, sfeerfoto: slim bijsnijden); object-cover, geen band.
+                    src={cldOptimize(img.url, { ar: GALLERY_ASPECT_RATIO[orientation], mode: frameMode(img), w: 1600, upscale: true, sourceW: img.w, quality: "auto:good" })}
                     alt={galleryAlt(productName, img, i, total)}
                     fill
                     priority={i === 0}
@@ -113,7 +116,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                     loading={i === 0 ? "eager" : "lazy"}
                     loader={cloudinaryLoader}
                     sizes="(max-width: 1024px) 100vw, 60vw"
-                    className="object-contain"
+                    className="object-cover"
                   />
                   {/* Vergroot-hint: op mobiel alleen het icoon (rechtsonder), op
                       desktop met tekst bij hover/focus. De teller staat rechtsboven. */}

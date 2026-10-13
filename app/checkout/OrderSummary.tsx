@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import type { CartItemType } from "@/context/CartContext";
-import { firstImageUrl } from "@/lib/imageHelpers";
+import { frameMode, parseImages } from "@/lib/imageHelpers";
+import { cldOptimize } from "@/lib/cloudinary-url";
 import { shippingInfo } from "@/lib/shipping-info";
 import { Price, formatPrice } from "@/components/ui/price";
 import { cartLineOptions, cartLineDelivery } from "@/components/CartItem";
@@ -24,12 +25,13 @@ export function OrderSummaryLines({ items, totals }: { items: CartItemType[]; to
     <>
       <ul className="space-y-5 mb-6">
         {items.map((item) => {
-          const thumb = firstImageUrl(item.product.images);
+          const thumbImage = parseImages(item.product.images)[0];
+          const thumb = thumbImage ? cldOptimize(thumbImage.url, { ar: "1:1", mode: frameMode(thumbImage), w: 160 }) : null;
           const options = cartLineOptions(item);
           return (
             <li key={item.lineKey} className="flex gap-4">
               <div className="relative w-20 h-20 bg-bone rounded-[8px] shrink-0 overflow-hidden">
-                {thumb && <Image src={thumb} alt="" fill sizes="80px" className="object-contain" />}
+                {thumb && <Image src={thumb} alt="" fill unoptimized sizes="80px" className="object-cover" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-ink text-base font-medium leading-snug">{item.product.name}</p>

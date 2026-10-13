@@ -75,6 +75,26 @@ Resultaat 2026-10-12 (1.467 producten, 1.425 rijen bijgewerkt):
 Let op: 9 producten hadden alleen `Categorie` in specs; hun specs zijn nu leeg
 (`{}`) en tellen in de audit als "zonderSpecs". Dat is geen dataverlies.
 
+### `scripts/classify-image-backgrounds.ts` (dry-run / `--apply`, herhaalbaar)
+
+Zet per foto `bg: "plain" | "scene"` in `Product.images`. De shop vult daarmee
+het kader van ProductCard, PDP-galerij en winkelwagen-thumbs zonder gekleurde
+band: vrijstaande foto's (effen rand, meestal wit) worden door Cloudinary
+opgevuld in hun eigen randkleur (`c_pad,b_auto`, onzichtbaar), sfeerfoto's
+worden slim bijgesneden (`c_fill,g_auto`). Zonder `bg` (nieuwe import of
+upload) wordt veilig opgevuld, dus na elke import opnieuw draaien:
+
+```
+npx tsx scripts/classify-image-backgrounds.ts            # dry-run, telt plain/scene
+npx tsx scripts/classify-image-backgrounds.ts --apply    # schrijft bg weg (alleen foto's zonder bg)
+npx tsx scripts/classify-image-backgrounds.ts --force    # herclassificeer alles
+npx tsx scripts/classify-image-backgrounds.ts --slug=x   # één product
+```
+
+Methode: 64px-versie ophalen, buitenste pixelring van 2px bekijken; ≥ 96% binnen
+±14 van de mediaankleur → `plain`. Steekproef 2026-10-13 (60 producten, 264 foto's):
+102 plain / 162 scene, visueel gecontroleerd. Andere JSON-sleutels blijven staan.
+
 ### `scripts/rename-greathome-products.ts` (dry-run / `--apply`)
 
 Kandidaten: producten met een leverancierscode in naam of slug (Great Home,

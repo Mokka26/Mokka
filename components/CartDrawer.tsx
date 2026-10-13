@@ -6,7 +6,8 @@ import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import { trackBeginCheckout, trackViewCart } from "@/lib/analytics";
 import { useCart } from "@/context/CartContext";
-import { firstImageUrl } from "@/lib/imageHelpers";
+import { frameMode, parseImages } from "@/lib/imageHelpers";
+import { cldOptimize } from "@/lib/cloudinary-url";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { productUrl } from "@/lib/categories";
 import { Drawer, DialogCloseButton } from "@/components/ui/Dialog";
@@ -145,7 +146,8 @@ export default function CartDrawer({ open, onClose }: Props) {
       ) : (
         <ul className="px-6 lg:px-8 py-6 space-y-6">
           {items.map((item) => {
-            const thumb = firstImageUrl(item.product.images);
+            const thumbImage = parseImages(item.product.images)[0];
+            const thumb = thumbImage ? cldOptimize(thumbImage.url, { ar: "1:1", mode: frameMode(thumbImage), w: 160 }) : null;
             const options = cartLineOptions(item);
             const maxQty = item.product.stock != null && item.product.stock > 0 ? Math.min(99, item.product.stock) : 99;
             return (
@@ -156,7 +158,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                   className="relative w-20 h-20 shrink-0 overflow-hidden bg-bone rounded-[8px]"
                   aria-label={`Bekijk ${item.product.name}`}
                 >
-                  {thumb && <Image src={thumb} alt="" fill className="object-contain" sizes="80px" />}
+                  {thumb && <Image src={thumb} alt="" fill unoptimized className="object-cover" sizes="80px" />}
                 </Link>
 
                 <div className="flex-1 min-w-0 flex flex-col gap-1">

@@ -9,13 +9,36 @@
  * altijd het nieuwe formaat op.
  */
 
+/**
+ * Achtergrondtype van een foto, bepaald door scripts/classify-image-backgrounds.ts:
+ * - "plain": vrijstaand product op een effen rand (wit/grijs studio) → opvullen
+ *   tot het kader in de randkleur (Cloudinary c_pad + b_auto) is onzichtbaar.
+ * - "scene": sfeerfoto (kamer, woonopstelling) → slim bijsnijden (c_fill + g_auto),
+ *   want opvullen geeft daar een zichtbare gekleurde band.
+ * Ontbreekt het veld (nieuwe import/upload), dan wordt veilig opgevuld.
+ */
+export type ImageBackground = "plain" | "scene";
+
 export type ProductImage = {
   url: string;
   w?: number;
   h?: number;
   /** Optionele alt-tekst per foto (bv. "zijaanzicht"); leeg → productnaam. */
   alt?: string;
+  bg?: ImageBackground;
 };
+
+function toBackground(value: unknown): ImageBackground | undefined {
+  return value === "plain" || value === "scene" ? value : undefined;
+}
+
+/**
+ * Kadermodus voor `cldOptimize`: "contain" (c_pad + b_auto) voor vrijstaande
+ * foto's en onbekende foto's, "fill" (c_fill + g_auto) voor sfeerfoto's.
+ */
+export function frameMode(img: Pick<ProductImage, "bg"> | undefined): "contain" | "fill" {
+  return img?.bg === "scene" ? "fill" : "contain";
+}
 
 function toPositiveNumber(value: unknown): number | undefined {
   if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
@@ -45,7 +68,8 @@ export function parseImages(raw: string | null | undefined): ProductImage[] {
       const w = toPositiveNumber(rec.w ?? rec.width);
       const h = toPositiveNumber(rec.h ?? rec.height);
       const alt = typeof rec.alt === "string" && rec.alt.trim() ? rec.alt.trim() : undefined;
-      return [{ url, ...(w ? { w } : {}), ...(h ? { h } : {}), ...(alt ? { alt } : {}) }];
+      const bg = toBackground(rec.bg);
+      return [{ url, ...(w ? { w } : {}), ...(h ? { h } : {}), ...(alt ? { alt } : {}), ...(bg ? { bg } : {}) }];
     });
   } catch {
     return [];

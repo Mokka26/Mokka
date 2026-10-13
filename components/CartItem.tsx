@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCart, type CartItemType } from "@/context/CartContext";
-import { firstImageUrl } from "@/lib/imageHelpers";
+import { frameMode, parseImages } from "@/lib/imageHelpers";
+import { cldOptimize } from "@/lib/cloudinary-url";
 import { productUrl } from "@/lib/categories";
 import { Price, formatPrice } from "@/components/ui/price";
 import { deliveryLine } from "@/components/product/deliveryTime";
@@ -29,7 +30,9 @@ export function cartLineDelivery(item: CartItemType): string {
 
 export default function CartItem({ item }: Props) {
   const { removeWithUndo, updateQuantity } = useCart();
-  const thumb = firstImageUrl(item.product.images);
+  // Vierkante thumb zonder band: vrijstaand opvullen in randkleur, sfeerfoto bijsnijden.
+  const thumbImage = parseImages(item.product.images)[0];
+  const thumb = thumbImage ? cldOptimize(thumbImage.url, { ar: "1:1", mode: frameMode(thumbImage), w: 192 }) : null;
   const itemTotal = item.product.price * item.quantity;
   const options = cartLineOptions(item);
   const maxQty = item.product.stock != null && item.product.stock > 0 ? Math.min(99, item.product.stock) : 99;
@@ -43,7 +46,7 @@ export default function CartItem({ item }: Props) {
           aria-label={`Bekijk ${item.product.name}`}
         >
           {thumb && (
-            <Image src={thumb} alt="" fill className="object-contain" sizes="96px" />
+            <Image src={thumb} alt="" fill unoptimized className="object-cover" sizes="96px" />
           )}
         </Link>
         <div className="min-w-0">

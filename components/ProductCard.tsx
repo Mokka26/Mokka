@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
-import { parseImages } from "@/lib/imageHelpers";
+import { frameMode, parseImages } from "@/lib/imageHelpers";
 import { getCategory, productUrl } from "@/lib/categories";
 import { Price } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
@@ -52,7 +52,7 @@ interface Props {
    */
   sizes?: string;
   /**
-   * @deprecated Elke kaart heeft nu dezelfde vaste 4:3-beeldbox (object-contain).
+   * @deprecated Elke kaart heeft nu dezelfde vaste 4:3-beeldbox.
    * De prop blijft bestaan zodat bestaande aanroepen werken; hij doet niets.
    */
   wide?: boolean;
@@ -63,13 +63,18 @@ export default function ProductCard({ product, variants, priority = false, sizes
   const firstImage = parsed[0];
   const firstRaw = firstImage?.url ?? "";
 
-  // Eén vaste beeldbox (4:3) voor élke kaart, foto met object-contain op bone:
-  // banken blijven volledig in beeld, staande foto's staan gecentreerd in
-  // dezelfde box en rijen in een grid lopen gelijk (naam/prijs op gelijke hoogte).
+  // Eén vaste beeldbox (4:3) voor élke kaart, zodat rijen in een grid gelijk
+  // lopen (naam/prijs op gelijke hoogte).
   // w:1000 is de basis; de cloudinaryLoader overschrijft 'm per srcSet-breedte,
   // zodat mobiel niet onnodig een 1000px-foto laadt.
+  // Cloudinary maakt de foto zélf 4:3, zodat de box altijd volledig gevuld is
+  // (object-cover) zonder gekleurde band: vrijstaande foto's worden opgevuld in
+  // hun eigen randkleur (c_pad + b_auto, onzichtbaar), sfeerfoto's worden slim
+  // bijgesneden (c_fill + g_auto). Zie `bg` in lib/imageHelpers.ts.
   const first = firstRaw
     ? cldOptimize(firstRaw, {
+        ar: "4:3",
+        mode: frameMode(firstImage),
         w: 1000,
         upscale: true,
         sourceW: firstImage?.w,
@@ -143,7 +148,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
               fill
               loading={priority ? "eager" : "lazy"}
               priority={priority}
-              className="object-contain transition-transform duration-[480ms] ease-out motion-safe:group-hover:scale-[1.03]"
+              className="object-cover transition-transform duration-[480ms] ease-out motion-safe:group-hover:scale-[1.03]"
               sizes={sizes}
             />
           ) : (

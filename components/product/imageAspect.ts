@@ -17,11 +17,22 @@ export function orientationOf(img: ProductImage | undefined): Orientation {
 
 /**
  * Galerij-frame op de productpagina: zelfde verhouding voor alle slides.
- * (De ProductCard gebruikt sinds de mobiele sweep één vaste 4:3-box met
- * object-contain, zodat rijen in een grid gelijk lopen.)
+ * (De ProductCard gebruikt sinds de mobiele sweep één vaste 4:3-box; de foto
+ * wordt door Cloudinary zelf op 4:3 gebracht, zodat rijen in een grid gelijk lopen.)
  */
 export const GALLERY_ASPECT_CLASS: Record<Orientation, string> = {
   landscape: "aspect-[4/3]",
   portrait: "aspect-[4/5]",
   square: "aspect-square",
+};
+
+/**
+ * Dezelfde verhoudingen als Cloudinary `ar_`-parameter. Met c_pad + b_auto
+ * vult Cloudinary de foto op tot deze verhouding in de eigen randkleur van de
+ * foto, zodat het kader volledig gevuld is zonder zichtbare gekleurde band.
+ */
+export const GALLERY_ASPECT_RATIO: Record<Orientation, string> = {
+  landscape: "4:3",
+  portrait: "4:5",
+  square: "1:1",
 };

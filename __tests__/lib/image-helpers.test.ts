@@ -1,4 +1,4 @@
-import { parseImages, imageUrls, firstImageUrl, firstImageOnly, imageAspect } from "@/lib/imageHelpers";
+import { parseImages, imageUrls, firstImageUrl, firstImageOnly, imageAspect, frameMode } from "@/lib/imageHelpers";
 
 const A = "https://res.cloudinary.com/mokka/image/upload/v1/a.jpg";
 const B = "https://res.cloudinary.com/mokka/image/upload/v1/b.jpg";
@@ -16,6 +16,13 @@ describe("lib/imageHelpers", () => {
         { url: B, w: 1600, h: 1200, alt: "zijaanzicht" },
         { url: "https://x/c.jpg", w: 800, h: 600 },
       ]);
+    });
+
+    it("leest bg (plain/scene) en negeert onbekende waarden", () => {
+      const raw = JSON.stringify([{ url: A, bg: "scene" }, { url: B, bg: "plain" }, { url: A, bg: "paars" }]);
+      expect(parseImages(raw)).toEqual([{ url: A, bg: "scene" }, { url: B, bg: "plain" }, { url: A }]);
+      // firstImageOnly serialiseert via parseImages: bg mag daarbij niet verloren gaan.
+      expect(JSON.parse(firstImageOnly(raw))).toEqual([{ url: A, bg: "scene" }]);
     });
 
     it("laat lege, ongeldige of niet-positieve waarden weg", () => {
@@ -39,6 +46,13 @@ describe("lib/imageHelpers", () => {
     expect(firstImageUrl("[]")).toBeNull();
     expect(firstImageOnly(raw)).toBe(JSON.stringify([{ url: A, w: 4, h: 3 }]));
     expect(firstImageOnly("[]")).toBe("[]");
+  });
+
+  it("frameMode: sfeerfoto bijsnijden, vrijstaand of onbekend opvullen", () => {
+    expect(frameMode({ bg: "scene" })).toBe("fill");
+    expect(frameMode({ bg: "plain" })).toBe("contain");
+    expect(frameMode({})).toBe("contain");
+    expect(frameMode(undefined)).toBe("contain");
   });
 
   it("imageAspect geeft w/h of de fallback", () => {
