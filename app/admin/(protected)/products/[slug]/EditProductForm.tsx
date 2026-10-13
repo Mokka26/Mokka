@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { Check, AlertTriangle } from "lucide-react";
 import SpecsEditor from "@/components/admin/SpecsEditor";
 import SizePriceEditor, { type SizeVariant } from "@/components/admin/SizePriceEditor";
+import { subscribeProductUpdated } from "@/components/admin/productUpdated";
 import { productUrl } from "@/lib/categories";
 import { parsePrice } from "@/lib/parse-price";
 import { updateProductFull, type FullUpdateState } from "../actions";
@@ -82,11 +84,27 @@ function money(n: number | null): string {
   return n == null ? "" : n.toFixed(2).replace(".", ",");
 }
 
+/** Jongste ISO-tijdstempel uit een lijst (ongeldige/lege waarden tellen niet mee). */
+function newestIso(...values: Array<string | undefined>): string {
+  let best = "";
+  let bestMs = Number.NEGATIVE_INFINITY;
+  for (const v of values) {
+    if (!v) continue;
+    const ms = Date.parse(v);
+    if (Number.isFinite(ms) && ms > bestMs) {
+      bestMs = ms;
+      best = v;
+    }
+  }
+  return best;
+}
+
 const inputCls =
   "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 
 export default function EditProductForm({ product, categories, validCategories, sources, imageCount, justSaved = false }: Props) {
   const [state, action, pending] = useActionState(updateProductFull, initial);
+  const router = useRouter();
   const base = useId();
   const fid = (name: string) => `${base}-${name}`;
 
@@ -97,6 +115,25 @@ export default function EditProductForm({ product, categories, validCategories, 
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(justSaved);
   const lastSavedAt = useRef<number | undefined>(undefined);
+  // updatedAt zoals een foto-actie (ImageManager, buur op deze pagina) hem
+  // zojuist op de server heeft gezet. Zonder dit weigerde de optimistic lock
+  // de volgende opslag ("formulier is verouderd") na elke foto-wijziging.
+  const [imagesUpdatedAt, setImagesUpdatedAt] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    return subscribeProductUpdated((detail) => {
+      if (detail.id !== product.id) return;
+      if (detail.updatedAt) {
+        setImagesUpdatedAt(detail.updatedAt);
+        return;
+      }
+      // Backend stuurt (nog) geen updatedAt mee: de pagina verversen haalt de
+      // nieuwe waarde op, maar remount het formulier (key=updatedAt) — dus
+      // alleen als er niets onopgeslagen is. Anders blijft de lock verouderd
+      // en meldt de server dat bij het opslaan.
+      if (!dirty) router.refresh();
+    });
+  }, [product.id, router, dirty]);
 
   // Na een geslaagde opslag: "Opgeslagen" tonen en dirty-state resetten.
   useEffect(() => {
@@ -144,7 +181,7 @@ export default function EditProductForm({ product, categories, validCategories, 
   return (
     <form action={action} onChange={onFormChange} noValidate className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <input type="hidden" name="id" value={product.id} />
-      <input type="hidden" name="updatedAt" value={state.updatedAt ?? product.updatedAt} />
+      <input type="hidden" name="updatedAt" value={newestIso(product.updatedAt, state.updatedAt, imagesUpdatedAt)} />
 
       <div className="lg:col-span-2 space-y-6">
         <Field id={fid("name")} label="Naam" error={err.name}>
@@ -527,7 +564,7 @@ export default function EditProductForm({ product, categories, validCategories, 
           <button
             type="submit"
             disabled={pending}
-            className="min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
+            className="w-full sm:w-auto min-h-12 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
           >
             {pending ? "Opslaan…" : "Wijzigingen opslaan"}
           </button>

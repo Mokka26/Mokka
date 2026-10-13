@@ -4,6 +4,13 @@ import SectionHeader from "@/components/SectionHeader";
 import { Button } from "@/components/ui/Button";
 import { businessInfo, getFullAddress, getOpeningHoursCompact, getPhoneLink } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/jsonLd";
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { name: "Home", url: "/" },
+  { name: "Over ons", url: "/about" },
+];
 
 export const metadata: Metadata = {
   title: `Over ons: showroom en werkwijze in ${businessInfo.address.city}`,
@@ -36,11 +43,16 @@ export default function AboutPage() {
   const hours = getOpeningHoursCompact();
 
   return (
-    <div className="pt-32 lg:pt-40 pb-28 lg:pb-40">
+    <div className="pt-28 lg:pt-32 pb-28 lg:pb-40">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(buildBreadcrumbJsonLd(breadcrumbs)) }}
+      />
       {/* Intro */}
       <section className="mb-24 lg:mb-40">
         <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
           <AnimatedSection>
+            <Breadcrumbs items={breadcrumbs} className="mb-6" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
               <div className="lg:col-span-8">
                 <p className="eyebrow mb-6">Over ons</p>

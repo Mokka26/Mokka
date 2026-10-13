@@ -7,13 +7,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useCart, useCartSync, syncCart, announceCartChanges } from "@/context/CartContext";
-import { firstImageUrl } from "@/lib/imageHelpers";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
-import { Price, formatPrice } from "@/components/ui/price";
+import { formatPrice } from "@/components/ui/price";
 import { PaymentIconRow } from "@/components/PaymentIcons";
-import { cartLineOptions } from "@/components/CartItem";
+import { getCookieConsent } from "@/components/CookieBanner";
 import { createCheckout, getPaymentMethods } from "./actions";
+import { MobileOrderSummary, OrderSummaryLines } from "./OrderSummary";
 import type { CheckoutMethod } from "@/lib/mollie";
 import { trackAddPaymentInfo, trackAddShippingInfo, trackBeginCheckout } from "@/lib/analytics";
 
@@ -88,6 +88,18 @@ function readGclid(): string | null {
   }
 }
 
+/** Eén sleutel per paginabezoek: een tweede klik (of retry) maakt geen tweede order. */
+function makeIdempotencyKey(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    // Oude WebView zonder randomUUID: zonder sleutel verder (server accepteert optioneel).
+    return "";
+  }
+}
+
+const NETWORK_FAILED = "Controleer je internetverbinding en probeer het opnieuw. Er is nog niets afgeschreven.";
+
 export default function CheckoutPage() {
   const { items, totalPrice } = useCart();
   // Prijzen/voorraad verversen tegen de server vóór het afrekenen.
@@ -102,13 +114,27 @@ export default function CheckoutPage() {
   const [showSummary, setShowSummary] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
 
-  // Anti-spam: honeypot (`website` blijft leeg) + timestamp bij mount (`ts`).
+  // Anti-spam: honeypot (`website` blijft leeg) + door de client gemeten
+  // invultijd (`elapsedMs`, performance.now() sinds mount — klokonafhankelijk).
   const [website, setWebsite] = useState("");
-  const tsRef = useRef<number>(0);
+  const mountedAtRef = useRef<number | null>(null);
   const gclidRef = useRef<string | null>(null);
+  const idempotencyKeyRef = useRef<string>("");
   useEffect(() => {
-    tsRef.current = Date.now();
+    mountedAtRef.current = performance.now();
     gclidRef.current = readGclid();
+    idempotencyKeyRef.current = makeIdempotencyKey();
+  }, []);
+
+  // bfcache: komt de klant met "terug" van de betaalpagina, dan wordt deze
+  // pagina uit het geheugen hersteld mét `submitting=true`. Resetten, anders
+  // blijft de knop voor altijd op "Even geduld…".
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setSubmitting(false);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
   // GA4 begin_checkout: één keer zodra de wagen uit localStorage is gehydrateerd
@@ -123,6 +149,7 @@ export default function CheckoutPage() {
   const freeShipping = isEligibleForFreeShipping(totalPrice, form.country);
   const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
   const total = totalPrice + shipping;
+  const totals = { subtotal: totalPrice, shipping, total };
   const phoneLink = getPhoneLink();
 
   const [methods, setMethods] = useState<CheckoutMethod[]>([]);
@@ -132,11 +159,20 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!(total > 0)) return;
     let active = true;
-    getPaymentMethods(total, form.country).then((m) => {
+    const load = async () => {
+      let m: CheckoutMethod[] = [];
+      try {
+        m = await getPaymentMethods(total, form.country);
+      } catch {
+        // Netwerkfout: lijst blijft leeg; de server valt bij het afrekenen
+        // terug op de standaardmethode.
+        return;
+      }
       if (!active) return;
       setMethods(m);
       setSelectedMethod((cur) => (cur && m.some((x) => x.id === cur) ? cur : m[0]?.id ?? ""));
-    });
+    };
+    void load();
     return () => { active = false; };
   }, [total, form.country]);
 
@@ -164,6 +200,8 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Dubbele submit (Enter + klik) negeren zolang de vorige loopt.
+    if (submitting) return;
     const allErrors = validateAll(form);
     setErrors(allErrors);
     setTouched(Object.fromEntries(FIELD_ORDER.map((n) => [n, true])));
@@ -179,39 +217,51 @@ export default function CheckoutPage() {
     // ingevuld; beide events vuren bij een geldige submit, vóór de redirect.
     trackAddShippingInfo(items, totalPrice, freeShipping ? "gratis" : "standaard");
     trackAddPaymentInfo(items, totalPrice, selectedMethod);
-    const result = await createCheckout({
-      customer: {
-        firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,
-        address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
-        country: form.country,
-      },
-      expectedTotal: totalPrice,
-      ...(selectedMethod ? { method: selectedMethod } : {}),
-      items: items.map((i) => ({
-        productId: i.productId,
-        variantLabel: i.variantLabel,
-        nachtkast: i.nachtkast,
-        voetbank: i.voetbank,
-        quantity: i.quantity,
-      })),
-      website,
-      ts: tsRef.current,
-      ...(gclidRef.current ? { gclid: gclidRef.current } : {}),
-    });
-    if (result.ok) {
-      // Door naar de beveiligde Mollie-betaalpagina.
-      window.location.href = result.url;
-      return;
+
+    const elapsedMs = mountedAtRef.current == null ? undefined : Math.round(performance.now() - mountedAtRef.current);
+    let redirecting = false;
+    try {
+      const result = await createCheckout({
+        customer: {
+          firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,
+          address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
+          country: form.country,
+        },
+        expectedTotal: totalPrice,
+        ...(selectedMethod ? { method: selectedMethod } : {}),
+        items: items.map((i) => ({
+          productId: i.productId,
+          variantLabel: i.variantLabel,
+          nachtkast: i.nachtkast,
+          voetbank: i.voetbank,
+          quantity: i.quantity,
+        })),
+        website,
+        ...(elapsedMs === undefined ? {} : { elapsedMs }),
+        ...(idempotencyKeyRef.current ? { idempotencyKey: idempotencyKeyRef.current } : {}),
+        analyticsConsent: getCookieConsent() === "accepted",
+        ...(gclidRef.current ? { gclid: gclidRef.current } : {}),
+      });
+      if (result.ok) {
+        // Door naar de beveiligde Mollie-betaalpagina; knop blijft geblokkeerd.
+        redirecting = true;
+        window.location.href = result.url;
+        return;
+      }
+      if (result.error === "PRICE_CHANGED") {
+        // Prijs gewijzigd sinds toevoegen: wagen verversen, melden, niet blokkeren.
+        const changes = await syncCart();
+        announceCartChanges(changes);
+        toast.info(result.message, { duration: 8000 });
+        return;
+      }
+      toast.error("Betaling starten mislukt", { description: result.message || result.error, duration: 8000 });
+    } catch {
+      // Netwerk weggevallen of server onbereikbaar: UI herstellen, klant kan opnieuw.
+      toast.error("Betaling starten mislukt", { description: NETWORK_FAILED, duration: 8000 });
+    } finally {
+      if (!redirecting) setSubmitting(false);
     }
-    setSubmitting(false);
-    if (result.error === "PRICE_CHANGED") {
-      // Prijs gewijzigd sinds toevoegen: wagen verversen, melden, niet blokkeren.
-      const changes = await syncCart();
-      announceCartChanges(changes);
-      toast.info(result.message, { duration: 8000 });
-      return;
-    }
-    toast.error("Betaling starten mislukt", { description: result.message || result.error });
   };
 
   const hasError = (name: FieldName) => Boolean(errors[name] && touched[name]);
@@ -222,7 +272,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
+      <div className="min-h-[80dvh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
         <AnimatedSection className="text-center max-w-xl">
           <h1 className="display-md text-ink mb-6">Niets om af te rekenen</h1>
           <p className="body-lg text-slate mb-12">Je winkelwagen is leeg.</p>
@@ -248,7 +298,7 @@ export default function CheckoutPage() {
     const hintId = hint ? `co-${name}-hint` : undefined;
     const describedBy = [hasError(name) ? errorId(name) : null, hintId].filter(Boolean).join(" ") || undefined;
     return (
-      <div className={className}>
+      <div className={`min-w-0 ${className}`}>
         <label htmlFor={`co-${name}`} className="block text-base text-ink mb-2">
           {FIELD_LABEL[name]}
         </label>
@@ -275,10 +325,12 @@ export default function CheckoutPage() {
     );
   };
 
+  const fieldsetClass = "bg-white border border-line rounded-[10px] p-5 sm:p-8 lg:p-12";
+
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
       {/* Editorial header */}
-      <AnimatedSection className="mb-12 lg:mb-16">
+      <AnimatedSection className="mb-10 lg:mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
           <div className="lg:col-span-8">
             <h1 className="display-lg text-ink">Afrekenen</h1>
@@ -290,13 +342,16 @@ export default function CheckoutPage() {
       </AnimatedSection>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-        <AnimatedSection direction="left" className="lg:col-span-8">
+        <AnimatedSection direction="left" className="lg:col-span-8 min-w-0">
+          {/* Mobiel/tablet: bestelling inklapbaar bóven het formulier (op lg staat de kaart ernaast). */}
+          <MobileOrderSummary items={items} totals={totals} />
+
           {showSummary && summaryErrors.length > 0 && (
             <div
               ref={summaryRef}
               role="alert"
               tabIndex={-1}
-              className="mb-8 border border-error rounded-[10px] bg-white p-6"
+              className="mb-8 border border-error rounded-[10px] bg-white p-5 sm:p-6"
             >
               <h2 className="text-base font-medium text-error mb-3">
                 Controleer {summaryErrors.length === 1 ? "dit veld" : `deze ${summaryErrors.length} velden`}
@@ -314,9 +369,9 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-10">
+          <form onSubmit={handleSubmit} noValidate className="space-y-8 lg:space-y-10">
             {/* Honeypot — voor mensen onzichtbaar, bots vullen 'm in. */}
-            <div className="absolute -left-[9999px] w-px h-px overflow-hidden" aria-hidden="true">
+            <div className="hp-field" aria-hidden="true">
               <label htmlFor="co-website">Website</label>
               <input
                 type="text"
@@ -330,9 +385,9 @@ export default function CheckoutPage() {
             </div>
 
             {/* Contactgegevens */}
-            <fieldset className="bg-white border border-line rounded-[10px] p-8 lg:p-12">
+            <fieldset className={fieldsetClass}>
               <legend className="sr-only">Contactgegevens</legend>
-              <h2 className="font-serif text-2xl text-ink mb-8">Contactgegevens</h2>
+              <h2 className="font-serif text-2xl text-ink mb-6 sm:mb-8">Contactgegevens</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                 {renderField({ name: "firstName", autoComplete: "given-name" })}
                 {renderField({ name: "lastName", autoComplete: "family-name" })}
@@ -342,9 +397,9 @@ export default function CheckoutPage() {
             </fieldset>
 
             {/* Verzendadres */}
-            <fieldset className="bg-white border border-line rounded-[10px] p-8 lg:p-12">
+            <fieldset className={fieldsetClass}>
               <legend className="sr-only">Bezorgadres</legend>
-              <h2 className="font-serif text-2xl text-ink mb-8">Bezorgadres</h2>
+              <h2 className="font-serif text-2xl text-ink mb-6 sm:mb-8">Bezorgadres</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                 <div>
                   <label htmlFor="co-country" className="block text-base text-ink mb-2">{FIELD_LABEL.country}</label>
@@ -367,9 +422,10 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div className="hidden sm:block" aria-hidden="true" />
-                <div className="sm:col-span-2 grid grid-cols-[minmax(0,1fr)_7rem] sm:grid-cols-[minmax(0,1fr)_9rem] gap-x-6 sm:gap-x-8">
-                  {renderField({ name: "address", autoComplete: "street-address" })}
-                  {renderField({ name: "houseNumber", autoComplete: "address-line2", inputMode: "numeric", placeholder: "12a" })}
+                {/* Straat + huisnummer: < 400px onder elkaar, daarboven naast elkaar met een smal nummerveld. */}
+                <div className="sm:col-span-2 grid grid-cols-1 min-[400px]:grid-cols-[minmax(0,1fr)_5.5rem] sm:grid-cols-[minmax(0,1fr)_9rem] gap-x-4 sm:gap-x-8 gap-y-6">
+                  {renderField({ name: "address", autoComplete: "address-line1" })}
+                  {renderField({ name: "houseNumber", autoComplete: "off", inputMode: "numeric", placeholder: "12a" })}
                 </div>
                 {renderField({
                   name: "zipCode",
@@ -382,9 +438,9 @@ export default function CheckoutPage() {
             </fieldset>
 
             {/* Betaalmethode — live uit Mollie (/v2/methods) */}
-            <fieldset className="bg-white border border-line rounded-[10px] p-8 lg:p-12">
+            <fieldset className={fieldsetClass}>
               <legend className="sr-only">Betaalmethode</legend>
-              <h2 className="font-serif text-2xl text-ink mb-8">Betaalmethode</h2>
+              <h2 className="font-serif text-2xl text-ink mb-6 sm:mb-8">Betaalmethode</h2>
               <div className="space-y-3">
                 {methods.length === 0 && (
                   <p className="text-base text-stone" aria-live="polite">Betaalmethoden laden…</p>
@@ -421,10 +477,18 @@ export default function CheckoutPage() {
 
             {/* Bestellen */}
             <div className="space-y-5">
+              {/* Totaal nog eens vlak boven de knop (de kaart staat op mobiel ingeklapt bovenaan). */}
+              <div className="lg:hidden flex items-baseline justify-between gap-4 border-t border-line pt-5">
+                <span className="text-base text-ink">
+                  Totaal <span className="text-slate">({shippingInfo.vatLabelShort})</span>
+                </span>
+                <span className="font-serif text-2xl text-ink tabular-nums">{formatPrice(total)}</span>
+              </div>
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-primary w-full !text-sm !normal-case !tracking-normal !py-5 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-busy={submitting || undefined}
+                className="btn-primary w-full min-h-12 !px-4 sm:!px-8 !text-base !normal-case !tracking-normal disabled:cursor-not-allowed"
               >
                 {submitting ? "Even geduld…" : `Bestellen en betalen — ${formatPrice(total)}`}
               </button>
@@ -462,44 +526,11 @@ export default function CheckoutPage() {
           </form>
         </AnimatedSection>
 
-        {/* Samenvatting */}
-        <AnimatedSection direction="right" className="lg:col-span-4">
+        {/* Samenvatting — alleen lg+ (op kleinere schermen staat hij ingeklapt boven het formulier) */}
+        <AnimatedSection direction="right" className="hidden lg:block lg:col-span-4">
           <div className="bg-white border border-line rounded-[10px] p-8 lg:p-10 sticky top-32">
             <h2 className="font-serif text-2xl text-ink mb-8">Je bestelling</h2>
-            <ul className="space-y-5 mb-8">
-              {items.map((item) => {
-                const thumb = firstImageUrl(item.product.images);
-                const options = cartLineOptions(item);
-                return (
-                  <li key={item.lineKey} className="flex gap-4">
-                    <div className="relative w-20 h-20 bg-bone rounded-[8px] shrink-0 overflow-hidden">
-                      {thumb && <Image src={thumb} alt="" fill sizes="80px" className="object-contain" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-ink text-base font-medium leading-snug">{item.product.name}</p>
-                      {options.length > 0 && <p className="text-stone text-[14px] mt-0.5">{options.join(" · ")}</p>}
-                      <p className="text-stone text-[14px] mt-0.5">Aantal: {item.quantity}</p>
-                      <Price price={item.product.price * item.quantity} size="sm" className="!text-base mt-1" />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="border-t border-line pt-5 space-y-4 text-base">
-              <div className="flex justify-between">
-                <span className="text-slate">Subtotaal</span>
-                <span className="text-ink tabular-nums">{formatPrice(totalPrice)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate">Verzending</span>
-                <span className="text-ink tabular-nums">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
-              </div>
-              <div className="border-t border-line pt-5 flex justify-between items-baseline">
-                <span className="text-ink">Totaal</span>
-                <span className="font-serif text-2xl text-ink tabular-nums">{formatPrice(total)}</span>
-              </div>
-              <p className="text-[14px] text-stone">{shippingInfo.vatLabelLong}</p>
-            </div>
+            <OrderSummaryLines items={items} totals={totals} />
           </div>
         </AnimatedSection>
       </div>

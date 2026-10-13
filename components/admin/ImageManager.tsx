@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useId, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Trash2, Star, Upload, AlertCircle, GripVertical } from "lucide-react";
+import { ArrowLeft, ArrowRight, Trash2, Star, Upload, AlertCircle, GripVertical, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   getCloudinarySignature,
@@ -10,6 +10,7 @@ import {
   softDeleteProductImage,
 } from "@/app/admin/(protected)/products/actions";
 import type { AdminImage } from "@/app/admin/(protected)/_lib/images";
+import { dispatchProductUpdated, readUpdatedAt } from "./productUpdated";
 
 type Props = {
   productId?: string;
@@ -90,7 +91,7 @@ export default function ImageManager({ productId, category, slug, initialImages,
    * geserialiseerd zodat een trager eerder verzoek nooit een nieuwere lijst
    * overschrijft. Bij een fout: toast + terug naar de laatst opgeslagen lijst.
    */
-  const persistLatest = () => {
+  const persistLatest = async (): Promise<void> => {
     if (!canPersist) return;
     if (savingRef.current) {
       queuedRef.current = true;
@@ -99,33 +100,34 @@ export default function ImageManager({ productId, category, slug, initialImages,
     savingRef.current = true;
     setSaving(true);
     const snapshot = imagesRef.current;
-    void updateProductImages({ id: productId!, images: snapshot })
-      .then((res) => {
-        if (res.ok) {
-          savedRef.current = snapshot;
-          return;
-        }
+    try {
+      const res = await updateProductImages({ id: productId!, images: snapshot });
+      if (res.ok) {
+        savedRef.current = snapshot;
+        // Het product is op de server gewijzigd (nieuwe updatedAt): het
+        // bewerkformulier hiernaast moet dat weten voor zijn optimistic lock.
+        dispatchProductUpdated({ id: productId!, updatedAt: readUpdatedAt(res) });
+      } else {
         toast.error(`Foto's niet opgeslagen: ${res.error}`);
         applyLocal(savedRef.current);
-      })
-      .catch(() => {
-        toast.error("Foto's niet opgeslagen: verbinding mislukt");
-        applyLocal(savedRef.current);
-      })
-      .finally(() => {
-        savingRef.current = false;
-        if (queuedRef.current) {
-          queuedRef.current = false;
-          persistLatest();
-        } else {
-          setSaving(false);
-        }
-      });
+      }
+    } catch {
+      toast.error("Foto's niet opgeslagen: verbinding mislukt");
+      applyLocal(savedRef.current);
+    } finally {
+      savingRef.current = false;
+      if (queuedRef.current) {
+        queuedRef.current = false;
+        void persistLatest();
+      } else {
+        setSaving(false);
+      }
+    }
   };
 
   const update = (fn: (prev: AdminImage[]) => AdminImage[]) => {
     applyLocal(fn(imagesRef.current));
-    persistLatest();
+    void persistLatest();
   };
 
   const move = (from: number, to: number) =>
@@ -153,15 +155,24 @@ export default function ImageManager({ productId, category, slug, initialImages,
     // Soft delete: server verplaatst de foto naar de prullenbak (30 dagen).
     const before = imagesRef.current;
     applyLocal(before.filter((img) => img.url !== target.url));
-    void softDeleteProductImage({ productId: productId!, url: target.url }).then((res) => {
+    void softDelete(target.url, before);
+  };
+
+  const softDelete = async (url: string, before: AdminImage[]): Promise<void> => {
+    try {
+      const res = await softDeleteProductImage({ productId: productId!, url });
       if (res.ok) {
         savedRef.current = imagesRef.current;
         toast.success("Foto naar de prullenbak verplaatst");
+        dispatchProductUpdated({ id: productId!, updatedAt: readUpdatedAt(res) });
         return;
       }
       toast.error(`Foto niet verwijderd: ${res.error}`);
       applyLocal(before);
-    });
+    } catch {
+      toast.error("Foto niet verwijderd: verbinding mislukt");
+      applyLocal(before);
+    }
   };
 
   const uploadOne = async (file: File) => {
@@ -226,9 +237,9 @@ export default function ImageManager({ productId, category, slug, initialImages,
             type="button"
             onClick={() => setError(null)}
             aria-label="Melding sluiten"
-            className="inline-flex items-center justify-center w-11 h-11 -my-2 -mr-2 text-error hover:bg-error/10"
+            className="inline-flex items-center justify-center w-11 h-11 -my-2 -mr-2 text-error hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
           >
-            ×
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -263,7 +274,7 @@ export default function ImageManager({ productId, category, slug, initialImages,
             onConfirmRemove={() => removeAt(i)}
             onAltChange={(alt) => setAlt(i, alt)}
             onAltBlur={() => {
-              if (imagesRef.current !== savedRef.current) persistLatest();
+              if (imagesRef.current !== savedRef.current) void persistLatest();
             }}
           />
         ))}

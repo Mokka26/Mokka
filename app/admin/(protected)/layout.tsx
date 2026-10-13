@@ -22,7 +22,8 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
   const recentMessages = await prisma.contactMessage.count({ where: { createdAt: { gte: since } } });
 
   return (
-    <div className="min-h-screen bg-bone">
+    // dvh i.p.v. vh: op iOS verandert de viewport-hoogte met de adresbalk.
+    <div className="min-h-dvh bg-bone">
       <AdminSidebar
         userName={session.user.name ?? "Admin"}
         userEmail={session.user.email ?? ""}
@@ -32,8 +33,10 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
           await signOut({ redirectTo: "/admin/login" });
         }}
       />
-      <main className="lg:ml-64">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 py-8 lg:py-14">{children}</div>
+      {/* Zijkanten/onderkant respecteren de safe-area (notch, home-balk); de
+          topbalk en sidebar regelen hun eigen inset in AdminSidebar. */}
+      <main className="lg:ml-64 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 py-6 sm:py-8 lg:py-14">{children}</div>
       </main>
     </div>
   );

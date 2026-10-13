@@ -66,15 +66,18 @@ export default function SizePriceEditor({
     .filter((r) => r.label.trim())
     .map((r) => ({ label: r.label.trim(), price: r.price.trim(), listPrice: r.listPrice.trim() }));
 
+  // 16px tekst (geen iOS-zoom), 44px hoog, zichtbare focus.
   const inputCls =
-    "min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+    "w-full min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+  // Alleen < sm zichtbaar: daar ontbreekt de kolomkop, dus elk veld krijgt een eigen label.
+  const mobileLabelCls = "sm:hidden block text-sm text-stone mb-1";
 
   return (
     <div>
       <input type="hidden" name={name} value={JSON.stringify(payload)} />
 
       {rows.length > 0 && (
-        <div className="space-y-3 mb-3">
+        <div className="space-y-4 sm:space-y-3 mb-3">
           <div className="hidden sm:grid sm:grid-cols-[11rem_1fr_1fr_2.75rem] gap-2 eyebrow-lg">
             <span>Maat</span>
             <span>Verkoopprijs incl. btw</span>
@@ -84,47 +87,62 @@ export default function SizePriceEditor({
           {rows.map((row, idx) => {
             const error = rowError(row);
             const errId = `${baseId}-${row.id}-err`;
+            const n = row.label.trim() || String(idx + 1);
+            const priceId = `${baseId}-${row.id}-price`;
+            const listId = `${baseId}-${row.id}-list`;
             return (
-              <div key={row.id}>
-                <div className="grid grid-cols-[1fr_2.75rem] sm:grid-cols-[11rem_1fr_1fr_2.75rem] gap-2 items-stretch">
+              <div key={row.id} className={idx > 0 ? "pt-4 border-t border-line sm:pt-0 sm:border-0" : ""}>
+                {/* < sm: maat + prullenbak op rij 1, daaronder de twee prijzen elk op een
+                    eigen rij (volle breedte). sm+: één rij van vier kolommen. De
+                    DOM-volgorde (maat → prijs → adviesprijs → verwijderen) blijft de
+                    tab-volgorde op elk formaat. */}
+                <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] sm:grid-cols-[11rem_1fr_1fr_2.75rem] gap-2 items-end sm:items-stretch">
                   <input
                     value={row.label}
                     onChange={(e) => updateRow(row.id, { label: e.target.value })}
                     placeholder="Maat (bijv. 140 × 200)"
                     aria-label={`Maat ${idx + 1}`}
                     maxLength={40}
-                    className={`${inputCls} bg-bone col-span-1`}
+                    className={`${inputCls} bg-bone col-start-1 row-start-1 sm:col-auto sm:row-auto`}
                   />
+                  <div className="col-span-2 row-start-2 sm:col-span-1 sm:row-auto min-w-0">
+                    <label htmlFor={priceId} className={mobileLabelCls}>Verkoopprijs incl. btw</label>
+                    <input
+                      id={priceId}
+                      value={row.price}
+                      onChange={(e) => updateRow(row.id, { price: e.target.value })}
+                      inputMode="decimal"
+                      placeholder="leeg = productprijs"
+                      aria-label={`Verkoopprijs voor maat ${n}`}
+                      aria-invalid={!!error}
+                      aria-describedby={error ? errId : undefined}
+                      className={`${inputCls} bg-white tabular-nums`}
+                    />
+                  </div>
+                  <div className="col-span-2 row-start-3 sm:col-span-1 sm:row-auto min-w-0">
+                    <label htmlFor={listId} className={mobileLabelCls}>Adviesprijs (optioneel)</label>
+                    <input
+                      id={listId}
+                      value={row.listPrice}
+                      onChange={(e) => updateRow(row.id, { listPrice: e.target.value })}
+                      inputMode="decimal"
+                      placeholder="bijv. 699"
+                      aria-label={`Adviesprijs voor maat ${n}`}
+                      aria-invalid={!!error}
+                      className={`${inputCls} bg-white tabular-nums`}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeRow(row.id)}
-                    className="sm:order-last inline-flex items-center justify-center min-h-11 text-stone hover:text-error hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
-                    aria-label={`Maat ${row.label || idx + 1} verwijderen`}
+                    className="col-start-2 row-start-1 sm:col-auto sm:row-auto inline-flex items-center justify-center min-h-11 min-w-11 text-stone hover:text-error hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+                    aria-label={`Maat ${n} verwijderen`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
-                  <input
-                    value={row.price}
-                    onChange={(e) => updateRow(row.id, { price: e.target.value })}
-                    inputMode="decimal"
-                    placeholder="leeg = productprijs"
-                    aria-label={`Verkoopprijs voor maat ${row.label || idx + 1}`}
-                    aria-invalid={!!error}
-                    aria-describedby={error ? errId : undefined}
-                    className={`${inputCls} bg-white tabular-nums`}
-                  />
-                  <input
-                    value={row.listPrice}
-                    onChange={(e) => updateRow(row.id, { listPrice: e.target.value })}
-                    inputMode="decimal"
-                    placeholder="bijv. 699"
-                    aria-label={`Adviesprijs voor maat ${row.label || idx + 1}`}
-                    aria-invalid={!!error}
-                    className={`${inputCls} bg-white tabular-nums`}
-                  />
                 </div>
                 {error && (
-                  <p id={errId} className="text-sm text-error mt-1">
+                  <p id={errId} className="text-sm text-error mt-1.5">
                     {row.label.trim() ? `${row.label.trim()}: ` : ""}
                     {error}
                   </p>
@@ -151,7 +169,7 @@ export default function SizePriceEditor({
           onClick={() => addRow()}
           className="inline-flex items-center gap-1.5 min-h-11 text-sm uppercase tracking-[0.1em] px-3 bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
         >
-          <Plus className="w-3 h-3" />
+          <Plus className="w-3 h-3" aria-hidden="true" />
           Eigen maat
         </button>
       </div>

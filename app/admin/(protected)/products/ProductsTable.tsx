@@ -74,14 +74,16 @@ export default function ProductsTable({ products, categories, sort, dir, sortHre
         <div role="rowgroup" className="hidden md:block">
           <div role="row" className={`${GRID} bg-bone border-b border-line px-4 py-2`}>
             <div role="columnheader" className="flex items-center justify-center">
-              <input
-                id={selectAllId}
-                type="checkbox"
-                checked={allSelected}
-                onChange={toggleAll}
-                aria-label="Alle producten op deze pagina selecteren"
-                className="w-5 h-5 accent-accent"
-              />
+              <label htmlFor={selectAllId} className="inline-flex items-center justify-center w-11 h-11 cursor-pointer">
+                <input
+                  id={selectAllId}
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  aria-label="Alle producten op deze pagina selecteren"
+                  className="w-5 h-5 accent-accent"
+                />
+              </label>
             </div>
             <div role="columnheader" />
             <SortHeader col="name" sort={sort} dir={dir} href={sortHrefs.name} />
@@ -179,14 +181,17 @@ function ProductRowView({ product, selected, onToggle }: { product: ProductRow; 
     <div role="row" aria-selected={selected} className={`${GRID} px-3 md:px-4 py-3 ${selected ? "bg-accent/5" : ""}`}>
       {/* Rij 1 op mobiel: selectie, foto, naam, bewerken */}
       <div className="flex items-start gap-3 md:contents">
-        <div role="cell" className="flex items-center justify-center min-h-11 md:min-h-0">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={onToggle}
-            aria-label={`${product.name} selecteren`}
-            className="w-5 h-5 accent-accent"
-          />
+        <div role="cell" className="flex items-center justify-center -ml-2 md:ml-0">
+          {/* Label van 44×44 px: het hele vak reageert op een tik, niet alleen de 20px-checkbox. */}
+          <label className="inline-flex items-center justify-center w-11 h-11 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={onToggle}
+              aria-label={`${product.name} selecteren`}
+              className="w-5 h-5 accent-accent"
+            />
+          </label>
         </div>
         <div role="cell">
           {product.thumb ? (
@@ -224,7 +229,7 @@ function ProductRowView({ product, selected, onToggle }: { product: ProductRow; 
       </div>
 
       {/* Rij 2 op mobiel: prijs, voorraad, uitgelicht, zichtbaar */}
-      <div className="mt-2 flex items-center justify-between gap-2 pl-[3.5rem] md:pl-0 md:mt-0 md:contents">
+      <div className="mt-1 flex items-center justify-between gap-1 min-[400px]:gap-2 pl-[3.75rem] md:pl-0 md:mt-0 md:contents">
         <div role="cell" className="md:text-right">
           <PriceCell id={product.id} initial={product.price} name={product.name} />
         </div>
@@ -265,7 +270,7 @@ function ProductRowView({ product, selected, onToggle }: { product: ProductRow; 
 // ─── Inline cellen ───────────────────────────────────────────────────
 
 const inlineInput =
-  "min-h-11 px-2 py-1 text-base border border-accent bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent text-right tabular-nums";
+  "min-h-11 max-w-full px-2 py-1 text-base border border-accent bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent text-right tabular-nums";
 
 function StockCell({ id, initial, name }: { id: string; initial: number; name: string }) {
   const [editing, setEditing] = useState(false);
