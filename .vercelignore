@@ -5,8 +5,11 @@ public/*.pdf
 # Dealer-fotozips (~9 GB) staan in .gitignore maar lokaal wél in public/
 public/*.zip
 
-# Eenmalige scripts en lokale data-dumps (niet nodig in runtime)
-scripts/
+# Eenmalige scripts en lokale data-dumps (niet nodig in runtime).
+# Uitzondering: prisma-env.cjs draait tijdens de build (migrate deploy in
+# "npm run build"); zonder dit bestand faalt de deploy met MODULE_NOT_FOUND.
+scripts/*
+!scripts/prisma-env.cjs
 photos-todo/
 _import-*/
 
