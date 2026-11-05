@@ -193,9 +193,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <>
-      {/* React 19 hoist <link> naar <head>; de Metadata-API kent geen prev/next. */}
-      {prevHref && <link rel="prev" href={prevHref} />}
-      {nextHref && <link rel="next" href={nextHref} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(collectionSchema) }}
@@ -305,6 +302,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </section>
         )}
       </div>
+
+      {/* React 19 hoist <link> naar <head>; de Metadata-API kent geen prev/next.
+          Bewust ná de inhoud: Next.js scrolt bij navigatie naar het eerste element
+          van de pagina, en een naar <head> verplaatste <link> als eerste kind
+          laat die scroll naar boven mislukken. */}
+      {prevHref && <link rel="prev" href={prevHref} />}
+      {nextHref && <link rel="next" href={nextHref} />}
     </>
   );
 }

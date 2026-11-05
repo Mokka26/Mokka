@@ -135,8 +135,6 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
 
   return (
     <>
-      {prevHref && <link rel="prev" href={prevHref} />}
-      {nextHref && <link rel="next" href={nextHref} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(collectionSchema) }}
@@ -219,6 +217,10 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
           )}
         </div>
       </div>
+
+      {/* Ná de inhoud: een naar <head> gehoiste <link> als eerste kind breekt de scroll naar boven van Next.js. */}
+      {prevHref && <link rel="prev" href={prevHref} />}
+      {nextHref && <link rel="next" href={nextHref} />}
     </>
   );
 }
