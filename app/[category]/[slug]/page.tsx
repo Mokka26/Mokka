@@ -24,6 +24,7 @@ import {
 } from "@/lib/jsonLd";
 import { findRedirectTarget } from "@/lib/slug-redirect";
 import { getFooterMethods } from "@/lib/mollie";
+import { MODEL_VARIANT_SELECT, onePerModel } from "@/lib/variants";
 
 interface Props {
   params: Promise<{ category: string; slug: string }>;
@@ -65,6 +66,7 @@ const PRODUCT_SELECT = {
   colorGroup: true,
   colorName: true,
   colorHex: true,
+  sizeName: true,
 } as const;
 
 // Kaart-velden voor gerelateerde/aanvullende producten.
@@ -156,37 +158,43 @@ export default async function ProductPageInCategory({ params }: Props) {
   //    categorie en "Past goed bij" uit de aanvullende categorie. Alles ná de
   //    404/redirect-checks, zodat de HTTP-status klopt.
   const complementary = complementaryCategoryFor(product.category);
-  const [colorVariants, relatedProducts, complementaryProducts] = await Promise.all([
+  // Aanbevelingen: alleen leverbaar (prijs + voorraad), nooit het eigen model,
+  // en per model één kaart (anders vier kleuren van dezelfde salontafel).
+  const recommendable = {
+    hidden: false,
+    deletedAt: null,
+    price: { gt: 0 },
+    stock: { gt: 0 },
+    // `not` alleen sluit in SQL ook NULL uit → expliciet OR met null.
+    ...(product.colorGroup ? { OR: [{ colorGroup: null }, { colorGroup: { not: product.colorGroup } }] } : {}),
+  };
+  const [colorVariants, relatedRaw, complementaryRaw] = await Promise.all([
     product.colorGroup
       ? prisma.product.findMany({
           where: { colorGroup: product.colorGroup, hidden: false, deletedAt: null },
-          select: { id: true, slug: true, colorName: true, colorHex: true },
-          orderBy: { name: "asc" },
+          select: MODEL_VARIANT_SELECT,
         })
       : Promise.resolve([]),
     prisma.product.findMany({
-      where: { category: product.category, id: { not: product.id }, hidden: false, deletedAt: null },
-      take: 4,
+      where: { ...recommendable, category: product.category, id: { not: product.id } },
+      take: 24,
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       select: CARD_SELECT,
     }),
     complementary
       ? prisma.product.findMany({
-          where: {
-            category: { in: [...complementary.dbCategories] },
-            hidden: false,
-            deletedAt: null,
-            price: { gt: 0 },
-          },
-          take: 4,
+          where: { ...recommendable, category: { in: [...complementary.dbCategories] } },
+          take: 24,
           orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
           select: CARD_SELECT,
         })
       : Promise.resolve([]),
   ]);
   // Payload-trim: de kaart toont alleen foto 1.
-  for (const p of relatedProducts) p.images = firstImageOnly(p.images);
-  for (const p of complementaryProducts) p.images = firstImageOnly(p.images);
+  const relatedProducts = onePerModel(relatedRaw).slice(0, 4).map((p) => ({ ...p, images: firstImageOnly(p.images) }));
+  const complementaryProducts = onePerModel(complementaryRaw)
+    .slice(0, 4)
+    .map((p) => ({ ...p, images: firstImageOnly(p.images) }));
 
   const url = `/${category.slug}/${product.slug}`;
   // Home > [Banken >] Hoekbanken > Product — dezelfde keten als de categoriepagina,

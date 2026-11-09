@@ -31,7 +31,7 @@ const getAllProducts = unstable_cache(
         id: true, slug: true, name: true, price: true, listPrice: true, category: true,
         images: true, featured: true, stock: true, createdAt: true,
         deliveryTime: true, sizeVariants: true,
-        colorGroup: true, colorName: true, colorHex: true, specs: true,
+        colorGroup: true, colorName: true, colorHex: true, sizeName: true, specs: true,
       },
     });
     // Payload-trim: kaart toont alleen foto 1 — rest van de images-JSON is

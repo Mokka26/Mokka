@@ -38,6 +38,7 @@ type Props = {
     colorGroup: string | null;
     colorName: string | null;
     colorHex: string | null;
+    sizeName: string | null;
     source: string | null;
   };
   categories: string[];
@@ -70,6 +71,7 @@ const FIELD_ORDER = [
   "colorGroup",
   "colorName",
   "colorHex",
+  "sizeName",
 ] as const;
 
 function money(n: number | null): string {
@@ -510,11 +512,12 @@ export default function EditProductForm({ product, categories, validCategories, 
         </div>
 
         <div className="bg-white border border-line p-5 space-y-5">
-          <p className="eyebrow-lg">Kleurvariant</p>
+          <p className="eyebrow-lg">Varianten (maat en kleur)</p>
           <p className="text-sm text-stone leading-relaxed">
-            Producten met dezelfde groep tonen op de productpagina een kleurkiezer en delen de verkoop- en
-            adviesprijs. Maten, voorraad en foto&rsquo;s blijven per kleur. Laat leeg als dit product geen
-            variant heeft.
+            Alle maten en kleuren van één model krijgen dezelfde groep. De productpagina toont dan een
+            maatkeuze (uit &ldquo;Maat&rdquo;) en een kleurkeuze (uit &ldquo;Kleurnaam&rdquo;). Kleuren in
+            dezelfde maat delen de verkoop- en adviesprijs; elke maat heeft een eigen prijs. Voorraad en
+            foto&rsquo;s blijven per product. Laat leeg als dit product geen varianten heeft.
           </p>
 
           <Field id={fid("colorGroup")} label="Groep (gedeelde sleutel)" error={err.colorGroup}>
@@ -526,6 +529,18 @@ export default function EditProductForm({ product, categories, validCategories, 
               maxLength={80}
               aria-invalid={!!err.colorGroup}
               className={`${inputCls} bg-bone font-mono`}
+            />
+          </Field>
+
+          <Field id={fid("sizeName")} label="Maat" error={err.sizeName}>
+            <input
+              id={fid("sizeName")}
+              name="sizeName"
+              defaultValue={product.sizeName ?? ""}
+              placeholder="bijv. 180 cm of Ø 130 cm"
+              maxLength={40}
+              aria-invalid={!!err.sizeName}
+              className={`${inputCls} bg-bone`}
             />
           </Field>
 

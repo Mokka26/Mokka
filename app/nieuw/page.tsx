@@ -10,6 +10,7 @@ import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/js
 import { ogDefaults } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
+import { dedupeByColorGroup } from "@/app/products/dedupe";
 
 const PATH = "/nieuw";
 const LIMIT = 48;
@@ -36,12 +37,15 @@ const getNewProducts = unstable_cache(
         colorGroup: true,
         colorName: true,
         colorHex: true,
+        sizeName: true,
         specs: true,
       },
       orderBy: { createdAt: "desc" },
-      take: LIMIT,
+      // Ruim ophalen: na het samenvoegen per model (maten/kleuren) blijven er
+      // minder kaarten over.
+      take: LIMIT * 3,
     });
-    return products.map((p) => ({ ...p, images: firstImageOnly(p.images) }));
+    return dedupeByColorGroup(products.map((p) => ({ ...p, images: firstImageOnly(p.images) }))).slice(0, LIMIT);
   },
   ["new-products"],
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
@@ -131,7 +135,7 @@ export default async function NieuwPage() {
               <h2 className="sr-only">Nieuwe producten</h2>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
                 {products.map((p, i) => (
-                  <ProductCard key={p.id} product={p} priority={i < 2} />
+                  <ProductCard key={p.id} product={p} variants={p.variants} priority={i < 2} />
                 ))}
               </div>
             </>

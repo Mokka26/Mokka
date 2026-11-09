@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
-import ProductCard from "@/components/ProductCard";
+import ProductCard, { type ProductCardVariant } from "@/components/ProductCard";
 import { Drawer } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { FilterChip, PriceFilter, PRICE_MAX, isDefaultPrice, priceInRange, type PriceRange } from "@/components/FilterBar";
@@ -26,10 +26,12 @@ export type ListingProduct = {
   colorGroup: string | null;
   colorName: string | null;
   colorHex: string | null;
+  sizeName: string | null;
   specs: string | null;
 };
 
-export type ListingVariant = { slug: string; colorName: string | null; colorHex: string | null };
+/** Variant van een model op de kaart (kleur, maat, prijs, voorraad). */
+export type ListingVariant = ProductCardVariant;
 
 type Product = ListingProduct;
 

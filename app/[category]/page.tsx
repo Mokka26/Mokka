@@ -9,6 +9,7 @@ import { firstImageOnly } from "@/lib/imageHelpers";
 import { buildBreadcrumbJsonLd, buildFaqJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/jsonLd";
 import { categoryDescription, categoryTitle, ogDefaults } from "@/lib/seo";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
+import { inStockFirst } from "@/lib/variants";
 import { getGuide, guidePath } from "@/app/gids/guides";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import CategoryListing, { type ListingProduct, type ListingVariant } from "./CategoryListing";
@@ -43,6 +44,7 @@ const getCategoryProducts = unstable_cache(
         colorGroup: true,
         colorName: true,
         colorHex: true,
+        sizeName: true,
         specs: true,
       },
       // Handmatige volgorde uit de admin (sortOrder) eerst; producten zonder
@@ -70,9 +72,11 @@ function applyTypeOrder(products: CategoryProduct[], category: Category): Catego
 }
 
 /**
- * Kleurvarianten (zelfde colorGroup) tellen als één kaart. Representant =
- * eerste op voorraad, anders de eerste in volgorde. Geeft ook de swatch-rij
- * per groep terug, zodat de kaart de andere kleuren kan tonen.
+ * Alle varianten van een model (zelfde colorGroup: maten én kleuren) tellen
+ * als één kaart. Representant = eerste op voorraad, anders de eerste in
+ * volgorde. Geeft ook de variantenrij per groep terug (kleur, maat, prijs,
+ * voorraad), zodat de kaart kleuren, maten en "vanaf"-prijs kan tonen.
+ * Uitverkochte kaarten (alle varianten uitverkocht) komen achteraan.
  */
 function collapseColorGroups(products: CategoryProduct[]): {
   collapsed: CategoryProduct[];
@@ -82,11 +86,18 @@ function collapseColorGroups(products: CategoryProduct[]): {
   const variants: Record<string, ListingVariant[]> = {};
   for (const p of products) {
     if (!p.colorGroup) continue;
-    (variants[p.colorGroup] ??= []).push({ slug: p.slug, colorName: p.colorName, colorHex: p.colorHex });
+    (variants[p.colorGroup] ??= []).push({
+      slug: p.slug,
+      colorName: p.colorName,
+      colorHex: p.colorHex,
+      sizeName: p.sizeName,
+      price: p.price,
+      stock: p.stock,
+    });
     const cur = representative.get(p.colorGroup);
-    if (!cur || (p.stock > 0 && cur.stock === 0)) representative.set(p.colorGroup, p);
+    if (!cur || (p.stock > 0 && cur.stock <= 0)) representative.set(p.colorGroup, p);
   }
-  const collapsed = products.filter((p) => !p.colorGroup || representative.get(p.colorGroup) === p);
+  const collapsed = inStockFirst(products.filter((p) => !p.colorGroup || representative.get(p.colorGroup) === p));
   return { collapsed, variants };
 }
 

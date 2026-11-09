@@ -124,10 +124,21 @@ describe("app/admin/products/actions", () => {
       db.product.findMany.mockResolvedValue([{ slug: "bed-oslo-zwart", category: "bedden" }]);
       expect(await updateProductInline({ id: "prod_1", hidden: true, price: 649 })).toEqual({ ok: true });
       expect(tx.product.updateMany).toHaveBeenCalledWith({
-        where: { colorGroup: "oslo", deletedAt: null, id: { not: "prod_1" } },
+        where: { colorGroup: "oslo", sizeName: null, deletedAt: null, id: { not: "prod_1" } },
         data: { price: 649 },
       });
       expect(revalidateProduct).toHaveBeenCalledWith({ slug: "bed-oslo-zwart", category: "bedden" });
+    });
+
+    it("werkt een prijswijziging alleen door op kleuren in dezelfde maat (andere maten houden hun prijs)", async () => {
+      db.product.findUnique.mockResolvedValue(makeProduct({ hidden: true, colorGroup: "salvator", sizeName: "200 cm" }));
+      tx.product.update.mockResolvedValue({});
+      db.product.findMany.mockResolvedValue([]);
+      expect(await updateProductInline({ id: "prod_1", price: 1249 })).toEqual({ ok: true });
+      expect(tx.product.updateMany).toHaveBeenCalledWith({
+        where: { colorGroup: "salvator", sizeName: "200 cm", deletedAt: null, id: { not: "prod_1" } },
+        data: { price: 1249 },
+      });
     });
 
     it("weigert ongeldige invoer (negatieve voorraad) en een onbekend product", async () => {

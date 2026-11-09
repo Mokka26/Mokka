@@ -11,6 +11,7 @@ import { buildBreadcrumbJsonLd, jsonLdHtml, truncateAtWord, type BreadcrumbItem 
 import { ogDefaults } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
+import { dedupeByColorGroup } from "@/app/products/dedupe";
 
 interface Props {
   searchParams: Promise<{ page?: string | string[] }>;
@@ -47,16 +48,18 @@ const getSaleProducts = unstable_cache(
         colorGroup: true,
         colorName: true,
         colorHex: true,
+        sizeName: true,
         specs: true,
       },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
     // Grootste korting (in %) eerst; stabiele sort binnen gelijke korting.
+    // Daarna één kaart per model (maten/kleuren met korting samen).
     const discount = (p: { price: number; listPrice: number | null }) =>
       p.listPrice ? (p.listPrice - p.price) / p.listPrice : 0;
-    return products
-      .map((p) => ({ ...p, images: firstImageOnly(p.images) }))
-      .sort((a, b) => discount(b) - discount(a));
+    return dedupeByColorGroup(
+      products.map((p) => ({ ...p, images: firstImageOnly(p.images) })).sort((a, b) => discount(b) - discount(a)),
+    );
   },
   ["sale-products"],
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
@@ -189,7 +192,7 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
               <h2 className="sr-only">Producten met korting</h2>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
                 {pageProducts.map((p, i) => (
-                  <ProductCard key={p.id} product={p} priority={i < 2} />
+                  <ProductCard key={p.id} product={p} variants={p.variants} priority={i < 2} />
                 ))}
               </div>
               {totalPages > 1 && (

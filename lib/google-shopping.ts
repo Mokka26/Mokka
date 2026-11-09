@@ -47,6 +47,8 @@ export type FeedProduct = {
   stock: number;
   deliveryTime: string | null;
   colorName: string | null;
+  colorGroup: string | null;
+  sizeName: string | null;
   featured: boolean;
   hidden: boolean;
   deletedAt: Date | null;
@@ -67,6 +69,8 @@ export const FEED_PRODUCT_SELECT = {
   stock: true,
   deliveryTime: true,
   colorName: true,
+  colorGroup: true,
+  sizeName: true,
   featured: true,
   hidden: true,
   deletedAt: true,
@@ -273,7 +277,10 @@ type Offer = {
   listPrice: number | null;
   link: string;
   itemGroupId?: string;
+  /** Maatvariant-label binnen één product ("160 × 200"): ook afmeting + titel. */
   size?: string;
+  /** Alleen g:size (maat van het model, bv. "180 cm"); afmetingen uit specs. */
+  sizeTag?: string;
 };
 
 function buildItem(product: FeedProduct, offer: Offer): string {
@@ -325,7 +332,7 @@ function buildItem(product: FeedProduct, offer: Offer): string {
     tag("g:color", product.colorName ?? specs.Kleur ?? null),
     tag("g:material", specs.Materiaal?.slice(0, MAX_MATERIAL) ?? null),
     offer.itemGroupId ? tag("g:item_group_id", offer.itemGroupId) : "",
-    offer.size ? tag("g:size", offer.size) : "",
+    (offer.size ?? offer.sizeTag) ? tag("g:size", offer.size ?? offer.sizeTag) : "",
     // Afmetingen: width = breedte, length = diepte, height = hoogte; rond → breedte = diepte = Ø.
     tag("g:product_width", cm(dims?.diameter ?? dims?.w)),
     tag("g:product_length", cm(dims?.diameter ?? dims?.d)),
@@ -355,8 +362,11 @@ export function isFeedEligible(product: FeedProduct): boolean {
 }
 
 /**
- * Eén product → één item, of één item per maatvariant (item_group_id = product,
- * link met ?maat=<label> zodat de PDP de juiste maat en prijs toont).
+ * Eén product → één item, of één item per maatvariant (link met ?maat=<label>
+ * zodat de PDP de juiste maat en prijs toont).
+ * item_group_id: het model (colorGroup) — alle maten en kleuren van één model
+ * vormen één groep; zonder model bij maatvarianten het product-id.
+ * g:size: de maatvariant, anders de maat van het model (sizeName).
  * g:id is het stabiele Prisma-id (Google: max 50 tekens; slugs kunnen langer zijn).
  */
 export function buildItems(product: FeedProduct): string[] {
@@ -364,7 +374,16 @@ export function buildItems(product: FeedProduct): string[] {
   const link = `${businessInfo.siteUrl}${productUrl(product)}`;
   const variants = parsePricedSizeVariants(product.sizeVariants);
   if (variants.length === 0) {
-    return [buildItem(product, { id: product.id, price: product.price, listPrice: product.listPrice, link })];
+    return [
+      buildItem(product, {
+        id: product.id,
+        price: product.price,
+        listPrice: product.listPrice,
+        link,
+        itemGroupId: product.colorGroup ?? undefined,
+        sizeTag: product.sizeName ?? undefined,
+      }),
+    ];
   }
   return variants.map((v, i) =>
     buildItem(product, {
@@ -372,7 +391,7 @@ export function buildItems(product: FeedProduct): string[] {
       price: v.price,
       listPrice: v.listPrice ?? null,
       link: `${link}?maat=${encodeURIComponent(v.label)}`,
-      itemGroupId: product.id,
+      itemGroupId: product.colorGroup ?? product.id,
       size: v.label,
     }),
   );

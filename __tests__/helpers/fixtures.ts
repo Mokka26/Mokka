@@ -26,6 +26,7 @@ export type DbProduct = {
   colorGroup: string | null;
   colorName: string | null;
   colorHex: string | null;
+  sizeName: string | null;
   source: string | null;
   hidden: boolean;
   deletedAt: Date | null;
@@ -58,6 +59,7 @@ export function makeProduct(overrides: Partial<DbProduct> = {}): DbProduct {
     colorGroup: null,
     colorName: null,
     colorHex: null,
+    sizeName: null,
     source: null,
     hidden: false,
     deletedAt: null,

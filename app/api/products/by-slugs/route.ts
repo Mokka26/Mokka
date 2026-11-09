@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       select: {
         id: true, slug: true, name: true, price: true, listPrice: true,
         category: true, images: true, featured: true, stock: true, createdAt: true,
-        colorGroup: true, colorName: true, colorHex: true, specs: true,
+        colorGroup: true, colorName: true, colorHex: true, sizeName: true, specs: true,
       },
     });
 

@@ -7,6 +7,7 @@ import { Price } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { deliveryLine } from "@/components/product/deliveryTime";
 import { DIMENSION_KEYS, findSpec, isNewProduct, parseSizeVariants, parseSpecs } from "@/components/product/specs";
+import { distinctColors, distinctSizes, formatSizeList } from "@/lib/variants";
 
 /**
  * Productkaart — server-vriendelijk (geen hooks, geen event handlers; hover
@@ -32,10 +33,14 @@ export interface ProductCardProduct {
   specs?: string | null;
 }
 
+/** Eén variant (maat/kleur) van hetzelfde model; zie lib/variants.ts. */
 export type ProductCardVariant = {
   slug: string;
   colorName: string | null;
   colorHex: string | null;
+  sizeName?: string | null;
+  price?: number;
+  stock?: number;
 };
 
 /** Default `sizes` voor een 2-koloms grid op mobiel, 3 kolommen op desktop. */
@@ -116,11 +121,23 @@ export default function ProductCard({ product, variants, priority = false, sizes
   addUnique(patroon);
   const materialLine = materialParts.join(" · ");
 
-  // Maatvarianten → "vanaf" + laagste prijs.
+  // Maten binnen het model (aparte producten, zie lib/variants.ts) → maatlijst
+  // i.p.v. de afmeting van alleen deze representant.
+  const modelVariants = variants ?? [];
+  const modelSizes = distinctSizes(modelVariants);
+  const hasModelSizes = modelSizes.length > 1;
+  const modelPrices = modelVariants
+    .map((v) => v.price)
+    .filter((p): p is number => typeof p === "number" && p > 0);
+  const hasModelPriceRange = modelPrices.length > 0 && Math.min(...modelPrices) !== Math.max(...modelPrices);
+
+  // Maatvarianten binnen één product (bedden) of verschillende prijzen binnen
+  // het model → "vanaf" + laagste prijs.
   const sizeVariants = parseSizeVariants(product.sizeVariants);
   const variantPrices = sizeVariants.map((v) => v.price).filter((p): p is number => typeof p === "number" && p > 0);
-  const hasSizeVariants = sizeVariants.length > 0;
-  const displayPrice = hasSizeVariants && variantPrices.length > 0 ? Math.min(product.price > 0 ? product.price : Infinity, ...variantPrices) : product.price;
+  const hasSizeVariants = sizeVariants.length > 0 || hasModelPriceRange;
+  const allPrices = [...variantPrices, ...(hasModelPriceRange ? modelPrices : [])];
+  const displayPrice = hasSizeVariants && allPrices.length > 0 ? Math.min(product.price > 0 ? product.price : Infinity, ...allPrices) : product.price;
 
   // Badges: alleen bij feitelijke data (CLAUDE.md §11 — geen fake urgency).
   const isNew = isNewProduct(product.createdAt);
@@ -133,9 +150,11 @@ export default function ProductCard({ product, variants, priority = false, sizes
   // Levertijd: productspecifiek of de standaard uit lib/shipping-info.
   const delivery = isOutOfStock ? null : deliveryLine(product.deliveryTime);
 
-  // Color swatches: max 4, rest als "+N"
-  const colorDots = variants && variants.length > 1 ? variants.slice(0, 4) : [];
-  const extraColors = variants && variants.length > 4 ? variants.length - 4 : 0;
+  // Kleurstalen: unieke kleuren van het model (niet per maat dubbel), max 4 + "+N".
+  const modelColors = distinctColors(modelVariants);
+  const colorDots = modelColors.length > 1 ? modelColors.slice(0, 4) : [];
+  const extraColors = modelColors.length > 4 ? modelColors.length - 4 : 0;
+  const sizeLine = hasModelSizes ? formatSizeList(modelSizes) : null;
 
   return (
     <article className="product-card group h-full min-w-0">
@@ -188,15 +207,23 @@ export default function ProductCard({ product, variants, priority = false, sizes
           </h3>
 
           {cardSubtitle && (
-            <p className="text-[13px] text-stone leading-snug mb-2">{cardSubtitle}</p>
+            <p className="text-[14px] text-stone leading-snug mb-2">{cardSubtitle}</p>
           )}
 
           {/* SIGNATURE: hairline-marker */}
           <div className="w-4 h-px bg-accent-light mb-2 sm:mb-3" aria-hidden="true" />
 
-          {(dimensions || materialLine || colorDots.length > 0) && (
-            <dl className="space-y-1 mb-3 text-[13px] sm:text-sm leading-[1.45]">
-              {dimensions && (
+          {(dimensions || sizeLine || materialLine || colorDots.length > 0) && (
+            <dl className="space-y-1 mb-3 text-[14px] leading-[1.45]">
+              {sizeLine ? (
+                <div className="flex items-baseline gap-3">
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Maten</dt>
+                  <dd className="text-ink tabular-nums truncate" title={sizeLine}>
+                    <span className="sm:hidden">Maten: </span>
+                    {sizeLine}
+                  </dd>
+                </div>
+              ) : dimensions && (
                 <div className="flex items-baseline gap-3">
                   <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Afmeting</dt>
                   <dd className="text-ink tabular-nums truncate" title={dimensions}>
@@ -230,7 +257,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
                       </span>
                     ))}
                     {extraColors > 0 && (
-                      <span className="text-[13px] text-stone ml-0.5">+{extraColors}<span className="sr-only"> kleuren</span></span>
+                      <span className="text-[14px] text-stone ml-0.5">+{extraColors}<span className="sr-only"> kleuren</span></span>
                     )}
                   </dd>
                 </div>
@@ -248,7 +275,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
               <Price price={displayPrice} listPrice={listPrice} vat from={hasSizeVariants} size="sm" showSavings={false} />
               <StockBadge stock={product.stock} className="sm:pt-1" />
             </div>
-            {delivery && <p className="text-[13px] text-stone leading-snug">{delivery}</p>}
+            {delivery && <p className="text-[14px] text-stone leading-snug">{delivery}</p>}
           </div>
         </div>
       </Link>

@@ -7,6 +7,9 @@ export interface ColorVariant {
   slug: string;
   colorName: string | null;
   colorHex: string | null;
+  sizeName?: string | null;
+  price?: number;
+  stock?: number;
 }
 
 interface Groupable {
@@ -15,6 +18,9 @@ interface Groupable {
   colorGroup?: string | null;
   colorName?: string | null;
   colorHex?: string | null;
+  sizeName?: string | null;
+  price?: number;
+  stock?: number;
   variants?: ColorVariant[];
 }
 
@@ -34,13 +40,21 @@ export function dedupeByColorGroup<T extends Groupable>(products: T[]): (T & { v
 
   const out: (T & { variants?: ColorVariant[] })[] = [...standalone];
   for (const items of groups.values()) {
-    const primary = items[0];
+    // Representant: eerste op voorraad (zelfde regel als de categoriepagina).
+    const primary = items.find((v) => (v.stock ?? 1) > 0) ?? items[0];
     // Al eerder (server-side) samengevoegd en nu alleen als primaire kaart
-    // aanwezig: bestaande swatches behouden i.p.v. ze te reduceren tot één.
+    // aanwezig: bestaande varianten behouden i.p.v. ze te reduceren tot één.
     const variants =
       items.length === 1 && primary.variants && primary.variants.length > 1
         ? primary.variants
-        : items.map((v) => ({ slug: v.slug, colorName: v.colorName ?? null, colorHex: v.colorHex ?? null }));
+        : items.map((v) => ({
+            slug: v.slug,
+            colorName: v.colorName ?? null,
+            colorHex: v.colorHex ?? null,
+            sizeName: v.sizeName ?? null,
+            price: v.price,
+            stock: v.stock,
+          }));
     out.push({ ...primary, variants });
   }
 

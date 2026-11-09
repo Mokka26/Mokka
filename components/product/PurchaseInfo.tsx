@@ -1,5 +1,6 @@
 import { Truck, Clock, ShieldCheck } from "lucide-react";
 import { shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
+import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { MolliePaymentChips, PaymentIconRow } from "@/components/PaymentIcons";
 import { deliveryLine } from "@/components/product/deliveryTime";
@@ -24,6 +25,8 @@ export function PurchaseInfo({ price, stock, deliveryTime, category, mollieMetho
   const freeShipping = price >= shippingInfo.freeShippingThreshold;
   const inStock = stock > 0;
   const warrantyYears = warrantyYearsFor(category);
+  const phoneLink = getPhoneLink();
+  const phoneFormatted = businessInfo.contact.phoneFormatted;
   const rowClass = "flex items-start gap-3 text-[15px] leading-relaxed text-ink";
   const iconClass = "w-[18px] h-[18px] mt-[3px] shrink-0 text-accent";
 
@@ -49,7 +52,18 @@ export function PurchaseInfo({ price, stock, deliveryTime, category, mollieMetho
             {inStock ? (
               <>{deliveryLine(deliveryTime)}.</>
             ) : (
-              <>Tijdelijk uitverkocht — bel ons voor de verwachte levertijd.</>
+              <>
+                Tijdelijk uitverkocht — bel ons
+                {phoneLink && phoneFormatted && (
+                  <>
+                    {" "}op{" "}
+                    <a href={phoneLink} className="underline underline-offset-4 hover:text-accent-dark whitespace-nowrap">
+                      {phoneFormatted}
+                    </a>
+                  </>
+                )}{" "}
+                voor de verwachte levertijd.
+              </>
             )}
           </span>
         </li>

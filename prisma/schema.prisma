@@ -39,9 +39,13 @@ model Product {
   sortOrder    Int?
   stock        Int      @default(10)
   deliveryTime String?
+  // Variantgroep = één model: alle maten én kleuren delen dezelfde colorGroup.
+  // sizeName onderscheidt de maten ("180 cm", "Ø 130 cm"), colorName de kleuren.
+  // Elke combinatie is een eigen product/URL; de PDP toont maat- en kleurkeuze.
   colorGroup   String?
   colorName    String?
   colorHex     String?
+  sizeName     String?
   source       String?   // Herkomst/leverancier (bv. "Rousseau") — admin-tag
   hidden       Boolean  @default(false)
   deletedAt    DateTime?

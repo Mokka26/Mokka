@@ -116,6 +116,7 @@ export default async function AdminProductEditPage({
           colorGroup: product.colorGroup,
           colorName: product.colorName,
           colorHex: product.colorHex,
+          sizeName: product.sizeName,
           source: product.source,
         }}
         categories={categories}

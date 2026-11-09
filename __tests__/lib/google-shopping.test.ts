@@ -245,4 +245,27 @@ describe("lib/google-shopping", () => {
       expect(stripHtml("<p>Eén&nbsp;regel</p><p>Twee &amp; drie<br/>vier</p>")).toBe("Eén regel\nTwee & drie\nvier");
     });
   });
+
+  describe("model met maten en kleuren (colorGroup + sizeName)", () => {
+    const base = { category: "eettafels", price: 1249, colorGroup: "salvator", colorName: "Walnut" };
+    const t200 = makeProduct({ ...base, id: "t200", slug: "salvator-walnut-200", sizeName: "200 cm" });
+    const t300 = makeProduct({ ...base, id: "t300", slug: "salvator-walnut-300", sizeName: "300 cm", price: 1699 });
+
+    it("geeft alle maten en kleuren van het model één item_group_id en een eigen g:size", () => {
+      const [a] = buildItems(t200);
+      const [b] = buildItems(t300);
+      expect(tags(a, "g:item_group_id")).toEqual(["salvator"]);
+      expect(tags(b, "g:item_group_id")).toEqual(["salvator"]);
+      expect(tag(a, "g:size")).toBe("200 cm");
+      expect(tag(b, "g:size")).toBe("300 cm");
+      expect(tag(a, "g:color")).toBe("Walnut");
+      expect(tag(b, "g:link")).toBe(`${businessInfo.siteUrl}/eettafels/salvator-walnut-300`);
+    });
+
+    it("zonder model geen item_group_id en geen g:size", () => {
+      const [item] = buildItems(makeProduct({ category: "eettafels", colorGroup: null, sizeName: null }));
+      expect(tag(item, "g:item_group_id")).toBeNull();
+      expect(tag(item, "g:size")).toBeNull();
+    });
+  });
 });

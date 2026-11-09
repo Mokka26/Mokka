@@ -23,8 +23,9 @@ interface Product {
   colorGroup?: string | null;
   colorName?: string | null;
   colorHex?: string | null;
+  sizeName?: string | null;
   specs?: string | null;
-  /** Al server-side samengevoegde kleurvarianten (app/products/page.tsx). */
+  /** Al server-side samengevoegde varianten (app/products/page.tsx). */
   variants?: ColorVariant[];
 }
 

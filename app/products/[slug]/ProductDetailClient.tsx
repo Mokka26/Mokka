@@ -14,7 +14,8 @@ import { Price, formatPrice } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { ProductGallery } from "@/components/product/ProductGallery";
-import { ColorSwatches, type ColorVariant } from "@/components/product/ColorSwatches";
+import { VariantPicker } from "@/components/product/VariantPicker";
+import type { ModelVariant } from "@/lib/variants";
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
 import type { CheckoutMethod } from "@/lib/mollie";
 import { ProductDescription } from "@/components/product/ProductDescription";
@@ -56,12 +57,14 @@ export interface Product {
   colorGroup?: string | null;
   colorName?: string | null;
   colorHex?: string | null;
+  sizeName?: string | null;
 }
 
 interface Props {
   product: Product;
   relatedProducts: ProductCardProduct[];
-  colorVariants: ColorVariant[];
+  /** Alle varianten (maten + kleuren) van hetzelfde model, incl. dit product. */
+  colorVariants: ModelVariant[];
   /** "Past goed bij" — aanvullende producten uit andere categorieën (optioneel). */
   complementaryProducts?: ProductCardProduct[];
   /** Live Mollie-betaalmethoden voor het koopblok (zelfde chips als de footer). */
@@ -248,9 +251,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </dl>
             )}
 
+            {/* Maat- en kleurkeuze binnen het model (elke optie = eigen product/URL). */}
+            <VariantPicker currentSlug={product.slug} category={product.category} variants={colorVariants} />
+
             {sizeVariants.length > 0 && (
               <div className="mb-6" role="group" aria-labelledby="pdp-size-label">
-                <p id="pdp-size-label" className="text-[14px] text-stone mb-3">
+                <p id="pdp-size-label" className="text-[15px] text-stone mb-3">
                   Kies je maat{activeVariant ? ":" : ""}{" "}
                   {activeVariant && <span className="text-ink font-medium">{activeVariant.label}</span>}
                 </p>
@@ -275,7 +281,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
             {isNkOptional && (
               <div className="mb-6" role="group" aria-labelledby="pdp-nk-label">
-                <p id="pdp-nk-label" className="text-[14px] text-stone mb-3">Nachtkast erbij?</p>
+                <p id="pdp-nk-label" className="text-[15px] text-stone mb-3">Nachtkast erbij?</p>
                 <div className="flex flex-wrap gap-2">
                   {[0, 1, 2].map((n) => {
                     const active = n === nachtkast;
@@ -297,7 +303,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
             {isVbOptional && (
               <div className="mb-6" role="group" aria-labelledby="pdp-vb-label">
-                <p id="pdp-vb-label" className="text-[14px] text-stone mb-3">Voetbank erbij?</p>
+                <p id="pdp-vb-label" className="text-[15px] text-stone mb-3">Voetbank erbij?</p>
                 <div className="flex flex-wrap gap-2">
                   {[0, 1].map((n) => {
                     const active = n === voetbank;
@@ -322,13 +328,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 Totaal met opties: <span className="font-medium tabular-nums">{formatPrice(lineUnitPrice)}</span>
               </p>
             )}
-
-            <ColorSwatches
-              currentSlug={product.slug}
-              currentColorName={product.colorName ?? null}
-              category={product.category}
-              variants={colorVariants}
-            />
 
             <div className="mb-5">
               <StockBadge stock={stock} showLow size="md" />
@@ -401,7 +400,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
               <div className="mb-10 lg:mb-14">
                 <h2 id="pdp-complementary" className="font-serif text-3xl lg:text-4xl text-ink">
-                  Past goed bij de {product.name}
+                  Past er goed bij
                 </h2>
               </div>
               <ul className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16 list-none">
@@ -446,7 +445,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
           <div className="flex items-center gap-4">
             <div className="shrink-0 min-w-0">
               <Price price={lineUnitPrice} listPrice={hasOptions ? null : activeListPrice} vat size="sm" inline showSavings={false} />
-              {activeVariant && <p className="text-[13px] text-stone leading-none mt-1">Maat {activeVariant.label}</p>}
+              {(activeVariant?.label ?? product.sizeName) && (
+                <p className="text-[14px] text-stone leading-none mt-1">Maat {activeVariant?.label ?? product.sizeName}</p>
+              )}
             </div>
             {priceOnRequest ? (
               <Link href={requestUrl} className="btn-primary flex-1 !px-4 text-center">

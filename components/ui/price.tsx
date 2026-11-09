@@ -7,7 +7,7 @@ import { shippingInfo } from "@/lib/shipping-info";
  *
  * - NL-notatie via Intl.NumberFormat('nl-NL') → "€ 2.999" / "€ 1.499,50"
  * - Hele bedragen tonen geen decimalen, anders twee (nl-komma)
- * - `vat` toont het "incl. btw"-label (verplicht op kaart + PDP), ≥13px
+ * - `vat` toont het "incl. btw"-label (verplicht op kaart + PDP), 14px
  * - `listPrice` > `price` → "Adviesprijs € X" doorgestreept + besparing in %
  *   (`showSavings={false}` laat het percentage weg, bv. op de kaart)
  * - `from` → "vanaf" (producten met maatvarianten)
@@ -69,7 +69,7 @@ interface PriceProps {
   size?: PriceSize;
   /** Extra classes op de prijs zelf (kleur/font). Default: serif, ink. */
   className?: string;
-  /** Classes op het btw-label; default ≥13px text-stone. */
+  /** Classes op het btw-label; default 14px text-stone. */
   vatClassName?: string;
   /** Richting van de stapel: kolom (default) of op één regel. */
   inline?: boolean;
@@ -104,7 +104,7 @@ export function Price({
   const pct = discountPercent(amount, listPrice);
   const hasDiscount = pct > 0 && listPrice != null;
   const vatLabel = (
-    <span className={vatClassName || "text-[13px] leading-snug text-stone"}>{shippingInfo.vatLabelShort}</span>
+    <span className={vatClassName || "text-[14px] leading-snug text-stone"}>{shippingInfo.vatLabelShort}</span>
   );
 
   return (
@@ -120,7 +120,7 @@ export function Price({
         </span>
       )}
       <span className="inline-flex items-baseline gap-2">
-        {from && <span className="text-[13px] text-stone">vanaf</span>}
+        {from && <span className="text-[14px] text-stone">vanaf</span>}
         <span className={priceClass}>{formatPrice(amount)}</span>
         {inline && vat && vatLabel}
       </span>

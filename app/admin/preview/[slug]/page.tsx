@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
 import { productUrl } from "@/lib/categories";
+import { MODEL_VARIANT_SELECT } from "@/lib/variants";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -47,8 +48,7 @@ export default async function AdminProductPreview({ params }: Props) {
     product.colorGroup
       ? prisma.product.findMany({
           where: { colorGroup: product.colorGroup, deletedAt: null },
-          select: { id: true, slug: true, colorName: true, colorHex: true },
-          orderBy: { name: "asc" },
+          select: MODEL_VARIANT_SELECT,
         })
       : Promise.resolve([]),
   ]);

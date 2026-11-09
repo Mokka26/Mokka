@@ -95,7 +95,7 @@ export async function updateProductInline(input: InlineUpdateInput): Promise<Inl
 
   const product = await prisma.product.findUnique({
     where: { id, deletedAt: null },
-    select: { id: true, name: true, slug: true, category: true, colorGroup: true, price: true, images: true, sizeVariants: true, hidden: true },
+    select: { id: true, name: true, slug: true, category: true, colorGroup: true, sizeName: true, price: true, images: true, sizeVariants: true, hidden: true },
   });
   if (!product) return { ok: false, error: "Product niet gevonden" };
 
@@ -119,10 +119,11 @@ export async function updateProductInline(input: InlineUpdateInput): Promise<Inl
   try {
     await prisma.$transaction(async (tx) => {
       await tx.product.update({ where: { id }, data });
-      // Prijswijziging werkt door op alle (niet-verwijderde) kleuren van hetzelfde model.
+      // Prijswijziging werkt door op de andere kleuren van hetzelfde model in
+      // dezelfde maat (andere maten hebben een eigen prijs).
       if (data.price !== undefined && product.colorGroup) {
         await tx.product.updateMany({
-          where: { colorGroup: product.colorGroup, deletedAt: null, id: { not: id } },
+          where: { colorGroup: product.colorGroup, sizeName: product.sizeName, deletedAt: null, id: { not: id } },
           data: { price: data.price },
         });
       }
@@ -389,6 +390,7 @@ const fullUpdateSchema = z.object({
   colorGroup: z.string().max(80).nullable(),
   colorName: z.string().max(40).nullable(),
   colorHex: hexSchema,
+  sizeName: z.string().max(40).nullable(),
   source: z.string().max(60).nullable(),
 });
 
@@ -453,6 +455,7 @@ export async function updateProductFull(_prev: FullUpdateState, formData: FormDa
     colorGroup: trimOrNull(formData.get("colorGroup")),
     colorName: trimOrNull(formData.get("colorName")),
     colorHex: trimOrNull(formData.get("colorHex")),
+    sizeName: trimOrNull(formData.get("sizeName")),
     source: trimOrNull(formData.get("source")),
   });
 
@@ -512,12 +515,12 @@ export async function updateProductFull(_prev: FullUpdateState, formData: FormDa
       });
 
       // Prijs + adviesprijs werken door op de andere kleuren van hetzelfde
-      // model (zelfde colorGroup, niet verwijderd). Bewust NIET gedeeld:
-      // sizeVariants, nachtkast/voetbank-opties, voorraad, foto's — die zijn
-      // per kleur/configuratie en zouden elkaar anders overschrijven.
+      // model in dezelfde maat (zelfde colorGroup + sizeName, niet verwijderd).
+      // Bewust NIET gedeeld: andere maten (eigen prijs), sizeVariants,
+      // nachtkast/voetbank-opties, voorraad, foto's.
       if (row.colorGroup) {
         await tx.product.updateMany({
-          where: { colorGroup: row.colorGroup, deletedAt: null, id: { not: id } },
+          where: { colorGroup: row.colorGroup, sizeName: rest.sizeName, deletedAt: null, id: { not: id } },
           data: { price: rest.price, listPrice: rest.listPrice },
         });
       }
@@ -676,6 +679,7 @@ const createSchema = z.object({
   colorGroup: z.string().max(80).nullable().default(null),
   colorName: z.string().max(40).nullable().default(null),
   colorHex: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable().default(null),
+  sizeName: z.string().max(40).nullable().default(null),
   source: z.string().max(60).nullable().default(null),
 });
 
@@ -731,6 +735,7 @@ export async function createProduct(_prev: CreateProductState, formData: FormDat
     colorGroup: trimOrNull(formData.get("colorGroup")),
     colorName: trimOrNull(formData.get("colorName")),
     colorHex: trimOrNull(formData.get("colorHex")),
+    sizeName: trimOrNull(formData.get("sizeName")),
     source: trimOrNull(formData.get("source")),
   });
 
