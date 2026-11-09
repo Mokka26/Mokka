@@ -7,7 +7,7 @@ import { Price } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { deliveryLine } from "@/components/product/deliveryTime";
 import { DIMENSION_KEYS, findSpec, isNewProduct, parseSizeVariants, parseSpecs } from "@/components/product/specs";
-import { distinctColors, distinctSizes, formatSizeList } from "@/lib/variants";
+import { distinctColors, distinctSizes, formatSizeList, swatchBackground } from "@/lib/variants";
 
 /**
  * Productkaart — server-vriendelijk (geen hooks, geen event handlers; hover
@@ -251,7 +251,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
                         key={v.slug}
                         title={v.colorName ?? undefined}
                         className={`inline-block w-4 h-4 rounded-full border border-line ${v.colorHex ? "" : "bg-mist"}`}
-                        style={v.colorHex ? { backgroundColor: v.colorHex } : undefined}
+                        style={swatchBackground(v.colorHex)}
                       >
                         {v.colorName && <span className="sr-only">{v.colorName}</span>}
                       </span>

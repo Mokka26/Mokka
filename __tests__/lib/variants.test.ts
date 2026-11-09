@@ -6,6 +6,7 @@ import {
   formatSizeList,
   inStockFirst,
   onePerModel,
+  swatchBackground,
   type ModelVariant,
 } from "@/lib/variants";
 
@@ -92,6 +93,22 @@ describe("maten en kleuren", () => {
     expect(formatSizeList(["180 cm", "200 cm", "220 cm"])).toBe("180, 200 en 220 cm");
     expect(formatSizeList(["Ø 120 cm", "Ø 130 cm"])).toBe("Ø 120 en Ø 130 cm");
     expect(formatSizeList(["160 × 90", "180 × 100"])).toBe("160 × 90 en 180 × 100");
+  });
+});
+
+describe("swatchBackground", () => {
+  it("geeft één kleur of een diagonaal gedeelde stof/onderstel-kleur", () => {
+    expect(swatchBackground("#D8C7A8")).toEqual({ background: "#D8C7A8" });
+    expect(swatchBackground("#F5F5F0/#1C1C1C")).toEqual({
+      background: "linear-gradient(135deg, #F5F5F0 0 50%, #1C1C1C 50% 100%)",
+    });
+  });
+
+  it("laat geen ongeldige CSS uit de database door", () => {
+    expect(swatchBackground(null)).toBeUndefined();
+    expect(swatchBackground("red")).toBeUndefined();
+    expect(swatchBackground("#123456;background:url(x)")).toBeUndefined();
+    expect(swatchBackground("#123456/url(x)")).toEqual({ background: "#123456" });
   });
 });
 

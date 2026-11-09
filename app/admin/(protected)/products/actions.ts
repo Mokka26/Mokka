@@ -365,7 +365,9 @@ function trimOrNull(v: FormDataEntryValue | null): string | null {
   return t.length > 0 ? t : null;
 }
 
-const hexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable();
+// "#RRGGBB" of tweekleurig "#RRGGBB/#RRGGBB" (stof / onderstel).
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}(\/#[0-9a-fA-F]{6})?$/;
+const hexSchema = z.string().regex(HEX_COLOR_RE, "Bijv. #8B6F47 of #D8C7A8/#1C1C1C").nullable();
 
 const fullUpdateSchema = z.object({
   id: z.string().min(1),
@@ -678,7 +680,7 @@ const createSchema = z.object({
   deliveryTime: z.string().max(80).nullable().default(null),
   colorGroup: z.string().max(80).nullable().default(null),
   colorName: z.string().max(40).nullable().default(null),
-  colorHex: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Bijv. #8B6F47").nullable().default(null),
+  colorHex: z.string().regex(HEX_COLOR_RE, "Bijv. #8B6F47 of #D8C7A8/#1C1C1C").nullable().default(null),
   sizeName: z.string().max(40).nullable().default(null),
   source: z.string().max(60).nullable().default(null),
 });

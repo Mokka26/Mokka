@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { productUrl } from "@/lib/categories";
-import { buildVariantOptions, type ModelVariant } from "@/lib/variants";
+import { buildVariantOptions, swatchBackground, type ModelVariant } from "@/lib/variants";
 import { formatPrice } from "@/components/ui/price";
 
 interface Props {
@@ -90,7 +90,7 @@ export function VariantPicker({ currentSlug, category, variants }: Props) {
                           ? "border-ink ring-2 ring-ink ring-offset-2 ring-offset-paper"
                           : "border-line ring-0 group-hover/swatch:ring-2 group-hover/swatch:ring-mist group-hover/swatch:ring-offset-2 group-hover/swatch:ring-offset-paper"
                       }`}
-                      style={c.colorHex ? { backgroundColor: c.colorHex } : undefined}
+                      style={swatchBackground(c.colorHex)}
                     />
                   </Link>
                 </li>

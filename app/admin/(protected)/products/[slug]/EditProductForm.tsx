@@ -648,14 +648,17 @@ function PrefixedInput({ prefix, children }: { prefix: string; children: React.R
 
 function ColorHexInput({ id, defaultValue, invalid }: { id: string; defaultValue: string; invalid: boolean }) {
   const [val, setVal] = useState(defaultValue);
-  const isValid = /^#[0-9a-fA-F]{6}$/.test(val);
+  // "#RRGGBB" of tweekleurig "#RRGGBB/#RRGGBB" (stof / onderstel).
+  const isValid = /^#[0-9a-fA-F]{6}(\/#[0-9a-fA-F]{6})?$/.test(val);
+  const [first, second] = val.split("/");
 
   return (
     <div className="flex items-center gap-2">
       <input
         type="color"
-        value={isValid ? val : "#8B6F47"}
-        onChange={(e) => setVal(e.target.value.toUpperCase())}
+        value={isValid ? first : "#8B6F47"}
+        // De kiezer past de eerste kleur aan; een tweede (onderstel) blijft staan.
+        onChange={(e) => setVal(second ? `${e.target.value.toUpperCase()}/${second}` : e.target.value.toUpperCase())}
         className="w-12 h-11 border border-line cursor-pointer p-0 shrink-0"
         aria-label="Kleur kiezen"
       />
@@ -666,7 +669,7 @@ function ColorHexInput({ id, defaultValue, invalid }: { id: string; defaultValue
         value={val}
         onChange={(e) => setVal(e.target.value)}
         placeholder="#8B6F47"
-        maxLength={7}
+        maxLength={15}
         aria-invalid={invalid || (val !== "" && !isValid)}
         className={`${inputCls} flex-1 bg-bone font-mono`}
       />

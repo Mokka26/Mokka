@@ -3,6 +3,7 @@
 //
 //   npx tsx --env-file=.env.local scripts/apply-variant-groups.ts <proposal.json>          # dry-run
 //   npx tsx --env-file=.env.local scripts/apply-variant-groups.ts <proposal.json> --apply  # schrijven
+//   … --swatches=<swatches-final.json>   kleurbolletjes uit de productfoto's (aanbevolen)
 //
 // Wijzigt GEEN prijs, voorraad, foto's, naam, slug of zichtbaarheid. Vereist de
 // migratie 20261106120000_product_size_name (kolom "sizeName").
@@ -12,6 +13,13 @@ import { readFileSync } from "node:fs";
 const db = new PrismaClient();
 const FILE = process.argv[2];
 const APPLY = process.argv.includes("--apply");
+// Optioneel: --swatches=<swatches-final.json> met fotokleuren per product-id
+// (uit swatch-colors-from-photos.ts + handmatige overrides). Gaat vóór het kleurwoord.
+const SWATCH_ARG = process.argv.find((a) => a.startsWith("--swatches="));
+const SWATCHES: Record<string, string> = SWATCH_ARG
+  ? (JSON.parse(readFileSync(SWATCH_ARG.slice("--swatches=".length), "utf8")) as Record<string, string>)
+  : {};
+const SWATCH_RE = /^#[0-9a-fA-F]{6}(\/#[0-9a-fA-F]{6})?$/;
 
 interface ProposalItem {
   id: string;
@@ -75,7 +83,7 @@ function hexFor(colorName: string | null): string | null {
       colorGroup: i.groupId,
       sizeName: i.sizeName,
       colorName: i.colorName,
-      colorHex: hexFor(i.colorName) ?? cur.colorHex,
+      colorHex: (SWATCH_RE.test(SWATCHES[i.id] ?? "") ? SWATCHES[i.id] : null) ?? hexFor(i.colorName) ?? cur.colorHex,
     };
     const changed =
       cur.colorGroup !== data.colorGroup ||

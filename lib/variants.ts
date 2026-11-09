@@ -135,6 +135,22 @@ export function buildVariantOptions(
   return { sizes, colors };
 }
 
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * Achtergrond van een kleurstaal. `colorHex` is "#RRGGBB" (één kleur) of
+ * "#RRGGBB/#RRGGBB" (stof / onderstel: tweekleurig, diagonaal gedeeld) —
+ * dat laatste bij modellen waar alleen het onderstel verschilt.
+ * Ongeldige waarden → undefined (geen ongefilterde CSS uit de database).
+ */
+export function swatchBackground(colorHex: string | null | undefined): { background: string } | undefined {
+  if (!colorHex) return undefined;
+  const [a, b] = colorHex.split("/").map((s) => s.trim());
+  if (!HEX_RE.test(a)) return undefined;
+  if (!b || !HEX_RE.test(b)) return { background: a };
+  return { background: `linear-gradient(135deg, ${a} 0 50%, ${b} 50% 100%)` };
+}
+
 /** "180 en 220 cm" / "Ø 120, Ø 130 en Ø 150 cm": korte maatlijst voor de kaart. */
 export function formatSizeList(labels: ReadonlyArray<string>): string {
   if (labels.length === 0) return "";
