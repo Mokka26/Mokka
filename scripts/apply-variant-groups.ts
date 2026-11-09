@@ -40,6 +40,10 @@ const HEX: Record<string, string> = {
   pecan: "#8B5E3C", chestnut: "#6E4630", espresso: "#3B2A20", karamel: "#A86B3C", roest: "#9A4E2E",
   oranje: "#C9773B", pandora: "#8A6A3F", goudbruin: "#8A6A3F", malta: "#9B8466", basalt: "#4D4B48",
   flintstone: "#8F8A82", crimson: "#8E3B36", sonoma: "#C9A876", ivoor: "#EFE9DA",
+  mango: "#8A5A3B", amandel: "#D9C2A0", toffee: "#8C5A35", bisque: "#E4CDB0", peper: "#5C5853",
+  burgundy: "#5B2A2E", blossom: "#D9B8B0", norris: "#7A5C43", amber: "#B5762E", coffee: "#4B3427",
+  desert: "#C8A982", geel: "#D9B648", turtle: "#6E6650", honey: "#C08A3E", brique: "#A3533A",
+  salmon: "#E09A83", hazel: "#8E6B48", liver: "#5E3A2C", smoke: "#7E7B76", gebroken: "#EFEDE6",
   // Materiaalwoorden: alleen als er geen echte kleur in de naam staat.
   steen: "#B5B0A8", marmer: "#E6E3DE", cement: "#A8A39B", decor: "#B0976E",
 };
