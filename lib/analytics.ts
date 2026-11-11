@@ -167,6 +167,36 @@ function sendEvent(name: string, params: Record<string, unknown>): void {
   gtagSafe("event", name, params);
 }
 
+/** Productlijst getoond (categoriepagina). `listId` = categorie-slug. */
+export function trackViewItemList(listId: string, listName: string, products: ReadonlyArray<AnalyticsProduct>, offset = 0): void {
+  if (products.length === 0) return;
+  const items = products.map((p, i) => ({ ...productToItem(p), index: offset + i, item_list_id: listId, item_list_name: listName }));
+  sendEvent("view_item_list", { item_list_id: listId, item_list_name: listName, items });
+}
+
+/** Product uit een lijst aangeklikt. */
+export function trackSelectItem(listId: string, listName: string, product: AnalyticsProduct, index: number): void {
+  const items = [{ ...productToItem(product), index, item_list_id: listId, item_list_name: listName }];
+  sendEvent("select_item", { item_list_id: listId, item_list_name: listName, items });
+}
+
+/** Regel uit de winkelwagen gehaald. */
+export function trackRemoveFromCart(line: AnalyticsCartLine): void {
+  const items = cartLinesToItems([line]);
+  sendEvent("remove_from_cart", { currency: CURRENCY, value: itemsValue(items), items });
+}
+
+/** Zoekopdracht via de zoekbalk (alleen de term, max. 100 tekens). */
+export function trackSearch(term: string): void {
+  const search_term = term.trim().slice(0, 100);
+  if (search_term) sendEvent("search", { search_term });
+}
+
+/** Lead: contactformulier, nieuwsbrief-aanmelding of klik op het telefoonnummer. Geen persoonsgegevens. */
+export function trackGenerateLead(source: "contact" | "newsletter" | "phone"): void {
+  sendEvent("generate_lead", { lead_source: source });
+}
+
 /** PDP bekeken. */
 export function trackViewItem(product: AnalyticsProduct, variant?: string): void {
   const items = [productToItem(product, 1, variant)];

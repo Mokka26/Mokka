@@ -12,6 +12,7 @@ import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
 import ToastProvider from "@/components/ToastProvider";
 import CookieBanner from "@/components/CookieBanner";
+import { PhoneLeadTracking } from "@/components/PhoneLeadTracking";
 import { Analytics } from "@/components/Analytics";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -114,6 +115,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </PaymentMethodsProvider>
           </CartProvider>
         <SpeedInsights />
+        <PhoneLeadTracking />
         {/* Google-tag (GA4 + Ads) met Consent Mode v2 — zie components/Analytics.tsx. */}
         <Analytics />
       </body>

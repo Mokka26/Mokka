@@ -9,21 +9,34 @@ interface Props {
   stock?: number | null;
   /** Toon de exacte rest bij ≤3 stuks (alleen op de PDP). */
   showLow?: boolean;
-  /** `sm` = kaart (13px), `md` = PDP (16px). */
+  /** `sm` = kaart (14px), `md` = PDP (16px). */
   size?: "sm" | "md";
+  /** Levertijd van het product: in weken = "Op bestelling" (zie /bezorging). */
+  deliveryTime?: string | null;
   className?: string;
 }
 
-export function stockLabel(stock: number | null | undefined, showLow = false): string {
+/**
+ * Levertijd in weken = wordt voor je besteld/gemaakt, niet uit eigen magazijn.
+ * /bezorging belooft drie statussen: op voorraad (dagen), op bestelling en
+ * maatwerk (weken). "Op voorraad" naast "4 tot 8 weken" wekt valse verwachting.
+ */
+export function isOnOrder(deliveryTime: string | null | undefined): boolean {
+  return /\bweken?\b/i.test(deliveryTime ?? "");
+}
+
+export function stockLabel(stock: number | null | undefined, showLow = false, deliveryTime?: string | null): string {
   const s = stock ?? 1;
   if (s <= 0) return "Uitverkocht";
+  if (isOnOrder(deliveryTime)) return "Op bestelling";
   if (showLow && s <= 3) return `Nog ${s} op voorraad`;
   return "Op voorraad";
 }
 
-export function StockBadge({ stock, showLow = false, size = "sm", className = "" }: Props) {
+export function StockBadge({ stock, showLow = false, size = "sm", deliveryTime, className = "" }: Props) {
   const inStock = (stock ?? 1) > 0;
-  const label = stockLabel(stock, showLow);
+  const onOrder = inStock && isOnOrder(deliveryTime);
+  const label = stockLabel(stock, showLow, deliveryTime);
   return (
     <span
       className={`inline-flex items-center gap-2 ${
@@ -32,7 +45,7 @@ export function StockBadge({ stock, showLow = false, size = "sm", className = ""
     >
       <span
         aria-hidden="true"
-        className={`w-2 h-2 rounded-full shrink-0 ${inStock ? "bg-success" : "bg-stone/50"}`}
+        className={`w-2 h-2 rounded-full shrink-0 ${onOrder ? "bg-warning" : inStock ? "bg-success" : "bg-stone/50"}`}
       />
       <span className="sr-only">Voorraad: </span>
       {label}

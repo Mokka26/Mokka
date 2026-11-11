@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { subscribeNewsletter } from "@/app/newsletter/actions";
+import { trackGenerateLead } from "@/lib/analytics";
 
 // Het enige interactieve deel van de footer (state + server action); de rest
 // van components/Footer.tsx is een server component.
@@ -23,6 +24,7 @@ export function FooterNewsletterForm() {
     const elapsedMs = mountedAt.current === null ? undefined : Math.round(performance.now() - mountedAt.current);
     const r = await subscribeNewsletter({ email, website, elapsedMs });
     if (r.ok) {
+      trackGenerateLead("newsletter");
       setStatus("done");
       setMsg("Bedankt! Check je mail om je aanmelding te bevestigen.");
       setEmail("");

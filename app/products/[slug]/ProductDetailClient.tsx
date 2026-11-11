@@ -328,7 +328,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             )}
 
             <div className="mb-5">
-              <StockBadge stock={stock} showLow size="md" />
+              <StockBadge stock={stock} showLow size="md" deliveryTime={product.deliveryTime ?? null} />
             </div>
 
             {/* Aantal + koopknop, of prijsaanvraag */}

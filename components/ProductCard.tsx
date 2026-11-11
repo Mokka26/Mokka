@@ -273,7 +273,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
           <div className="flex flex-col gap-1.5 pt-2.5 sm:pt-3 border-t border-line mt-auto min-w-0">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <Price price={displayPrice} listPrice={listPrice} vat from={hasSizeVariants} size="sm" showSavings={false} />
-              <StockBadge stock={product.stock} className="sm:pt-1" />
+              <StockBadge stock={product.stock} deliveryTime={product.deliveryTime} className="sm:pt-1" />
             </div>
             {delivery && <p className="text-[14px] text-stone leading-snug">{delivery}</p>}
           </div>

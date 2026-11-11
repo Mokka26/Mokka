@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { subscribeNewsletter } from "@/app/newsletter/actions";
+import { trackGenerateLead } from "@/lib/analytics";
 import { businessInfo } from "@/lib/business-info";
 
 export default function DarkNewsletterForm() {
@@ -24,7 +25,7 @@ export default function DarkNewsletterForm() {
     setStatus("sending");
     const elapsedMs = mountedAt.current === null ? undefined : Math.round(performance.now() - mountedAt.current);
     const r = await subscribeNewsletter({ email, website, elapsedMs });
-    if (r.ok) { setStatus("done"); setMsg("Check je mail om je aanmelding te bevestigen."); setEmail(""); }
+    if (r.ok) { trackGenerateLead("newsletter"); setStatus("done"); setMsg("Check je mail om je aanmelding te bevestigen."); setEmail(""); }
     else { setStatus("error"); setMsg(r.error ?? "Er ging iets mis."); }
   }
 

@@ -21,6 +21,7 @@ import { useSyncExternalStore, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
 import { getCartSnapshot, type CartSnapshotLine } from "@/app/cart/actions";
 import { formatPrice } from "@/components/ui/price";
+import { trackRemoveFromCart } from "@/lib/analytics";
 
 export interface CartProduct {
   id: string;
@@ -128,6 +129,7 @@ export function removeFromCart(lineKey: string): { item: CartItemType; index: nu
   if (index === -1) return null;
   const item = items[index];
   persist(items.filter((i) => i.lineKey !== lineKey));
+  trackRemoveFromCart(item);
   return { item, index };
 }
 

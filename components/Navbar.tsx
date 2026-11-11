@@ -9,6 +9,7 @@ import { Search, ShoppingBag, Menu, ChevronDown, Phone } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartDrawer, { CART_DRAWER_ID } from "./CartDrawer";
 import { OPEN_CART_EVENT } from "@/lib/events";
+import { trackSearch } from "@/lib/analytics";
 import { Dialog, Drawer } from "@/components/ui/Dialog";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 
@@ -207,6 +208,7 @@ export default function Navbar() {
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
+    trackSearch(q);
     router.push(`/products?q=${encodeURIComponent(q)}`);
     setSearchOpen(false);
     setSearchQuery("");

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { submitContact } from "./actions";
+import { trackGenerateLead } from "@/lib/analytics";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 
 type FormState = { name: string; email: string; phone: string; subject: string; message: string };
@@ -149,6 +150,7 @@ export default function ContactForm() {
         ...(elapsedMs === undefined ? {} : { elapsedMs }),
       });
       if (r.ok) {
+        trackGenerateLead("contact");
         setSubmitted(true);
         return;
       }

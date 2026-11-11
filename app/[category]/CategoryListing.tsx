@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import ProductCard, { type ProductCardVariant } from "@/components/ProductCard";
 import { useFooterInView } from "@/components/product/useFooterInView";
-import { type Category } from "@/lib/categories";
+import { productUrl, type Category } from "@/lib/categories";
+import { trackSelectItem, trackViewItemList } from "@/lib/analytics";
 import {
   activeFilterCount,
   emptyFilters,
@@ -122,6 +123,22 @@ export default function CategoryListing({
   };
   const clearFilters = () => applyFilters(emptyFilters(filters.sort));
 
+  // GA4: zichtbare lijst (per pagina/filtercombinatie) en klik op een kaart.
+  const listOffset = (page - 1) * pageSize;
+  const listKey = products.map((p) => p.id).join(",");
+  useEffect(() => {
+    trackViewItemList(category.slug, category.label, products, listOffset);
+    // listKey vat de producten samen; products zelf is per render een nieuwe array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category.slug, category.label, listKey, listOffset]);
+  const onGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const link = e.target instanceof Element ? e.target.closest("a[href]") : null;
+    const href = link?.getAttribute("href");
+    if (!href) return;
+    const index = products.findIndex((p) => href.startsWith(productUrl(p)));
+    if (index >= 0) trackSelectItem(category.slug, category.label, products[index], listOffset + index);
+  };
+
   const activeCount = activeFilterCount(filters);
   const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, totalCount);
@@ -185,7 +202,7 @@ export default function CategoryListing({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+            <div onClick={onGridClick} className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
               {products.map((p, i) => (
                 <ProductCard
                   key={p.id}
