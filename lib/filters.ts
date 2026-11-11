@@ -50,7 +50,7 @@ interface Group {
 const MATERIAL_GROUPS: ReadonlyArray<Group & { primaryOnly?: boolean }> = [
   { value: "hout", label: "Hout", words: ["hout", "eik", "eiken", "eikenhout", "walnoot", "notenhout", "fineer", "teak", "teakhout", "acacia", "essen", "beuk", "sheesham", "oak", "wood"] },
   { value: "mangohout", label: "Mangohout", words: ["mango", "mangohout"] },
-  { value: "steen-look", label: "Steen-look", words: ["decor", "faux", "look", "imitatie"] },
+  { value: "steen-look", label: "Steen-look", words: ["decor", "faux", "look", "imitatie", "marmerlook", "steenlook", "betonlook"] },
   { value: "marmer", label: "Marmer", words: ["marmer", "marble"] },
   { value: "keramiek-sintersteen", label: "Keramiek / sintersteen", words: ["keramiek", "keramisch", "sintersteen", "ceramic"] },
   { value: "steen", label: "Steen", words: ["steen", "natuursteen", "travertin", "travertijn", "terrazzo"] },

@@ -39,6 +39,8 @@ describe("materialGroups", () => {
     expect(materialGroups("Hout (fineer)")).toEqual(["hout"]);
     expect(materialGroups("Bouclé-stof")).toEqual(["boucle"]);
     expect(materialGroups("PU")).toEqual(["leer"]);
+    expect(materialGroups("Kunstleer (PU)")).toEqual(["leer"]);
+    expect(materialGroups("Marmerlook")).toEqual(["steen-look"]);
   });
 
   it("telt metaal alleen als hoofdmateriaal", () => {
