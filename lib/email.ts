@@ -3,6 +3,7 @@ import { businessInfo, getFullAddress } from "@/lib/business-info";
 import { NEXT_STEP_AFTER_PAYMENT, shippingInfo } from "@/lib/shipping-info";
 import { captureError } from "@/lib/sentry";
 import { formatCents, toCents } from "@/lib/money";
+import { deliverySummary } from "@/lib/delivery";
 
 /**
  * E-mail via SMTP (server-only). Afzender en interne ontvanger zijn
@@ -172,6 +173,10 @@ export type OrderMailData = {
   total: number;
   shipping: number;
   paymentMethod?: string | null;
+  deliveryFloor?: string | null;
+  deliveryElevator?: boolean | null;
+  deliveryNotes?: string | null;
+  assemblyRequested?: boolean | null;
   items: { productName: string; variantLabel: string | null; quantity: number; price: number }[];
 };
 
@@ -258,6 +263,7 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     ``,
     `Bezorgadres:`,
     addressText(order),
+    ...(deliverySummary(order).length ? [``, `Bezorging:`, ...deliverySummary(order).map((l) => `  ${l}`)] : []),
     ``,
     `Hoe nu verder?`,
     NEXT_STEP_AFTER_PAYMENT,
@@ -285,6 +291,9 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     p(`We hebben je betaling ontvangen. Je bestelnummer is <strong style="color:#14110D;">${escapeHtml(order.orderNumber)}</strong> — handig om bij de hand te hebben als je ons belt of mailt.`),
     orderLinesHtml(order),
     p(`<strong style="color:#14110D;">Bezorgadres</strong><br>${addressHtml(order)}`),
+    ...(deliverySummary(order).length
+      ? [p(`<strong style="color:#14110D;">Bezorging</strong><br>${deliverySummary(order).map(escapeHtml).join("<br>")}`)]
+      : []),
     p(`<strong style="color:#14110D;">Hoe nu verder?</strong><br>${escapeHtml(NEXT_STEP_AFTER_PAYMENT)}`),
     p(`Vragen? Mail naar <a href="mailto:${businessInfo.contact.email}" style="color:#14110D;">${escapeHtml(businessInfo.contact.email)}</a>${escapeHtml(phoneLine)}.`),
     p(`Hartelijke groet,<br>${escapeHtml(businessInfo.name)}`),
@@ -312,6 +321,7 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
       `Totaal: ${eur(order.total)}`,
       `Adres:`,
       addressText(order),
+      ...(deliverySummary(order).length ? [``, `Bezorging:`, ...deliverySummary(order).map((l) => `  ${l}`)] : []),
     ].join("\n"),
     replyTo: order.email,
   });

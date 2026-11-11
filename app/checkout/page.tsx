@@ -16,6 +16,7 @@ import { getCookieConsent } from "@/components/CookieBanner";
 import { createCheckout, getPaymentMethods } from "./actions";
 import { MobileOrderSummary, OrderSummaryLines } from "./OrderSummary";
 import type { CheckoutMethod } from "@/lib/mollie";
+import { DELIVERY_FLOORS, type DeliveryFloor } from "@/lib/delivery";
 import { trackAddPaymentInfo, trackAddShippingInfo, trackBeginCheckout } from "@/lib/analytics";
 
 type Country = "NL" | "BE";
@@ -109,6 +110,13 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormFields>({
     firstName: "", lastName: "", email: "", phone: "", address: "", houseNumber: "", zipCode: "", city: "", country: "NL",
+  });
+  // Bezorgvragen (optioneel): helpen de bezorgers bij grote meubels.
+  const [delivery, setDelivery] = useState<{ floor: DeliveryFloor | ""; elevator: "" | "ja" | "nee"; notes: string; assembly: boolean }>({
+    floor: "",
+    elevator: "",
+    notes: "",
+    assembly: false,
   });
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
@@ -227,6 +235,12 @@ export default function CheckoutPage() {
           firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone,
           address: form.address, houseNumber: form.houseNumber, city: form.city, zipCode: form.zipCode,
           country: form.country,
+        },
+        delivery: {
+          ...(delivery.floor ? { floor: delivery.floor } : {}),
+          ...(delivery.elevator ? { elevator: delivery.elevator === "ja" } : {}),
+          ...(delivery.notes.trim() ? { notes: delivery.notes.trim().slice(0, 500) } : {}),
+          assembly: delivery.assembly,
         },
         expectedTotal: totalPrice,
         ...(selectedMethod ? { method: selectedMethod } : {}),
@@ -436,6 +450,71 @@ export default function CheckoutPage() {
                   placeholder: form.country === "BE" ? "1000" : "1234 AB",
                 })}
                 {renderField({ name: "city", autoComplete: "address-level2" })}
+              </div>
+
+              {/* Bezorgvragen — optioneel. Grote meubels: verdieping en lift bepalen
+                  hoe we bezorgen; montage zonder vaste prijs (we bellen vooraf). */}
+              <div className="mt-8 pt-8 border-t border-line">
+                <h3 className="text-lg text-ink font-medium mb-1">Bezorging</h3>
+                <p className="text-base text-graphite mb-6">Optioneel, maar het helpt ons bij het bezorgen van grote meubels.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                  <div>
+                    <label htmlFor="co-floor" className="block text-base text-ink mb-2">Verdieping</label>
+                    <select
+                      id="co-floor"
+                      value={delivery.floor}
+                      onChange={(e) => setDelivery((d) => ({ ...d, floor: e.target.value as DeliveryFloor | "" }))}
+                      className="input-field min-h-11 cursor-pointer"
+                    >
+                      <option value="">Kies (optioneel)</option>
+                      {DELIVERY_FLOORS.map((f) => (
+                        <option key={f} value={f}>
+                          {f.charAt(0).toUpperCase() + f.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="co-elevator" className="block text-base text-ink mb-2">Is er een lift?</label>
+                    <select
+                      id="co-elevator"
+                      value={delivery.elevator}
+                      onChange={(e) => setDelivery((d) => ({ ...d, elevator: e.target.value as "" | "ja" | "nee" }))}
+                      className="input-field min-h-11 cursor-pointer"
+                    >
+                      <option value="">Kies (optioneel)</option>
+                      <option value="ja">Ja</option>
+                      <option value="nee">Nee</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="co-notes" className="block text-base text-ink mb-2">
+                      Opmerking voor de bezorging <span className="text-graphite">(optioneel)</span>
+                    </label>
+                    <textarea
+                      id="co-notes"
+                      rows={3}
+                      maxLength={500}
+                      value={delivery.notes}
+                      onChange={(e) => setDelivery((d) => ({ ...d, notes: e.target.value }))}
+                      placeholder="Bijvoorbeeld: smalle trap, parkeren lastig, liever ’s middags"
+                      className="input-field"
+                    />
+                  </div>
+                  <label htmlFor="co-assembly" className="sm:col-span-2 flex items-start gap-3 min-h-11 cursor-pointer">
+                    <input
+                      id="co-assembly"
+                      type="checkbox"
+                      checked={delivery.assembly}
+                      onChange={(e) => setDelivery((d) => ({ ...d, assembly: e.target.checked }))}
+                      className="mt-1 w-5 h-5 shrink-0 accent-ink"
+                    />
+                    <span className="text-base text-ink">
+                      Ik wil graag dat het meubel gemonteerd wordt
+                      <span className="block text-graphite">We bellen je vooraf over de mogelijkheden en de kosten.</span>
+                    </span>
+                  </label>
+                </div>
               </div>
             </fieldset>
 

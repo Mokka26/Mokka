@@ -143,6 +143,12 @@ model Order {
   // Cookie-akkoord op het moment van bestellen; alleen dan sturen we de
   // server-side GA4-purchase (Measurement Protocol).
   analyticsConsent Boolean  @default(false)
+  // Bezorgvragen uit de checkout (verdieping, lift, opmerkingen) en montagewens.
+  // Montage zonder vaste prijs: we bellen de klant vooraf over de kosten.
+  deliveryFloor     String?
+  deliveryElevator  Boolean?
+  deliveryNotes     String?  @db.Text
+  assemblyRequested Boolean  @default(false)
   // Betaalde bestellingen worden nooit hard verwijderd (bewaarplicht) maar
   // gearchiveerd: uit de lijst, wel bewaard.
   archivedAt      DateTime?

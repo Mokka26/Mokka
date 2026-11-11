@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies, headers } from "next/headers";
+import { DELIVERY_FLOORS } from "@/lib/delivery";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -52,8 +53,17 @@ const customerSchema = z
 // een klant met autofill nooit geblokkeerd raakt op het betaalpad.
 const MIN_FILL_MS = 2500;
 
+/** Bezorgvragen (optioneel): verdieping, lift, opmerkingen en montagewens. */
+const deliverySchema = z.object({
+  floor: z.enum(DELIVERY_FLOORS).optional(),
+  elevator: z.boolean().optional(),
+  notes: z.string().trim().max(500).optional(),
+  assembly: z.boolean().default(false),
+});
+
 const checkoutSchema = z.object({
   customer: customerSchema,
+  delivery: deliverySchema.optional(),
   // Door de client per checkout-poging gegenereerde uuid. Een herhaalde submit
   // (dubbelklik, retry na netwerkfout) met dezelfde sleutel hergebruikt de
   // open order en de bestaande Mollie-checkout i.p.v. een tweede order.
@@ -167,6 +177,7 @@ async function resolveGclid(fromForm: string | undefined): Promise<string | null
 
 type OrderDraft = {
   customer: z.infer<typeof customerSchema>;
+  delivery?: z.infer<typeof deliverySchema>;
   computed: Awaited<ReturnType<typeof computeOrder>>;
   gclid: string | null;
   idempotencyKey: string | null;
@@ -191,6 +202,10 @@ async function createOrderRecord(draft: OrderDraft) {
           shipping: draft.computed.shipping,
           status: "open",
           ...draft.customer,
+          deliveryFloor: draft.delivery?.floor ?? null,
+          deliveryElevator: draft.delivery?.elevator ?? null,
+          deliveryNotes: draft.delivery?.notes || null,
+          assemblyRequested: draft.delivery?.assembly ?? false,
           gclid: draft.gclid,
           idempotencyKey: draft.idempotencyKey,
           analyticsConsent: draft.analyticsConsent,
@@ -304,6 +319,7 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   try {
     order = await createOrderRecord({
       customer,
+      delivery: parsed.data.delivery,
       computed,
       gclid: await resolveGclid(parsed.data.gclid),
       idempotencyKey: idempotencyKey ?? null,

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { deliverySummary } from "@/lib/delivery";
 import { ChevronLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/components/ui/price";
@@ -164,6 +165,15 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <br />
               {countryLabel(order.country)}
             </address>
+            {deliverySummary(order).length > 0 && (
+              <ul className="mt-4 pt-4 border-t border-line text-base text-ink space-y-1 list-none m-0 p-0">
+                {deliverySummary(order).map((l) => (
+                  <li key={l} className={l.startsWith("Montage") ? "font-medium" : undefined}>
+                    {l}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <section className="bg-white border border-line p-5">
