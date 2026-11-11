@@ -81,6 +81,8 @@ describe("cleanup", () => {
     db.rateLimit.deleteMany.mockResolvedValue({ count: 3 });
     db.newsletterSubscriber.deleteMany.mockResolvedValue({ count: 2 });
     db.newsletterSubscriber.updateMany.mockResolvedValue({ count: 1 });
+    db.contactMessage.deleteMany.mockResolvedValue({ count: 4 });
+    db.order.updateMany.mockResolvedValueOnce({ count: 5 }).mockResolvedValueOnce({ count: 0 });
     const res = await cleanupGET(req("/api/cron/cleanup", `Bearer ${SECRET}`));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
@@ -88,7 +90,15 @@ describe("cleanup", () => {
       rateLimitsDeleted: 3,
       unconfirmedSubscribersDeleted: 2,
       expiredResubscribeTokens: 1,
+      contactMessagesDeleted: 4,
+      gclidsCleared: 5,
+      ordersAnonymized: 0,
     });
+    // Alleen orders van vóór 1 januari, 7 jaar terug; boekhoudvelden blijven.
+    const anonymizeCall = db.order.updateMany.mock.calls[1][0];
+    expect(anonymizeCall.where.createdAt.lt.toISOString()).toMatch(/-01-01T00:00:00/);
+    expect(anonymizeCall.data).not.toHaveProperty("total");
+    expect(anonymizeCall.data).toMatchObject({ email: "geanonimiseerd@invalid.local", address: "" });
     // Alleen double-opt-in-rijen die na 7 dagen niet bevestigd zijn.
     expect(db.newsletterSubscriber.deleteMany).toHaveBeenCalledWith({
       where: expect.objectContaining({ confirmedAt: null, confirmToken: { not: null } }),

@@ -75,7 +75,11 @@ export default function PrivacyPage() {
       <LegalSection heading="Bewaartermijn">
         <p>
           We bewaren je gegevens niet langer dan nodig. Bestel- en factuurgegevens bewaren we
-          conform de wettelijke fiscale bewaarplicht van 7 jaar.
+          conform de wettelijke fiscale bewaarplicht van 7 jaar na afloop van het boekjaar; daarna
+          wissen we je naam, adres en contactgegevens automatisch. Berichten via het contactformulier
+          verwijderen we na 12 maanden. De klik-ID van een Google-advertentie bij je bestelling wissen
+          we na 90 dagen. Een nieuwsbriefaanmelding die je niet binnen 7 dagen bevestigt, verwijderen
+          we.
         </p>
       </LegalSection>
       <LegalSection heading="Je rechten">

@@ -37,7 +37,7 @@ export type PrismaMock = {
   slugRedirect: { findUnique: jest.Mock; upsert: jest.Mock; deleteMany: jest.Mock };
   rateLimit: { findUnique: jest.Mock; deleteMany: jest.Mock };
   newsletterSubscriber: { findUnique: jest.Mock; upsert: jest.Mock; updateMany: jest.Mock; deleteMany: jest.Mock };
-  contactMessage: { create: jest.Mock };
+  contactMessage: { create: jest.Mock; deleteMany: jest.Mock };
   $queryRaw: jest.Mock;
   $transaction: jest.Mock;
 };
@@ -75,7 +75,7 @@ export function createPrismaMock(): PrismaMock {
     slugRedirect: { findUnique: jest.fn(), upsert: jest.fn(), deleteMany: jest.fn() },
     rateLimit: { findUnique: jest.fn(), deleteMany: jest.fn() },
     newsletterSubscriber: { findUnique: jest.fn(), upsert: jest.fn(), updateMany: jest.fn(), deleteMany: jest.fn() },
-    contactMessage: { create: jest.fn() },
+    contactMessage: { create: jest.fn(), deleteMany: jest.fn() },
     $queryRaw: jest.fn(),
     $transaction: jest.fn(),
   };

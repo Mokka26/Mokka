@@ -70,7 +70,7 @@ export type Category = {
   /** Bovenliggende umbrella (kruimelpad Home > Banken > Hoekbanken). */
   parent?: CategorySlug;
   /** Hoort tot welke top-groep in FilterBar */
-  group: "Banken" | "Tafels" | "Stoelen" | "Slapen" | "Opbergen" | "Sfeer";
+  group: "Banken" | "Tafels" | "Stoelen" | "Slapen" | "Opbergen" | "Verlichting & spiegels";
   /**
    * Groep in de Google Shopping-feed (`g:product_type`) als die afwijkt van
    * `group`: tv-meubels horen daar bij Opbergen, poefs bij Zitten.
@@ -690,7 +690,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     intro: "Sfeer maken begint bij licht. Plafond-, vloer-, tafel- en wandlampen met karakter.",
     dbCategories: ["verlichting", "plafondlampen", "vloerlampen", "tafellampen", "wandlampen"],
     isUmbrella: true,
-    group: "Sfeer",
+    group: "Verlichting & spiegels",
     seoIntro: `Goede verlichting bestaat uit lagen. Een plafond- of hanglamp geeft het algemene licht; boven de eettafel hang je die ${cmRange(G.lampAboveTableCm)} boven het blad. Een vloerlamp naast de bank of een tafellamp op het dressoir geeft licht op ooghoogte voor lezen en sfeer. Wandlampen verlichten een gang of een muur zonder vloerruimte in te nemen. Kies overal dezelfde kleurtemperatuur, meestal warm licht van 2700 K, en dimbare lichtbronnen; bij de specificaties staat welke fitting en welk maximaal wattage geldt.`,
     metaDescription: `Plafond-, vloer-, tafel- en wandlampen. Hang een lamp ${cmRange(G.lampAboveTableCm)} boven de eettafel en kies overal warm, dimbaar licht van 2700 K. Prijzen incl. btw.`,
     faq: [
@@ -716,7 +716,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["plafondlampen"],
     isUmbrella: false,
     parent: "verlichting",
-    group: "Sfeer",
+    group: "Verlichting & spiegels",
     seoIntro: `Boven de eettafel hang je een plafondlamp op ${cmRange(G.lampAboveTableCm)} boven het blad: laag genoeg voor gezellig licht, hoog genoeg om elkaar aan te kijken. Bij een tafel van 200 cm past een hanglamp van 100 tot 120 cm breed of een rij van drie kleinere lampen. In de woonkamer houd je minstens 2 m vrije hoogte onder de lamp aan, zodat je er niet tegenaan loopt. Kies een dimbare lichtbron (E27 of E14) en warm licht van 2700 K voor een rustige sfeer.`,
     metaDescription: `Plafond- en hanglampen voor eettafel en woonkamer. Hang de lamp ${cmRange(G.lampAboveTableCm)} boven het tafelblad en kies dimbaar warm licht van 2700 K. Prijzen incl. btw.`,
     faq: [
@@ -742,7 +742,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["vloerlampen"],
     isUmbrella: false,
     parent: "verlichting",
-    group: "Sfeer",
+    group: "Verlichting & spiegels",
     metaDescription: `Vloerlampen voor naast de bank of in een leeshoek. Een leeslamp schijnt van opzij over je schouder; een lamp van 150 tot 180 cm hoog geeft licht op ooghoogte.`,
   },
   {
@@ -753,7 +753,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["tafellampen"],
     isUmbrella: false,
     parent: "verlichting",
-    group: "Sfeer",
+    group: "Verlichting & spiegels",
     metaDescription: `Tafellampen voor op het dressoir, bureau of nachtkastje. Naast het bed kies je een lamp van 40 tot 60 cm hoog, zodat de kap boven ooghoogte zit als je ligt.`,
   },
   {
@@ -764,7 +764,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["wandlampen"],
     isUmbrella: false,
     parent: "verlichting",
-    group: "Sfeer",
+    group: "Verlichting & spiegels",
     metaDescription: `Wandlampen voor gang, slaapkamer en woonkamer. Hang een wandlamp op ongeveer 160 tot 170 cm hoogte, net boven ooghoogte, zodat je niet in de lichtbron kijkt.`,
   },
   {
@@ -774,7 +774,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     intro: "Wandspiegels voor hal, slaapkamer en woonkamer; een spiegel tegenover een raam maakt een ruimte lichter.",
     dbCategories: ["spiegels"],
     isUmbrella: false,
-    group: "Sfeer",
+    group: "Verlichting & spiegels",
     seoIntro:
       "Een spiegel maakt een ruimte lichter en ruimer, vooral tegenover een raam. In de hal volstaat een spiegel van 50 tot 60 cm breed en 80 tot 100 cm hoog, zodat je jezelf tot je middel ziet. Wil je jezelf helemaal zien, kies dan een staande of hangende spiegel van minstens 160 cm hoog. Hang een spiegel zo dat het midden op ooghoogte zit, ongeveer 150 tot 160 cm vanaf de vloer. Boven een dressoir laat je 10 tot 20 cm ruimte tussen meubel en spiegel.",
     metaDescription:
@@ -875,5 +875,5 @@ export const GROUP_ORDER: ReadonlyArray<Category["group"]> = [
   "Stoelen",
   "Slapen",
   "Opbergen",
-  "Sfeer",
+  "Verlichting & spiegels",
 ] as const;

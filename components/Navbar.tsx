@@ -110,7 +110,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: "Sfeer",
+    label: "Verlichting & spiegels",
     href: "/verlichting",
     subLinks: [
       {
