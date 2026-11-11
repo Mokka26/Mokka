@@ -9,6 +9,7 @@ import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import ClearCart from "./ClearCart";
 import { PurchaseConversion } from "./PurchaseConversion";
+import { AutoRefresh } from "./AutoRefresh";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 
 const COPY: Record<string, { eyebrow: string; title: string; body: string; tone: "ok" | "wait" | "bad" }> = {
   paid: { eyebrow: "Bedankt", title: "Betaling geslaagd", body: `Je bestelling is bevestigd. ${NEXT_STEP_AFTER_PAYMENT}`, tone: "ok" },
-  open: { eyebrow: "In behandeling", title: "Betaling wordt verwerkt", body: "We wachten op de bevestiging van je betaling. Dit kan een paar minuten duren — je ontvangt bericht zodra het rond is.", tone: "wait" },
+  open: { eyebrow: "In behandeling", title: "Betaling wordt verwerkt", body: "We wachten op de bevestiging van je betaling. Dit kan een paar minuten duren. Je hoeft niet opnieuw te betalen: deze pagina ververst vanzelf en je ontvangt een e-mail zodra het rond is.", tone: "wait" },
   failed: { eyebrow: "Mislukt", title: "Betaling niet gelukt", body: "De betaling is niet voltooid. Er is niets afgeschreven. Probeer het opnieuw.", tone: "bad" },
   canceled: { eyebrow: "Geannuleerd", title: "Betaling geannuleerd", body: "Je hebt de betaling afgebroken. Je winkelwagen staat nog klaar.", tone: "bad" },
   expired: { eyebrow: "Verlopen", title: "Betaling verlopen", body: "De betaaltijd is verstreken. Probeer het opnieuw.", tone: "bad" },
@@ -99,6 +100,7 @@ export default async function CheckoutDonePage({
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
       {copy.tone === "ok" && <ClearCart orderNumber={order?.orderNumber} />}
+      {copy.tone === "wait" && <AutoRefresh />}
       {order && trusted && status === "paid" && (
         <PurchaseConversion
           orderNumber={order.orderNumber}
@@ -147,21 +149,45 @@ export default async function CheckoutDonePage({
         <p className="body-lg text-slate mb-2">{copy.body}</p>
 
         {order && (
-          <p className="text-stone text-sm mb-4">
+          <p className="text-stone text-base mb-4">
             Bestelnummer <span className="text-ink tabular-nums">{order.orderNumber}</span>
             {trusted && status === "paid" && <> · {formatPrice(order.total)}</>}
           </p>
         )}
+        {trusted && status === "paid" && measured && (
+          <div className="text-left border-y border-line py-6 my-8 grid gap-6 sm:grid-cols-2">
+            <div>
+              <h2 className="text-base font-medium text-ink mb-2">Je bestelling</h2>
+              <ul className="list-none m-0 p-0 text-base text-graphite space-y-1">
+                {measured.items.map((it) => (
+                  <li key={`${it.productId}-${it.variantLabel ?? ""}`}>
+                    {it.quantity}× {it.productName}
+                    {it.variantLabel ? ` (${it.variantLabel})` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h2 className="text-base font-medium text-ink mb-2">Bezorgadres</h2>
+              <p className="text-base text-graphite">
+                {measured.firstName} {measured.lastName}
+                <br />
+                {measured.address} {measured.houseNumber}
+                <br />
+                {measured.zipCode} {measured.city}
+              </p>
+            </div>
+          </div>
+        )}
         {trusted && status === "paid" && (
-          <p className="text-stone text-sm mb-10">
+          <p className="text-stone text-base mb-10">
             De bevestiging sturen we naar <span className="text-ink">{maskEmail(order!.email)}</span>.
           </p>
         )}
 
         <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
-          {(copy.tone === "bad" || copy.tone === "wait") && (
-            <Link href="/checkout" className="btn-primary">Opnieuw proberen</Link>
-          )}
+          {/* Bij "open" géén opnieuw-betalen-knop: de betaling kan nog slagen (dubbel betalen). */}
+          {copy.tone === "bad" && <Link href="/checkout" className="btn-primary">Opnieuw proberen</Link>}
           <Link href="/nieuw" className={copy.tone === "ok" ? "btn-primary" : "btn-link"}>
             Verder winkelen
           </Link>

@@ -426,7 +426,8 @@ export default function CheckoutPage() {
                 {/* Straat + huisnummer: < 400px onder elkaar, daarboven naast elkaar met een smal nummerveld. */}
                 <div className="sm:col-span-2 grid grid-cols-1 min-[400px]:grid-cols-[minmax(0,1fr)_5.5rem] sm:grid-cols-[minmax(0,1fr)_9rem] gap-x-4 sm:gap-x-8 gap-y-6">
                   {renderField({ name: "address", autoComplete: "address-line1" })}
-                  {renderField({ name: "houseNumber", autoComplete: "off", inputMode: "numeric", placeholder: "12a" })}
+                  {/* Geen numeriek toetsenbord: toevoegingen als "12a" of "3-bis" moeten typbaar zijn. */}
+                  {renderField({ name: "houseNumber", autoComplete: "off", placeholder: "12a" })}
                 </div>
                 {renderField({
                   name: "zipCode",

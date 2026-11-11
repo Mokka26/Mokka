@@ -123,6 +123,15 @@ describe("listing-helpers", () => {
     expect(onePerModel(list).map((p) => p.id)).toEqual([1, 2, 4]);
   });
 
+  it("telt ongegroepeerde naamgenoten als één model", () => {
+    const list = [
+      { id: 1, colorGroup: null, name: "Salontafel 'Apollo' 130 cm" },
+      { id: 2, colorGroup: null, name: "salontafel 'apollo' 130 cm " },
+      { id: 3, colorGroup: null, name: "Salontafel 'Apollo' 90 cm" },
+    ];
+    expect(onePerModel(list).map((p) => p.id)).toEqual([1, 3]);
+  });
+
   it("zet uitverkocht achteraan zonder de volgorde verder te wijzigen", () => {
     const list = [
       { id: 1, stock: 0 },

@@ -163,14 +163,16 @@ export function formatSizeList(labels: ReadonlyArray<string>): string {
 /**
  * Eén product per model: behoudt de volgorde, kiest per colorGroup het eerste
  * product (de aanroeper sorteert de beste representant vooraan). Producten
- * zonder groep blijven staan.
+ * zonder groep blijven staan, behalve exacte naamgenoten (nog niet gegroepeerde
+ * kleurvarianten, bv. 4× "Salontafel 'Apollo' 130 cm"): die tellen als één model.
  */
-export function onePerModel<T extends { colorGroup?: string | null }>(products: ReadonlyArray<T>): T[] {
+export function onePerModel<T extends { colorGroup?: string | null; name?: string }>(products: ReadonlyArray<T>): T[] {
   const seen = new Set<string>();
   return products.filter((p) => {
-    if (!p.colorGroup) return true;
-    if (seen.has(p.colorGroup)) return false;
-    seen.add(p.colorGroup);
+    const key = p.colorGroup ? `g:${p.colorGroup}` : p.name ? `n:${p.name.trim().toLowerCase()}` : null;
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }
