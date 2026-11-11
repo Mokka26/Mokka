@@ -108,7 +108,7 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
 
             <Link
               href={href}
-              className="group inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium uppercase tracking-[0.08em] hover:bg-accent hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
+              className="group inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium uppercase tracking-[0.08em] hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
             >
               Bekijk dit product
               <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />

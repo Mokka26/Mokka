@@ -163,7 +163,7 @@ export default function CartDrawer({ open, onClose }: Props) {
 
                 <div className="flex-1 min-w-0 flex flex-col gap-1">
                   <h3 className="font-serif text-base text-ink leading-tight">
-                    <Link href={productUrl(item.product)} onClick={onClose} className="inline-block py-1 hover:text-accent transition-colors">
+                    <Link href={productUrl(item.product)} onClick={onClose} className="inline-block py-1 hover:text-accent-dark transition-colors">
                       {item.product.name}
                     </Link>
                   </h3>

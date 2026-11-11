@@ -318,12 +318,11 @@ h1, h2, h3, h4, h5, h6 {
    TYPOGRAFIE UTILITIES
    ═══════════════════════════════════════════════════════════ */
 
-/* eyebrow — korte label-tekst boven koppen. 12px is de ondergrens; voor
-   labels die informatie dragen (formulieren, tellers) gebruik eyebrow-lg of
-   gewoon text-sm. */
+/* eyebrow — korte label-tekst boven koppen. 14px is de ondergrens
+   (docs/brand.md: "Small: niet onder 14px"; publiek tot 70 jaar). */
 @utility eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.12em;

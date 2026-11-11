@@ -102,7 +102,7 @@ export default function CartPage() {
                 <PaymentMethodChips className="mt-6" />
                 <Link
                   href="/nieuw"
-                  className="inline-flex items-center justify-center w-full mt-6 min-h-11 text-[14px] text-ink underline underline-offset-4 hover:text-accent transition-colors"
+                  className="inline-flex items-center justify-center w-full mt-6 min-h-11 text-[14px] text-ink underline underline-offset-4 hover:text-accent-dark transition-colors"
                 >
                   Verder winkelen
                 </Link>

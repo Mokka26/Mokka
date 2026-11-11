@@ -121,7 +121,7 @@ export default async function NieuwPage() {
               <p className="font-serif text-2xl text-ink mb-4">Nog geen producten</p>
               <p className="text-[16px] text-slate">
                 Bekijk de{" "}
-                <Link href="/banken" className="underline underline-offset-2 text-ink hover:text-accent">
+                <Link href="/banken" className="underline underline-offset-2 text-ink hover:text-accent-dark">
                   banken
                 </Link>{" "}
                 of de categorieën via het menu.

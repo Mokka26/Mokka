@@ -41,7 +41,7 @@ export function VariantPicker({ currentSlug, category, variants }: Props) {
                   href={productUrl({ category, slug: s.slug })}
                   scroll={false}
                   aria-current={s.current ? "page" : undefined}
-                  className={`inline-flex flex-col items-start justify-center gap-0.5 px-4 py-2 min-h-11 min-w-[6.5rem] rounded-[8px] border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                  className={`inline-flex flex-col items-start justify-center gap-0.5 px-4 py-2 min-h-11 min-w-[6.5rem] rounded-[8px] border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
                     s.current ? "bg-ink text-paper border-ink" : "bg-transparent text-ink border-line-strong hover:border-ink"
                   }`}
                 >
@@ -79,7 +79,7 @@ export function VariantPicker({ currentSlug, category, variants }: Props) {
                     aria-current={c.current ? "page" : undefined}
                     aria-label={label}
                     title={label}
-                    className="group/swatch inline-flex items-center justify-center w-11 h-11 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                    className="group/swatch inline-flex items-center justify-center w-11 h-11 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     <span
                       aria-hidden="true"
@@ -88,7 +88,7 @@ export function VariantPicker({ currentSlug, category, variants }: Props) {
                       } ${c.inStock ? "" : "opacity-45"} ${
                         c.current
                           ? "border-ink ring-2 ring-ink ring-offset-2 ring-offset-paper"
-                          : "border-line ring-0 group-hover/swatch:ring-2 group-hover/swatch:ring-mist group-hover/swatch:ring-offset-2 group-hover/swatch:ring-offset-paper"
+                          : "border-line-strong ring-0 group-hover/swatch:ring-2 group-hover/swatch:ring-mist group-hover/swatch:ring-offset-2 group-hover/swatch:ring-offset-paper"
                       }`}
                       style={swatchBackground(c.colorHex)}
                     />

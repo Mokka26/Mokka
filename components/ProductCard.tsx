@@ -158,7 +158,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
 
   return (
     <article className="product-card group h-full min-w-0">
-      <Link href={productUrl(product)} className="flex flex-col h-full min-w-0 rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+      <Link href={productUrl(product)} className="flex flex-col h-full min-w-0 rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
         <figure className="relative aspect-[4/3] overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]">
           {first ? (
             <CloudinaryImage
@@ -180,7 +180,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
           {(isNew || hasDiscount) && (
             <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-[5]">
               {hasDiscount && (
-                <span className="badge bg-accent tabular-nums">
+                <span className="badge bg-accent-dark tabular-nums">
                   -{discountPct}%<span className="sr-only"> korting</span>
                 </span>
               )}
@@ -250,7 +250,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
                       <span
                         key={v.slug}
                         title={v.colorName ?? undefined}
-                        className={`inline-block w-4 h-4 rounded-full border border-line ${v.colorHex ? "" : "bg-mist"}`}
+                        className={`inline-block w-4 h-4 rounded-full border border-line-strong ${v.colorHex ? "" : "bg-mist"}`}
                         style={swatchBackground(v.colorHex)}
                       >
                         {v.colorName && <span className="sr-only">{v.colorName}</span>}

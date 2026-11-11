@@ -360,7 +360,7 @@ export default function CheckoutPage() {
               <ul className="space-y-1.5 text-[15px] text-ink">
                 {summaryErrors.map((err) => (
                   <li key={err.name}>
-                    <a href={`#co-${err.name}`} className="underline underline-offset-4 hover:text-accent">
+                    <a href={`#co-${err.name}`} className="underline underline-offset-4 hover:text-accent-dark">
                       {FIELD_LABEL[err.name]}
                     </a>
                     : {err.message}
@@ -495,11 +495,11 @@ export default function CheckoutPage() {
               </button>
               <p className="text-[14px] text-slate leading-relaxed">
                 Met je bestelling ga je akkoord met onze{" "}
-                <Link href={businessInfo.legal.termsUrl} className="underline underline-offset-4 hover:text-accent">
+                <Link href={businessInfo.legal.termsUrl} className="underline underline-offset-4 hover:text-accent-dark">
                   algemene voorwaarden
                 </Link>{" "}
                 en{" "}
-                <Link href={businessInfo.legal.privacyPolicyUrl} className="underline underline-offset-4 hover:text-accent">
+                <Link href={businessInfo.legal.privacyPolicyUrl} className="underline underline-offset-4 hover:text-accent-dark">
                   privacyverklaring
                 </Link>
                 .
@@ -511,7 +511,7 @@ export default function CheckoutPage() {
                 {phoneLink && businessInfo.contact.phoneFormatted && (
                   <li>
                     Vragen? Bel{" "}
-                    <a href={phoneLink} className="underline underline-offset-4 hover:text-accent whitespace-nowrap">
+                    <a href={phoneLink} className="underline underline-offset-4 hover:text-accent-dark whitespace-nowrap">
                       {businessInfo.contact.phoneFormatted}
                     </a>
                   </li>

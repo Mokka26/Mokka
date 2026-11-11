@@ -295,7 +295,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                     className="inline-flex items-center min-h-11 px-4 border border-line bg-white text-ink text-[15px] hover:border-ink focus-visible:border-ink transition-colors"
                   >
                     {sub.label}
-                    <span className="ml-2 text-stone text-[13px]">({sub.count})</span>
+                    <span className="ml-2 text-stone text-sm">({sub.count})</span>
                   </Link>
                 </li>
               ))}
@@ -344,7 +344,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                   <div className="divide-y divide-line border-y border-line">
                     {category.faq.map((item) => (
                       <details key={item.q} className="group py-1">
-                        <summary className="flex items-center justify-between gap-6 min-h-12 py-3 cursor-pointer text-ink text-[17px] font-medium list-none [&::-webkit-details-marker]:hidden hover:text-accent focus-visible:text-accent">
+                        <summary className="flex items-center justify-between gap-6 min-h-12 py-3 cursor-pointer text-ink text-[17px] font-medium list-none [&::-webkit-details-marker]:hidden hover:text-accent-dark focus-visible:text-accent-dark">
                           <span>{item.q}</span>
                           <span aria-hidden="true" className="text-stone text-xl leading-none group-open:rotate-45 transition-transform">
                             +

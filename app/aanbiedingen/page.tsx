@@ -177,7 +177,7 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
               <p className="font-serif text-2xl text-ink mb-4">Op dit moment geen aanbiedingen</p>
               <p className="text-[16px] text-slate">
                 Kijk later nog eens, of bekijk wat er{" "}
-                <Link href="/nieuw" className="underline underline-offset-2 text-ink hover:text-accent">
+                <Link href="/nieuw" className="underline underline-offset-2 text-ink hover:text-accent-dark">
                   nieuw binnen
                 </Link>{" "}
                 is.

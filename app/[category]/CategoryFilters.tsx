@@ -126,11 +126,22 @@ function PriceOptions({
     setMaxText(current?.max !== undefined ? String(current.max) : "");
   }
 
+  const [error, setError] = useState<string | null>(null);
+  const errorId = `${idPrefix}-price-error`;
+
+  // Alleen cijfers in de velden (zichtbaar, niet pas stil bij toepassen).
+  const digitsOnly = (v: string) => v.replace(/\D/g, "").slice(0, 6);
+
   const applyCustom = () => {
-    const min = parseInt(minText.replace(/\D/g, ""), 10);
-    const max = parseInt(maxText.replace(/\D/g, ""), 10);
+    const min = parseInt(minText, 10);
+    const max = parseInt(maxText, 10);
     const hasMin = Number.isFinite(min) && min > 0;
     const hasMax = Number.isFinite(max) && max > 0;
+    if (hasMin && hasMax && min > max) {
+      setError("Het bedrag bij ‘Van’ is hoger dan bij ‘Tot’. Pas een van beide aan.");
+      return;
+    }
+    setError(null);
     const value = hasMin || hasMax ? `${hasMin ? min : 0}-${hasMax ? max : ""}` : null;
     const next = setPrice(filters, value);
     if (next.prijs?.min === current?.min && next.prijs?.max === current?.max) return;
@@ -182,8 +193,9 @@ function PriceOptions({
             autoComplete="off"
             placeholder="0"
             value={minText}
-            onChange={(e) => setMinText(e.target.value)}
-            onBlur={applyCustom}
+            onChange={(e) => setMinText(digitsOnly(e.target.value))}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             className="input-field tabular-nums"
           />
         </div>
@@ -198,13 +210,19 @@ function PriceOptions({
             autoComplete="off"
             placeholder="Geen max"
             value={maxText}
-            onChange={(e) => setMaxText(e.target.value)}
-            onBlur={applyCustom}
+            onChange={(e) => setMaxText(digitsOnly(e.target.value))}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             className="input-field tabular-nums"
           />
         </div>
-        {/* Enter in een veld past het bedrag toe. */}
-        <button type="submit" className="sr-only">
+        {error && (
+          <p id={errorId} role="alert" className="col-span-2 text-base text-error">
+            {error}
+          </p>
+        )}
+        {/* Toepassen met Enter of deze knop; niet bij wegklikken (WCAG 3.2.2). */}
+        <button type="submit" className="btn-ghost col-span-2 w-full">
           Prijs toepassen
         </button>
       </form>
@@ -408,7 +426,11 @@ export function ActiveFilterChips({
         <li key={c.key}>
           <button
             type="button"
-            onClick={() => onChange(c.without)}
+            onClick={() => {
+              onChange(c.without);
+              // De knop verdwijnt; focus naar de resultaatregel i.p.v. naar <body>.
+              focusResults();
+            }}
             className="inline-flex items-center gap-2 min-h-11 pl-4 pr-3 rounded-full bg-bone text-ink text-base hover:bg-line transition-colors"
           >
             <span>{c.label}</span>
@@ -418,12 +440,26 @@ export function ActiveFilterChips({
         </li>
       ))}
       <li>
-        <button type="button" onClick={onClear} className="btn-link min-h-11 px-2">
+        <button
+          type="button"
+          onClick={() => {
+            onClear();
+            focusResults();
+          }}
+          className="btn-link min-h-11 px-2"
+        >
           Alles wissen
         </button>
       </li>
     </ul>
   );
+}
+
+/** Id van de resultaatregel in CategoryListing (focusdoel na chip weghalen). */
+export const RESULTS_ID = "category-results";
+
+function focusResults() {
+  document.getElementById(RESULTS_ID)?.focus();
 }
 
 // ─── Mobiel: lade met secties ───────────────────────────────────────
@@ -500,8 +536,12 @@ export function FilterDrawer({
             </Button>
           )}
           <Button onClick={onClose} className="flex-1">
-            <span aria-live="polite">{isPending ? "Bezig…" : `Toon ${resultLabel}`}</span>
+            {isPending ? "Bezig…" : `Toon ${resultLabel}`}
           </Button>
+          {/* Live-regio buiten de knop: in een knop wordt hij niet betrouwbaar voorgelezen. */}
+          <p role="status" className="sr-only">
+            {isPending ? "Producten laden" : `${resultLabel} gevonden`}
+          </p>
         </div>
       }
     >

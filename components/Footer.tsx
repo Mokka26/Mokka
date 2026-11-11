@@ -33,7 +33,7 @@ const shopGroups = GROUP_ORDER.map((group) => {
   };
 });
 
-const footerHeading = "text-[13px] uppercase tracking-[0.2em] text-white/70 mb-5";
+const footerHeading = "text-sm uppercase tracking-[0.2em] text-white/70 mb-5";
 // Elke tekstlink is een touch target van ≥ 44px hoog (WCAG 2.5.8 / CLAUDE.md §7).
 const footerLink =
   "inline-flex min-h-11 items-center text-white/85 hover:text-white underline-offset-4 hover:underline transition-colors";
@@ -224,7 +224,7 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
             {/* Social — alleen renderen als er actieve URLs zijn */}
             {socials.length > 0 && (
               <div className="flex items-center gap-3">
-                <p className="text-[13px] uppercase tracking-[0.2em] text-white/70 mr-2">Volg ons</p>
+                <p className="text-sm uppercase tracking-[0.2em] text-white/70 mr-2">Volg ons</p>
                 {socials.map(({ platform, url }) => (
                   <a
                     key={platform}

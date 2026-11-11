@@ -27,7 +27,7 @@ export function StockBadge({ stock, showLow = false, size = "sm", className = ""
   return (
     <span
       className={`inline-flex items-center gap-2 ${
-        size === "md" ? "text-base" : "text-[13px]"
+        size === "md" ? "text-base" : "text-sm"
       } ${inStock ? "text-ink" : "text-stone"} ${className}`}
     >
       <span

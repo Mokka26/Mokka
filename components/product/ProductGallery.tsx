@@ -74,7 +74,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                   onClick={() => scrollTo(i)}
                   aria-label={`Toon foto ${i + 1} van ${total}`}
                   aria-current={current ? "true" : undefined}
-                  className={`relative block w-[80px] h-[80px] overflow-hidden bg-bone rounded-md border transition-[opacity,border-color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                  className={`relative block w-[80px] h-[80px] overflow-hidden bg-bone rounded-md border transition-[opacity,border-color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
                     current ? "opacity-100 border-ink" : "opacity-60 border-transparent hover:opacity-100 hover:border-mist"
                   }`}
                 >
@@ -103,7 +103,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                   type="button"
                   onClick={() => onOpen(i)}
                   aria-label={`Vergroot foto ${i + 1} van ${total}`}
-                  className={`group/zoom relative block w-full ${aspect} cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent`}
+                  className={`group/zoom relative block w-full ${aspect} cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink`}
                 >
                   <Image
                     // Cloudinary brengt de foto zelf op de galerijverhouding (vrijstaand:
@@ -132,7 +132,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
             ))}
           </div>
           {total > 1 && (
-            <div className="lg:hidden absolute top-3 right-3 bg-white/90 px-3 py-1.5 text-[13px] text-ink rounded-full tabular-nums" aria-hidden="true">
+            <div className="lg:hidden absolute top-3 right-3 bg-white/90 px-3 py-1.5 text-sm text-ink rounded-full tabular-nums" aria-hidden="true">
               {active + 1} / {total}
             </div>
           )}
@@ -148,7 +148,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                 onClick={() => scrollTo(i)}
                 aria-label={`Ga naar foto ${i + 1} van ${total}`}
                 aria-current={active === i ? "true" : undefined}
-                className="inline-flex items-center justify-center w-11 h-11 min-w-11 focus-visible:outline-2 focus-visible:outline-accent rounded-full"
+                className="inline-flex items-center justify-center w-11 h-11 min-w-11 focus-visible:outline-2 focus-visible:outline-ink rounded-full"
               >
                 <span
                   aria-hidden="true"

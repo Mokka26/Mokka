@@ -98,7 +98,7 @@ export function ProductDescription({ name, description }: Props) {
                   onClick={() => setExpanded((v) => !v)}
                   aria-expanded={expanded}
                   aria-controls={restId}
-                  className="mt-6 inline-flex items-center min-h-11 text-base text-ink underline underline-offset-4 hover:text-accent transition-colors"
+                  className="mt-6 inline-flex items-center min-h-11 text-base text-ink underline underline-offset-4 hover:text-accent-dark transition-colors"
                 >
                   {expanded ? "Lees minder" : "Lees meer"}
                 </button>

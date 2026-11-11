@@ -95,7 +95,7 @@ export default function ProductLightbox({ images, productName, startIndex, onClo
             <button
               type="button"
               onClick={() => emblaApi?.scrollPrev()}
-              className="absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 w-12 h-12 inline-flex items-center justify-center rounded-full text-paper bg-paper/10 hover:bg-paper/20 transition-colors focus-visible:outline-2 focus-visible:outline-accent-light"
+              className="absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 w-12 h-12 inline-flex items-center justify-center rounded-full text-paper bg-paper/10 hover:bg-paper/20 transition-colors focus-visible:outline-2 focus-visible:outline-paper"
               aria-label="Vorige foto"
             >
               <ChevronLeft className="w-6 h-6" strokeWidth={1.5} aria-hidden="true" />
@@ -103,7 +103,7 @@ export default function ProductLightbox({ images, productName, startIndex, onClo
             <button
               type="button"
               onClick={() => emblaApi?.scrollNext()}
-              className="absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 w-12 h-12 inline-flex items-center justify-center rounded-full text-paper bg-paper/10 hover:bg-paper/20 transition-colors focus-visible:outline-2 focus-visible:outline-accent-light"
+              className="absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 w-12 h-12 inline-flex items-center justify-center rounded-full text-paper bg-paper/10 hover:bg-paper/20 transition-colors focus-visible:outline-2 focus-visible:outline-paper"
               aria-label="Volgende foto"
             >
               <ChevronRight className="w-6 h-6" strokeWidth={1.5} aria-hidden="true" />

@@ -63,7 +63,7 @@ export default function CartItem({ item }: Props) {
         </Link>
         <div className="min-w-0">
           <h3 className="text-ink text-base font-medium leading-snug">
-            <Link href={productUrl(item.product)} className="hover:text-accent transition-colors">
+            <Link href={productUrl(item.product)} className="hover:text-accent-dark transition-colors">
               {item.product.name}
             </Link>
           </h3>

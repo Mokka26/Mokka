@@ -94,7 +94,7 @@ function CategoryTile({ tile, primary }: { tile: Tile; primary: boolean }) {
   return (
     <Link
       href={`/${tile.slug}`}
-      className="group block rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+      className="group block rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
     >
       <div
         className={`relative overflow-hidden rounded-[10px] bg-bone ${

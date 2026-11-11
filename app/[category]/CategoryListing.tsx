@@ -15,7 +15,7 @@ import {
   type Facet,
   type FacetOption,
 } from "@/lib/filters";
-import { ActiveFilterChips, FilterDrawer, FilterToolbar, SortSelect } from "./CategoryFilters";
+import { ActiveFilterChips, FilterDrawer, FilterToolbar, RESULTS_ID, SortSelect } from "./CategoryFilters";
 
 export type ListingProduct = {
   id: string;
@@ -145,7 +145,7 @@ export default function CategoryListing({
 
         {/* Resultaat + actieve filters */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mb-8 px-2 min-h-11">
-          <p className="text-base text-graphite tabular-nums" aria-live="polite" aria-atomic="true">
+          <p id={RESULTS_ID} tabIndex={-1} className="text-base text-graphite tabular-nums" aria-live="polite" aria-atomic="true">
             {isPending ? (
               "Producten laden…"
             ) : activeCount > 0 ? (

@@ -91,7 +91,7 @@ export default function Hero() {
             </p>
             <Link
               href="/banken"
-              className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium tracking-[0.08em] uppercase hover:bg-accent hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
+              className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium tracking-[0.08em] uppercase hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
             >
               Bekijk banken
               <ArrowRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />

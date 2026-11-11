@@ -34,7 +34,7 @@ export function QuantityStepper({
   const canDecrease = !disabled && value > min;
   const canIncrease = !disabled && value < max;
   const btn =
-    "inline-flex items-center justify-center min-w-11 min-h-11 text-ink transition-colors duration-[280ms] hover:bg-bone hover:text-accent disabled:text-stone/50 disabled:hover:bg-transparent disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center min-w-11 min-h-11 text-ink transition-colors duration-[280ms] hover:bg-bone hover:text-accent-dark disabled:text-stone/50 disabled:hover:bg-transparent disabled:cursor-not-allowed";
   const height = size === "md" ? "h-[52px]" : "h-11";
 
   return (
