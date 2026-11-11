@@ -9,6 +9,7 @@ import { firstImageOnly } from "@/lib/imageHelpers";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
 import { dedupeByColorGroup } from "./dedupe";
 import ProductsContent from "./ProductsContent";
+import MotionProvider from "@/components/MotionProvider";
 
 export const revalidate = 3600;
 
@@ -114,12 +115,15 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       </div>
     }>
-      <ProductsContent
-        initialProducts={initialProducts}
-        page={page}
-        pageCount={pageCount}
-        total={all.length}
-      />
+      {/* framer-motion alleen hier (FilterBar/ProductsContent), niet in de root-bundel. */}
+      <MotionProvider>
+        <ProductsContent
+          initialProducts={initialProducts}
+          page={page}
+          pageCount={pageCount}
+          total={all.length}
+        />
+      </MotionProvider>
     </Suspense>
   );
 }

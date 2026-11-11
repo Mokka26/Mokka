@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { m, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { businessInfo } from "@/lib/business-info";
 import { Button } from "@/components/ui/Button";
@@ -89,17 +88,15 @@ export default function CookieBanner() {
   };
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <m.section
+        // Inschuiven met CSS (motion-safe = respecteert "minder beweging"):
+        // geen framer-motion meer in de bundel van élke pagina.
+        <section
           ref={panelRef}
           role="region"
           aria-label="Cookievoorkeuren"
-          initial={{ y: "100%", opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: "100%", opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-x-0 bottom-0 z-[60] bg-white border-t border-line shadow-[0_-12px_40px_-12px_rgba(20,17,13,0.15)]"
+          className="fixed inset-x-0 bottom-0 z-[60] bg-white border-t border-line shadow-[0_-12px_40px_-12px_rgba(20,17,13,0.15)] motion-safe:animate-[mk-slide-in-bottom_var(--dur-moderate)_var(--ease-out-strong)]"
         >
           <div className="max-w-[1600px] mx-auto px-4 sm:px-10 lg:px-14 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))] sm:py-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-10">
@@ -124,8 +121,8 @@ export default function CookieBanner() {
               </div>
             </div>
           </div>
-        </m.section>
+        </section>
       )}
-    </AnimatePresence>
+    </>
   );
 }

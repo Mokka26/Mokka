@@ -1,5 +1,5 @@
 // Next.js 16: "middleware" is hernoemd naar "proxy".
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 
@@ -15,14 +15,25 @@ function lowercaseTarget(pathname: string): string | null {
 }
 
 // `auth()` draait de `authorized`-callback uit auth.config.ts (alleen /admin
-// vereist een sessie) en roept daarna onze handler aan.
-export default auth((req) => {
-  const target = lowercaseTarget(req.nextUrl.pathname);
+// vereist een sessie). Alleen voor /admin: op publieke pagina's zou NextAuth
+// anders bij elke (prefetch-)request sessie-cookies lezen én zetten voor
+// anonieme bezoekers — onnodig werk en slechter voor de CDN-cache.
+const adminProxy = auth(() => NextResponse.next());
+
+export function isAdminPath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
+export default function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  // NextAuth verwacht een route-context; de proxy heeft geen route-params.
+  if (isAdminPath(pathname)) return adminProxy(req, { params: Promise.resolve({}) });
+  const target = lowercaseTarget(pathname);
   if (!target) return NextResponse.next();
   const url = req.nextUrl.clone();
   url.pathname = target;
   return NextResponse.redirect(url, 308);
-});
+}
 
 export const config = {
   // Alles behalve API-routes, Next-internals en statische bestanden.

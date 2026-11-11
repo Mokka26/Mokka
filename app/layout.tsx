@@ -10,7 +10,6 @@ import { getFooterMethods } from "@/lib/mollie";
 import { PaymentMethodsProvider } from "@/components/PaymentMethodsProvider";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
-import MotionProvider from "@/components/MotionProvider";
 import ToastProvider from "@/components/ToastProvider";
 import CookieBanner from "@/components/CookieBanner";
 import { Analytics } from "@/components/Analytics";
@@ -102,8 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(webSiteSchema) }}
         />
-        <MotionProvider>
-          <CartProvider>
+        <CartProvider>
             {/* Zelfde Mollie-lijst voor footer, winkelwagen, drawer en checkout. */}
             <PaymentMethodsProvider methods={footerMethods}>
               <ToastProvider />
@@ -115,7 +113,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <CookieBanner />
             </PaymentMethodsProvider>
           </CartProvider>
-        </MotionProvider>
         <SpeedInsights />
         {/* Google-tag (GA4 + Ads) met Consent Mode v2 — zie components/Analytics.tsx. */}
         <Analytics />

@@ -21,6 +21,7 @@ import type { CheckoutMethod } from "@/lib/mollie";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { orientationOf } from "@/components/product/imageAspect";
 import { useFooterInView } from "@/components/product/useFooterInView";
+import { OPEN_CART_EVENT } from "@/lib/events";
 import { trackAddToCart, trackViewItem, variantLabelOf } from "@/lib/analytics";
 import {
   DELIVERY_KEY_RE,
@@ -70,9 +71,6 @@ interface Props {
   /** Live Mollie-betaalmethoden voor het koopblok (zelfde chips als de footer). */
   mollieMethods?: CheckoutMethod[];
 }
-
-/** Event waarmee de Navbar de winkelwagen-drawer kan openen (cancelable). */
-export const OPEN_CART_EVENT = "mokka:open-cart";
 
 /**
  * Leest `?maat=<label>` (feed-links per maatvariant) en selecteert die maat.

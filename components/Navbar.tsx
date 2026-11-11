@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { Search, ShoppingBag, Menu, ChevronDown, Phone } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartDrawer, { CART_DRAWER_ID } from "./CartDrawer";
-import { OPEN_CART_EVENT } from "@/app/products/[slug]/ProductDetailClient";
+import { OPEN_CART_EVENT } from "@/lib/events";
 import { Dialog, Drawer } from "@/components/ui/Dialog";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 
