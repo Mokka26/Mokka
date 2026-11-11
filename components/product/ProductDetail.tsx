@@ -135,6 +135,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const priceOnRequest = activePrice <= 0;
   const canBuy = inStock && !priceOnRequest;
   const requestUrl = `/contact?product=${encodeURIComponent(product.slug)}&naam=${encodeURIComponent(product.name)}`;
+  // Geen koopknop (prijs op aanvraag of tijdelijk uitverkocht) → een vraag i.p.v. een dode, grijze knop.
+  const askInstead = priceOnRequest || !inStock;
+  const askLabel = priceOnRequest ? "Vraag prijs en levertijd aan" : "Vraag naar levertijd";
+  const askHint = priceOnRequest
+    ? "We reageren binnen één werkdag met prijs en levertijd."
+    : "Tijdelijk uitverkocht. Vraag het ons: we laten binnen één werkdag weten wanneer het weer leverbaar is, of wat er vergelijkbaar is.";
 
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -332,12 +338,12 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             </div>
 
             {/* Aantal + koopknop, of prijsaanvraag */}
-            {priceOnRequest ? (
+            {askInstead ? (
               <div className="mb-2">
                 <Link href={requestUrl} className="btn-primary w-full text-center">
-                  Vraag prijs en levertijd aan
+                  {askLabel}
                 </Link>
-                <p className="text-[14px] text-stone mt-3">We reageren binnen één werkdag met prijs en levertijd.</p>
+                <p className="text-base text-graphite mt-3">{askHint}</p>
               </div>
             ) : (
               <div className="flex flex-col sm:flex-row gap-3 mb-2">
@@ -447,9 +453,9 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 <p className="text-[14px] text-stone leading-none mt-1">Maat {activeVariant?.label ?? product.sizeName}</p>
               )}
             </div>
-            {priceOnRequest ? (
+            {askInstead ? (
               <Link href={requestUrl} className="btn-primary flex-1 !px-4 text-center">
-                Vraag prijs aan
+                {priceOnRequest ? "Vraag prijs aan" : "Vraag levertijd"}
               </Link>
             ) : (
               <button
