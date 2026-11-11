@@ -2,6 +2,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
+import { CATEGORY_CACHE_PREFIX, cacheableCategory } from "@/lib/category-cache";
 
 const { auth } = NextAuth(authConfig);
 
@@ -25,14 +26,32 @@ export function isAdminPath(pathname: string): boolean {
 }
 
 export default function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const { pathname, searchParams } = req.nextUrl;
   // NextAuth verwacht een route-context; de proxy heeft geen route-params.
   if (isAdminPath(pathname)) return adminProxy(req, { params: Promise.resolve({}) });
+
+  // De interne ISR-route nooit rechtstreeks tonen (dubbele URL) → terug naar /<slug>.
+  if (pathname.startsWith(CATEGORY_CACHE_PREFIX)) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${pathname.slice(CATEGORY_CACHE_PREFIX.length)}`;
+    return NextResponse.redirect(url, 308);
+  }
+
   const target = lowercaseTarget(pathname);
-  if (!target) return NextResponse.next();
-  const url = req.nextUrl.clone();
-  url.pathname = target;
-  return NextResponse.redirect(url, 308);
+  if (target) {
+    const url = req.nextUrl.clone();
+    url.pathname = target;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Kale categorie-URL → gecachte (ISR) variant; de browser-URL blijft /<slug>.
+  const slug = cacheableCategory(pathname, searchParams);
+  if (slug) {
+    const url = req.nextUrl.clone();
+    url.pathname = `${CATEGORY_CACHE_PREFIX}${slug}`;
+    return NextResponse.rewrite(url);
+  }
+  return NextResponse.next();
 }
 
 export const config = {
