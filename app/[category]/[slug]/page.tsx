@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
+import ProductDetailClient from "@/components/product/ProductDetail";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import {

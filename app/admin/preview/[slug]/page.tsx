@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import ProductDetailClient from "@/app/products/[slug]/ProductDetailClient";
+import ProductDetailClient from "@/components/product/ProductDetail";
 import { productUrl } from "@/lib/categories";
 import { MODEL_VARIANT_SELECT } from "@/lib/variants";
 

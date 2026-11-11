@@ -11,7 +11,7 @@ import { buildBreadcrumbJsonLd, jsonLdHtml, truncateAtWord, type BreadcrumbItem 
 import { ogDefaults } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
-import { dedupeByColorGroup } from "@/app/products/dedupe";
+import { dedupeByColorGroup } from "@/lib/dedupe";
 
 interface Props {
   searchParams: Promise<{ page?: string | string[] }>;

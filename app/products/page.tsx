@@ -7,7 +7,7 @@ import { businessInfo } from "@/lib/business-info";
 import { prisma } from "@/lib/prisma";
 import { firstImageOnly } from "@/lib/imageHelpers";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
-import { dedupeByColorGroup } from "./dedupe";
+import { dedupeByColorGroup } from "@/lib/dedupe";
 import ProductsContent from "./ProductsContent";
 import MotionProvider from "@/components/MotionProvider";
 

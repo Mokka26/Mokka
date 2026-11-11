@@ -7,7 +7,7 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import FilterBar from "@/components/FilterBar";
 import { getCategory } from "@/lib/categories";
-import { dedupeByColorGroup, type ColorVariant } from "./dedupe";
+import { dedupeByColorGroup, type ColorVariant } from "@/lib/dedupe";
 
 interface Product {
   id: string;

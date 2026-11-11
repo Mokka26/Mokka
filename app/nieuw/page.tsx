@@ -10,7 +10,7 @@ import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/js
 import { ogDefaults } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
-import { dedupeByColorGroup } from "@/app/products/dedupe";
+import { dedupeByColorGroup } from "@/lib/dedupe";
 
 const PATH = "/nieuw";
 const LIMIT = 48;
