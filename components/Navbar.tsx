@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
@@ -10,6 +10,7 @@ import TopBanner from "./TopBanner";
 import CartDrawer, { CART_DRAWER_ID } from "./CartDrawer";
 import { OPEN_CART_EVENT } from "@/lib/events";
 import { trackSearch } from "@/lib/analytics";
+import { pruneEmptyLinks } from "@/lib/nav-prune";
 import { Dialog, Drawer } from "@/components/ui/Dialog";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 
@@ -179,8 +180,14 @@ const SERVICE_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/contact", label: "Contact" },
 ];
 
-export default function Navbar() {
+/** `emptyCategoryHrefs`: categorieën zonder zichtbare producten (uit de root-layout). */
+export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs?: ReadonlyArray<string> }) {
   const pathname = usePathname();
+  // Geen menulinks naar lege categorieën (bv. Nachtkastjes met 0 producten).
+  const menuItems = useMemo(
+    () => pruneEmptyLinks(navItems, new Set(emptyCategoryHrefs)),
+    [emptyCategoryHrefs],
+  );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
@@ -267,7 +274,7 @@ export default function Navbar() {
             {/* Desktop navigation — vanaf lg (1024px) met 16px-items. Tussen lg en
                 xl staan de secundaire items in "Meer"; vanaf xl staat alles naast elkaar. */}
             <ul className="hidden lg:flex items-center list-none m-0 p-0">
-              {[...navItems, moreItem].map((item) => {
+              {[...menuItems, moreItem].map((item) => {
                 const isOpen = activeDropdown === item.label;
                 const panelId = `submenu-${slug(item.label)}`;
                 const isMore = item.label === MORE_LABEL;
@@ -441,7 +448,7 @@ export default function Navbar() {
             Zoek een product
           </button>
           <ul className="list-none m-0 p-0">
-            {navItems.map((item) => {
+            {menuItems.map((item) => {
               const expanded = activeMobileItem === item.label;
               const panelId = `mobile-submenu-${slug(item.label)}`;
               return (

@@ -38,7 +38,15 @@ const footerHeading = "text-sm uppercase tracking-[0.2em] text-white/70 mb-5";
 const footerLink =
   "inline-flex min-h-11 items-center text-white/85 hover:text-white underline-offset-4 hover:underline transition-colors";
 
-export default function Footer({ mollieMethods = [] }: { mollieMethods?: CheckoutMethod[] }) {
+export default function Footer({
+  mollieMethods = [],
+  emptyCategoryHrefs = [],
+}: {
+  mollieMethods?: CheckoutMethod[];
+  /** Categorieën zonder zichtbare producten: niet linken (zie app/layout). */
+  emptyCategoryHrefs?: ReadonlyArray<string>;
+}) {
+  const empty = new Set(emptyCategoryHrefs);
   const phoneLink = getPhoneLink();
   const emailLink = getEmailLink();
   const socials = getActiveSocials();
@@ -115,7 +123,7 @@ export default function Footer({ mollieMethods = [] }: { mollieMethods?: Checkou
                     )}
                   </p>
                   <ul className="text-base list-none m-0 p-0">
-                    {g.links.map((l) => (
+                    {g.links.filter((l) => !empty.has(l.href)).map((l) => (
                       <li key={l.href}>
                         <Link href={l.href} className={footerLink}>{l.label}</Link>
                       </li>

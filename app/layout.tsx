@@ -7,6 +7,9 @@ import { shippingInfo } from "@/lib/shipping-info";
 import { buildOrganizationJsonLd, buildWebSiteJsonLd, jsonLdHtml } from "@/lib/jsonLd";
 import Footer from "@/components/Footer";
 import { getFooterMethods } from "@/lib/mollie";
+import { getProductCounts } from "@/lib/product-counts";
+import { emptyCategoryHrefs } from "@/lib/nav-prune";
+import { CATEGORIES } from "@/lib/categories";
 import { PaymentMethodsProvider } from "@/components/PaymentMethodsProvider";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
@@ -75,6 +78,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const footerMethods = await getFooterMethods();
+  // Lege categorieën uit het menu (gecachet, 1 query per 5 min). Bij een
+  // DB-hapering gewoon het volledige menu tonen.
+  const counts = await getProductCounts().catch(() => null);
+  const emptyHrefs = counts
+    ? emptyCategoryHrefs(counts, CATEGORIES.filter((c) => !c.isUmbrella).map((c) => c.slug))
+    : [];
   const organizationSchema = buildOrganizationJsonLd();
   const webSiteSchema = buildWebSiteJsonLd();
   return (
@@ -106,11 +115,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Zelfde Mollie-lijst voor footer, winkelwagen, drawer en checkout. */}
             <PaymentMethodsProvider methods={footerMethods}>
               <ToastProvider />
-              <Navbar />
+              <Navbar emptyCategoryHrefs={emptyHrefs} />
               <main id="main" className="flex-1">
                 <PageTransition>{children}</PageTransition>
               </main>
-              <Footer mollieMethods={footerMethods} />
+              <Footer mollieMethods={footerMethods} emptyCategoryHrefs={emptyHrefs} />
               <CookieBanner />
             </PaymentMethodsProvider>
           </CartProvider>
