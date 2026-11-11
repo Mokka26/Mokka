@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { categoryBreadcrumbs, getCategory, isCategorySlug, productUrl, type Category } from "@/lib/categories";
@@ -10,13 +10,24 @@ import { buildBreadcrumbJsonLd, buildFaqJsonLd, jsonLdHtml, type BreadcrumbItem 
 import { categoryDescription, categoryTitle, ogDefaults } from "@/lib/seo";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
 import { inStockFirst } from "@/lib/variants";
+import {
+  filterModels,
+  filtersToQuery,
+  hasActiveFilters,
+  parseFilters,
+  sortModels,
+  variantTraits,
+  type VariantTraits,
+} from "@/lib/filters";
 import { getGuide, guidePath } from "@/app/gids/guides";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import CategoryListing, { type ListingProduct, type ListingVariant } from "./CategoryListing";
 
+type SearchParams = Record<string, string | string[] | undefined>;
+
 interface Props {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<SearchParams>;
 }
 
 const PAGE_SIZE = 24;
@@ -72,20 +83,22 @@ function applyTypeOrder(products: CategoryProduct[], category: Category): Catego
 }
 
 /**
- * Alle varianten van een model (zelfde colorGroup: maten én kleuren) tellen
- * als één kaart. Representant = eerste op voorraad, anders de eerste in
- * volgorde. Geeft ook de variantenrij per groep terug (kleur, maat, prijs,
- * voorraad), zodat de kaart kleuren, maten en "vanaf"-prijs kan tonen.
- * Uitverkochte kaarten (alle varianten uitverkocht) komen achteraan.
+ * Alle varianten van een model (zelfde colorGroup: maten én kleuren) vormen
+ * één kaart. Geeft de modellen (varianten in catalogusvolgorde) en de
+ * variantenrij per groep (kleur, maat, prijs, voorraad) voor de kaart.
  */
-function collapseColorGroups(products: CategoryProduct[]): {
-  collapsed: CategoryProduct[];
+function groupModels(products: CategoryProduct[]): {
+  models: CategoryProduct[][];
   variants: Record<string, ListingVariant[]>;
 } {
-  const representative = new Map<string, CategoryProduct>();
+  const byGroup = new Map<string, CategoryProduct[]>();
+  const models: CategoryProduct[][] = [];
   const variants: Record<string, ListingVariant[]> = {};
   for (const p of products) {
-    if (!p.colorGroup) continue;
+    if (!p.colorGroup) {
+      models.push([p]);
+      continue;
+    }
     (variants[p.colorGroup] ??= []).push({
       slug: p.slug,
       colorName: p.colorName,
@@ -94,11 +107,15 @@ function collapseColorGroups(products: CategoryProduct[]): {
       price: p.price,
       stock: p.stock,
     });
-    const cur = representative.get(p.colorGroup);
-    if (!cur || (p.stock > 0 && cur.stock <= 0)) representative.set(p.colorGroup, p);
+    const group = byGroup.get(p.colorGroup);
+    if (group) group.push(p);
+    else {
+      const fresh = [p];
+      byGroup.set(p.colorGroup, fresh);
+      models.push(fresh);
+    }
   }
-  const collapsed = inStockFirst(products.filter((p) => !p.colorGroup || representative.get(p.colorGroup) === p));
-  return { collapsed, variants };
+  return { models, variants };
 }
 
 /**
@@ -113,31 +130,38 @@ function parsePage(raw: string | string[] | undefined): number | "redirect" | nu
   return n <= 1 ? "redirect" : n;
 }
 
-function pageUrl(slug: string, page: number): string {
-  return page <= 1 ? `/${slug}` : `/${slug}?page=${page}`;
+/** Pagina-URL; `query` = actieve filters/sortering (zonder pagina). */
+function pageUrl(slug: string, page: number, query = ""): string {
+  const q = new URLSearchParams(query);
+  if (page > 1) q.set("page", String(page));
+  const s = q.toString().replace(/%2C/gi, ",");
+  return s ? `/${slug}?${s}` : `/${slug}`;
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const [{ category: categorySlug }, { page: rawPage }] = await Promise.all([params, searchParams]);
+  const [{ category: categorySlug }, sp] = await Promise.all([params, searchParams]);
   const category = getCategory(categorySlug);
-  const parsed = parsePage(rawPage);
+  const parsed = parsePage(sp.page);
   if (!category || parsed === null) {
     return { title: "Categorie niet gevonden", robots: { index: false, follow: false } };
   }
   const page = parsed === "redirect" ? 1 : parsed;
+  const filters = parseFilters(sp);
+  // Gefilterde/gesorteerde varianten niet indexeren (dubbele inhoud); links wel volgen.
+  const isFiltered = hasActiveFilters(filters) || filters.sort !== "aanbevolen";
 
   // Lege categorie (nog geen zichtbare producten) niet laten indexeren.
   const products = await getCategoryProducts([...category.dbCategories]);
   const isEmpty = products.length === 0;
 
-  const url = pageUrl(category.slug, page);
+  const url = pageUrl(category.slug, isFiltered ? 1 : page);
   const title = categoryTitle(category, page);
   const description = categoryDescription(category, page);
   return {
     title,
     description,
     alternates: { canonical: url },
-    robots: isEmpty ? { index: false, follow: true } : { index: true, follow: true },
+    robots: isEmpty || isFiltered ? { index: false, follow: true } : { index: true, follow: true },
     ...ogDefaults({
       title: `${title} | ${businessInfo.name}`,
       description,
@@ -149,26 +173,43 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
-  const [{ category: categorySlug }, { page: rawPage }] = await Promise.all([params, searchParams]);
+  const [{ category: categorySlug }, sp] = await Promise.all([params, searchParams]);
 
   // Validatie + data VÓÓR de render: notFound() zet dan echt een 404.
   if (!isCategorySlug(categorySlug)) notFound();
   const category = getCategory(categorySlug);
   if (!category) notFound();
-  const parsed = parsePage(rawPage);
+  const filters = parseFilters(sp);
+  const query = filtersToQuery(filters);
+  const parsed = parsePage(sp.page);
   if (parsed === null) notFound();
-  if (parsed === "redirect") permanentRedirect(`/${category.slug}`);
+  if (parsed === "redirect") permanentRedirect(pageUrl(category.slug, 1, query));
   const page = parsed;
 
   const all = applyTypeOrder(await getCategoryProducts([...category.dbCategories]), category);
-  const { collapsed, variants } = collapseColorGroups(all);
+  const { models, variants } = groupModels(all);
 
-  const totalCount = collapsed.length;
+  // Filteren over de héle categorie (niet alleen de geladen pagina) + tellingen per filterwaarde.
+  const traits = new Map<string, VariantTraits>(all.map((p) => [p.id, variantTraits(p)]));
+  const result = filterModels(
+    models,
+    (p) => traits.get(p.id) as VariantTraits,
+    filters,
+    (c) => getCategory(c)?.label ?? c,
+  );
+  const sorted =
+    filters.sort === "aanbevolen" ? inStockFirst(result.models) : sortModels(result.models, filters.sort);
+
+  const totalCount = sorted.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  if (page > totalPages) notFound();
+  if (page > totalPages) {
+    // Na het aanscherpen van een filter kan de pagina niet meer bestaan → naar pagina 1.
+    if (query) redirect(pageUrl(category.slug, 1, query));
+    notFound();
+  }
 
   const start = (page - 1) * PAGE_SIZE;
-  const pageProducts: ListingProduct[] = collapsed.slice(start, start + PAGE_SIZE);
+  const pageProducts: ListingProduct[] = sorted.slice(start, start + PAGE_SIZE);
   const pageVariants: Record<string, ListingVariant[]> = {};
   for (const p of pageProducts) {
     if (p.colorGroup && variants[p.colorGroup]) pageVariants[p.colorGroup] = variants[p.colorGroup];
@@ -199,8 +240,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     },
   };
 
-  const prevHref = page > 1 ? pageUrl(category.slug, page - 1) : null;
-  const nextHref = page < totalPages ? pageUrl(category.slug, page + 1) : null;
+  const prevHref = page > 1 ? pageUrl(category.slug, page - 1, query) : null;
+  const nextHref = page < totalPages ? pageUrl(category.slug, page + 1, query) : null;
 
   return (
     <>
@@ -278,8 +319,14 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           pageSize={PAGE_SIZE}
           totalPages={totalPages}
           totalCount={totalCount}
+          categoryCount={models.length}
           prevHref={prevHref}
           nextHref={nextHref}
+          query={query}
+          filters={filters}
+          facets={result.facets}
+          priceOptions={result.priceOptions}
+          inStockCount={result.inStockCount}
         />
 
         {(category.seoIntro || (category.faq && category.faq.length > 0)) && (
