@@ -22,7 +22,6 @@
   --color-accent: #B96B4C;        /* Decoratief accent (lijnen, iconen, koppen ≥24px). 3,5:1 op paper — niet voor kleine tekst */
   --color-accent-light: #C9876C;  /* Op donkere achtergronden */
   --color-accent-dark: #9A5639;   /* Hover-state knoppen + accent-TEKST (4,9:1 op paper) */
-  --color-accent-text: #9A5639;   /* Alias: accent-kleur die als tekst mag (AA) */
 
   /* ─── FEEDBACK ─── */
   --color-success: #3D6B4A;       /* 6,6:1 op paper */
@@ -383,42 +382,9 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
 }
 
-/* Backwards compat */
-@utility section-title {
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  color: var(--color-ink);
-  margin-bottom: 0.75rem;
-  line-height: 1.1;
-}
-
-@utility section-subtitle {
-  color: var(--color-stone);
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  margin-bottom: 1.5rem;
-  font-weight: 500;
-}
-
 /* ═══════════════════════════════════════════════════════════
    STATUS-UTILITIES — voorraad en badges (gedeeld door kaart, PDP, cart)
    ═══════════════════════════════════════════════════════════ */
-
-@utility stock-ok {
-  color: var(--color-success);
-  font-weight: 500;
-}
-
-@utility stock-low {
-  color: var(--color-warning);
-  font-weight: 500;
-}
-
-@utility stock-out {
-  color: var(--color-error);
-  font-weight: 500;
-}
 
 /* badge — klein label op kaart/PDP ("Nieuw", "Op voorraad"). 13px, ink op
    paper; kleur omdraaien kan met extra Tailwind-classes. */
@@ -510,35 +476,6 @@ h1, h2, h3, h4, h5, h6 {
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   SKIP-LINK — onzichtbaar tot toetsenbord-focus, dan linksboven
-   ═══════════════════════════════════════════════════════════ */
-
-.skip-link {
-  position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 300;
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0.75rem 1.25rem;
-  background-color: var(--color-ink);
-  color: var(--color-paper);
-  font-size: 1rem;
-  font-weight: 500;
-  border-radius: 10px;
-  clip-path: inset(50%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.skip-link:focus-visible {
-  clip-path: none;
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -703,30 +640,6 @@ h1, h2, h3, h4, h5, h6 {
   scrollbar-width: none;
 }
 
-/* Typographic loader — pulse + accent line ride */
-@keyframes typo-loader-fade {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
-}
-@keyframes typo-loader-line {
-  0% { transform: scaleX(0); transform-origin: left; }
-  50% { transform: scaleX(1); transform-origin: left; }
-  50.001% { transform: scaleX(1); transform-origin: right; }
-  100% { transform: scaleX(0); transform-origin: right; }
-}
-.typo-loader-fade {
-  animation: typo-loader-fade 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-.typo-loader-line {
-  animation: typo-loader-line 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .typo-loader-fade,
-  .typo-loader-line {
-    animation: none;
-    opacity: 1;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════
    IMAGE LOADING
