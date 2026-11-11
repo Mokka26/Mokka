@@ -12,7 +12,7 @@ export default function TopBanner() {
   ];
   return (
     <div className="bg-ink text-paper border-b border-graphite">
-      <ul className="max-w-[1600px] mx-auto h-9 px-4 sm:px-10 lg:px-14 flex items-center justify-center gap-6 overflow-hidden list-none m-0 p-0">
+      <ul className="max-w-[1600px] mx-auto h-9 px-6 sm:px-10 lg:px-14 flex items-center justify-center gap-6 overflow-hidden list-none m-0 p-0">
         {items.map((t, i) => (
           <li
             key={t}

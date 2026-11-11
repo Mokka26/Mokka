@@ -170,6 +170,15 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const dropdownPanelClass =
   "absolute top-full pt-2 z-50 motion-safe:animate-[mk-fade-in_200ms_var(--ease-out-soft)]";
 
+/** Service-pagina's in het mobiele menu (bestaande routes). */
+const SERVICE_LINKS: ReadonlyArray<{ href: string; label: string }> = [
+  { href: "/showroom", label: "Showroom" },
+  { href: "/bezorging", label: "Bezorging" },
+  { href: "/retourneren", label: "Retourneren" },
+  { href: "/gids", label: "Koopgidsen" },
+  { href: "/contact", label: "Contact" },
+];
+
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -240,7 +249,7 @@ export default function Navbar() {
         </div>
 
         <div className="max-w-[1600px] mx-auto">
-          <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-4 sm:px-10 lg:px-8 xl:px-14">
+          <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-6 sm:px-10 lg:px-8 xl:px-14">
             {/* Logo links */}
             <Link href="/" className="flex-shrink-0 inline-flex items-center min-h-11" aria-label="Mokka Home Interior — naar de homepage">
               {/* 480×166 PNG (20 kB). Geen priority/preload: het logo is klein
@@ -419,6 +428,18 @@ export default function Navbar() {
         title="Menu"
       >
         <nav aria-label="Mobiele navigatie" className="px-6 py-6">
+          {/* Zoeken ook vanuit het menu (op mobiel staat de zoekknop klein in de balk). */}
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setSearchOpen(true);
+            }}
+            className="w-full flex items-center gap-3 min-h-12 px-4 mb-4 rounded-[10px] border border-line-strong text-base text-graphite hover:border-ink transition-colors"
+          >
+            <Search className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
+            Zoek een product
+          </button>
           <ul className="list-none m-0 p-0">
             {navItems.map((item) => {
               const expanded = activeMobileItem === item.label;
@@ -487,6 +508,24 @@ export default function Navbar() {
               );
             })}
           </ul>
+
+          {/* Service: showroom en praktische info ook in het mobiele menu. */}
+          <div className="mt-8 pt-6 border-t border-line">
+            <p className="eyebrow mb-3">Service</p>
+            <ul className="space-y-1 text-base text-slate list-none m-0 p-0">
+              {SERVICE_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="inline-flex items-center min-h-11 hover:text-ink transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Contact onderaan in het menu */}
           <div className="mt-8 pt-6 border-t border-line">
