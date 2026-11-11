@@ -14,6 +14,7 @@ import {
 } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { firstImageOnly } from "@/lib/imageHelpers";
+import { ogDefaults } from "@/lib/seo";
 import {
   buildBreadcrumbJsonLd,
   buildProductDescription,
@@ -114,15 +115,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: { absolute: title },
     description,
     alternates: { canonical: url },
-    openGraph: {
-      title: product.name,
-      description,
-      type: "website",
-      url,
-      locale: "nl_NL",
-      // Geen `images` hier: de gegenereerde opengraph-image.tsx (product-
-      // foto + prijs) maakt de OG-kaart.
-    },
+    // Prijs op aanvraag (0) is geen koopbare pagina: niet indexeren, wel links volgen.
+    ...(product.price > 0 ? {} : { robots: { index: false, follow: true } }),
+    // ogDefaults: siteName + Twitter-card. De bestandsgebaseerde
+    // opengraph-image.tsx (productfoto + prijs) gaat vóór de standaardafbeelding.
+    ...ogDefaults({ title: product.name, description, url }),
   };
 }
 

@@ -28,7 +28,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       _max: { updatedAt: true },
     }),
     prisma.product.findMany({
-      where: VISIBLE,
+      // Prijs 0 = "prijs op aanvraag": noindex op de PDP, dus ook niet in de sitemap.
+      where: { ...VISIBLE, price: { gt: 0 } },
       select: { slug: true, category: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     }),

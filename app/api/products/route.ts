@@ -116,6 +116,7 @@ export async function GET(request: NextRequest) {
       id: true, slug: true, name: true, price: true, listPrice: true,
       category: true, images: true, featured: true, stock: true, createdAt: true,
       colorGroup: true, colorName: true, colorHex: true, sizeName: true, specs: true,
+      deliveryTime: true,
     },
   });
   // Payload-trim: de listing-kaart toont alleen foto 1 — bij take:1000 scheelt

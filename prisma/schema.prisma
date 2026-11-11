@@ -55,6 +55,8 @@ model Product {
 
   @@index([category])
   @@index([category, sortOrder])
+  // Hoofdquery van de winkel: zichtbare producten per categorie, op volgorde.
+  @@index([category, hidden, deletedAt, sortOrder])
   @@index([colorGroup])
   @@index([hidden])
   @@index([deletedAt])
@@ -93,6 +95,8 @@ model RateLimit {
   key     String   @id
   count   Int      @default(0)
   resetAt DateTime
+
+  @@index([resetAt]) // cleanup-cron verwijdert verlopen tellers
 }
 
 model DeletedImage {
@@ -160,6 +164,7 @@ model Order {
   @@index([createdAt])
   @@index([email])
   @@index([archivedAt])
+  @@index([molliePaymentId]) // admin-zoeken en webhook-opvolging
 }
 
 // Oude product-slugs blijven werken na een hernoeming (301 naar het product).
@@ -185,6 +190,11 @@ model OrderItem {
   // orderregels (omzethistorie) meeslepen. De verwijder-flows slaan producten
   // met bestelgeschiedenis daarom over.
   product      Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  // Postgres indexeert foreign keys niet zelf: nodig voor order-detail-joins en
+  // de Restrict-controle bij het definitief verwijderen van producten.
+  @@index([orderId])
+  @@index([productId])
 }
 
 model AdminUser {

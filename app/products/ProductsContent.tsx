@@ -127,7 +127,8 @@ export default function ProductsContent({ initialProducts, page, pageCount, tota
       if (searchQuery) params.set("q", searchQuery);
       params.set("sort", sortBy);
       params.set("minPrice", priceRange[0].toString());
-      params.set("maxPrice", priceRange[1].toString());
+      // Schuif op het maximum = geen bovengrens (anders vallen dure producten weg).
+      if (priceRange[1] < 5000) params.set("maxPrice", priceRange[1].toString());
       try {
         const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store", signal: controller.signal });
         const data: unknown = await res.json().catch(() => null);

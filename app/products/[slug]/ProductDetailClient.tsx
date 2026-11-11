@@ -136,7 +136,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const inStock = stock > 0;
   const priceOnRequest = activePrice <= 0;
   const canBuy = inStock && !priceOnRequest;
-  const requestUrl = `/contact?product=${encodeURIComponent(product.slug)}`;
+  const requestUrl = `/contact?product=${encodeURIComponent(product.slug)}&naam=${encodeURIComponent(product.name)}`;
 
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);

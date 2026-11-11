@@ -10,6 +10,18 @@ const env = { ...process.env };
 if (process.argv[2] === "migrate" && env.DATABASE_URL) {
   env.DATABASE_URL = env.DIRECT_DATABASE_URL || env.DATABASE_URL.replace("-pooler.", ".");
 }
-const args = process.argv.slice(2).map((a) => (a.startsWith("ENV:") ? `"${env[a.slice(4)] ?? ""}"` : a));
+// `--only-production` (gebruikt door `npm run build`): migreer alleen bij een
+// Vercel-productiebuild of met MIGRATE_ON_BUILD=1. Preview-builds en lokale
+// builds raken zo nooit (per ongeluk) de productiedatabase. Handmatig migreren
+// blijft `npm run db:migrate`.
+const ONLY_PROD = "--only-production";
+if (process.argv.includes(ONLY_PROD)) {
+  const allowed = process.env.VERCEL_ENV === "production" || process.env.MIGRATE_ON_BUILD === "1";
+  if (!allowed) {
+    console.log(`[prisma-env] migratie overgeslagen (VERCEL_ENV=${process.env.VERCEL_ENV ?? "lokaal"})`);
+    process.exit(0);
+  }
+}
+const args = process.argv.slice(2).filter((a) => a !== ONLY_PROD).map((a) => (a.startsWith("ENV:") ? `"${env[a.slice(4)] ?? ""}"` : a));
 const r = spawnSync(process.platform === "win32" ? "npx.cmd" : "npx", ["prisma", ...args], { stdio: "inherit", shell: true, env });
 process.exit(r.status ?? 1);

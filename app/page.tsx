@@ -47,6 +47,9 @@ const cardSelect = {
   colorName: true,
   colorHex: true,
   specs: true,
+  // Zonder dit valt de kaart terug op de standaard "2-3 werkdagen" (onjuist
+  // voor producten met weken levertijd).
+  deliveryTime: true,
 } as const;
 
 const visibleWhere = { hidden: false, deletedAt: null } as const;
@@ -69,6 +72,7 @@ type Collection = {
     colorName: string | null;
     colorHex: string | null;
     specs: string | null;
+    deliveryTime: string | null;
   }>;
 };
 

@@ -7,7 +7,22 @@ import { sendOrderConfirmation } from "@/lib/email";
 import { captureError, captureWarning } from "@/lib/sentry";
 import { revalidateProduct } from "@/lib/revalidate";
 import { queueServerPurchase } from "@/lib/analytics-server";
-import { syncOrderByPaymentId, getOrderForReturnPage, reconcileOpenOrders, resendPendingConfirmations } from "@/lib/order-sync";
+import { syncOrderByPaymentId, getOrderForReturnPage, reconcileOpenOrders, resendPendingConfirmations, paymentMismatch } from "@/lib/order-sync";
+
+describe("paymentMismatch", () => {
+  const order = { total: 1299, molliePaymentId: "tr_1" };
+  it("accepteert het juiste bedrag en id", () => {
+    expect(paymentMismatch(order, "tr_1", { value: "1299.00", currency: "EUR" })).toBeNull();
+  });
+  it("blokkeert een ander bedrag, een andere valuta of een ander payment-id", () => {
+    expect(paymentMismatch(order, "tr_1", { value: "1.00", currency: "EUR" })).toMatch(/bedrag/);
+    expect(paymentMismatch(order, "tr_1", { value: "1299.00", currency: "USD" })).toMatch(/valuta/);
+    expect(paymentMismatch(order, "tr_2", { value: "1299.00", currency: "EUR" })).toMatch(/payment-id/);
+  });
+  it("blokkeert niet als Mollie geen bedrag meestuurt", () => {
+    expect(paymentMismatch(order, "tr_1", undefined)).toBeNull();
+  });
+});
 
 jest.mock("@/lib/prisma", () => ({
   prisma: jest

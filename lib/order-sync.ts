@@ -5,6 +5,7 @@ import { sendOrderConfirmation } from "@/lib/email";
 import { captureError, captureWarning } from "@/lib/sentry";
 import { revalidateProduct } from "@/lib/revalidate";
 import { queueServerPurchase } from "@/lib/analytics-server";
+import { toCents } from "@/lib/money";
 
 export type OrderStatus = "open" | "paid" | "failed" | "canceled" | "expired";
 
@@ -26,6 +27,24 @@ function mapStatus(mollieStatus: string): OrderStatus {
     default:
       return "open"; // open | pending
   }
+}
+
+/**
+ * Reden waarom een Mollie-betaling niet bij de order past, of null als alles
+ * klopt. Ontbreekt het bedrag in de respons, dan wordt het niet geblokkeerd.
+ */
+export function paymentMismatch(
+  order: { total: number; molliePaymentId: string | null },
+  paymentId: string,
+  amount: { value?: string; currency?: string } | null | undefined,
+): string | null {
+  if (order.molliePaymentId && order.molliePaymentId !== paymentId) return "ander payment-id";
+  if (!amount?.value) return null;
+  if (amount.currency && amount.currency !== "EUR") return `valuta ${amount.currency}`;
+  const paidCents = toCents(Number(amount.value));
+  const totalCents = toCents(order.total);
+  if (!Number.isFinite(paidCents) || paidCents !== totalCents) return `bedrag ${amount.value} ≠ ${order.total}`;
+  return null;
 }
 
 type SyncOptions = {
@@ -68,6 +87,18 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
     // neveneffect → een conditionele set (nooit over 'paid' heen) is idempotent.
     await prisma.order.updateMany({ where: { id: order.id, status: { not: "paid" } }, data: { status: next } });
     return next;
+  }
+
+  // Extra zekerheid: de betaling moet bij déze order horen en het volle bedrag
+  // dekken. Betalingen worden server-side aangemaakt, dus een verschil wijst op
+  // een fout of manipulatie → niet als betaald boeken, wel melden.
+  const mismatch = paymentMismatch(order, paymentId, payment.amount);
+  if (mismatch) {
+    captureError(new Error(`Betaling past niet bij order: ${mismatch}`), {
+      scope: "orderSync.paymentMismatch",
+      orderNumber: order.orderNumber,
+    });
+    return order.status as OrderStatus;
   }
 
   const paidAt = new Date(payment.paidAt ?? payment.authorizedAt ?? Date.now());

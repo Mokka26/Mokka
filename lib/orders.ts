@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { toCents, fromCents, vatFromGrossCents } from "@/lib/money";
+import { captureWarning } from "@/lib/sentry";
 
 export type CheckoutLineInput = {
   productId: string;
@@ -64,9 +65,21 @@ export type LinePricing =
  */
 function variantPrice(sizeVariants: string | null, label: string | null, fallback: number): number | null {
   if (!sizeVariants) return fallback;
-  let arr: SizeVariant[];
-  try { arr = JSON.parse(sizeVariants) as SizeVariant[]; } catch { return fallback; }
-  if (!Array.isArray(arr) || arr.length === 0) return fallback;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(sizeVariants);
+  } catch {
+    // Kapotte maat-data: NIET stil de basisprijs (vaak de kleinste maat)
+    // rekenen — weigeren en melden, zodat de admin het kan herstellen.
+    captureWarning("sizeVariants is geen geldige JSON", { label });
+    return null;
+  }
+  if (!Array.isArray(parsed)) {
+    captureWarning("sizeVariants is geen lijst", { label });
+    return null;
+  }
+  const arr = parsed as SizeVariant[];
+  if (arr.length === 0) return fallback;
   if (!label) return fallback; // varianten aanwezig maar geen maat gekozen → basisprijs
   const match = arr.find((v) => v.label === label);
   if (!match) return null; // maat bestaat niet (meer) → fout

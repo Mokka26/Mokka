@@ -90,8 +90,13 @@ describe("lib/orders", () => {
       expect(priceLine(makeProduct({ price: 0 }), {})).toEqual({ ok: false, reason: "NO_PRICE" });
     });
 
-    it("negeert kapotte sizeVariants-JSON en gebruikt de basisprijs", () => {
-      expect(priceLine(makeProduct({ sizeVariants: "{niet json" }), { variantLabel: "x" })).toMatchObject({ unitCents: 59900 });
+    it("weigert kapotte sizeVariants-JSON in plaats van stil de basisprijs te rekenen", () => {
+      expect(priceLine(makeProduct({ sizeVariants: "{niet json" }), { variantLabel: "x" })).toEqual({ ok: false, reason: "VARIANT_MISSING" });
+      expect(priceLine(makeProduct({ sizeVariants: "{\"a\":1}" }), {})).toEqual({ ok: false, reason: "VARIANT_MISSING" });
+    });
+
+    it("gebruikt de basisprijs bij een lege maatlijst", () => {
+      expect(priceLine(makeProduct({ sizeVariants: "[]" }), {})).toMatchObject({ unitCents: 59900 });
     });
   });
 

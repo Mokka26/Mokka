@@ -25,8 +25,14 @@ const SUBJECT_MAX = 60;
 
 const NETWORK_FAILED = "Versturen is niet gelukt. Controleer je internetverbinding en probeer het opnieuw, of bel ons.";
 
-function productSubject(slug: string): string {
-  return `Prijs en levertijd aanvragen voor ${slug}`.slice(0, SUBJECT_MAX);
+function productSubject(label: string): string {
+  return `Prijs en levertijd aanvragen voor ${label}`.slice(0, SUBJECT_MAX);
+}
+
+/** `?naam=` (productnaam vanaf de PDP): alleen leesbare tekst, max. 100 tekens. */
+function cleanName(param: string | null): string | null {
+  const name = param?.replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 100) ?? "";
+  return name || null;
 }
 
 function cleanSlug(param: string | null): string | null {
@@ -40,14 +46,18 @@ function presetSubject(param: string | null): string {
   return SUBJECT_OPTIONS.some((o) => o.value === value) ? value : "";
 }
 
-function initialForm(productSlug: string | null, subject: string): FormState {
+function initialForm(productSlug: string | null, productName: string | null, subject: string): FormState {
   if (productSlug) {
+    // Naam voor de klant leesbaar; slug tussen haakjes zodat wij het product terugvinden.
+    const label = productName ?? productSlug;
     return {
       name: "",
       email: "",
       phone: "",
-      subject: productSubject(productSlug),
-      message: `Ik wil graag de prijs en levertijd weten van: ${productSlug}\n\n`,
+      subject: productSubject(label),
+      message: productName
+        ? `Ik wil graag de prijs en levertijd weten van: ${productName} (${productSlug})\n\n`
+        : `Ik wil graag de prijs en levertijd weten van: ${productSlug}\n\n`,
     };
   }
   return {
@@ -79,9 +89,11 @@ export default function ContactForm() {
   // ?subject=showroom vanaf de showroompagina → "Showroomafspraak".
   const searchParams = useSearchParams();
   const productSlug = cleanSlug(searchParams.get("product"));
+  const productName = cleanName(searchParams.get("naam"));
+  const productLabel = productName ?? productSlug;
   const subjectParam = presetSubject(searchParams.get("subject"));
 
-  const [form, setForm] = useState<FormState>(() => initialForm(productSlug, subjectParam));
+  const [form, setForm] = useState<FormState>(() => initialForm(productSlug, productName, subjectParam));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
@@ -286,8 +298,8 @@ export default function ContactForm() {
           className="input-field"
         >
           <option value="">Kies een onderwerp</option>
-          {productSlug && (
-            <option value={productSubject(productSlug)}>{productSubject(productSlug)}</option>
+          {productLabel && (
+            <option value={productSubject(productLabel)}>{productSubject(productLabel)}</option>
           )}
           {SUBJECT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
