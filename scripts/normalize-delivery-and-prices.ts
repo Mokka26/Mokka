@@ -6,6 +6,8 @@
 //   2. sizeVariants-labels opschonen: Arabisch-Indische cijfers/ruis weg,
 //      "200 x 200" → "200 × 200", dubbele spaties weg.
 //   3. price = goedkoopste maat met prijs (kaart, JSON-LD en feed tonen "vanaf").
+//   4. Namen zonder Turkse combinatie-punt (U+0307, "Ni̇rvana" → "Nirvana") en
+//      "İ" → "I": anders vindt de zoekfunctie ze niet en tonen sommige fonts een losse punt.
 // Uitverkocht + "Binnen 5 werkdagen" wordt alleen GEMELD: de juiste levertijd
 // per leverancier is een beslissing van de eigenaar.
 //
@@ -50,7 +52,7 @@ function parseVariants(raw: string | null): SizeVariant[] | null {
 async function main() {
   const products = await prisma.product.findMany({
     where: { deletedAt: null },
-    select: { id: true, slug: true, hidden: true, stock: true, price: true, deliveryTime: true, sizeVariants: true },
+    select: { id: true, slug: true, name: true, hidden: true, stock: true, price: true, deliveryTime: true, sizeVariants: true },
   });
 
   const updates: Array<{ id: string; slug: string; data: Record<string, unknown>; notes: string[] }> = [];
@@ -60,6 +62,12 @@ async function main() {
   for (const p of products) {
     const data: Record<string, unknown> = {};
     const notes: string[] = [];
+
+    const name = p.name.replace(/̇/g, "").replace(/İ/g, "I");
+    if (name !== p.name) {
+      data.name = name;
+      notes.push(`naam "${p.name}" → "${name}"`);
+    }
 
     const dt = normalizeDelivery(p.deliveryTime);
     if (dt !== p.deliveryTime) {

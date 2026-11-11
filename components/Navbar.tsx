@@ -588,8 +588,11 @@ export default function Navbar() {
                   key={term}
                   type="button"
                   onClick={() => {
-                    setSearchQuery(term);
-                    searchInputRef.current?.focus();
+                    // Direct zoeken (voorheen vulde de chip alleen het veld).
+                    trackSearch(term);
+                    router.push(`/products?q=${encodeURIComponent(term)}`);
+                    setSearchOpen(false);
+                    setSearchQuery("");
                   }}
                   className="inline-flex items-center min-h-11 px-4 rounded-full border border-line-strong text-base text-ink hover:border-ink hover:bg-bone transition-colors"
                 >

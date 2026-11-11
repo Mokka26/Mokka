@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { firstImageOnly } from "@/lib/imageHelpers";
 import { getCategory } from "@/lib/categories";
 import { rateLimitIp } from "@/lib/rate-limit";
+import { buildSearchWhere } from "@/lib/search";
 
 // Public listing-endpoint: korte cache OK (admin-mutaties zijn niet
 // kritiek-real-time). s-maxage=60 = CDN cached 60s, stale-while-revalidate
@@ -90,10 +91,9 @@ export async function GET(request: NextRequest) {
   if (categoryFilter) where.category = categoryFilter;
 
   if (q) {
-    // Alleen op naam (niet op de lange, niet-geïndexeerde beschrijving).
-    // insensitive: Postgres 'contains' is standaard hoofdlettergevoelig —
-    // "vanilla" zou "Vanilla Loop" anders niet vinden.
-    where.name = { contains: q, mode: "insensitive" };
+    // Woord voor woord over naam, kleur, specs en categorie (zie lib/search.ts).
+    const search = buildSearchWhere(q);
+    if (search) Object.assign(where, search);
   }
 
   where.price = {
