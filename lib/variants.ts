@@ -182,3 +182,29 @@ export function inStockFirst<T extends { stock?: number }>(products: ReadonlyArr
   const available = (p: T) => (p.stock ?? 1) > 0;
   return [...products.filter(available), ...products.filter((p) => !available(p))];
 }
+
+/**
+ * Kleurvarianten van hetzelfde model én dezelfde maat zijn voor Google bijna
+ * dubbele pagina's. Per (colorGroup, sizeName) is de oudste variant de
+ * hoofdpagina (canonical, sitemap); maten blijven eigen pagina's (zoekvragen
+ * als "eettafel 200 cm"). Op aanmaakdatum, niet op voorraad: anders verspringt
+ * de canonical bij elke voorraadwijziging.
+ */
+export function primaryVariantSlugs(
+  rows: ReadonlyArray<{ slug: string; colorGroup: string | null; sizeName: string | null; createdAt: Date | string }>,
+): Set<string> {
+  const best = new Map<string, { slug: string; t: number }>();
+  const out = new Set<string>();
+  for (const r of rows) {
+    if (!r.colorGroup) {
+      out.add(r.slug);
+      continue;
+    }
+    const key = `${r.colorGroup}|${norm(r.sizeName)}`;
+    const t = new Date(r.createdAt).getTime();
+    const cur = best.get(key);
+    if (!cur || t < cur.t || (t === cur.t && r.slug < cur.slug)) best.set(key, { slug: r.slug, t });
+  }
+  for (const b of best.values()) out.add(b.slug);
+  return out;
+}

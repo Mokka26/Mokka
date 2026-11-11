@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { primaryVariantSlugs } from "@/lib/variants";
 import { CATEGORIES, productUrl } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { STATIC_ROUTE_UPDATED } from "@/lib/seo";
@@ -30,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.product.findMany({
       // Prijs 0 = "prijs op aanvraag": noindex op de PDP, dus ook niet in de sitemap.
       where: { ...VISIBLE, price: { gt: 0 } },
-      select: { slug: true, category: true, updatedAt: true },
+      select: { slug: true, category: true, updatedAt: true, colorGroup: true, sizeName: true, createdAt: true },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.product.count({
@@ -73,7 +74,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (newCount > 0) collectionRoutes.push({ url: `${baseUrl}/nieuw`, lastModified: newest });
 
   const productRoutes: MetadataRoute.Sitemap = [];
+  // Alleen de hoofdvariant per model + maat (kleurvarianten wijzen ernaar via canonical).
+  const primaries = primaryVariantSlugs(products);
   for (const p of products) {
+    if (!primaries.has(p.slug)) continue;
     const path = productUrl(p);
     // Categorie zonder route → geen canonieke pagina → niet in de sitemap.
     if (path.startsWith("/products/")) continue;

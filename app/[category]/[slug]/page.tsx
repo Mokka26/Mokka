@@ -11,6 +11,7 @@ import {
   dbCategoryToRouteSlug,
   getCategory,
   isCategorySlug,
+  productUrl,
 } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
 import { firstImageOnly } from "@/lib/imageHelpers";
@@ -25,7 +26,7 @@ import {
 } from "@/lib/jsonLd";
 import { findRedirectTarget } from "@/lib/slug-redirect";
 import { getFooterMethods } from "@/lib/mollie";
-import { MODEL_VARIANT_SELECT, onePerModel } from "@/lib/variants";
+import { MODEL_VARIANT_SELECT, onePerModel, primaryVariantSlugs } from "@/lib/variants";
 
 interface Props {
   params: Promise<{ category: string; slug: string }>;
@@ -98,6 +99,26 @@ const getProduct = cache(async (slug: string) =>
   }),
 );
 
+/**
+ * Hoofdvariant voor Google: kleurvarianten van hetzelfde model en dezelfde
+ * maat wijzen met hun canonical naar één pagina (zie primaryVariantSlugs).
+ * Zelfde set als de sitemap: zichtbaar en met prijs.
+ */
+const getCanonicalPath = cache(async (product: { slug: string; category: string; colorGroup: string | null; sizeName: string | null }) => {
+  const own = productUrl(product);
+  if (!product.colorGroup) return own;
+  const siblings = await prisma.product.findMany({
+    where: { colorGroup: product.colorGroup, hidden: false, deletedAt: null, price: { gt: 0 } },
+    select: { slug: true, category: true, colorGroup: true, sizeName: true, createdAt: true },
+  });
+  const primaries = primaryVariantSlugs(siblings);
+  const sameSize = (s: string | null) => (s ?? "").trim().toLowerCase() === (product.sizeName ?? "").trim().toLowerCase();
+  const primary = siblings.find((s) => primaries.has(s.slug) && sameSize(s.sizeName));
+  const path = primary ? productUrl(primary) : own;
+  // Categorie zonder eigen route → legacy-pad; dan de eigen URL houden.
+  return path.startsWith("/products/") ? own : path;
+});
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: categorySlug, slug } = await params;
   const category = getCategory(categorySlug);
@@ -107,6 +128,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const url = `/${category.slug}/${product.slug}`;
+  const canonical = await getCanonicalPath(product);
   const title = buildProductTitle(product.name, category.label);
   const description = buildProductDescription(product.description, product.name, category.label);
 
@@ -114,7 +136,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Absolute title: de layout-template zou anders "| Mokka Home" dubbel zetten.
     title: { absolute: title },
     description,
-    alternates: { canonical: url },
+    alternates: { canonical },
     // Prijs op aanvraag (0) is geen koopbare pagina: niet indexeren, wel links volgen.
     ...(product.price > 0 ? {} : { robots: { index: false, follow: true } }),
     // ogDefaults: siteName + Twitter-card. De bestandsgebaseerde

@@ -6,6 +6,7 @@ import {
   formatSizeList,
   inStockFirst,
   onePerModel,
+  primaryVariantSlugs,
   swatchBackground,
   type ModelVariant,
 } from "@/lib/variants";
@@ -140,5 +141,17 @@ describe("listing-helpers", () => {
       { id: 4, stock: 0 },
     ];
     expect(inStockFirst(list).map((p) => p.id)).toEqual([2, 3, 1, 4]);
+  });
+});
+
+describe("primaryVariantSlugs", () => {
+  it("kiest per model en maat de oudste variant; losse producten en andere maten blijven", () => {
+    const rows = [
+      { slug: "tafel-wit-200", colorGroup: "tafel", sizeName: "200 cm", createdAt: "2026-02-01" },
+      { slug: "tafel-zwart-200", colorGroup: "tafel", sizeName: "200 cm", createdAt: "2026-01-01" },
+      { slug: "tafel-zwart-180", colorGroup: "tafel", sizeName: "180 cm", createdAt: "2026-03-01" },
+      { slug: "los-product", colorGroup: null, sizeName: null, createdAt: "2026-01-01" },
+    ];
+    expect([...primaryVariantSlugs(rows)].sort()).toEqual(["los-product", "tafel-zwart-180", "tafel-zwart-200"]);
   });
 });
