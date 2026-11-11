@@ -1,129 +1,136 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { permanentRedirect } from "next/navigation";
-import { unstable_cache } from "next/cache";
-import { isCategorySlug } from "@/lib/categories";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { CATEGORIES, getCategory, isCategorySlug } from "@/lib/categories";
 import { businessInfo } from "@/lib/business-info";
-import { prisma } from "@/lib/prisma";
-import { firstImageOnly } from "@/lib/imageHelpers";
-import { PRODUCTS_TAG } from "@/lib/revalidate";
-import { dedupeByColorGroup } from "@/lib/dedupe";
-import ProductsContent from "./ProductsContent";
-import MotionProvider from "@/components/MotionProvider";
-
-export const revalidate = 3600;
-
-// Kaarten per pagina. De catalogus (±1.200 producten) ging eerder in zijn
-// geheel als RSC-payload naar de client (~600 kB); nu alleen de pagina die
-// de bezoeker ziet (?page=N, server-side slice). Filters halen zelf via
-// /api/products op (zie ProductsContent).
-const PAGE_SIZE = 48;
-
-// De ?category=-redirect maakt deze route per-request dynamisch, waardoor de
-// volledige-catalogus-query anders bij ELKE bezoeker Neon zou raken. Cache de
-// query daarom 1u (zelfde venster als de ISR-categoriepagina's) zodat 'ie
-// hooguit 1×/uur draait i.p.v. per bezoek.
-const getAllProducts = unstable_cache(
-  async () => {
-    const products = await prisma.product.findMany({
-      where: { hidden: false, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true, slug: true, name: true, price: true, listPrice: true, category: true,
-        images: true, featured: true, stock: true, createdAt: true,
-        deliveryTime: true, sizeVariants: true,
-        colorGroup: true, colorName: true, colorHex: true, sizeName: true, specs: true,
-      },
-    });
-    // Payload-trim: kaart toont alleen foto 1 — rest van de images-JSON is
-    // ballast in de flight-payload.
-    // Kleurvarianten hier al samenvoegen, zodat de paginering op kaarten telt
-    // en een kleurgroep nooit over twee pagina's verdeeld raakt.
-    return dedupeByColorGroup(products.map((p) => ({ ...p, images: firstImageOnly(p.images) })));
-  },
-  ["all-products"],
-  { tags: [PRODUCTS_TAG], revalidate: 3600 },
-);
-
-export const metadata: Metadata = {
-  title: "Alle producten: het volledige assortiment",
-  description: `Het volledige assortiment van ${businessInfo.name} in één overzicht: banken, eettafels, stoelen, kasten, bedden en verlichting. Filter op categorie, prijs of materiaal.`,
-  alternates: { canonical: "/products" },
-  // Totaaloverzicht is een hulpmiddel, geen landingspagina: de categorie-
-  // pagina's zijn canoniek. Niet indexeren, wel links volgen; niet in de sitemap.
-  robots: { index: false, follow: true },
-  openGraph: {
-    title: `Alle producten | ${businessInfo.name}`,
-    description: `Het volledige assortiment van ${businessInfo.name} in één overzicht.`,
-    type: "website",
-    url: "/products",
-    locale: "nl_NL",
-  },
-};
-
-interface Props {
-  searchParams: Promise<{ category?: string; page?: string }>;
-}
-
-function parsePage(raw: string | undefined, pageCount: number): number {
-  const n = Number.parseInt(raw ?? "1", 10);
-  if (!Number.isFinite(n) || n < 1) return 1;
-  return Math.min(n, pageCount);
-}
+import { filterModels, filtersToQuery, parseFilters, sortModels, variantTraits, type VariantTraits } from "@/lib/filters";
+import { inStockFirst } from "@/lib/variants";
+import { matchesSearch, searchTerms } from "@/lib/search";
+import { getCategoryProducts, groupModels, type SearchParams } from "@/app/[category]/category-page";
+import CategoryListing, { type ListingProduct, type ListingVariant } from "@/app/[category]/CategoryListing";
 
 /**
- * /products — overzicht "alle producten" (geen filter), 48 per pagina.
- *
- * Als ?category=X aanwezig → 301-redirect naar canonieke /<categorie>.
- * Speciale waarde "alle-banken" mapt naar /banken (umbrella).
+ * /products — alle producten én zoekresultaten (?q=). Zelfde server-side
+ * filters, kaarten en paginering als de categoriepagina's (lib/filters +
+ * CategoryListing). Geen landingspagina: noindex, niet in de sitemap.
+ * ?category=X → 308 naar /X (oude links).
  */
-export default async function ProductsPage({ searchParams }: Props) {
-  const { category, page: rawPage } = await searchParams;
 
+const PAGE_SIZE = 24;
+const LISTING = { slug: "products", label: "Alle producten" } as const;
+
+/** Alle DB-categorieën met een eigen route (umbrella's zijn alleen groeperingen). */
+const ALL_DB_CATEGORIES = [...new Set(CATEGORIES.flatMap((c) => c.dbCategories))];
+
+interface Props {
+  searchParams: Promise<SearchParams>;
+}
+
+function first(v: string | string[] | undefined): string | undefined {
+  return Array.isArray(v) ? v[0] : v;
+}
+
+/** Zoekterm uit ?q=, opgeschoond (max. 80 tekens, zoals /api/products). */
+function readQuery(sp: SearchParams): string {
+  return (first(sp.q) ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const q = readQuery(await searchParams);
+  return {
+    title: q ? `Zoekresultaten voor “${q}”` : "Alle producten: het volledige assortiment",
+    description: `Het volledige assortiment van ${businessInfo.name} in één overzicht: banken, eettafels, stoelen, kasten, bedden en verlichting. Filter op prijs, materiaal, kleur en maat.`,
+    alternates: { canonical: "/products" },
+    // Hulpmiddel, geen landingspagina: de categoriepagina's zijn canoniek.
+    robots: { index: false, follow: true },
+  };
+}
+
+export default async function ProductsPage({ searchParams }: Props) {
+  const sp = await searchParams;
+
+  // Oude links: ?category=X → canonieke categoriepagina.
+  const category = first(sp.category);
   if (category) {
     const target = category === "alle-banken" ? "banken" : category;
-    if (isCategorySlug(target)) {
-      permanentRedirect(`/${target}`);
-    }
+    if (isCategorySlug(target)) permanentRedirect(`/${target}`);
   }
 
-  // Server-side ophalen (gecached, zie getAllProducts) → de kaarten van deze
-  // pagina staan in de SSR-HTML (LCP), geen client-fetch bij eerste load.
-  const all = await getAllProducts();
-  const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
-  const page = parsePage(rawPage, pageCount);
-  const initialProducts = all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = readQuery(sp);
+  const terms = searchTerms(q);
+  const filters = parseFilters(sp);
+  const baseQuery = q ? new URLSearchParams({ q }).toString() : "";
+  const query = [baseQuery, filtersToQuery(filters)].filter(Boolean).join("&");
+
+  const rawPage = first(sp.page);
+  const page = rawPage === undefined ? 1 : /^\d+$/.test(rawPage) ? Number(rawPage) : NaN;
+  if (!Number.isFinite(page) || page < 1) notFound();
+
+  const all = await getCategoryProducts(ALL_DB_CATEGORIES);
+  // Zoeken per variant: een model blijft staan als minstens één uitvoering past.
+  const matching = terms.length > 0 ? all.filter((p) => matchesSearch(p, terms)) : all;
+  const { models, variants } = groupModels(matching);
+
+  const traits = new Map<string, VariantTraits>(matching.map((p) => [p.id, variantTraits(p)]));
+  const result = filterModels(
+    models,
+    (p) => traits.get(p.id) as VariantTraits,
+    filters,
+    (c) => getCategory(c)?.label ?? c,
+  );
+  const sorted = filters.sort === "aanbevolen" ? inStockFirst(result.models) : sortModels(result.models, filters.sort);
+
+  const totalCount = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  // Na een strenger filter kan de pagina niet meer bestaan → terug naar pagina 1.
+  if (page > totalPages) redirect(query ? `/products?${query}` : "/products");
+
+  const start = (page - 1) * PAGE_SIZE;
+  const pageProducts: ListingProduct[] = sorted.slice(start, start + PAGE_SIZE);
+  const pageVariants: Record<string, ListingVariant[]> = {};
+  for (const p of pageProducts) {
+    if (p.colorGroup && variants[p.colorGroup]) pageVariants[p.colorGroup] = variants[p.colorGroup];
+  }
+
+  const href = (n: number) => {
+    const qs = new URLSearchParams(query);
+    if (n > 1) qs.set("page", String(n));
+    const s = qs.toString().replace(/%2C/gi, ",");
+    return s ? `/products?${s}` : "/products";
+  };
 
   return (
-    <Suspense fallback={
-      <div className="pt-28 lg:pt-32 pb-20">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-14 lg:mb-20">
-          <div className="h-3 w-24 bg-bone animate-shimmer mb-4" />
-          <div className="h-12 w-72 bg-bone animate-shimmer" />
-        </div>
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="h-14 bg-bone animate-shimmer mb-10 lg:mb-14" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-12 sm:gap-x-4 sm:gap-y-14">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <div className="aspect-square bg-white animate-shimmer" />
-                <div className="h-3 w-3/4 bg-bone animate-shimmer" />
-                <div className="h-3 w-1/3 bg-bone animate-shimmer" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    }>
-      {/* framer-motion alleen hier (FilterBar/ProductsContent), niet in de root-bundel. */}
-      <MotionProvider>
-        <ProductsContent
-          initialProducts={initialProducts}
-          page={page}
-          pageCount={pageCount}
-          total={all.length}
-        />
-      </MotionProvider>
-    </Suspense>
+    <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
+      <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
+        <p className="eyebrow mb-4">{q ? "Zoeken" : "Collectie"}</p>
+        <h1 className="display-lg text-ink">{q ? `Resultaten voor “${q}”` : "Alle producten"}</h1>
+      </header>
+
+      <CategoryListing
+        category={q ? { slug: LISTING.slug, label: `Zoeken: ${q}` } : LISTING}
+        products={pageProducts}
+        variants={pageVariants}
+        page={page}
+        pageSize={PAGE_SIZE}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        categoryCount={models.length}
+        prevHref={page > 1 ? href(page - 1) : null}
+        nextHref={page < totalPages ? href(page + 1) : null}
+        query={query}
+        filters={filters}
+        facets={result.facets}
+        priceOptions={result.priceOptions}
+        inStockCount={result.inStockCount}
+        baseQuery={baseQuery}
+        empty={
+          q
+            ? {
+                title: `Niets gevonden voor “${q}”`,
+                text: "Probeer een ander woord (bijvoorbeeld ‘eettafel’ of ‘hoekbank’), haal een filter weg of bel ons: we denken graag mee.",
+              }
+            : undefined
+        }
+      />
+    </div>
   );
 }

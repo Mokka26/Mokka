@@ -76,3 +76,20 @@ export function buildSearchWhere(q: string): Prisma.ProductWhereInput | null {
     }),
   };
 }
+
+function fold(s: string): string {
+  return s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");
+}
+
+/**
+ * Zelfde logica als buildSearchWhere, maar in het geheugen (voor gecachte
+ * productlijsten, bv. /products). Accenten tellen hier niet mee.
+ */
+export function matchesSearch(
+  p: { name: string; colorName?: string | null; specs?: string | null; category: string },
+  terms: ReadonlyArray<string>,
+): boolean {
+  if (terms.length === 0) return true;
+  const hay = fold(`${p.name} ${p.colorName ?? ""} ${p.specs ?? ""}`);
+  return terms.every((t) => hay.includes(fold(t)) || categoriesFor(t).includes(p.category));
+}

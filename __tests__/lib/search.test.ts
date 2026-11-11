@@ -1,4 +1,4 @@
-import { buildSearchWhere, searchTerms } from "@/lib/search";
+import { buildSearchWhere, matchesSearch, searchTerms } from "@/lib/search";
 
 describe("searchTerms", () => {
   it("normaliseert en kort meervoud in", () => {
@@ -26,5 +26,25 @@ describe("buildSearchWhere", () => {
 
   it("geeft null bij een lege zoekterm", () => {
     expect(buildSearchWhere("  ")).toBeNull();
+  });
+});
+
+describe("matchesSearch (in het geheugen)", () => {
+  const tafel = { name: "Enzo eettafel rond Ø120", colorName: "Walnoot", specs: '{"Materiaal":"Keramiek"}', category: "eettafels" };
+  const stoel = { name: "Stoel 'Sevilla'", colorName: "Zand", specs: '{"Materiaal":"Bouclé"}', category: "eetkamerstoelen" };
+
+  it("eist elk woord in naam, kleur, specs of categorie", () => {
+    expect(matchesSearch(tafel, searchTerms("ronde eettafel"))).toBe(true);
+    expect(matchesSearch(tafel, searchTerms("eettafel walnoot"))).toBe(true);
+    expect(matchesSearch(tafel, searchTerms("eettafel marmer"))).toBe(false);
+  });
+
+  it("negeert accenten en vindt via de categorie", () => {
+    expect(matchesSearch(stoel, searchTerms("boucle"))).toBe(true);
+    expect(matchesSearch(stoel, searchTerms("eetkamerstoelen zand"))).toBe(true);
+  });
+
+  it("laat alles door zonder zoekwoorden", () => {
+    expect(matchesSearch(stoel, [])).toBe(true);
   });
 });

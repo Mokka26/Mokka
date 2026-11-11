@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import ProductCard, { type ProductCardVariant } from "@/components/ProductCard";
 import { useFooterInView } from "@/components/product/useFooterInView";
-import { productUrl, type Category } from "@/lib/categories";
+import { productUrl } from "@/lib/categories";
 import { trackSelectItem, trackViewItemList } from "@/lib/analytics";
 import {
   activeFilterCount,
@@ -42,7 +42,8 @@ export type ListingProduct = {
 export type ListingVariant = ProductCardVariant;
 
 interface Props {
-  category: Category;
+  /** Alleen slug (URL + GA4-lijst) en label worden gebruikt; /products geeft een eigen waarde mee. */
+  category: { slug: string; label: string };
   /** De kaarten van déze pagina (max. 24), al gefilterd en gesorteerd op de server. */
   products: ListingProduct[];
   /** Swatch-rij per colorGroup voor de kaarten op deze pagina. */
@@ -62,6 +63,10 @@ interface Props {
   facets: Facet[];
   priceOptions: FacetOption[];
   inStockCount: number;
+  /** Vaste querydeel dat bij elke filterwijziging blijft staan (bv. `q=bank` op /products). */
+  baseQuery?: string;
+  /** Eigen tekst als er niets gevonden is (bv. zoekresultaten). */
+  empty?: { title: string; text: string };
 }
 
 const FILTER_DRAWER_ID = "category-filters";
@@ -107,6 +112,8 @@ export default function CategoryListing({
   facets,
   priceOptions,
   inStockCount,
+  baseQuery = "",
+  empty,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -116,7 +123,7 @@ export default function CategoryListing({
 
   /** Nieuwe filterstaat → URL (pagina terug naar 1); de server rendert het resultaat. */
   const applyFilters = (next: ActiveFilters) => {
-    const q = filtersToQuery(next);
+    const q = [baseQuery, filtersToQuery(next)].filter(Boolean).join("&");
     startTransition(() => {
       router.push(q ? `/${category.slug}?${q}` : `/${category.slug}`, { scroll: false });
     });
@@ -188,12 +195,13 @@ export default function CategoryListing({
           {products.length === 0 ? (
             <div className="text-center py-24">
               <p className="font-serif text-2xl text-ink mb-4">
-                {categoryCount === 0 ? "Nog geen producten" : "Geen producten met deze filters"}
+                {empty?.title ?? (categoryCount === 0 ? "Nog geen producten" : "Geen producten met deze filters")}
               </p>
               <p className="text-base text-graphite">
-                {categoryCount === 0
-                  ? "Deze collectie wordt binnenkort gevuld."
-                  : "Haal een filter weg of kies een andere combinatie."}
+                {empty?.text ??
+                  (categoryCount === 0
+                    ? "Deze collectie wordt binnenkort gevuld."
+                    : "Haal een filter weg of kies een andere combinatie.")}
               </p>
               {activeCount > 0 && (
                 <button type="button" onClick={clearFilters} className="btn-ghost mt-8">

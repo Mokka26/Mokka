@@ -37,7 +37,7 @@ const PAGE_SIZE = 24;
 // De dynamische route leest `?page=`/filters per request. De catalogus-
 // query zelf is 1 uur gecached (tag "products" → vervalt bij elke mutatie via
 // lib/revalidate.ts), dus Neon wordt hooguit 1×/uur per categorie geraakt.
-const getCategoryProducts = unstable_cache(
+export const getCategoryProducts = unstable_cache(
   async (dbCategories: string[]) => {
     const products = await prisma.product.findMany({
       where: { category: { in: dbCategories }, hidden: false, deletedAt: null },
@@ -71,7 +71,7 @@ const getCategoryProducts = unstable_cache(
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
 );
 
-type CategoryProduct = Awaited<ReturnType<typeof getCategoryProducts>>[number];
+export type CategoryProduct = Awaited<ReturnType<typeof getCategoryProducts>>[number];
 
 /** Umbrella-volgorde (bv. banken → hoekbanken eerst); stabiele sort. */
 function applyTypeOrder(products: CategoryProduct[], category: Category): CategoryProduct[] {
@@ -89,7 +89,7 @@ function applyTypeOrder(products: CategoryProduct[], category: Category): Catego
  * één kaart. Geeft de modellen (varianten in catalogusvolgorde) en de
  * variantenrij per groep (kleur, maat, prijs, voorraad) voor de kaart.
  */
-function groupModels(products: CategoryProduct[]): {
+export function groupModels(products: CategoryProduct[]): {
   models: CategoryProduct[][];
   variants: Record<string, ListingVariant[]>;
 } {
