@@ -137,7 +137,11 @@ function buildShippingDetails(price: number, deliveryTime: string | null | undef
       value: free ? 0 : shippingInfo.rates.standard,
       currency: "EUR",
     },
-    shippingDestination: { "@type": "DefinedRegion", addressCountry: "NL" },
+    // Zelfde tarief en drempel voor alle bezorglanden (NL + BE), zie shipping-info.
+    shippingDestination: shippingInfo.freeShippingCountries.map((country) => ({
+      "@type": "DefinedRegion",
+      addressCountry: country,
+    })),
     deliveryTime: deliveryTimeSpec,
   };
 }

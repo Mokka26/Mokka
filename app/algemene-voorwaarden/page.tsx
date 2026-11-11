@@ -71,8 +71,8 @@ export default function VoorwaardenPage() {
       <LegalSection heading="8. Klachten">
         <p>
           Heb je een klacht? Neem contact op via {businessInfo.contact.email}. We reageren binnen
-          14 dagen. Komen we er samen niet uit, dan kun je je wenden tot de Europese
-          geschillencommissie (ODR-platform).
+          14 dagen. Komen we er samen niet uit, dan kun je het geschil voorleggen aan de bevoegde
+          rechter.
         </p>
       </LegalSection>
     </LegalPage>

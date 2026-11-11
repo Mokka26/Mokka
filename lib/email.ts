@@ -209,6 +209,32 @@ function addressHtml(order: OrderMailData): string {
 }
 
 /**
+ * Herroepingsrecht + wettelijk modelformulier (Bijlage I deel B bij Boek 6 BW).
+ * Moet uiterlijk bij levering op een duurzame drager bij de klant zijn
+ * (art. 6:230v BW) — de orderbevestiging is die drager.
+ */
+export function withdrawalLines(): string[] {
+  const days = shippingInfo.returnWindowDays;
+  const site = businessInfo.siteUrl;
+  return [
+    `Bedenktijd`,
+    `Je hebt ${days} dagen bedenktijd vanaf de dag dat je het product ontvangt (bij meerdere leveringen: het laatste product). Wil je de koop herroepen, laat het ons dan binnen die termijn weten per e-mail (${businessInfo.contact.email}) of met het modelformulier hieronder. ${shippingInfo.returnFeesCopy} Maatwerk is uitgezonderd.`,
+    `Meer informatie: ${site}${businessInfo.legal.returnPolicyUrl} · Algemene voorwaarden: ${site}${businessInfo.legal.termsUrl}`,
+    ``,
+    `Modelformulier voor herroeping`,
+    `(dit formulier alleen invullen en terugzenden als je de overeenkomst wilt herroepen)`,
+    `— Aan: ${businessInfo.legalName}, ${getFullAddress()}, ${businessInfo.contact.email}`,
+    `— Ik/Wij* deel/delen* u hierbij mede dat ik/wij* onze overeenkomst betreffende de verkoop van de volgende producten herroep/herroepen*:`,
+    `— Besteld op*/Ontvangen op*:`,
+    `— Naam/Namen consument(en):`,
+    `— Adres consument(en):`,
+    `— Handtekening van consument(en) (alleen wanneer dit formulier op papier wordt ingediend):`,
+    `— Datum:`,
+    `* Doorhalen wat niet van toepassing is.`,
+  ];
+}
+
+/**
  * Orderbevestiging naar de klant + interne kopie naar info@.
  * Retourneert true als de KLANT-mail is verstuurd. De interne kopie gaat
  * alléén na een geslaagde klantmail (best-effort, telt niet mee voor
@@ -240,7 +266,18 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     ``,
     `Hartelijke groet,`,
     businessInfo.name,
+    ``,
+    `────────────`,
+    ...withdrawalLines(),
   ].join("\n");
+
+  const [wTitle, wBody, wLinks, , fTitle, ...form] = withdrawalLines();
+  const withdrawalHtml = [
+    `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #E5E1D9;font-size:14px;line-height:1.6;">`,
+    p(`<strong style="color:#14110D;">${escapeHtml(wTitle)}</strong><br>${escapeHtml(wBody)}<br>${escapeHtml(wLinks)}`),
+    p(`<strong style="color:#14110D;">${escapeHtml(fTitle)}</strong><br>${form.map(escapeHtml).join("<br>")}`),
+    `</div>`,
+  ].join("");
 
   const html = layout(`Bevestiging van je bestelling ${order.orderNumber}`, [
     h1("Bedankt voor je bestelling"),
@@ -251,6 +288,7 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     p(`<strong style="color:#14110D;">Hoe nu verder?</strong><br>${escapeHtml(NEXT_STEP_AFTER_PAYMENT)}`),
     p(`Vragen? Mail naar <a href="mailto:${businessInfo.contact.email}" style="color:#14110D;">${escapeHtml(businessInfo.contact.email)}</a>${escapeHtml(phoneLine)}.`),
     p(`Hartelijke groet,<br>${escapeHtml(businessInfo.name)}`),
+    withdrawalHtml,
   ].join(""));
 
   const sent = await sendMail({

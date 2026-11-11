@@ -141,7 +141,7 @@ export const shippingInfo = {
 
   // Footer USP-balk (4 items, korte sub-tekst)
   footerUsps: [
-    { title: "Gratis verzending", sub: "Vanaf €100 in NL" },
+    { title: "Gratis verzending", sub: "Vanaf €100 in NL en BE" },
     { title: "Persoonlijk advies", sub: "Over maten, stoffen en kleuren" },
     { title: "Garantie", sub: "Op fabrieks- en materiaalfouten" },
     { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
