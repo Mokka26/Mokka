@@ -198,20 +198,24 @@ export default function ProductCard({ product, variants, priority = false, sizes
         {/* Info block — flex-col zodat footer (prijs+voorraad) altijd op
             zelfde Y-positie eindigt ongeacht spec-grid lengte */}
         <div className="text-left flex flex-col flex-1 min-w-0">
+          {/* Mobiel (2 kolommen, ±155px breed) alleen het essentiële: naam, maat,
+              kleuren, prijs, voorraad en levertijd. Eyebrow, standaardzin en
+              materiaal pas vanaf sm. */}
           {eyebrow && (
-            <p className="eyebrow-lg mb-1">{eyebrow}</p>
+            <p className="hidden sm:block eyebrow-lg mb-1">{eyebrow}</p>
           )}
 
           <h3 className="font-serif text-lg sm:text-2xl text-ink leading-[1.2] sm:leading-[1.15] tracking-[-0.015em] mb-1.5 line-clamp-2 sm:line-clamp-none">
             <span className="card-name">{title}</span>
           </h3>
 
-          {cardSubtitle && (
-            <p className="text-[14px] text-stone leading-snug mb-2">{cardSubtitle}</p>
+          {/* Standaardzin ("In diverse kleuren.") niet als de kleurbolletjes het al laten zien. */}
+          {cardSubtitle && colorDots.length === 0 && (
+            <p className="hidden sm:block text-[14px] text-stone leading-snug mb-2">{cardSubtitle}</p>
           )}
 
           {/* SIGNATURE: hairline-marker */}
-          <div className="w-4 h-px bg-accent-light mb-2 sm:mb-3" aria-hidden="true" />
+          <div className="hidden sm:block w-4 h-px bg-accent-light mb-3" aria-hidden="true" />
 
           {(dimensions || sizeLine || materialLine || colorDots.length > 0) && (
             <dl className="space-y-1 mb-3 text-[14px] leading-[1.45]">
@@ -233,7 +237,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
                 </div>
               )}
               {materialLine && (
-                <div className="flex items-baseline gap-3">
+                <div className="hidden sm:flex items-baseline gap-3">
                   <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Materiaal</dt>
                   <dd className="text-stone sm:text-ink truncate" title={materialLine}>
                     <span className="sr-only sm:hidden">Materiaal: </span>
