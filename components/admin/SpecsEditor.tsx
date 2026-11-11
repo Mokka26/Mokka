@@ -22,7 +22,7 @@ function rowsToObject(rows: Row[]): Record<string, string> {
 
 // 16px tekst (geen iOS-zoom), 44px hoog, zichtbare focus.
 const inputCls =
-  "w-full min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
+  "w-full min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
 
 export default function SpecsEditor({
   name,

@@ -122,7 +122,7 @@ export function CategoryOrderEditor({ slug, label, initial, hasManualOrder }: Pr
                 max={items.length}
                 value={i + 1}
                 onChange={(e) => setPosition(i, e.target.value)}
-                className="w-16 min-h-11 px-2 text-center bg-white border border-line-strong text-ink text-base tabular-nums focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-16 min-h-11 px-2 text-center bg-white border border-line-strong text-ink text-base tabular-nums focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
               />
             </label>
             <div className="relative w-14 h-14 shrink-0 bg-bone overflow-hidden rounded-[6px]">

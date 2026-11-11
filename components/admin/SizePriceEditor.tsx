@@ -68,7 +68,7 @@ export default function SizePriceEditor({
 
   // 16px tekst (geen iOS-zoom), 44px hoog, zichtbare focus.
   const inputCls =
-    "w-full min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+    "w-full min-h-11 px-3 py-2 border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
   // Alleen < sm zichtbaar: daar ontbreekt de kolomkop, dus elk veld krijgt een eigen label.
   const mobileLabelCls = "sm:hidden block text-sm text-stone mb-1";
 

@@ -9,7 +9,7 @@ import { createProduct, type CreateProductState } from "../actions";
 const initial: CreateProductState = {};
 
 const inputCls =
-  "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+  "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 
 export default function NewProductForm({ categories }: { categories: string[] }) {
   const [state, action, pending] = useActionState(createProduct, initial);

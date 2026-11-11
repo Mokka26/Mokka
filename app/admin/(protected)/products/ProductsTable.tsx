@@ -270,7 +270,7 @@ function ProductRowView({ product, selected, onToggle }: { product: ProductRow; 
 // ─── Inline cellen ───────────────────────────────────────────────────
 
 const inlineInput =
-  "min-h-11 max-w-full px-2 py-1 text-base border border-accent bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent text-right tabular-nums";
+  "min-h-11 max-w-full px-2 py-1 text-base border border-accent bg-white focus-visible:ring-2 focus-visible:ring-accent text-right tabular-nums";
 
 function StockCell({ id, initial, name }: { id: string; initial: number; name: string }) {
   const [editing, setEditing] = useState(false);

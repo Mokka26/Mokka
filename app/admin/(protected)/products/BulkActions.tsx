@@ -202,7 +202,7 @@ function CategoryDialog({
         id={selectId}
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base mb-6 focus:outline-none focus:border-accent"
+        className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base mb-6 focus:border-accent"
       >
         {categories.map((c) => (
           <option key={c} value={c}>{c}</option>
@@ -275,7 +275,7 @@ function PriceDialog({
             id={modeId}
             value={mode}
             onChange={(e) => setMode(e.target.value === "absolute" ? "absolute" : "percent")}
-            className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent"
+            className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base focus:border-accent"
           >
             <option value="percent">Percentage</option>
             <option value="absolute">Vast bedrag</option>
@@ -293,7 +293,7 @@ function PriceDialog({
             placeholder={mode === "percent" ? "bijv. -10 of 5" : "bijv. 599,00"}
             aria-invalid={!!error}
             aria-describedby={error ? `${amountId}-err` : undefined}
-            className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base tabular-nums focus:outline-none focus:border-accent aria-[invalid=true]:border-error"
+            className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base tabular-nums focus:border-accent aria-[invalid=true]:border-error"
           />
         </div>
       </div>

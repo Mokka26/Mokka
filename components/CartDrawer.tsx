@@ -103,6 +103,10 @@ export default function CartDrawer({ open, onClose }: Props) {
               </div>
             )}
 
+            {/* Voorleesbare samenvatting bij elke wijziging (aantal/verwijderen). */}
+            <p className="sr-only" role="status">
+              {`Totaal bijgewerkt: ${formatPrice(total)}${shipping === 0 ? ", gratis verzending" : ""}`}
+            </p>
             <div className="flex justify-between items-baseline pt-3 border-t border-line">
               <span className="text-base text-ink">Totaal <span className="text-stone text-[14px]">({shippingInfo.vatLabelShort})</span></span>
               <span className="font-serif text-2xl text-ink tabular-nums">{formatPrice(total)}</span>

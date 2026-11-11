@@ -29,7 +29,7 @@ export default function LoginForm({ from, notice }: { from?: string; notice?: st
           autoComplete="email"
           required
           disabled={pending}
-          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
+          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:border-accent transition-colors disabled:opacity-60"
         />
         {state.fieldErrors?.email && (
           <p className="text-sm text-error mt-1.5">{state.fieldErrors.email}</p>
@@ -47,7 +47,7 @@ export default function LoginForm({ from, notice }: { from?: string; notice?: st
           autoComplete="current-password"
           required
           disabled={pending}
-          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent transition-colors disabled:opacity-60"
+          className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:border-accent transition-colors disabled:opacity-60"
         />
         {state.fieldErrors?.password && (
           <p className="text-sm text-error mt-1.5">{state.fieldErrors.password}</p>

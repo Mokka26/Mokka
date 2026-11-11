@@ -68,7 +68,7 @@ export default function DeleteProductButton({ id, name }: { id: string; name: st
               disabled={pending}
               autoFocus
               autoComplete="off"
-              className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line text-ink text-base focus:outline-none focus:border-error disabled:opacity-60 mb-2"
+              className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line text-ink text-base focus:border-error disabled:opacity-60 mb-2"
               placeholder={name}
             />
             {error && (

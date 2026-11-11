@@ -21,7 +21,7 @@ import { VALID_DB_CATEGORIES } from "../_lib/db-categories";
 export const dynamic = "force-dynamic";
 
 const selectCls =
-  "min-h-11 px-3 py-2 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
+  "min-h-11 px-3 py-2 bg-white border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
 
 export default async function AdminProductsPage({
   searchParams,

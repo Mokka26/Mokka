@@ -95,10 +95,26 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="relative overflow-hidden bg-bone rounded-[10px]" ref={emblaRef}>
+        <div
+          className="relative overflow-hidden bg-bone rounded-[10px]"
+          ref={emblaRef}
+          role="region"
+          aria-roledescription="carousel"
+          aria-label={`Foto's van ${productName}`}
+        >
           <div className="flex">
             {images.map((img, i) => (
-              <div key={`${img.url}-${i}`} className="flex-[0_0_100%] min-w-0">
+              <div
+                key={`${img.url}-${i}`}
+                className="flex-[0_0_100%] min-w-0"
+                role="group"
+                aria-roledescription="dia"
+                aria-label={`${i + 1} van ${total}`}
+                // Alleen de zichtbare dia is bereikbaar: anders 1 tabstop per foto
+                // naar onzichtbare dia's (de miniaturen/swipe wisselen van foto).
+                aria-hidden={i === active ? undefined : true}
+                inert={i === active ? undefined : true}
+              >
                 <button
                   type="button"
                   onClick={() => onOpen(i)}
@@ -135,6 +151,11 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
             <div className="lg:hidden absolute top-3 right-3 bg-white/90 px-3 py-1.5 text-sm text-ink rounded-full tabular-nums" aria-hidden="true">
               {active + 1} / {total}
             </div>
+          )}
+          {total > 1 && (
+            <p className="sr-only" aria-live="polite">
+              Foto {active + 1} van {total}
+            </p>
           )}
         </div>
 

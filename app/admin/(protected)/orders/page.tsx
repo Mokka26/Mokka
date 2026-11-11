@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 const dt = new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Amsterdam" });
 
 const selectCls =
-  "w-full min-h-11 px-3 py-2 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
+  "w-full min-h-11 px-3 py-2 bg-white border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent";
 const labelCls = "block eyebrow-lg mb-1.5";
 
 export default async function AdminOrdersPage({

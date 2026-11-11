@@ -94,7 +94,7 @@ function newestIso(...values: Array<string | undefined>): string {
 }
 
 const inputCls =
-  "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+  "w-full min-h-11 px-3 py-2.5 border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 
 export default function EditProductForm({ product, categories, validCategories, sources, imageCount, justSaved = false }: Props) {
   const [state, action, pending] = useActionState(updateProductFull, initial);

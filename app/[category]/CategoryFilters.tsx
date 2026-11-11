@@ -150,7 +150,7 @@ function PriceOptions({
 
   return (
     <div>
-      <ul className="list-none m-0 p-0">
+      <ul className="list-none m-0 p-0" aria-label="Prijsklasse (kies één)">
         {options.map((o) => (
           <li key={o.value}>
             <button
@@ -299,7 +299,14 @@ function Popover({
 
   const active = selectedCount > 0;
   return (
-    <div ref={rootRef} className="relative">
+    <div
+      ref={rootRef}
+      className="relative"
+      // Tab uit het paneel = sluiten (anders blijft het open over de pagina).
+      onBlur={(e) => {
+        if (open && !e.currentTarget.contains(e.relatedTarget as Node | null)) onOpenChange(false);
+      }}
+    >
       <button
         ref={buttonRef}
         type="button"

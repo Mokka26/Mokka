@@ -451,7 +451,7 @@ function ImageTile({
           onBlur={onAltBlur}
           maxLength={200}
           placeholder="Bijv. Hoekbank Lucce in bruin, vooraanzicht"
-          className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="w-full min-h-11 px-3 py-2 bg-bone border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
         />
       </div>
     </li>

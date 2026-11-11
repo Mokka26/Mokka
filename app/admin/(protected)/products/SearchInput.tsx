@@ -50,7 +50,7 @@ export default function SearchInput({ placeholder = "Zoek op naam, slug of kleur
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-full sm:w-80 min-h-11 pl-10 pr-11 py-2.5 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="w-full sm:w-80 min-h-11 pl-10 pr-11 py-2.5 bg-white border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
         />
         {value && (
           <button

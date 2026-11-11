@@ -110,7 +110,7 @@ export default function DeleteOrderButton({ id, orderNumber, paid, redirectTo, v
                   autoFocus
                   autoComplete="off"
                   placeholder={orderNumber}
-                  className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line text-ink text-base font-mono focus:outline-none focus:border-error disabled:opacity-60"
+                  className="w-full min-h-11 px-3 py-2.5 bg-bone border border-line text-ink text-base font-mono focus:border-error disabled:opacity-60"
                 />
               </div>
             )}

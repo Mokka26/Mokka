@@ -19,7 +19,7 @@ type Props = {
 };
 
 const inputCls =
-  "w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
+  "w-full min-h-11 px-3 py-2.5 bg-bone border border-line-strong text-ink text-base focus:border-accent focus-visible:ring-2 focus-visible:ring-accent aria-[invalid=true]:border-error";
 const labelCls = "block eyebrow-lg mb-1.5";
 
 export default function FulfillmentForm({ order }: Props) {

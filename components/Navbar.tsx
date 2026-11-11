@@ -277,13 +277,19 @@ export default function Navbar() {
                         setActiveDropdown(null);
                       }
                     }}
+                    // Esc sluit het submenu en zet de focus terug op het hoofditem (WCAG 1.4.13).
+                    onKeyDown={(e) => {
+                      if (e.key !== "Escape" || !item.subLinks || !isOpen) return;
+                      e.stopPropagation();
+                      setActiveDropdown(null);
+                      e.currentTarget.querySelector<HTMLElement>("a, button")?.focus();
+                    }}
                   >
                     {isMore ? (
                       // "Meer" is geen pagina: een knop die alleen het menu opent.
                       <button
                         type="button"
                         onClick={() => setActiveDropdown(isOpen ? null : item.label)}
-                        aria-haspopup="true"
                         aria-expanded={isOpen}
                         aria-controls={panelId}
                         className={`${desktopItemClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
@@ -297,11 +303,10 @@ export default function Navbar() {
                         <span aria-hidden="true" className={`${desktopUnderlineClass} ${isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
                       </button>
                     ) : (
+                      // Gewone link (navigeert naar de categorie). Het submenu opent bij
+                      // hover/focus en is daarna met Tab bereikbaar; geen menu-ARIA op een link.
                       <Link
                         href={item.href}
-                        aria-haspopup={item.subLinks ? "true" : undefined}
-                        aria-expanded={item.subLinks ? isOpen : undefined}
-                        aria-controls={item.subLinks ? panelId : undefined}
                         className={`${desktopItemClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
                       >
                         {item.label}

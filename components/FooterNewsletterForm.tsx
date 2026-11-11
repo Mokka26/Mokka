@@ -35,7 +35,8 @@ export function FooterNewsletterForm() {
   }
 
   if (status === "done") {
-    return <p className="text-white text-base py-3" role="status">{msg}</p>;
+    // tabIndex + autoFocus: het formulier verdwijnt, de focus gaat naar de bevestiging.
+    return <p className="text-white text-base py-3" role="status" tabIndex={-1} autoFocus>{msg}</p>;
   }
 
   return (
@@ -64,6 +65,8 @@ export function FooterNewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="jouw@email.nl"
+          aria-invalid={status === "error" || undefined}
+          aria-describedby={status === "error" ? "footer-newsletter-error" : undefined}
           className="flex-1 min-w-0 bg-transparent py-3 min-h-11 text-white placeholder-white/70 text-base focus:outline-none"
         />
         <button
@@ -74,7 +77,7 @@ export function FooterNewsletterForm() {
           {status === "sending" ? "Bezig…" : "Aanmelden"}
         </button>
       </form>
-      {status === "error" && <p className="text-error-light text-sm mt-2" role="alert">{msg}</p>}
+      {status === "error" && <p id="footer-newsletter-error" className="text-error-light text-base mt-2" role="alert">{msg}</p>}
     </>
   );
 }

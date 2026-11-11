@@ -94,7 +94,7 @@ function PasswordField({
         type="password"
         autoComplete={autoComplete}
         required
-        className="w-full min-h-11 px-3 py-2.5 bg-white border border-line-strong text-ink text-base focus:outline-none focus:border-accent"
+        className="w-full min-h-11 px-3 py-2.5 bg-white border border-line-strong text-ink text-base focus:border-accent"
       />
       {error && <p className="text-sm text-error mt-1.5">{error}</p>}
     </div>

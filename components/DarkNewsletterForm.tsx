@@ -30,7 +30,7 @@ export default function DarkNewsletterForm() {
   }
 
   if (status === "done") {
-    return <p className="text-white/80 text-base max-w-md mx-auto text-center" role="status">{msg}</p>;
+    return <p className="text-white/80 text-base max-w-md mx-auto text-center" role="status" tabIndex={-1} autoFocus>{msg}</p>;
   }
 
   return (
@@ -59,6 +59,8 @@ export default function DarkNewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="jouw@email.nl"
+          aria-invalid={status === "error" || undefined}
+          aria-describedby={status === "error" ? "nl-email-error" : undefined}
           // Zichtbare focus: de onderlijn (altijd 2px, dus geen verspringen)
           // wordt wit bij focus — vervangt de standaard outline.
           className="flex-1 min-h-11 bg-transparent border-b-2 border-white/40 text-white placeholder-white/60 py-3 px-0 focus-visible:outline-none focus-visible:border-white transition-colors text-base"
@@ -70,7 +72,7 @@ export default function DarkNewsletterForm() {
         >
           {status === "sending" ? "Bezig…" : "Aanmelden"}
         </button>
-        {status === "error" && <p className="text-error-light text-sm w-full sm:w-auto" role="alert">{msg}</p>}
+        {status === "error" && <p id="nl-email-error" className="text-error-light text-base w-full sm:w-auto" role="alert">{msg}</p>}
       </form>
       {/* Zelfde frequentie-belofte als de footer (components/Footer.tsx). */}
       <p className="text-sm text-white/70 mt-6 max-w-md mx-auto text-center leading-[1.6]">
