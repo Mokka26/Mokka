@@ -115,17 +115,22 @@ const PAY_LATER = new Set(["klarna", "in3", "riverty", "billie", "klarnapaylater
  * Client rendert deze als keuze. Valt terug op een vaste basislijst als Mollie
  * onbereikbaar is (bv. lokaal zonder API-key) zodat de checkout-UI altijd werkt.
  */
+const FALLBACK_METHODS: CheckoutMethod[] = [
+  { id: "ideal", description: "iDEAL", image: null },
+  { id: "creditcard", description: "Creditcard", image: null },
+  { id: "bancontact", description: "Bancontact", image: null },
+];
+
 export async function getPaymentMethods(amountValue: number, country: CheckoutCountry = "NL"): Promise<CheckoutMethod[]> {
   const amt = typeof amountValue === "number" && amountValue > 0 ? amountValue : 0;
   if (!amt) return [];
+  // Elke aanroep raakt de Mollie-API: begrens per IP. Boven de grens de vaste
+  // lijst (geen fout voor de klant, wel geen gratis Mollie-proxy).
+  if (!(await rateLimitIp("payment-methods", 60, 60_000)).ok) return FALLBACK_METHODS;
   const safeCountry: CheckoutCountry = country === "BE" ? "BE" : "NL";
   const methods = await listEnabledMethods(amt, safeCountry);
   if (methods && methods.length) return methods;
-  return [
-    { id: "ideal", description: "iDEAL", image: null },
-    { id: "creditcard", description: "Creditcard", image: null },
-    { id: "bancontact", description: "Bancontact", image: null },
-  ];
+  return FALLBACK_METHODS;
 }
 
 async function baseUrl(): Promise<string> {

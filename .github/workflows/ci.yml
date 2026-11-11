@@ -45,8 +45,14 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Lint
-        run: npm run lint
+      - name: Lint (geen warnings)
+        run: npm run lint:strict
+
+      # Meldt kwetsbare dependencies. Tijdelijk niet blokkerend: de updates
+      # wachten op akkoord van de eigenaar (verbeterplan SEC-1).
+      - name: npm audit (productie-dependencies)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
 
       - name: Tests (jest --ci --coverage)
         run: npm run test:ci
