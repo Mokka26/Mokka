@@ -28,10 +28,12 @@ export const shippingInfo = {
     standard: 4.95,
   },
 
-  // Levertijden per stock-status — TODO: bevestig per categorie
+  // Algemene levertijden per voorraadstatus, gelijk aan wat de producten zelf
+  // tonen (2026-11: 1.269× "Binnen 5 werkdagen", 155× "4 tot 8 weken"). De
+  // levertijd per product (Product.deliveryTime) gaat altijd voor.
   deliveryTime: {
-    inStock: "2-3 werkdagen",
-    backorder: "2-4 weken",
+    inStock: "5 werkdagen",
+    backorder: "4 tot 8 weken",
     custom: "6-8 weken",
   },
 

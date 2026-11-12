@@ -54,10 +54,17 @@ export function parseImages(raw: string | null | undefined): ProductImage[] {
   try {
     const arr: unknown = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
+    // Dezelfde foto twee keer in de JSON (komt bij imports voor) → één keer tonen.
+    const seen = new Set<string>();
+    const unique = (img: ProductImage): ProductImage[] => {
+      if (seen.has(img.url)) return [];
+      seen.add(img.url);
+      return [img];
+    };
     return arr.flatMap((item: unknown): ProductImage[] => {
       if (typeof item === "string") {
         const url = item.trim();
-        return url.length > 0 ? [{ url }] : [];
+        return url.length > 0 ? unique({ url }) : [];
       }
       if (!item || typeof item !== "object") return [];
       const rec = item as Record<string, unknown>;
@@ -69,7 +76,7 @@ export function parseImages(raw: string | null | undefined): ProductImage[] {
       const h = toPositiveNumber(rec.h ?? rec.height);
       const alt = typeof rec.alt === "string" && rec.alt.trim() ? rec.alt.trim() : undefined;
       const bg = toBackground(rec.bg);
-      return [{ url, ...(w ? { w } : {}), ...(h ? { h } : {}), ...(alt ? { alt } : {}), ...(bg ? { bg } : {}) }];
+      return unique({ url, ...(w ? { w } : {}), ...(h ? { h } : {}), ...(alt ? { alt } : {}), ...(bg ? { bg } : {}) });
     });
   } catch {
     return [];

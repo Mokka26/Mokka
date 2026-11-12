@@ -39,9 +39,9 @@ export default function CookiesPage() {
       <LegalSection heading="Je keuze beheren">
         <p>
           Bij je eerste bezoek vragen we via de cookiemelding of je analytische en marketingcookies
-          accepteert.
-          Je kunt weigeren zonder dat de website minder goed werkt. Je kunt cookies ook op elk
-          moment verwijderen via je browserinstellingen.
+          accepteert. Je kunt weigeren zonder dat de website minder goed werkt. Je keuze wijzigen
+          kan altijd via &ldquo;Cookie-instellingen&rdquo; onderaan elke pagina; je kunt cookies ook
+          verwijderen via je browserinstellingen.
         </p>
       </LegalSection>
       <LegalSection heading="Cookies van derden">

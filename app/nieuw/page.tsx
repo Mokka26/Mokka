@@ -130,7 +130,7 @@ export default async function NieuwPage() {
             </div>
           ) : (
             <>
-              <p className="text-[13px] uppercase tracking-label text-stone mb-8 px-2">
+              <p className="text-sm uppercase tracking-label text-stone mb-8 px-2">
                 {products.length} {products.length === 1 ? "product" : "producten"}
               </p>
               <h2 className="sr-only">Nieuwe producten</h2>

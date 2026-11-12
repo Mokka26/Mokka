@@ -1,23 +1,25 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Script from "next/script";
 import { ADS_ID, ADS_ID_PATTERN, GA4_ID, GA4_ID_PATTERN } from "@/lib/analytics";
 
 // Google-tag (gtag.js) voor GA4 én Google Ads, met Consent Mode v2 in de
-// "advanced" opstelling:
+// "basic" opstelling: gtag.js laadt pas ná "Accepteren" in de cookiemelding.
+// Zonder akkoord gaat er niets naar Google (ook geen cookieloze pings), zoals
+// de cookieverklaring (app/cookies) belooft.
 //
 // 1. Een inline script (uitgevoerd tijdens het parsen van de HTML, dus vóór
 //    gtag.js) zet de consent-default op 'denied' voor alle vier de signalen,
 //    en upgradet direct naar 'granted' als de bezoeker eerder al "Accepteren"
 //    koos (localStorage-sleutel van components/CookieBanner.tsx). Daardoor
 //    hoeft Google niet op `wait_for_update` te wachten bij terugkerend bezoek.
-// 2. gtag.js laadt daarna met strategy="lazyOnload": pas ná window.load,
+// 2. gtag.js laadt alleen bij akkoord, met strategy="lazyOnload": pas ná window.load,
 //    dus buiten het kritieke pad van LCP/INP op mobiel (gtag.js + GA4-config is
 //    ~100 kB JS en ~150 ms main-thread op een mid-range Android). Afweging:
 //    bezoekers die vóór window.load al weg zijn (zeldzaam, <1-2 s) missen in
 //    GA4; alle events die vóór het laden worden gepusht staan al in de
-//    dataLayer en gaan alsnog mee. Zonder akkoord zet gtag geen cookies en
-//    stuurt het alleen cookieloze pings (gemodelleerde conversies).
+//    dataLayer en gaan alsnog mee.
 // 3. Bij een keuze in de banner roept CookieBanner `applyConsent()` aan
 //    (lib/analytics.ts) → `gtag('consent','update', …)`.
 //
@@ -65,7 +67,25 @@ ${configs}
 `;
 }
 
+// Zelfde bron als components/CookieBanner.tsx (localStorage + events).
+function subscribeConsent(onChange: () => void) {
+  window.addEventListener("cookieConsentChanged", onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener("cookieConsentChanged", onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+function readAccepted(): boolean {
+  try {
+    return window.localStorage.getItem(CONSENT_STORAGE_KEY) === "accepted";
+  } catch {
+    return false;
+  }
+}
+
 export function Analytics() {
+  const accepted = useSyncExternalStore(subscribeConsent, readAccepted, () => false);
   if (!ga4 && !ads) return null;
 
   const primaryId = ga4 ?? ads!;
@@ -75,10 +95,12 @@ export function Analytics() {
       {/* Gewone <script> (geen next/script): wordt synchroon uitgevoerd bij het
           parsen, dus gegarandeerd vóór gtag.js — vereist voor Consent Mode. */}
       <script id="google-tag-bootstrap" dangerouslySetInnerHTML={{ __html: buildBootstrap() }} />
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(primaryId)}`}
-        strategy="lazyOnload"
-      />
+      {accepted && (
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(primaryId)}`}
+          strategy="lazyOnload"
+        />
+      )}
     </>
   );
 }

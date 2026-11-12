@@ -14,6 +14,7 @@ import { CATEGORIES, GROUP_ORDER, categoryUrl } from "@/lib/categories";
 import { MolliePaymentChips, PaymentIcon } from "@/components/PaymentIcons";
 import { FooterNewsletterForm } from "@/components/FooterNewsletterForm";
 import { FooterGate } from "@/components/FooterGate";
+import { CookieSettingsButton } from "@/components/CookieSettingsButton";
 import type { CheckoutMethod } from "@/lib/mollie";
 
 // Server component: alles staat in de server-HTML, geen hydratie behalve de
@@ -160,6 +161,7 @@ export default function Footer({
                 <li><Link href="/contact" className={footerLink}>Contact &amp; showroom</Link></li>
                 <li><Link href={legal.privacyPolicyUrl} className={footerLink}>Privacybeleid</Link></li>
                 <li><Link href={legal.cookiePolicyUrl} className={footerLink}>Cookiebeleid</Link></li>
+                <li><CookieSettingsButton className={`${footerLink} cursor-pointer`} /></li>
               </ul>
             </div>
 
@@ -239,7 +241,7 @@ export default function Footer({
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-11 h-11 border border-white/40 flex items-center justify-center text-white/85 hover:text-white hover:border-white transition-all capitalize text-[13px] uppercase tracking-label"
+                    className="w-11 h-11 border border-white/40 flex items-center justify-center text-white/85 hover:text-white hover:border-white transition-all capitalize text-sm uppercase tracking-label"
                     aria-label={platform}
                   >
                     {platform.slice(0, 2)}

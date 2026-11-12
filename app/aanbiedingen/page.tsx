@@ -186,7 +186,7 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
             </div>
           ) : (
             <>
-              <p className="text-[13px] uppercase tracking-label text-stone mb-8 px-2">
+              <p className="text-sm uppercase tracking-label text-stone mb-8 px-2">
                 {totalCount} {totalCount === 1 ? "product" : "producten"}
                 {totalPages > 1 && ` · pagina ${page} van ${totalPages}`}
               </p>

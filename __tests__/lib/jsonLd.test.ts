@@ -48,8 +48,11 @@ describe("lib/jsonLd", () => {
   describe("buildProductTitle", () => {
     const brand = businessInfo.name;
 
-    it("gebruikt naam | categorie | merk als dat past", () => {
-      expect(buildProductTitle("Bed Oslo", "Bedden")).toBe(`Bed Oslo | Bedden | ${brand}`);
+    it("gebruikt naam | categorie | merk, met 'kopen' als de titel anders te kort is", () => {
+      expect(buildProductTitle("Bed Oslo", "Bedden")).toBe(`Bed Oslo kopen | Bedden | ${brand}`);
+      expect(buildProductTitle("Eettafel Lagos ovaal eiken 200 cm", "Eettafels")).toBe(
+        `Eettafel Lagos ovaal eiken 200 cm | Eettafels | ${brand}`,
+      );
       expect(buildProductTitle("Bed Oslo", null)).toBe(`Bed Oslo | ${brand}`);
     });
 
@@ -108,7 +111,7 @@ describe("lib/jsonLd", () => {
       ["4 tot 8 weken", { min: 20, max: 40 }],
       ["5 tot 3 dagen", { min: 3, max: 5 }],
       ["Op aanvraag", null],
-      ["Binnen 5 werkdagen", null],
+      ["Binnen 5 werkdagen", { min: 1, max: 5 }],
       [null, null],
     ])("%p → %p", (text, expected) => {
       expect(parseTransitDays(text)).toEqual(expected);
@@ -121,6 +124,8 @@ describe("lib/jsonLd", () => {
     // `.failing` hier én in de Offer-test hieronder.
     it("leest werkdagen niet als weken", () => {
       expect(parseTransitDays("2-3 werkdagen")).toEqual({ min: 2, max: 3 });
+      expect(parseTransitDays("Binnen 5 werkdagen")).toEqual({ min: 1, max: 5 });
+      expect(parseTransitDays("5 werkdagen")).toEqual({ min: 1, max: 5 });
     });
   });
 

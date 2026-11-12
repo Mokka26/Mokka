@@ -221,7 +221,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
             <dl className="space-y-1 mb-3 text-[14px] leading-[1.45]">
               {sizeLine ? (
                 <div className="flex items-baseline gap-3">
-                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Maten</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.06em] w-[88px] shrink-0">Maten</dt>
                   <dd className="text-ink tabular-nums truncate" title={sizeLine}>
                     <span className="sm:hidden">Maten: </span>
                     {sizeLine}
@@ -229,7 +229,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
                 </div>
               ) : dimensions && (
                 <div className="flex items-baseline gap-3">
-                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Afmeting</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.06em] w-[88px] shrink-0">Afmeting</dt>
                   <dd className="text-ink tabular-nums truncate" title={dimensions}>
                     <span className="sr-only sm:hidden">Afmeting: </span>
                     {dimensions}
@@ -238,7 +238,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
               )}
               {materialLine && (
                 <div className="hidden sm:flex items-baseline gap-3">
-                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Materiaal</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.06em] w-[88px] shrink-0">Materiaal</dt>
                   <dd className="text-stone sm:text-ink truncate" title={materialLine}>
                     <span className="sr-only sm:hidden">Materiaal: </span>
                     {materialLine}
@@ -247,7 +247,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
               )}
               {colorDots.length > 0 && (
                 <div className="flex items-center gap-3">
-                  <dt className="hidden sm:block eyebrow-lg tracking-[0.08em] w-[72px] shrink-0">Kleuren</dt>
+                  <dt className="hidden sm:block eyebrow-lg tracking-[0.06em] w-[88px] shrink-0">Kleuren</dt>
                   <dd className="flex items-center gap-1.5 pt-0.5">
                     <span className="sr-only">Verkrijgbaar in: </span>
                     {colorDots.map((v) => (

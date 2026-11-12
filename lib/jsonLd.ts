@@ -35,6 +35,7 @@ export function truncateAtWord(text: string, max: number): string {
   return base.replace(/[\s,;:–—-]+$/u, "");
 }
 
+const TITLE_MIN = 50;
 const TITLE_MAX = 60;
 const DESCRIPTION_MIN = 140;
 const DESCRIPTION_MAX = 160;
@@ -48,6 +49,11 @@ export function buildProductTitle(productName: string, categoryLabel: string | n
   const brand = businessInfo.name;
   const name = collapseWhitespace(productName);
   const withCategory = categoryLabel ? `${name} | ${categoryLabel} | ${brand}` : null;
+  // Korte titels (< 50 tekens) krijgen de zoekintentie erbij: "… kopen | …".
+  if (withCategory && withCategory.length < TITLE_MIN) {
+    const withIntent = `${name} kopen | ${categoryLabel} | ${brand}`;
+    if (withIntent.length <= TITLE_MAX) return withIntent;
+  }
   if (withCategory && withCategory.length <= TITLE_MAX) return withCategory;
   const withoutCategory = `${name} | ${brand}`;
   if (withoutCategory.length <= TITLE_MAX) return withoutCategory;
@@ -92,6 +98,12 @@ function gtin13(value: string | undefined): string | null {
  */
 export function parseTransitDays(text: string | null | undefined): { min: number; max: number } | null {
   if (!text) return null;
+  // "Binnen 5 werkdagen" / "5 werkdagen" = 1 tot 5 dagen.
+  const single = text.match(/^(?:binnen\s+)?(\d+)\s*(werkdag|dag|we(?:e)?k)/i);
+  if (single) {
+    const max = Number(single[1]) * (/^wee?k/i.test(single[2]) ? 5 : 1);
+    return max > 0 ? { min: 1, max } : null;
+  }
   const m = text.match(/(\d+)\s*(?:-|–|—|tot)\s*(\d+)\s*(werkdag|dag|we(?:e)?k)/i);
   if (!m) return null;
   // "weken"/"week" → ×5 werkdagen; "werkdagen" begint ook met "we", dus op "week" matchen.

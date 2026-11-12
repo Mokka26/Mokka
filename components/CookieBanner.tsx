@@ -17,6 +17,17 @@ export const COOKIE_BANNER_HEIGHT_VAR = "--cookie-banner-h";
 
 type Consent = "accepted" | "declined" | null;
 
+/** Opent de cookiemelding opnieuw (footer: "Cookie-instellingen"); de vorige keuze vervalt. */
+export function reopenCookieBanner(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage geblokkeerd — de banner opent toch via het event
+  }
+  window.dispatchEvent(new CustomEvent("cookieConsentReopen"));
+  window.dispatchEvent(new CustomEvent("cookieConsentChanged", { detail: null }));
+}
+
 export function getCookieConsent(): Consent {
   if (typeof window === "undefined") return null;
   try {
@@ -54,6 +65,12 @@ export default function CookieBanner() {
   const [dismissed, setDismissed] = useState(false);
   const open = consent === null && !dismissed;
   const panelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const onReopen = () => setDismissed(false);
+    window.addEventListener("cookieConsentReopen", onReopen);
+    return () => window.removeEventListener("cookieConsentReopen", onReopen);
+  }, []);
 
   // Hoogte van de banner doorgeven aan de pagina (zie COOKIE_BANNER_HEIGHT_VAR).
   useEffect(() => {

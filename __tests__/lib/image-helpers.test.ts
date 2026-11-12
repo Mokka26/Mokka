@@ -19,10 +19,15 @@ describe("lib/imageHelpers", () => {
     });
 
     it("leest bg (plain/scene) en negeert onbekende waarden", () => {
-      const raw = JSON.stringify([{ url: A, bg: "scene" }, { url: B, bg: "plain" }, { url: A, bg: "paars" }]);
-      expect(parseImages(raw)).toEqual([{ url: A, bg: "scene" }, { url: B, bg: "plain" }, { url: A }]);
+      const raw = JSON.stringify([{ url: A, bg: "scene" }, { url: B, bg: "plain" }, { url: "https://x/c.jpg", bg: "paars" }]);
+      expect(parseImages(raw)).toEqual([{ url: A, bg: "scene" }, { url: B, bg: "plain" }, { url: "https://x/c.jpg" }]);
       // firstImageOnly serialiseert via parseImages: bg mag daarbij niet verloren gaan.
       expect(JSON.parse(firstImageOnly(raw))).toEqual([{ url: A, bg: "scene" }]);
+    });
+
+    it("toont dezelfde foto maar één keer", () => {
+      const raw = JSON.stringify([{ url: A, bg: "scene" }, A, { url: B }, { url: A }]);
+      expect(parseImages(raw)).toEqual([{ url: A, bg: "scene" }, { url: B }]);
     });
 
     it("laat lege, ongeldige of niet-positieve waarden weg", () => {

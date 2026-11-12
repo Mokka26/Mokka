@@ -6,7 +6,6 @@ import CategoriesGrid from "@/components/CategoriesGrid";
 import CollectionPreview from "@/components/CollectionPreview";
 import FeaturedStory from "@/components/FeaturedStory";
 import ShowroomSection from "@/components/ShowroomSection";
-import DarkNewsletterForm from "@/components/DarkNewsletterForm";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
@@ -162,26 +161,6 @@ export default async function HomePage() {
       {/* 06 — SHOWROOM */}
       <ShowroomSection />
 
-      {/* 07 — NIEUWSBRIEF */}
-      <section className="py-20 lg:py-32 bg-ink text-white" aria-labelledby="newsletter-heading">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="max-w-xl mx-auto text-center">
-            <p className="text-sm font-medium uppercase tracking-label text-accent-light mb-4">
-              Nieuwsbrief
-            </p>
-            <h2
-              id="newsletter-heading"
-              className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white mb-5 leading-[1.05]"
-            >
-              Nieuwe collecties, <span className="italic text-accent-light">als eerste</span>.
-            </h2>
-            <p className="text-white/80 text-base lg:text-lg leading-[1.6] mb-10 max-w-md mx-auto">
-              Nieuwe stukken, stijladvies en aanbiedingen uit de showroom.
-            </p>
-            <DarkNewsletterForm />
-          </div>
-        </div>
-      </section>
     </>
   );
 }
