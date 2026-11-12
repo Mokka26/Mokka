@@ -12,8 +12,10 @@ const prisma = new PrismaClient();
 const APPLY = process.argv.includes("--apply");
 const OUT = process.argv.find((a, i) => i > 1 && !a.startsWith("--"));
 
-type Row = { id: string; slug: string; name: string; source: string | null; colorName: string | null; specs: string };
-type Result = { to: string; fabric?: string; assembled?: boolean; flag?: string };
+type Row = { id: string; slug: string; name: string; source: string | null; colorName: string | null; colorGroup: string | null; specs: string };
+// kleur = hoofdkleur voor specs.Kleur (filters); group/colorLabel alleen voor
+// Rousseau-stoelen die nog geen model-groep hebben (nieuwe imports).
+type Result = { to: string; fabric?: string; assembled?: boolean; flag?: string; kleur?: string; group?: string; colorLabel?: string };
 type Proposal = Result & { id: string; slug: string; source: string | null; from: string };
 
 const DASH = " – ";
@@ -96,7 +98,17 @@ function rousseau(name: string): Result | null {
   const extras = [back, wood ? `frame ${wood}` : "", frame ? `frame ${frame.toLowerCase()}` : "", legs ? `poten ${legs.toLowerCase()}` : ""].filter(Boolean);
   const descriptor = [main, ...extras].filter(Boolean).join(", ");
   if (!descriptor) return { to: name, flag: "geen kleur of materiaal gevonden" };
+  const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+  const toSlug = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const groupBase = setCount
+    ? `set-van-${setCount}-stoelen`
+    : `stoel${prefix.includes("armleuningen") ? "-met-armleuningen" : ""}${swivel ? "-draaibaar" : ""}`;
+  const variantLabel = [color, ...extras.filter((e) => !e.startsWith("rug "))].filter(Boolean).join(", ");
   return {
+    kleur: color ? cap(color.split(" ")[0]) : undefined,
+    group: `eetkamerstoelen-rousseau-${groupBase}-${toSlug(model)}`,
+    colorLabel: variantLabel ? cap(variantLabel) : undefined,
     to: `${type} ${model.replace(/\//g, " / ")}${DASH}${descriptor}`,
     fabric: fabrics.map(squash).join(" en ") || undefined,
     assembled: assembled || undefined,
@@ -143,7 +155,12 @@ function byColorName(name: string, colorName: string | null): Result {
 function propose(r: Row): Proposal {
   const base = { id: r.id, slug: r.slug, source: r.source, from: r.name };
   if (r.name.includes(DASH)) return { ...base, to: r.name, flag: "al genormaliseerd" };
-  if (r.source === "Rousseau") return { ...base, ...(rousseau(r.name) ?? { to: r.name, flag: "onbekend Rousseau-patroon" }) };
+  if (r.source === "Rousseau") {
+    const res = rousseau(r.name) ?? { to: r.name, flag: "onbekend Rousseau-patroon" };
+    // Bestaande groepen (gecontroleerde kleuren en swatches) blijven zoals ze zijn.
+    if (r.colorGroup) return { ...base, ...res, group: undefined, colorLabel: undefined };
+    return { ...base, ...res };
+  }
   if (r.source === "Great Home") return { ...base, ...greatHome(r.name) };
   return { ...base, ...byColorName(r.name, r.colorName) };
 }
@@ -151,7 +168,7 @@ function propose(r: Row): Proposal {
 async function dryRun(out: string) {
   const rows: Row[] = await prisma.product.findMany({
     where: { deletedAt: null, category: "eetkamerstoelen" },
-    select: { id: true, slug: true, name: true, source: true, colorName: true, specs: true },
+    select: { id: true, slug: true, name: true, source: true, colorName: true, colorGroup: true, specs: true },
     orderBy: { name: "asc" },
   });
   const proposals = rows.map(propose);
@@ -159,7 +176,12 @@ async function dryRun(out: string) {
   const changes = proposals.filter((p) => !p.flag && p.to !== p.from);
   const flagged = proposals.filter((p) => p.flag && p.flag !== "al genormaliseerd");
   console.log(`${rows.length} stoelen · ${changes.length} nieuwe namen · ${flagged.length} handmatig`);
-  for (const p of changes) console.log(`  ${p.from}\n→ ${p.to}${p.fabric ? `   [Stof: ${p.fabric}]` : ""}`);
+  for (const p of changes) {
+    const extra = [p.fabric ? `Stof: ${p.fabric}` : "", p.kleur ? `Kleur: ${p.kleur}` : "", p.group ? `groep ${p.group} / ${p.colorLabel}` : ""]
+      .filter(Boolean)
+      .join(" · ");
+    console.log(`  ${p.from}\n→ ${p.to}${extra ? `   [${extra}]` : ""}`);
+  }
   for (const p of flagged) console.log(`  ⚠ ${p.from} (${p.flag})`);
   console.log(`\nVoorstel: ${out}. Nakijken, dan opnieuw met --apply.`);
 }
@@ -170,7 +192,7 @@ async function apply(out: string) {
   const todo = proposals.filter((p) => !p.flag && p.to !== p.from);
   const current = await prisma.product.findMany({
     where: { id: { in: todo.map((p) => p.id) } },
-    select: { id: true, name: true, specs: true },
+    select: { id: true, name: true, specs: true, colorGroup: true },
   });
   const byId = new Map(current.map((c) => [c.id, c]));
   const backup = `${out.replace(/\.json$/, "")}-backup.json`;
@@ -183,7 +205,10 @@ async function apply(out: string) {
     try { specs = JSON.parse(cur.specs || "{}"); } catch { /* lege specs */ }
     if (p.fabric && !specs.Stof) specs.Stof = p.fabric;
     if (p.assembled && !specs.Montage) specs.Montage = "Wordt gemonteerd geleverd";
-    await prisma.product.update({ where: { id: p.id }, data: { name: p.to, specs: JSON.stringify(specs) } });
+    if (p.kleur) specs.Kleur = p.kleur;
+    if (!specs.Materiaal && /stof|bouclé|fluweel|ribstof/.test(p.to)) specs.Materiaal = "Stof";
+    const grouping = p.group && !cur.colorGroup ? { colorGroup: p.group, colorName: p.colorLabel ?? null } : {};
+    await prisma.product.update({ where: { id: p.id }, data: { name: p.to, specs: JSON.stringify(specs), ...grouping } });
     done++;
   }
   console.log(`✅ ${done} namen bijgewerkt. Back-up: ${backup}`);
