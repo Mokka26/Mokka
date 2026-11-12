@@ -38,6 +38,14 @@ export default function PrivacyPage() {
           fiscale bewaarplicht) na te komen.
         </p>
       </LegalSection>
+      <LegalSection heading="Grondslagen">
+        <p>
+          We verwerken je gegevens omdat dat nodig is om je bestelling uit te voeren (de
+          overeenkomst), omdat de wet het vraagt (zoals de fiscale bewaarplicht), omdat jij
+          toestemming geeft (nieuwsbrief, analytische en marketingcookies) of omdat we een
+          gerechtvaardigd belang hebben bij een veilige, goed werkende website.
+        </p>
+      </LegalSection>
       <LegalSection heading="Delen met derden">
         <p>
           We verkopen je gegevens nooit. We delen ze alleen met partijen die nodig zijn om je
@@ -46,6 +54,16 @@ export default function PrivacyPage() {
           afbeeldingen en het bewaken van de werking en veiligheid van de website. Met deze partijen
           zijn verwerkersafspraken gemaakt en zij mogen je gegevens alleen voor dat doel gebruiken.
         </p>
+        <p>Concreet gaat het om:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Mollie: afhandeling van je betaling</li>
+          <li>Vercel: hosting van de website</li>
+          <li>Neon: de database met bestellingen en berichten</li>
+          <li>Cloudinary: opslag en weergave van productfoto&apos;s</li>
+          <li>Sentry: foutmeldingen van de website (zonder je naam of adres)</li>
+          <li>onze e-maildienst: verzending van orderbevestigingen en de nieuwsbrief</li>
+          <li>Google: alleen als je analytische of marketingcookies accepteert</li>
+        </ul>
         <p>
           Alleen als je marketingcookies accepteert, meet Google Ads of een bezoek of bestelling
           voortkomt uit een advertentie. Google kan die gegevens buiten de EU verwerken; dit gebeurt
@@ -85,7 +103,9 @@ export default function PrivacyPage() {
       <LegalSection heading="Je rechten">
         <p>
           Je hebt het recht je gegevens in te zien, te corrigeren of te laten verwijderen, en het
-          recht op gegevensoverdraagbaarheid. Stuur je verzoek naar {businessInfo.contact.email}.
+          recht op gegevensoverdraagbaarheid. Je mag bezwaar maken tegen verwerking op basis van
+          gerechtvaardigd belang, en een gegeven toestemming altijd intrekken (cookies via
+          &ldquo;Cookie-instellingen&rdquo; onderaan elke pagina). Stuur je verzoek naar {businessInfo.contact.email}.
           Je kunt ook een klacht indienen bij de Autoriteit Persoonsgegevens.
         </p>
       </LegalSection>

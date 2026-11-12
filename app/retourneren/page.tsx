@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/LegalPage";
+import { WITHDRAWAL_FORM_TITLE, withdrawalFormLines } from "@/lib/withdrawal";
 import { businessInfo, getFullAddress, getPhoneLink } from "@/lib/business-info";
 import { shippingInfo, formatShippingCost } from "@/lib/shipping-info";
 import { ogDefaults } from "@/lib/seo";
@@ -86,6 +87,18 @@ export default function RetourPage() {
         <p>
           {customMade.label} is {customMade.definition}. {customMade.returnNote} Producten &ldquo;op bestelling&rdquo; (standaarduitvoering, besteld bij de fabrikant) zijn geen maatwerk en vallen gewoon onder de bedenktijd.
         </p>
+      </LegalSection>
+
+      <LegalSection heading={WITHDRAWAL_FORM_TITLE}>
+        <p>
+          Je mag dit formulier gebruiken, maar het hoeft niet: een e-mail aan {businessInfo.contact.email} met
+          je bestelnummer is ook genoeg. Het formulier zit ook in je orderbevestiging.
+        </p>
+        <div className="border border-line bg-white p-5 sm:p-6 text-base leading-relaxed">
+          {withdrawalFormLines().map((line) => (
+            <p key={line} className="m-0 mb-2 last:mb-0">{line}</p>
+          ))}
+        </div>
       </LegalSection>
 
       <LegalSection heading="Retouradres">

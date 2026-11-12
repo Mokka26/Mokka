@@ -4,6 +4,7 @@ import { NEXT_STEP_AFTER_PAYMENT, shippingInfo } from "@/lib/shipping-info";
 import { captureError } from "@/lib/sentry";
 import { formatCents, toCents } from "@/lib/money";
 import { deliverySummary } from "@/lib/delivery";
+import { WITHDRAWAL_FORM_TITLE, withdrawalFormLines } from "@/lib/withdrawal";
 
 /**
  * E-mail via SMTP (server-only). Afzender en interne ontvanger zijn
@@ -226,16 +227,8 @@ export function withdrawalLines(): string[] {
     `Je hebt ${days} dagen bedenktijd vanaf de dag dat je het product ontvangt (bij meerdere leveringen: het laatste product). Wil je de koop herroepen, laat het ons dan binnen die termijn weten per e-mail (${businessInfo.contact.email}) of met het modelformulier hieronder. ${shippingInfo.returnFeesCopy} Maatwerk is uitgezonderd.`,
     `Meer informatie: ${site}${businessInfo.legal.returnPolicyUrl} · Algemene voorwaarden: ${site}${businessInfo.legal.termsUrl}`,
     ``,
-    `Modelformulier voor herroeping`,
-    `(dit formulier alleen invullen en terugzenden als je de overeenkomst wilt herroepen)`,
-    `— Aan: ${businessInfo.legalName}, ${getFullAddress()}, ${businessInfo.contact.email}`,
-    `— Ik/Wij* deel/delen* u hierbij mede dat ik/wij* onze overeenkomst betreffende de verkoop van de volgende producten herroep/herroepen*:`,
-    `— Besteld op*/Ontvangen op*:`,
-    `— Naam/Namen consument(en):`,
-    `— Adres consument(en):`,
-    `— Handtekening van consument(en) (alleen wanneer dit formulier op papier wordt ingediend):`,
-    `— Datum:`,
-    `* Doorhalen wat niet van toepassing is.`,
+    WITHDRAWAL_FORM_TITLE,
+    ...withdrawalFormLines(),
   ];
 }
 

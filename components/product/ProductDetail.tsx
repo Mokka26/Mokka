@@ -205,7 +205,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     ].filter(Boolean);
     toast.success("Toegevoegd aan je winkelwagen", {
       description: extras.join(" · "),
-      duration: 5000,
+      // Met een knop erin: langer zichtbaar (WCAG 2.2.1); sonner pauzeert ook bij hover/focus.
+      duration: 9000,
       action: { label: "Bekijk winkelwagen", onClick: openCart },
     });
     setAdded(true);
