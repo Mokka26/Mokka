@@ -37,9 +37,11 @@ export default function ToastProvider() {
           title: "!text-[15px] !leading-snug !font-medium",
           // Eén regel: productnaam + aantal; lange namen worden afgekapt.
           description: "!block !truncate !text-[14px] !leading-snug !text-paper/80",
-          actionButton: "!bg-paper !text-ink !text-[14px] !font-medium !rounded-[8px] !h-9 !px-3",
-          cancelButton: "!bg-transparent !text-paper/80 !text-[14px] !h-9 !px-3",
-          closeButton: "!bg-ink !text-paper !border-graphite hover:!bg-graphite !w-7 !h-7",
+          actionButton: "!bg-paper !text-ink !text-[14px] !font-medium !rounded-[8px] !h-11 !px-4",
+          cancelButton: "!bg-transparent !text-paper/80 !text-[14px] !h-11 !px-4",
+          // Zichtbaar 28px, tikvlak 44px via een onzichtbare rand (::after).
+          closeButton:
+            "!bg-ink !text-paper !border-graphite hover:!bg-graphite !w-7 !h-7 after:absolute after:-inset-2 after:content-['']",
           icon: "!text-accent-light",
         },
       }}
