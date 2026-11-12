@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
-import AnimatedSection from "@/components/AnimatedSection";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/jsonLd";
 import ContactForm from "./ContactForm";
@@ -32,7 +31,7 @@ export default function ContactPage() {
       />
 
       {/* Kop */}
-      <AnimatedSection className="mb-12 lg:mb-24">
+      <div className="mb-12 lg:mb-24">
         <Breadcrumbs items={breadcrumbs} className="mb-6" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-end">
           <div className="lg:col-span-8">
@@ -45,11 +44,11 @@ export default function ContactPage() {
             </p>
           </div>
         </div>
-      </AnimatedSection>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
         {/* Gegevens — bron: lib/business-info.ts */}
-        <AnimatedSection direction="left" className="lg:col-span-5">
+        <div className="lg:col-span-5">
           <div className="border-t border-line pt-10">
             <p className="eyebrow">Bereikbaar</p>
             <h2 className="display-md text-ink mt-4 mb-10">
@@ -133,14 +132,14 @@ export default function ContactPage() {
               </li>
             </ul>
           </div>
-        </AnimatedSection>
+        </div>
 
         {/* Formulier — useSearchParams vereist een Suspense-grens */}
-        <AnimatedSection direction="right" className="lg:col-span-7 min-w-0">
+        <div className="lg:col-span-7 min-w-0">
           <Suspense fallback={<div className="bg-white border border-line p-5 sm:p-8 lg:p-12 min-h-[32rem]" aria-busy="true" />}>
             <ContactForm />
           </Suspense>
-        </AnimatedSection>
+        </div>
       </div>
     </div>
   );

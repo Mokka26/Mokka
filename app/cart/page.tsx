@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import CartItem, { cartDeliverySummary } from "@/components/CartItem";
-import AnimatedSection from "@/components/AnimatedSection";
 import { useCart, useCartSync } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { formatPrice } from "@/components/ui/price";
@@ -21,7 +20,7 @@ export default function CartPage() {
   return (
     <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
       {/* Editorial header */}
-      <AnimatedSection className="mb-12 lg:mb-24">
+      <div className="mb-12 lg:mb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">
           <div className="lg:col-span-8">
             <div className="flex items-center gap-4 mb-6">
@@ -38,10 +37,10 @@ export default function CartPage() {
             </div>
           )}
         </div>
-      </AnimatedSection>
+      </div>
 
       {items.length === 0 ? (
-        <AnimatedSection className="text-center py-24 lg:py-40">
+        <div className="text-center py-24 lg:py-40">
           <h2 className="display-md text-ink mb-6">Je winkelwagen is leeg</h2>
           <p className="body-lg text-slate max-w-md mx-auto mb-12">
             Bekijk de collectie en voeg toe wat je mooi vindt.
@@ -49,11 +48,11 @@ export default function CartPage() {
           <Link href="/banken" className="btn-primary min-h-12">
             Bekijk collectie
           </Link>
-        </AnimatedSection>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-            <AnimatedSection direction="left" className="lg:col-span-8 min-w-0">
+            <div className="lg:col-span-8 min-w-0">
               <div className="border-b border-line pb-5 mb-2 hidden md:grid grid-cols-12 gap-4 eyebrow-lg">
                 <div className="col-span-6">Product</div>
                 <div className="col-span-2 text-center">Aantal</div>
@@ -63,9 +62,9 @@ export default function CartPage() {
               {items.map((item) => (
                 <CartItem key={item.lineKey} item={item} />
               ))}
-            </AnimatedSection>
+            </div>
 
-            <AnimatedSection direction="right" className="lg:col-span-4">
+            <div className="lg:col-span-4">
               <div className="bg-white border border-line rounded-[10px] p-5 sm:p-8 lg:p-10 lg:sticky lg:top-32">
                 <h2 className="font-serif text-2xl text-ink mb-6 sm:mb-8">Overzicht</h2>
                 <dl className="space-y-4 text-base">
@@ -107,7 +106,7 @@ export default function CartPage() {
                   Verder winkelen
                 </Link>
               </div>
-            </AnimatedSection>
+            </div>
           </div>
 
           {/* Mobiel/tablet: totaal + Afrekenen blijven onderaan in beeld tijdens het scrollen

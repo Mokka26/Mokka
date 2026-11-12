@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import AnimatedSection from "@/components/AnimatedSection";
 import { useCart, useCartSync, syncCart, announceCartChanges } from "@/context/CartContext";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
@@ -288,11 +287,11 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-[80dvh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
-        <AnimatedSection className="text-center max-w-xl">
+        <div className="text-center max-w-xl">
           <h1 className="display-md text-ink mb-6">Niets om af te rekenen</h1>
           <p className="body-lg text-slate mb-12">Je winkelwagen is leeg.</p>
           <button type="button" onClick={() => router.push("/banken")} className="btn-primary">Bekijk collectie</button>
-        </AnimatedSection>
+        </div>
       </div>
     );
   }
@@ -345,7 +344,7 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
       {/* Editorial header */}
-      <AnimatedSection className="mb-10 lg:mb-16">
+      <div className="mb-10 lg:mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
           <div className="lg:col-span-8">
             <h1 className="display-lg text-ink">Afrekenen</h1>
@@ -354,10 +353,10 @@ export default function CheckoutPage() {
             </p>
           </div>
         </div>
-      </AnimatedSection>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-        <AnimatedSection direction="left" className="lg:col-span-8 min-w-0">
+        <div className="lg:col-span-8 min-w-0">
           {/* Mobiel/tablet: bestelling inklapbaar bóven het formulier (op lg staat de kaart ernaast). */}
           <MobileOrderSummary items={items} totals={totals} />
 
@@ -601,15 +600,15 @@ export default function CheckoutPage() {
               <PaymentMethodChips methods={methods} />
             </div>
           </form>
-        </AnimatedSection>
+        </div>
 
         {/* Samenvatting — alleen lg+ (op kleinere schermen staat hij ingeklapt boven het formulier) */}
-        <AnimatedSection direction="right" className="hidden lg:block lg:col-span-4">
+        <div className="hidden lg:block lg:col-span-4">
           <div className="bg-white border border-line rounded-[10px] p-8 lg:p-10 sticky top-32">
             <h2 className="font-serif text-2xl text-ink mb-8">Je bestelling</h2>
             <OrderSummaryLines items={items} totals={totals} />
           </div>
-        </AnimatedSection>
+        </div>
       </div>
     </div>
   );

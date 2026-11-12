@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import AnimatedSection, { StaggerContainer, StaggerItem } from "@/components/AnimatedSection";
 import SectionHeader from "@/components/SectionHeader";
 import { Button } from "@/components/ui/Button";
 import { businessInfo, getFullAddress, getOpeningHoursCompact, getPhoneLink } from "@/lib/business-info";
@@ -51,7 +50,7 @@ export default function AboutPage() {
       {/* Intro */}
       <section className="mb-24 lg:mb-40">
         <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
-          <AnimatedSection>
+          <div>
             <Breadcrumbs items={breadcrumbs} className="mb-6" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
               <div className="lg:col-span-8">
@@ -66,7 +65,7 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-          </AnimatedSection>
+          </div>
         </div>
       </section>
 
@@ -81,17 +80,17 @@ export default function AboutPage() {
               titleItalic="mag verwachten"
             />
           </div>
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
             {pillars.map((p) => (
-              <StaggerItem key={p.title}>
+              <div key={p.title}>
                 <div className="border-t border-line pt-8">
                   <span className="font-serif italic text-stone text-base block mb-6">— {p.number}</span>
                   <h3 className="font-serif text-3xl lg:text-4xl text-ink mb-6 leading-tight">{p.title}</h3>
                   <p className="body-lg text-slate">{p.text}</p>
                 </div>
-              </StaggerItem>
+              </div>
             ))}
-          </StaggerContainer>
+          </div>
         </div>
       </section>
 
@@ -106,7 +105,7 @@ export default function AboutPage() {
               titleItalic="vindt"
             />
           </div>
-          <AnimatedSection>
+          <div>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
               <div className="lg:col-span-10 lg:col-start-2 space-y-8">
                 <p className="font-serif text-2xl lg:text-3xl text-ink leading-snug">
@@ -120,14 +119,14 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-          </AnimatedSection>
+          </div>
         </div>
       </section>
 
       {/* Showroom + CTA */}
       <section>
         <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
-          <AnimatedSection className="text-center max-w-3xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto">
             <p className="eyebrow mb-6">Showroom</p>
             <h2 className="display-lg text-ink mb-6">
               Bezoek onze <span className="italic text-stone">showroom</span>
@@ -151,7 +150,7 @@ export default function AboutPage() {
               <Button href="/banken">Bekijk de collectie</Button>
               <Button href="/contact" variant="secondary">Neem contact op</Button>
             </div>
-          </AnimatedSection>
+          </div>
         </div>
       </section>
     </div>
