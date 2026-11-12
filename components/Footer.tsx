@@ -33,7 +33,7 @@ const shopGroups = GROUP_ORDER.map((group) => {
   };
 });
 
-const footerHeading = "text-sm uppercase tracking-[0.2em] text-white/70 mb-5";
+const footerHeading = "text-sm uppercase tracking-label text-white/70 mb-5";
 // Elke tekstlink is een touch target van ≥ 44px hoog (WCAG 2.5.8 / CLAUDE.md §7).
 const footerLink =
   "inline-flex min-h-11 items-center text-white/85 hover:text-white underline-offset-4 hover:underline transition-colors";
@@ -58,7 +58,7 @@ export default function Footer({
       <footer className="bg-ink text-white/85 pb-[env(safe-area-inset-bottom)]">
         {/* Pre-footer: USP balk */}
         <div className="border-b border-white/10">
-          <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
             <ul className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/10 list-none m-0 p-0">
               {shippingInfo.footerUsps.map((item) => (
                 <li key={item.title} className="py-8 lg:py-10 lg:px-8 first:lg:pl-0 last:lg:pr-0">
@@ -71,7 +71,7 @@ export default function Footer({
         </div>
 
         {/* Hoofdinhoud */}
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-20 lg:pt-24 pb-10">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-20 lg:pt-24 pb-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16 lg:mb-20 pb-12 border-b border-white/10">
             {/* Logo + statement */}
             <div className="lg:col-span-5">
@@ -93,7 +93,7 @@ export default function Footer({
               </p>
               <p className="flex items-center gap-3 text-sm text-white/75">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent-light" aria-hidden="true" />
-                <span className="uppercase tracking-[0.2em]">Sinds {foundingYear}, {foundingCity}</span>
+                <span className="uppercase tracking-label">Sinds {foundingYear}, {foundingCity}</span>
               </p>
             </div>
 
@@ -232,14 +232,14 @@ export default function Footer({
             {/* Social — alleen renderen als er actieve URLs zijn */}
             {socials.length > 0 && (
               <div className="flex items-center gap-3">
-                <p className="text-sm uppercase tracking-[0.2em] text-white/70 mr-2">Volg ons</p>
+                <p className="text-sm uppercase tracking-label text-white/70 mr-2">Volg ons</p>
                 {socials.map(({ platform, url }) => (
                   <a
                     key={platform}
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-11 h-11 border border-white/40 flex items-center justify-center text-white/85 hover:text-white hover:border-white transition-all capitalize text-[13px] uppercase tracking-wider"
+                    className="w-11 h-11 border border-white/40 flex items-center justify-center text-white/85 hover:text-white hover:border-white transition-all capitalize text-[13px] uppercase tracking-label"
                     aria-label={platform}
                   >
                     {platform.slice(0, 2)}

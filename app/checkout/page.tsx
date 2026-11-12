@@ -343,7 +343,7 @@ export default function CheckoutPage() {
   const fieldsetClass = "bg-white border border-line rounded-[10px] p-5 sm:p-8 lg:p-12";
 
   return (
-    <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
+    <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
       {/* Editorial header */}
       <AnimatedSection className="mb-10 lg:mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">

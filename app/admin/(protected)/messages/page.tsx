@@ -55,7 +55,7 @@ export default async function AdminMessagesPage({
   const subscriberTotal = confirmedCount + unconfirmedCount + unsubscribedCount;
 
   const tabCls = (active: boolean) =>
-    `inline-flex items-center gap-2 min-h-11 px-4 text-sm uppercase tracking-[0.1em] border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+    `inline-flex items-center gap-2 min-h-11 px-4 text-sm uppercase tracking-label border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
       active ? "border-ink text-ink" : "border-transparent text-stone hover:text-ink"
     }`;
 
@@ -119,7 +119,7 @@ function SearchForm({ tab, q, status, placeholder }: { tab: Tab; q?: string; sta
       </div>
       <button
         type="submit"
-        className="min-h-11 px-5 text-sm uppercase tracking-[0.1em] border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+        className="min-h-11 px-5 text-sm uppercase tracking-label border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
       >
         Zoeken
       </button>
@@ -225,7 +225,7 @@ async function NewsletterTab({
               key={f}
               href={href({ tab: "nieuwsbrief", status: f, q })}
               aria-current={status === f ? "page" : undefined}
-              className={`inline-flex items-center min-h-11 px-3.5 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`inline-flex items-center min-h-11 px-3.5 text-sm uppercase tracking-label border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 status === f ? "bg-ink text-white border-ink" : "bg-white text-ink border-line hover:border-accent"
               }`}
             >
@@ -235,7 +235,7 @@ async function NewsletterTab({
         </nav>
         <a
           href={`/api/admin/newsletter/export${status !== "all" ? `?status=${status}` : ""}`}
-          className="inline-flex items-center gap-2 min-h-11 px-4 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 px-4 text-sm uppercase tracking-label border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           <Download className="w-3.5 h-3.5" aria-hidden="true" />
           Export CSV ({SUBSCRIBER_FILTER_LABEL[status].toLowerCase()})

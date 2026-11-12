@@ -50,7 +50,7 @@ export default function AboutPage() {
       />
       {/* Intro */}
       <section className="mb-24 lg:mb-40">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <AnimatedSection>
             <Breadcrumbs items={breadcrumbs} className="mb-6" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
@@ -72,7 +72,7 @@ export default function AboutPage() {
 
       {/* Hoe we werken */}
       <section className="mb-24 lg:mb-40">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <div className="mb-16 lg:mb-24">
             <SectionHeader
               number="02"
@@ -97,7 +97,7 @@ export default function AboutPage() {
 
       {/* Het assortiment */}
       <section className="bg-white py-24 lg:py-40 mb-24 lg:mb-40">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <div className="mb-16 lg:mb-24">
             <SectionHeader
               number="03"
@@ -126,7 +126,7 @@ export default function AboutPage() {
 
       {/* Showroom + CTA */}
       <section>
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <AnimatedSection className="text-center max-w-3xl mx-auto">
             <p className="eyebrow mb-6">Showroom</p>
             <h2 className="display-lg text-ink mb-6">

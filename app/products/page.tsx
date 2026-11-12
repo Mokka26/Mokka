@@ -100,7 +100,7 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   return (
     <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
-      <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
+      <header className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
         <p className="eyebrow mb-4">{q ? "Zoeken" : "Collectie"}</p>
         <h1 className="display-lg text-ink">{q ? `Resultaten voor “${q}”` : "Alle producten"}</h1>
       </header>

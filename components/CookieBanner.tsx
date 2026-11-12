@@ -98,7 +98,7 @@ export default function CookieBanner() {
           aria-label="Cookievoorkeuren"
           className="fixed inset-x-0 bottom-0 z-[60] bg-white border-t border-line shadow-[0_-12px_40px_-12px_rgba(20,17,13,0.15)] motion-safe:animate-[mk-slide-in-bottom_var(--dur-moderate)_var(--ease-out-strong)]"
         >
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-10 lg:px-14 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))] sm:py-5">
+          <div className="max-w-page mx-auto px-4 sm:px-10 lg:px-14 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))] sm:py-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-10">
               <p className="text-[15px] sm:text-base text-slate leading-[1.5] lg:flex-1">
                 We gebruiken functionele cookies en, na je akkoord, cookies voor statistiek en advertenties.{" "}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
+import { ProductGrid } from "./ProductGrid";
 
 interface Product {
   id: string;
@@ -33,10 +34,10 @@ export default function CollectionPreview({ products, title, eyebrow }: Props) {
 
   return (
     <section className="py-20 lg:py-32 bg-paper" aria-labelledby="collection-heading">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+      <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-12 lg:mb-16">
           <div className="lg:col-span-8">
-            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-dark mb-4">
+            <p className="text-sm font-medium uppercase tracking-label text-accent-dark mb-4">
               {eyebrow}
             </p>
             <h2 id="collection-heading" className="display-md text-ink">
@@ -51,11 +52,11 @@ export default function CollectionPreview({ products, title, eyebrow }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16">
+        <ProductGrid columns={4}>
           {products.slice(0, 8).map((product) => (
             <ProductCard key={product.id} product={product} sizes="(max-width: 768px) 50vw, 25vw" />
           ))}
-        </div>
+        </ProductGrid>
 
         <div className="sm:hidden mt-10 text-center">
           <Link href="/products" className="btn-ghost text-sm">

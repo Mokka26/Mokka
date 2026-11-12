@@ -13,7 +13,7 @@ export default function NotFound() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-24">
-      <div className="max-w-[1600px] w-full mx-auto">
+      <div className="max-w-page w-full mx-auto">
         <div className="text-center max-w-2xl mx-auto">
           <p className="font-serif text-[clamp(6rem,18vw,14rem)] leading-none text-accent/30 mb-2 select-none" aria-hidden="true">
             404

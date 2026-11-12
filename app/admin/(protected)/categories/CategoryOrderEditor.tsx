@@ -93,7 +93,7 @@ export function CategoryOrderEditor({ slug, label, initial, hasManualOrder }: Pr
           type="button"
           onClick={save}
           disabled={!dirty || pending}
-          className="inline-flex items-center min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-40 disabled:hover:bg-ink"
+          className="inline-flex items-center min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-label hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-40 disabled:hover:bg-ink"
         >
           {pending ? "Bezig…" : "Volgorde opslaan"}
         </button>
@@ -103,7 +103,7 @@ export function CategoryOrderEditor({ slug, label, initial, hasManualOrder }: Pr
             type="button"
             onClick={reset}
             disabled={pending}
-            className="inline-flex items-center min-h-11 px-3 text-sm uppercase tracking-[0.1em] text-stone hover:text-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="inline-flex items-center min-h-11 px-3 text-sm uppercase tracking-label text-stone hover:text-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Handmatige volgorde wissen
           </button>

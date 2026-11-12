@@ -21,7 +21,7 @@ type Dialog = "category" | "price" | "trash" | null;
 type BulkCommand = BulkInput extends infer U ? (U extends BulkInput ? Omit<U, "ids"> : never) : never;
 
 const btn =
-  "inline-flex items-center gap-1.5 min-h-11 px-3 text-sm uppercase tracking-[0.1em] border border-white/30 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 transition-colors";
+  "inline-flex items-center gap-1.5 min-h-11 px-3 text-sm uppercase tracking-label border border-white/30 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 transition-colors";
 
 /** Balk met bulkacties; verschijnt zodra er een selectie is. */
 export default function BulkActions({ selected, categories, onDone, onClear }: Props) {
@@ -139,9 +139,9 @@ function Overlay({ titleId, children, onClose }: { titleId: string; children: Re
 }
 
 const dialogBtnSecondary =
-  "flex-1 min-h-11 px-5 py-3 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60";
+  "flex-1 min-h-11 px-5 py-3 text-sm uppercase tracking-label border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60";
 const dialogBtnPrimary =
-  "flex-1 min-h-11 px-5 py-3 text-sm uppercase tracking-[0.1em] bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-50";
+  "flex-1 min-h-11 px-5 py-3 text-sm uppercase tracking-label bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-50";
 
 function ConfirmDialog({
   title,

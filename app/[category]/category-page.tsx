@@ -261,7 +261,7 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
       )}
 
       <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
-        <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
+        <header className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 mb-6 sm:mb-8 lg:mb-12">
           <Breadcrumbs items={breadcrumbs} className="mb-6" />
           <p className="eyebrow mb-4">Collectie</p>
           <h1 className="display-lg text-ink mb-6">
@@ -285,7 +285,7 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
         {subcategories.length > 0 && (
           <nav
             aria-label={`Subcategorieën van ${category.label.toLowerCase()}`}
-            className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-10 lg:mb-14"
+            className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 mb-10 lg:mb-14"
           >
             <ul className="flex flex-wrap gap-3">
               {subcategories.map((sub) => (
@@ -330,7 +330,7 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
         />
 
         {(category.seoIntro || (category.faq && category.faq.length > 0)) && (
-          <section className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mt-20 lg:mt-28">
+          <section className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 mt-20 lg:mt-28">
             <div className="max-w-3xl">
               {category.seoIntro && (
                 <>

@@ -63,7 +63,7 @@ export default function LoginForm({ from, notice }: { from?: string; notice?: st
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 w-full bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent transition-colors disabled:opacity-60"
+        className="min-h-11 w-full bg-ink text-white px-6 py-3 text-sm uppercase tracking-label hover:bg-accent transition-colors disabled:opacity-60"
       >
         {pending ? "Inloggen…" : "Inloggen"}
       </button>

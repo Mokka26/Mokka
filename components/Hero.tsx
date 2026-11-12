@@ -78,7 +78,7 @@ export default function Hero() {
         aria-hidden
       />
 
-      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-36 lg:pt-44 pb-12 sm:pb-16 lg:pb-20">
+      <div className="relative z-10 w-full max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-36 lg:pt-44 pb-12 sm:pb-16 lg:pb-20">
         <div>
           <div className="max-w-2xl text-white">
             <h1 className="font-serif text-[2rem] leading-[1.08] sm:text-5xl lg:text-6xl tracking-[-0.02em] mb-5">
@@ -91,7 +91,7 @@ export default function Hero() {
             </p>
             <Link
               href="/banken"
-              className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium tracking-[0.08em] uppercase hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
+              className="inline-flex items-center gap-3 bg-white text-ink px-7 py-4 rounded-[10px] text-sm font-medium tracking-label uppercase hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
             >
               Bekijk banken
               <ArrowRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />

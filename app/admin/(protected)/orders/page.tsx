@@ -84,7 +84,7 @@ export default async function AdminOrdersPage({
         </div>
         <a
           href={exportHref}
-          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 px-4 py-2.5 text-sm uppercase tracking-label border border-line text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
           Export CSV
@@ -102,7 +102,7 @@ export default async function AdminOrdersPage({
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Link
           href={orderListHref({ ...params, status: "paid", page: 1 })}
-          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-label border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
             params.status === "paid" ? "bg-success text-white border-success" : "bg-success/10 text-success border-success/30 hover:bg-success/20"
           }`}
         >
@@ -110,7 +110,7 @@ export default async function AdminOrdersPage({
         </Link>
         <Link
           href={orderListHref({ ...params, fulfillment: "pending", status: "paid", page: 1 })}
-          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-label border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
             params.fulfillment === "pending" && params.status === "paid"
               ? "bg-ink text-white border-ink"
               : "bg-white text-ink border-line hover:border-accent"
@@ -121,7 +121,7 @@ export default async function AdminOrdersPage({
         <Link
           href={orderListHref({ ...params, archived: !params.archived, page: 1 })}
           aria-pressed={params.archived}
-          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          className={`inline-flex items-center min-h-11 px-4 text-sm uppercase tracking-label border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
             params.archived ? "bg-ink text-white border-ink" : "bg-white text-ink border-line hover:border-accent"
           }`}
         >
@@ -202,7 +202,7 @@ export default async function AdminOrdersPage({
             </label>
             <button
               type="submit"
-              className="w-full sm:w-auto min-h-11 bg-ink text-white px-6 py-2.5 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+              className="w-full sm:w-auto min-h-11 bg-ink text-white px-6 py-2.5 text-sm uppercase tracking-label hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
             >
               Filteren
             </button>
@@ -261,7 +261,7 @@ export default async function AdminOrdersPage({
                 <div className="shrink-0 flex items-center gap-1">
                   <Link
                     href={`/admin/orders/${o.id}`}
-                    className="hidden sm:inline-flex items-center min-h-11 px-3 text-sm uppercase tracking-[0.1em] text-ink border border-line hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+                    className="hidden sm:inline-flex items-center min-h-11 px-3 text-sm uppercase tracking-label text-ink border border-line hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
                   >
                     Details
                   </Link>

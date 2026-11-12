@@ -139,7 +139,7 @@ export default function FulfillmentForm({ order }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
+        className="min-h-11 bg-ink text-white px-6 py-3 text-sm uppercase tracking-label hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
       >
         {pending ? "Opslaan…" : "Afhandeling opslaan"}
       </button>

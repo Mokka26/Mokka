@@ -104,7 +104,7 @@ export default function ShowroomPage() {
       <ContentSection heading="Adres en openingstijden">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           <div>
-            <h3 className="text-base font-medium text-ink uppercase tracking-[0.12em] mb-3">Adres</h3>
+            <h3 className="text-base font-medium text-ink uppercase tracking-label mb-3">Adres</h3>
             <address className="not-italic text-[17px] leading-[1.7] text-graphite">
               <span className="block text-ink">{businessInfo.name}</span>
               <span className="block">{address.street}</span>
@@ -119,7 +119,7 @@ export default function ShowroomPage() {
             </address>
           </div>
           <div>
-            <h3 className="text-base font-medium text-ink uppercase tracking-[0.12em] mb-3">Openingstijden</h3>
+            <h3 className="text-base font-medium text-ink uppercase tracking-label mb-3">Openingstijden</h3>
             <dl className="text-[17px] leading-[1.7] text-graphite">
               {DAYS.map((d) => {
                 const hours = businessInfo.openingHours[d.key];

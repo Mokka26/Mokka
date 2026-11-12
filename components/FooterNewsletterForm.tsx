@@ -72,7 +72,7 @@ export function FooterNewsletterForm() {
         <button
           type="submit"
           disabled={status === "sending"}
-          className="min-h-11 text-white hover:text-accent-light text-sm font-medium uppercase tracking-[0.14em] px-3 transition-colors disabled:opacity-60"
+          className="min-h-11 text-white hover:text-accent-light text-sm font-medium uppercase tracking-label px-3 transition-colors disabled:opacity-60"
         >
           {status === "sending" ? "Bezig…" : "Aanmelden"}
         </button>

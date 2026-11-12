@@ -68,7 +68,7 @@ export default function DarkNewsletterForm() {
         <button
           type="submit"
           disabled={status === "sending"}
-          className="min-h-11 bg-white text-ink px-8 py-3 rounded-[10px] text-sm uppercase tracking-[0.08em] font-medium hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors disabled:opacity-60"
+          className="min-h-11 bg-white text-ink px-8 py-3 rounded-[10px] text-sm uppercase tracking-label font-medium hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors disabled:opacity-60"
         >
           {status === "sending" ? "Bezig…" : "Aanmelden"}
         </button>

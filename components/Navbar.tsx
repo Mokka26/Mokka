@@ -255,7 +255,7 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
           <TopBanner />
         </div>
 
-        <div className="max-w-[1600px] mx-auto">
+        <div className="max-w-page mx-auto">
           <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-6 sm:px-10 lg:px-8 xl:px-14">
             {/* Logo links */}
             <Link href="/" className="flex-shrink-0 inline-flex items-center min-h-11" aria-label="Mokka Home Interior — naar de homepage">

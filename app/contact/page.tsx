@@ -25,7 +25,7 @@ export default function ContactPage() {
   const hours = getOpeningHoursCompact();
 
   return (
-    <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-28 lg:pt-32 pb-28 lg:pb-40">
+    <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-28 lg:pt-32 pb-28 lg:pb-40">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(buildBreadcrumbJsonLd(breadcrumbs)) }}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import ProductCard, { type ProductCardProduct } from "@/components/ProductCard";
+import { ProductGrid } from "@/components/ProductGrid";
 import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
 import { parseImages } from "@/lib/imageHelpers";
@@ -237,7 +238,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
           {/* Info — sticky op desktop */}
           <div className="px-6 sm:px-10 lg:px-0 lg:pr-[max(56px,calc((100vw-1600px)/2+56px))] flex flex-col lg:sticky lg:top-32 lg:py-4 mt-8 lg:mt-0">
-            <p className="text-[14px] uppercase tracking-[0.14em] text-stone mb-3">{categoryLabel}</p>
+            <p className="text-[14px] uppercase tracking-label text-stone mb-3">{categoryLabel}</p>
             <h1 className="display-md text-ink mb-4">{product.name}</h1>
             {categorySubtitle && <p className="text-base text-graphite mb-5">{categorySubtitle}</p>}
 
@@ -401,24 +402,24 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
 
         {complementaryProducts.length > 0 && (
           <section className="mt-24 lg:mt-36" aria-labelledby="pdp-complementary">
-            <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+            <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
               <div className="mb-10 lg:mb-14">
                 <h2 id="pdp-complementary" className="font-serif text-3xl lg:text-4xl text-ink">
                   Past er goed bij
                 </h2>
               </div>
-              <ul className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16 list-none">
+              <ProductGrid as="ul" columns={4}>
                 {complementaryProducts.slice(0, 4).map((p) => (
                   <li key={p.id}><ProductCard product={p} /></li>
                 ))}
-              </ul>
+              </ProductGrid>
             </div>
           </section>
         )}
 
         {relatedProducts.length > 0 && (
           <section className="mt-24 lg:mt-36">
-            <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+            <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
               <div className="mb-10 lg:mb-14">
                 <SectionHeader
                   number="02"
@@ -428,11 +429,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                   linkLabel="Alles bekijken"
                 />
               </div>
-              <ul className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-16 list-none">
+              <ProductGrid as="ul" columns={4}>
                 {relatedProducts.map((p) => (
                   <li key={p.id}><ProductCard product={p} /></li>
                 ))}
-              </ul>
+              </ProductGrid>
             </div>
           </section>
         )}

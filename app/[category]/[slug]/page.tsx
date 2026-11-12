@@ -234,7 +234,7 @@ export default async function ProductPageInCategory({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbSchema) }}
       />
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40">
+      <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40">
         <Breadcrumbs items={breadcrumbs} />
       </div>
       <ProductDetailClient

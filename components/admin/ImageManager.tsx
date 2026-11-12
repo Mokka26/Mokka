@@ -397,14 +397,14 @@ function ImageTile({
             <button
               type="button"
               onClick={onCancelRemove}
-              className="flex-1 min-h-11 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex-1 min-h-11 text-sm uppercase tracking-label border border-line text-ink hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Annuleren
             </button>
             <button
               type="button"
               onClick={onConfirmRemove}
-              className="flex-1 min-h-11 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
+              className="flex-1 min-h-11 text-sm uppercase tracking-label bg-error text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
             >
               Verwijderen
             </button>

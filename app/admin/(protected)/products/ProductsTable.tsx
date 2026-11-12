@@ -134,7 +134,7 @@ function SortHeader({
     <div role="columnheader" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"} className={`flex ${className}`}>
       <Link
         href={href}
-        className={`inline-flex items-center gap-1 min-h-11 text-sm uppercase tracking-[0.1em] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        className={`inline-flex items-center gap-1 min-h-11 text-sm uppercase tracking-label hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           active ? "text-ink" : "text-stone"
         }`}
       >

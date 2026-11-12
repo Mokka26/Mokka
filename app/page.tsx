@@ -166,7 +166,7 @@ export default async function HomePage() {
       <section className="py-20 lg:py-32 bg-ink text-white" aria-labelledby="newsletter-heading">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
           <div className="max-w-xl mx-auto text-center">
-            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-light mb-4">
+            <p className="text-sm font-medium uppercase tracking-label text-accent-light mb-4">
               Nieuwsbrief
             </p>
             <h2

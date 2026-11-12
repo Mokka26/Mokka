@@ -17,7 +17,7 @@ export default function SectionHeader({ number, label, title, titleItalic, linkH
       <div className="lg:col-span-8">
         <div className="flex items-center gap-4 mb-5">
           <span className="font-serif italic text-stone text-sm">— {number}</span>
-          <span className="text-sm font-medium uppercase tracking-[0.14em] text-stone">{label}</span>
+          <span className="text-sm font-medium uppercase tracking-label text-stone">{label}</span>
         </div>
         <h2 className="display-lg text-ink leading-[1.05]">
           {title}

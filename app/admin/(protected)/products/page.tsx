@@ -102,7 +102,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="inline-flex items-center gap-2 min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+          className="inline-flex items-center gap-2 min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-label hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Nieuw product
@@ -116,7 +116,7 @@ export default async function AdminProductsPage({
             key={status}
             href={productListHref({ ...params, status, page: 1 })}
             aria-current={params.status === status ? "page" : undefined}
-            className={`inline-flex items-center min-h-11 px-3.5 text-sm uppercase tracking-[0.1em] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`inline-flex items-center min-h-11 px-3.5 text-sm uppercase tracking-label border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               params.status === status ? "bg-ink text-white border-ink" : "bg-white text-ink border-line hover:border-accent"
             }`}
           >
@@ -177,7 +177,7 @@ export default async function AdminProductsPage({
         </div>
         <button
           type="submit"
-          className="min-h-11 px-5 py-2.5 text-sm uppercase tracking-[0.1em] border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+          className="min-h-11 px-5 py-2.5 text-sm uppercase tracking-label border border-ink text-ink hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           Toepassen
         </button>

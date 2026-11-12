@@ -103,7 +103,7 @@ export default function TrashClient({
         <button
           type="button"
           onClick={() => setTab("products")}
-          className={`flex items-center gap-2 min-h-11 px-4 py-3 text-sm uppercase tracking-[0.1em] transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-3 text-sm uppercase tracking-label transition-colors border-b-2 -mb-px ${
             tab === "products"
               ? "border-ink text-ink"
               : "border-transparent text-stone hover:text-ink"
@@ -115,7 +115,7 @@ export default function TrashClient({
         <button
           type="button"
           onClick={() => setTab("images")}
-          className={`flex items-center gap-2 min-h-11 px-4 py-3 text-sm uppercase tracking-[0.1em] transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-3 text-sm uppercase tracking-label transition-colors border-b-2 -mb-px ${
             tab === "images"
               ? "border-ink text-ink"
               : "border-transparent text-stone hover:text-ink"
@@ -129,7 +129,7 @@ export default function TrashClient({
             type="button"
             onClick={() => setConfirmEmpty(true)}
             disabled={pending}
-            className="min-h-11 ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
+            className="min-h-11 ml-auto mb-2 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-label text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Prullenbak leegmaken
@@ -203,7 +203,7 @@ export default function TrashClient({
                         type="button"
                         onClick={() => handleRestoreProduct(p.id)}
                         disabled={pending}
-                        className="min-h-11 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone disabled:opacity-50"
+                        className="min-h-11 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-label border border-line text-ink hover:bg-bone disabled:opacity-50"
                       >
                         <RotateCcw className="w-3 h-3" />
                         Herstel
@@ -212,7 +212,7 @@ export default function TrashClient({
                         type="button"
                         onClick={() => setConfirmId(p.id)}
                         disabled={pending}
-                        className="min-h-11 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
+                        className="min-h-11 inline-flex items-center gap-1.5 px-3 py-2 text-sm uppercase tracking-label text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
                       >
                         <X className="w-3 h-3" />
                         Permanent
@@ -269,7 +269,7 @@ export default function TrashClient({
                           onClick={() => handleRestoreImage(img.id)}
                           disabled={pending || !img.productId}
                           title={img.productId ? "Herstel" : "Product weg"}
-                          className="min-h-11 flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone disabled:opacity-30"
+                          className="min-h-11 flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-sm uppercase tracking-label border border-line text-ink hover:bg-bone disabled:opacity-30"
                         >
                           <RotateCcw className="w-2.5 h-2.5" />
                           Herstel
@@ -278,7 +278,7 @@ export default function TrashClient({
                           type="button"
                           onClick={() => setConfirmId(img.id)}
                           disabled={pending}
-                          className="min-h-11 inline-flex items-center justify-center px-2 py-1.5 text-sm uppercase tracking-[0.1em] text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
+                          className="min-h-11 inline-flex items-center justify-center px-2 py-1.5 text-sm uppercase tracking-label text-error border border-error/30 hover:bg-error/10 disabled:opacity-50"
                           title="Permanent verwijderen"
                         >
                           <X className="w-2.5 h-2.5" />
@@ -342,7 +342,7 @@ function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="min-h-11 flex-1 px-6 py-3 text-sm uppercase tracking-[0.1em] border border-line text-ink hover:bg-bone disabled:opacity-60"
+            className="min-h-11 flex-1 px-6 py-3 text-sm uppercase tracking-label border border-line text-ink hover:bg-bone disabled:opacity-60"
           >
             Annuleren
           </button>
@@ -350,7 +350,7 @@ function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="min-h-11 flex-1 px-6 py-3 text-sm uppercase tracking-[0.1em] bg-error text-white hover:opacity-90 disabled:opacity-50"
+            className="min-h-11 flex-1 px-6 py-3 text-sm uppercase tracking-label bg-error text-white hover:opacity-90 disabled:opacity-50"
           >
             {pending ? "Verwijderen…" : "Definitief weg"}
           </button>

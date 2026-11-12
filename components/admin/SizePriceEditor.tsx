@@ -159,7 +159,7 @@ export default function SizePriceEditor({
             key={p}
             type="button"
             onClick={() => addRow(p)}
-            className="min-h-11 text-sm uppercase tracking-[0.1em] px-3 border border-line text-stone hover:border-accent hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+            className="min-h-11 text-sm uppercase tracking-label px-3 border border-line text-stone hover:border-accent hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
           >
             + {p}
           </button>
@@ -167,7 +167,7 @@ export default function SizePriceEditor({
         <button
           type="button"
           onClick={() => addRow()}
-          className="inline-flex items-center gap-1.5 min-h-11 text-sm uppercase tracking-[0.1em] px-3 bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+          className="inline-flex items-center gap-1.5 min-h-11 text-sm uppercase tracking-label px-3 bg-ink text-white hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
         >
           <Plus className="w-3 h-3" aria-hidden="true" />
           Eigen maat

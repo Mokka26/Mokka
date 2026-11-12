@@ -155,10 +155,10 @@ export default async function CategoriesGrid() {
 
   return (
     <section className="py-20 lg:py-32 bg-white" aria-labelledby="categories-heading">
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+      <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-12 lg:mb-16">
           <div className="lg:col-span-8">
-            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-dark mb-4">
+            <p className="text-sm font-medium uppercase tracking-label text-accent-dark mb-4">
               Collectie
             </p>
             <h2 id="categories-heading" className="display-md text-ink">

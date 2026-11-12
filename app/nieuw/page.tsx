@@ -10,6 +10,7 @@ import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/js
 import { ogDefaults } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
+import { ProductGrid } from "@/components/ProductGrid";
 import { dedupeByColorGroup } from "@/lib/dedupe";
 
 const PATH = "/nieuw";
@@ -99,7 +100,7 @@ export default async function NieuwPage() {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(buildBreadcrumbJsonLd(breadcrumbs)) }}
       />
       <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
-        <header className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 mb-10 lg:mb-14">
+        <header className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 mb-10 lg:mb-14">
           <Breadcrumbs items={breadcrumbs} className="mb-6" />
           <p className="eyebrow mb-4">Collectie</p>
           <h1 className="display-lg text-ink mb-6">Nieuw</h1>
@@ -115,7 +116,7 @@ export default async function NieuwPage() {
           </p>
         </header>
 
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           {products.length === 0 ? (
             <div className="text-center py-32">
               <p className="font-serif text-2xl text-ink mb-4">Nog geen producten</p>
@@ -129,15 +130,15 @@ export default async function NieuwPage() {
             </div>
           ) : (
             <>
-              <p className="text-[13px] uppercase tracking-[0.2em] text-stone mb-8 px-2">
+              <p className="text-[13px] uppercase tracking-label text-stone mb-8 px-2">
                 {products.length} {products.length === 1 ? "product" : "producten"}
               </p>
               <h2 className="sr-only">Nieuwe producten</h2>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+              <ProductGrid>
                 {products.map((p, i) => (
                   <ProductCard key={p.id} product={p} variants={p.variants} priority={i < 2} />
                 ))}
-              </div>
+              </ProductGrid>
             </>
           )}
         </div>

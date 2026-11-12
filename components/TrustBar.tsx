@@ -16,7 +16,7 @@ export default function TrustBar() {
 
   return (
     <section className="py-8 lg:py-10 bg-bone border-b border-line" aria-label="Onze service">
-      <ul className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+      <ul className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
         {items.map((item) => {
           const Icon = ICONS[item.key] ?? Truck;
           return (

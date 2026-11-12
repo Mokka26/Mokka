@@ -225,7 +225,7 @@ export default function EditProductForm({ product, categories, validCategories, 
                 setSlug(slugify(name));
                 onFormChange();
               }}
-              className="shrink-0 min-h-11 px-3 text-sm uppercase tracking-[0.1em] border border-line text-stone hover:text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+              className="shrink-0 min-h-11 px-3 text-sm uppercase tracking-label border border-line text-stone hover:text-ink hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
             >
               Uit naam
             </button>
@@ -571,7 +571,7 @@ export default function EditProductForm({ product, categories, validCategories, 
           <button
             type="submit"
             disabled={pending}
-            className="w-full sm:w-auto min-h-12 bg-ink text-white px-6 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
+            className="w-full sm:w-auto min-h-12 bg-ink text-white px-6 py-3 text-sm uppercase tracking-label hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
           >
             {pending ? "Opslaan…" : "Wijzigingen opslaan"}
           </button>

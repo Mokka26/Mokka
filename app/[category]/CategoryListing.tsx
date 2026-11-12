@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import ProductCard, { type ProductCardVariant } from "@/components/ProductCard";
+import { ProductGrid } from "@/components/ProductGrid";
 import { useFooterInView } from "@/components/product/useFooterInView";
 import { productUrl } from "@/lib/categories";
 import { trackSelectItem, trackViewItemList } from "@/lib/analytics";
@@ -153,7 +154,7 @@ export default function CategoryListing({
 
   return (
     <div>
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         {/* Filterrij (desktop) + sorteren */}
         <div className="border-y border-line py-4 mb-6 px-2">
           <div className="flex items-center justify-between gap-4">
@@ -210,7 +211,7 @@ export default function CategoryListing({
               )}
             </div>
           ) : (
-            <div onClick={onGridClick} className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+            <ProductGrid onClick={onGridClick}>
               {products.map((p, i) => (
                 <ProductCard
                   key={p.id}
@@ -219,7 +220,7 @@ export default function CategoryListing({
                   variants={p.colorGroup ? variants[p.colorGroup] : undefined}
                 />
               ))}
-            </div>
+            </ProductGrid>
           )}
         </div>
 

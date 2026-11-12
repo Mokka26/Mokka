@@ -51,7 +51,7 @@ export default async function AdminMessageDetailPage({ params }: { params: Promi
           </div>
           <a
             href={`mailto:${message.email}?subject=${replySubject}`}
-            className="inline-flex items-center justify-center w-full min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-[0.1em] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
+            className="inline-flex items-center justify-center w-full min-h-11 bg-ink text-white px-5 py-3 text-sm uppercase tracking-label hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-colors"
           >
             Beantwoorden per e-mail
           </a>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import ProductCard from "@/components/ProductCard";
+import { ProductGrid } from "@/components/ProductGrid";
 
 interface Product {
   id: string;
@@ -83,14 +84,14 @@ export default function RecentlyViewed({ currentSlug, max = 4 }: Props) {
       aria-labelledby="recently-viewed-heading"
       aria-busy={state.status === "loading"}
     >
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+      <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         <div className="mb-10">
-          <p className="text-sm font-medium uppercase tracking-[0.14em] text-stone mb-3">Voor jou</p>
+          <p className="text-sm font-medium uppercase tracking-label text-stone mb-3">Voor jou</p>
           <h2 id="recently-viewed-heading" className="font-serif text-2xl sm:text-3xl lg:text-4xl text-ink">
             Recent bekeken
           </h2>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <ProductGrid columns={4}>
           {state.status === "ready"
             ? state.products.map((p) => <ProductCard key={p.id} product={p} sizes={CARD_SIZES} />)
             : Array.from({ length: expected }, (_, i) => (
@@ -102,7 +103,7 @@ export default function RecentlyViewed({ currentSlug, max = 4 }: Props) {
                   <div className="h-4 w-1/3 bg-bone animate-shimmer" />
                 </div>
               ))}
-        </div>
+        </ProductGrid>
       </div>
     </section>
   );

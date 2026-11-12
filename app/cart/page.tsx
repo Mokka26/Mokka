@@ -19,7 +19,7 @@ export default function CartPage() {
   const remaining = Math.max(0, shippingInfo.freeShippingThreshold - totalPrice);
 
   return (
-    <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
+    <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
       {/* Editorial header */}
       <AnimatedSection className="mb-12 lg:mb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ProductCard, { type ProductCardProduct } from "@/components/ProductCard";
+import { ProductGrid } from "@/components/ProductGrid";
 import { Button } from "@/components/ui/Button";
 import { buildBreadcrumbJsonLd, buildFaqJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/jsonLd";
 
@@ -79,7 +80,7 @@ export function ContentPage({
       ))}
 
       <div className="pt-28 lg:pt-32 pb-20 lg:pb-28">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-14">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <header className="max-w-3xl mb-12 lg:mb-16">
             <Breadcrumbs items={breadcrumbs} className="mb-6" />
             <p className="eyebrow mb-4">{eyebrow}</p>
@@ -123,11 +124,11 @@ export function ContentPage({
                   {productSection.ctaLabel}
                 </Link>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+              <ProductGrid columns={4}>
                 {productSection.products.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
-              </div>
+              </ProductGrid>
             </section>
           )}
 
