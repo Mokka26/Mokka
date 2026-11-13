@@ -13,7 +13,9 @@ const prisma = new PrismaClient();
 const APPLY = process.argv.includes("--apply");
 const BACKUP = process.argv.find((a, i) => i > 1 && !a.startsWith("--"));
 
-const HET = "bankstel|dressoir|tv-meubel|bed|meubel|bureau|nachtkastje|kastje|wandmeubel|ladekastje|hoofdbord|ledikant";
+const HET_WORDS = "bankstel|dressoir|tv-meubel|bed|meubel|bureau|nachtkastje|kastje|wandmeubel|ladekastje|hoofdbord|ledikant";
+// Ook met hoofdletter, zoals in productnamen: "de Clara Bankstel" → "het Clara Bankstel".
+const HET = `${HET_WORDS}|${HET_WORDS.split("|").map((w) => w[0].toUpperCase() + w.slice(1)).join("|")}`;
 const NAME = "(?:[\\p{Lu}0-9][\\p{L}\\p{M}0-9'’-]*\\s+){1,3}";
 
 function fixText(s: string): string {
