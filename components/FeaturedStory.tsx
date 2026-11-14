@@ -52,20 +52,23 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
               href={href}
               className="group block relative rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
-              <div className="relative aspect-[4/3] overflow-hidden bg-bone rounded-[10px]">
-                <CloudinaryImage
-                  src={src}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                  className="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"
-                />
+              <div className="relative aspect-[4/3] overflow-hidden bg-bone rounded-[14px]">
+                {/* Parallax: het beeld beweegt trager dan de pagina (scroll-gekoppeld). */}
+                <div className="absolute inset-0 parallax-img">
+                  <CloudinaryImage
+                    src={src}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    className="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"
+                  />
+                </div>
               </div>
             </Link>
           </div>
 
           {/* Tekst */}
-          <div className="lg:col-span-5 lg:order-1">
+          <div className="lg:col-span-5 lg:order-1 reveal">
             <p className="text-sm font-medium uppercase tracking-label text-accent-light mb-5">
               In de spotlight
             </p>

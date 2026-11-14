@@ -19,7 +19,7 @@ export default function ShowroomSection() {
     <section className="py-20 lg:py-32 bg-paper" aria-labelledby="showroom-heading">
       <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 reveal">
             <ShowroomVideo
               src="/mokka.mp4"
               poster="/mokka-poster.jpg"

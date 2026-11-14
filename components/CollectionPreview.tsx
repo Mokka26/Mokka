@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { ProductGrid } from "./ProductGrid";
+import { stagger } from "@/components/home/motion";
 
 interface Product {
   id: string;
@@ -35,12 +36,12 @@ export default function CollectionPreview({ products, title, eyebrow }: Props) {
   return (
     <section className="py-20 lg:py-32 bg-paper" aria-labelledby="collection-heading">
       <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-12 lg:mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end mb-12 lg:mb-16 reveal">
           <div className="lg:col-span-8">
             <p className="text-sm font-medium uppercase tracking-label text-accent-dark mb-4">
               {eyebrow}
             </p>
-            <h2 id="collection-heading" className="display-md text-ink">
+            <h2 id="collection-heading" className="display-lg text-ink">
               {title}
             </h2>
           </div>
@@ -53,8 +54,11 @@ export default function CollectionPreview({ products, title, eyebrow }: Props) {
         </div>
 
         <ProductGrid columns={4}>
-          {products.slice(0, 8).map((product) => (
-            <ProductCard key={product.id} product={product} sizes="(max-width: 768px) 50vw, 25vw" />
+          {products.slice(0, 8).map((product, i) => (
+            // .reveal op een wrapper: ProductCard heeft eigen hover-transforms.
+            <div key={product.id} className={`reveal ${stagger(i % 4)}`}>
+              <ProductCard product={product} sizes="(max-width: 768px) 50vw, 25vw" />
+            </div>
           ))}
         </ProductGrid>
 
