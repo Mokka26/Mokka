@@ -6,6 +6,8 @@ import CategoriesGrid from "@/components/CategoriesGrid";
 import CollectionPreview from "@/components/CollectionPreview";
 import FeaturedStory from "@/components/FeaturedStory";
 import ShowroomSection from "@/components/ShowroomSection";
+import { RoomStory } from "@/components/home/RoomStory";
+import { HERO_PRODUCT_SLUG } from "@/lib/hero-image";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
@@ -125,40 +127,54 @@ const getSpotlightProduct = unstable_cache(
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
 );
 
+// Product op de hero-foto ("Op de foto"-kaartje): alleen als het zichtbaar is.
+const getHeroProduct = unstable_cache(
+  async () =>
+    prisma.product.findFirst({
+      where: { ...visibleWhere, slug: HERO_PRODUCT_SLUG },
+      select: { name: true, slug: true, category: true, price: true, listPrice: true },
+    }),
+  ["home-hero-product"],
+  { tags: [PRODUCTS_TAG], revalidate: 3600 },
+);
+
 async function loadHomepageData() {
   try {
-    return await Promise.all([getCollection(), getSpotlightProduct()]);
+    return await Promise.all([getCollection(), getSpotlightProduct(), getHeroProduct()]);
   } catch {
     // DB tijdelijk onbereikbaar: toon de statische secties, geen 500.
-    return [{ kind: "featured", products: [] } satisfies Collection, null] as const;
+    return [{ kind: "featured", products: [] } satisfies Collection, null, null] as const;
   }
 }
 
 export default async function HomePage() {
-  const [collection, spotlightProduct] = await loadHomepageData();
+  const [collection, spotlightProduct, heroProduct] = await loadHomepageData();
 
   return (
     <>
-      {/* 01 — HERO: zichtbare H1, next/image priority (LCP) */}
-      <Hero />
+      {/* 01 — HERO: zichtbare H1, next/image priority (LCP), levende foto */}
+      <Hero product={heroProduct} />
 
       {/* 02 — TRUST BAR: USP's uit lib/shipping-info, direct onder de fold */}
       <TrustBar />
 
-      {/* 03 — CATEGORIEËN: server-side tellingen + productfoto's */}
+      {/* 03 — CATEGORIEËN: bento-tegels met 3D-kanteling */}
       <CategoriesGrid />
 
-      {/* 04 — UITGELICHT / NIEUW BINNEN */}
+      {/* 04 — KAMER VOOR KAMER: vaststaand beeld dat wisselt bij scrollen */}
+      <RoomStory />
+
+      {/* 05 — UITGELICHT / NIEUW BINNEN */}
       <CollectionPreview
         products={collection.products}
         title={collection.kind === "featured" ? "Uitgelicht" : "Nieuw binnen"}
         eyebrow={collection.kind === "featured" ? "Onze selectie" : "Net binnengekomen"}
       />
 
-      {/* 05 — SPOTLIGHT (bank) */}
+      {/* 06 — SPOTLIGHT (bank) */}
       <FeaturedStory product={spotlightProduct} />
 
-      {/* 06 — SHOWROOM */}
+      {/* 07 — SHOWROOM */}
       <ShowroomSection />
 
     </>
