@@ -672,6 +672,128 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   HOMEPAGE MOTION — zonder JS-bibliotheek.
+   Alles staat achter `prefers-reduced-motion: no-preference`; de
+   scroll-gekoppelde effecten bovendien achter @supports. Zonder support
+   (of met "minder beweging") is alles direct en volledig zichtbaar: in de
+   server-HTML staat nooit iets op opacity 0.
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(2.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(0.55em) rotateX(-35deg); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hero-settle {
+  from { transform: scale(1.14); }
+  to { transform: scale(1.02); }
+}
+
+@keyframes hero-drift {
+  to { transform: translateY(14%) scale(1.06); }
+}
+
+@keyframes hero-content-out {
+  to { opacity: 0; transform: translateY(-3rem); }
+}
+
+@keyframes parallax-y {
+  from { transform: translateY(-7%) scale(1.16); }
+  to { transform: translateY(7%) scale(1.16); }
+}
+
+@keyframes scroll-cue {
+  0% { transform: scaleY(0); transform-origin: top; }
+  45% { transform: scaleY(1); transform-origin: top; }
+  55% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Hero: kop woord voor woord (--i = woordindex), foto zakt rustig in. */
+  .hero-word {
+    display: inline-block;
+    animation: word-in 1000ms var(--ease-out-strong) both;
+    animation-delay: calc(var(--i, 0) * 70ms + 200ms);
+  }
+  .hero-fade {
+    animation: fade-in 1000ms var(--ease-out-soft) both;
+    animation-delay: var(--delay, 700ms);
+  }
+  .hero-settle {
+    animation: hero-settle 2600ms var(--ease-out-strong) both;
+  }
+  .scroll-cue {
+    /* Stopt vanzelf na 2 rondes (WCAG 2.2.2: geen beweging > 5 s zonder pauze). */
+    animation: scroll-cue 2400ms var(--ease-in-out) 1800ms 2 both;
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--i, 0) * 6%) entry calc(55% + var(--i, 0) * 6%);
+    }
+    .parallax-img {
+      animation: parallax-y linear both;
+      animation-timeline: view();
+    }
+    .hero-drift {
+      animation: hero-drift linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100svh;
+    }
+    .hero-content-out {
+      animation: hero-content-out linear both;
+      animation-timeline: scroll(root);
+      animation-range: 10svh 70svh;
+    }
+  }
+}
+
+/* Tilt — 3D-kanteling op muisbeweging (components/home/Tilt.tsx zet de
+   variabelen). Alleen op apparaten met een muis en zonder "minder beweging". */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .tilt {
+    transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform-style: preserve-3d;
+    transition: transform 700ms var(--ease-out-strong);
+  }
+  .tilt[data-active] {
+    transition-duration: 160ms;
+  }
+  .tilt-media {
+    transform: translate3d(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -14px), 0) scale(1.08);
+    transition: transform 700ms var(--ease-out-strong);
+  }
+  .tilt-float {
+    transform: translateZ(48px);
+  }
+  .tilt-glare {
+    background: radial-gradient(
+      circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--color-white) 22%, transparent),
+      transparent 55%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-moderate) var(--ease-out-soft);
+  }
+  .tilt[data-active] .tilt-glare {
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    REDUCED MOTION
    ═══════════════════════════════════════════════════════════ */
 
