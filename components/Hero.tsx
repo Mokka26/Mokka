@@ -4,7 +4,8 @@ import { getImageProps } from "next/image";
 import { preload } from "react-dom";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
-import { HERO_IMAGE_ALT, HERO_IMAGE_SOURCE } from "@/lib/hero-image";
+import { HERO_IMAGE_ALT, HERO_IMAGE_SOURCE, HERO_VIDEO } from "@/lib/hero-image";
+import { HeroVideo } from "@/components/home/HeroVideo";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { productUrl } from "@/lib/categories";
@@ -58,15 +59,13 @@ export default function Hero({ product }: { product?: HeroProduct | null }) {
 
   return (
     <section className="relative isolate flex items-end min-h-[92svh] md:min-h-[100svh] bg-ink overflow-hidden">
-      {/* Twee lagen: buitenste beweegt mee met scrollen, binnenste zoomt bij laden. */}
-      <div className="absolute inset-0 hero-drift">
-        <div className="absolute inset-0 hero-settle">
-          <picture>
-            <source media={MD_QUERY} srcSet={desktop.srcSet} sizes={desktop.sizes} />
-            <img {...mobile} alt={HERO_IMAGE_ALT} className="object-cover" />
-          </picture>
-        </div>
-      </div>
+      {/* Foto (LCP) met daaroverheen, na het laden, de stille sfeervideo. */}
+      <HeroVideo srcLarge={HERO_VIDEO.large} srcSmall={HERO_VIDEO.small}>
+        <picture>
+          <source media={MD_QUERY} srcSet={desktop.srcSet} sizes={desktop.sizes} />
+          <img {...mobile} alt={HERO_IMAGE_ALT} className="object-cover" />
+        </picture>
+      </HeroVideo>
 
       {/* Leesbaarheid: donker onderin waar de tekst staat (wit op ink/80 ≥ 4.5:1),
           links iets donkerder voor de kop op brede schermen. */}
