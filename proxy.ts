@@ -6,6 +6,8 @@ import { CATEGORY_CACHE_PREFIX, cacheableCategory } from "@/lib/category-cache";
 
 const { auth } = NextAuth(authConfig);
 
+const SEARCH_ALIASES: ReadonlySet<string> = new Set(["/zoeken", "/search"]);
+
 /** Publieke routes met hoofdletters (bv. /Banken) → 308 naar lowercase. */
 function lowercaseTarget(pathname: string): string | null {
   if (!/[A-Z]/.test(pathname)) return null;
@@ -34,6 +36,14 @@ export default function proxy(req: NextRequest) {
   if (pathname.startsWith(CATEGORY_CACHE_PREFIX)) {
     const url = req.nextUrl.clone();
     url.pathname = `/${pathname.slice(CATEGORY_CACHE_PREFIX.length)}`;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Gangbare zoek-URL's (/zoeken, /search, ook met ?q=) → de echte zoekpagina.
+  // Hoort bij de SearchAction in de WebSite-JSON-LD (lib/jsonLd.ts).
+  if (SEARCH_ALIASES.has(pathname.toLowerCase().replace(/\/$/, ""))) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/products";
     return NextResponse.redirect(url, 308);
   }
 

@@ -14,6 +14,8 @@ import {
   buildOrganizationJsonLd,
   buildWebSiteJsonLd,
   buildFaqJsonLd,
+  productTitleDetails,
+  truncateAtSentence,
 } from "@/lib/jsonLd";
 
 type Offer = Record<string, unknown> & { shippingDetails: { shippingRate: { value: number } } };
@@ -67,6 +69,28 @@ describe("lib/jsonLd", () => {
       const namePart = title.slice(0, -` | ${brand}`.length);
       expect(long.startsWith(namePart)).toBe(true);
       expect(long.charAt(namePart.length)).toBe(" ");
+    });
+
+    it("laat leverancierscodes weg en vult korte titels aan met maat of materiaal", () => {
+      expect(buildProductTitle("Eettafel Lagos QL10648", "Eettafels")).not.toContain("QL10648");
+      const title = buildProductTitle("Bed Oslo", "Bedden", { size: "160 x 200 cm", material: "Eiken" });
+      expect(title).toContain("160 x 200 cm");
+      expect(title.length).toBeLessThanOrEqual(60);
+      expect(title.length).toBeGreaterThanOrEqual(50);
+    });
+
+    it("productTitleDetails leest maat en materiaal uit de specs", () => {
+      const specs = JSON.stringify({ Afmetingen: "B 200 × D 100 × H 76 cm", Materiaal: "Eiken" });
+      expect(productTitleDetails(specs, "eettafels")).toEqual({ size: "200 x 100 cm", material: "Eiken" });
+      expect(productTitleDetails(null)).toEqual({ size: null, material: null });
+    });
+  });
+
+  describe("truncateAtSentence", () => {
+    it("kapt af na de laatste hele zin binnen het maximum", () => {
+      const text = "Eerste zin hier. Tweede zin is wat langer. Derde zin valt weg.";
+      expect(truncateAtSentence(text, 50)).toBe("Eerste zin hier. Tweede zin is wat langer.");
+      expect(truncateAtSentence("Kort.", 50)).toBe("Kort.");
     });
   });
 

@@ -1,7 +1,7 @@
 import { businessInfo, getActiveSocials } from "@/lib/business-info";
 import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { parseImages } from "@/lib/imageHelpers";
-import { parsePricedSizeVariants, parseSpecs } from "@/lib/specs";
+import { parseDimensions, parsePricedSizeVariants, parseSpecs, stripProductCode } from "@/lib/specs";
 
 /**
  * Serialiseer een JSON-LD object veilig voor inline <script type="application/ld+json">.
@@ -35,24 +35,95 @@ export function truncateAtWord(text: string, max: number): string {
   return base.replace(/[\s,;:–—-]+$/u, "");
 }
 
+/**
+ * Kapt een tekst af na de laatste volledige zin binnen `max` tekens. Past de
+ * hele tekst, dan blijft die heel. Geen zinsgrens in de eerste helft → op een
+ * woordgrens (truncateAtWord).
+ */
+export function truncateAtSentence(text: string, max: number): string {
+  const clean = collapseWhitespace(text);
+  if (clean.length <= max) return clean;
+  const head = clean.slice(0, max + 1);
+  let end = -1;
+  for (const m of head.matchAll(/[.!?](?=\s|$)/g)) {
+    if (m.index !== undefined && m.index < max) end = m.index;
+  }
+  return end >= max / 2 ? clean.slice(0, end + 1) : truncateAtWord(clean, max);
+}
+
 const TITLE_MIN = 50;
 const TITLE_MAX = 60;
 const DESCRIPTION_MIN = 140;
 const DESCRIPTION_MAX = 160;
 
+/** Maat en materiaal om een te korte producttitel mee aan te vullen. */
+export type ProductTitleDetails = { size?: string | null; material?: string | null };
+
+const TITLE_DIMENSION_KEYS = ["afmetingen", "afmeting", "maten", "maat"];
+const TITLE_MATERIAL_KEYS = ["materiaal", "material"];
+
+function specValue(specs: Record<string, string>, keys: ReadonlyArray<string>): string | undefined {
+  for (const [k, v] of Object.entries(specs)) if (keys.includes(k.toLowerCase()) && v) return v;
+  return undefined;
+}
+
+const cm = (n: number) => String(n).replace(".", ",");
+
+/**
+ * Maat ("200 x 100 cm", "Ø 120 cm") en materiaal ("Eiken") uit de specs, voor
+ * buildProductTitle. Alleen korte, eenduidige waarden; anders null.
+ */
+export function productTitleDetails(specsJson: string | null | undefined, category?: string): ProductTitleDetails {
+  const specs = parseSpecs(specsJson);
+  const dims = parseDimensions(specValue(specs, TITLE_DIMENSION_KEYS), category);
+  let size: string | null = null;
+  if (dims?.diameter !== undefined) size = `Ø ${cm(dims.diameter)} cm`;
+  else if (dims?.w !== undefined && dims.d !== undefined) size = `${cm(dims.w)} x ${cm(dims.d)} cm`;
+  const rawMaterial = specValue(specs, TITLE_MATERIAL_KEYS);
+  const material = rawMaterial && collapseWhitespace(rawMaterial).length <= 20 ? collapseWhitespace(rawMaterial) : null;
+  return { size, material };
+}
+
+/** Naam voor in de title: zonder leverancierscodes (QL10648, GH1018, …). */
+function titleName(productName: string): string {
+  const name = collapseWhitespace(productName);
+  return stripProductCode(name) || name;
+}
+
 /**
  * Productpagina-title: "<naam> | <categorie> | Mokka Home", maximaal 60
- * tekens. Bij ruimtegebrek vervalt eerst de categorie, daarna wordt de
- * productnaam op een woordgrens ingekort. De bedrijfsnaam blijft altijd staan.
+ * tekens. Leverancierscodes in de naam vallen weg (alleen in de title; de
+ * naam in de DB en op de pagina blijft). Te korte titels (< 50 tekens) worden
+ * aangevuld met maat of materiaal uit de specs en/of "kopen". Bij
+ * ruimtegebrek vervalt eerst de categorie, daarna wordt de productnaam op een
+ * woordgrens ingekort. De bedrijfsnaam blijft altijd staan.
  */
-export function buildProductTitle(productName: string, categoryLabel: string | null): string {
+export function buildProductTitle(
+  productName: string,
+  categoryLabel: string | null,
+  details: ProductTitleDetails = {},
+): string {
   const brand = businessInfo.name;
-  const name = collapseWhitespace(productName);
+  const name = titleName(productName);
   const withCategory = categoryLabel ? `${name} | ${categoryLabel} | ${brand}` : null;
-  // Korte titels (< 50 tekens) krijgen de zoekintentie erbij: "… kopen | …".
   if (withCategory && withCategory.length < TITLE_MIN) {
-    const withIntent = `${name} kopen | ${categoryLabel} | ${brand}`;
-    if (withIntent.length <= TITLE_MAX) return withIntent;
+    const lower = name.toLowerCase();
+    const extras = [details.size, details.material].filter(
+      (d): d is string => Boolean(d) && !lower.includes((d as string).toLowerCase()),
+    );
+    // Eén detail, beide details, en dezelfde met "kopen"; de eerste die 50-60
+    // tekens haalt wint, anders de langste die past.
+    const combos = extras.length > 1 ? [...extras, extras.join(" ")] : extras;
+    const candidates = [
+      ...combos.map((d) => `${name} ${d} | ${categoryLabel} | ${brand}`),
+      ...combos.map((d) => `${name} ${d} kopen | ${categoryLabel} | ${brand}`),
+      // Zoekintentie erbij: "… kopen | …".
+      `${name} kopen | ${categoryLabel} | ${brand}`,
+    ].filter((c) => c.length <= TITLE_MAX);
+    const fitting = candidates.find((c) => c.length >= TITLE_MIN);
+    if (fitting) return fitting;
+    const longest = candidates.reduce<string | null>((a, c) => (a && a.length >= c.length ? a : c), null);
+    if (longest) return longest;
   }
   if (withCategory && withCategory.length <= TITLE_MAX) return withCategory;
   const withoutCategory = `${name} | ${brand}`;
@@ -130,6 +201,9 @@ export type JsonLdProduct = {
 
 const SCHEMA = "https://schema.org";
 
+/** Product-schema: beschrijving tot ~1000 tekens, afgekapt na een hele zin. */
+const PRODUCT_DESCRIPTION_MAX = 1000;
+
 function quantitative(min: number, max: number) {
   return { "@type": "QuantitativeValue", minValue: min, maxValue: max, unitCode: "DAY" };
 }
@@ -192,7 +266,8 @@ export function buildProductJsonLd(product: JsonLdProduct, opts: { url: string }
     "@context": SCHEMA,
     "@type": "Product",
     name: collapseWhitespace(product.name),
-    description: truncateAtWord(product.description, 300),
+    // Op een zinsgrens (was: woordgrens na 300 tekens, midden in een zin).
+    description: truncateAtSentence(product.description, PRODUCT_DESCRIPTION_MAX),
     sku: baseSku,
     url: opts.url,
   };
@@ -324,6 +399,15 @@ export function buildWebSiteJsonLd(): Record<string, unknown> {
     alternateName: businessInfo.legalName,
     inLanguage: "nl-NL",
     publisher: { "@id": `${businessInfo.siteUrl}/#organization` },
+    // Zoeken op de site: /products?q= (zelfde route als de zoekdialoog).
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${businessInfo.siteUrl}/products?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 

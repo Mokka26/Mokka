@@ -23,6 +23,7 @@ import {
   buildProductJsonLd,
   buildProductTitle,
   jsonLdHtml,
+  productTitleDetails,
   type BreadcrumbItem,
 } from "@/lib/jsonLd";
 import { findRedirectTarget } from "@/lib/slug-redirect";
@@ -130,7 +131,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const url = `/${category.slug}/${product.slug}`;
   const canonical = await getCanonicalPath(product);
-  const title = buildProductTitle(product.name, category.label);
+  const title = buildProductTitle(product.name, category.label, productTitleDetails(product.specs, product.category));
   const description = buildProductDescription(product.description, product.name, category.label);
 
   return {
@@ -140,9 +141,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical },
     // Prijs op aanvraag (0) is geen koopbare pagina: niet indexeren, wel links volgen.
     ...(product.price > 0 ? {} : { robots: { index: false, follow: true } }),
-    // ogDefaults: siteName + Twitter-card. De bestandsgebaseerde
-    // opengraph-image.tsx (productfoto + prijs) gaat vóór de standaardafbeelding.
-    ...ogDefaults({ title: product.name, description, url }),
+    // ogDefaults: siteName + Twitter-card. Het beeld expliciet naar de eigen
+    // opengraph-image.tsx (productfoto + prijs): zonder `image` vulde
+    // ogDefaults het root-logo in, en Next laat een bestandsgebaseerd beeld
+    // alleen toe als de route zelf geen openGraph.images zet.
+    ...ogDefaults({
+      title: product.name,
+      description,
+      url,
+      image: { url: `${url}/opengraph-image`, width: 1200, height: 630, alt: product.name },
+    }),
   };
 }
 

@@ -163,7 +163,10 @@ export async function categoryMetadata(categorySlug: string, sp: SearchParams): 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    // Facetten (?kleur=, ?materiaal=, sortering): alleen noindex,follow en
+    // géén canonical naar de basis — die twee spreken elkaar tegen (Google
+    // advies: noindex voor facetten). Ongefilterde pagina's: canonical naar zichzelf.
+    ...(isFiltered ? {} : { alternates: { canonical: url } }),
     robots: isEmpty || isFiltered ? { index: false, follow: true } : { index: true, follow: true },
     ...ogDefaults({
       title: `${title} | ${businessInfo.name}`,

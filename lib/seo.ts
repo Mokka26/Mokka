@@ -7,6 +7,10 @@
  * object van de root-layout (geen diepe merge). De file-based
  * `app/opengraph-image.tsx` komt dan niet meer mee. `ogDefaults()` zet daarom
  * altijd `images` én `siteName`/`locale`, zodat elke pagina een OG-beeld houdt.
+ * Let op: zodra een route zelf `openGraph.images` zet, negeert Next een
+ * opengraph-image.tsx in dat segment. Routes met een eigen beeld (PDP,
+ * categorie) geven die URL daarom expliciet mee als `image`
+ * (`/<categorie>/<slug>/opengraph-image`); anders deelt de pagina het logo.
  */
 import type { Metadata } from "next";
 import { businessInfo } from "@/lib/business-info";
