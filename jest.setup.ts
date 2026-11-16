@@ -1,6 +1,6 @@
 // Draait vóór elk testbestand (setupFilesAfterEnv). jest-dom levert de
-// DOM-matchers (toBeInTheDocument, toHaveAttribute, …) voor component-tests
-// die met /** @jest-environment jsdom */ draaien; in Node-tests is de import
+// DOM-matchers (toBeInTheDocument, toHaveAttribute, …) voor eventuele
+// component-tests in jsdom (zie jest.config.mjs); in Node-tests is de import
 // onschadelijk.
 import "@testing-library/jest-dom";
 

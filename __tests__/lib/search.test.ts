@@ -1,4 +1,4 @@
-import { buildSearchWhere, matchesSearch, searchTerms } from "@/lib/search";
+import { matchesSearch, searchTerms } from "@/lib/search";
 
 describe("searchTerms", () => {
   it("normaliseert en kort meervoud in", () => {
@@ -13,19 +13,6 @@ describe("searchTerms", () => {
 
   it("vindt namen met een Turkse i (i + punt)", () => {
     expect(searchTerms("Ni̇rvana")).toEqual(["nirvana"]);
-  });
-});
-
-describe("buildSearchWhere", () => {
-  it("eist elk woord en koppelt categoriewoorden aan de categorie", () => {
-    const where = buildSearchWhere("hoekbanken grijs");
-    expect(where?.AND).toHaveLength(2);
-    const first = (where?.AND as Array<{ OR: Array<Record<string, unknown>> }>)[0].OR;
-    expect(first).toEqual(expect.arrayContaining([{ category: { in: expect.arrayContaining(["hoekbanken"]) } }]));
-  });
-
-  it("geeft null bij een lege zoekterm", () => {
-    expect(buildSearchWhere("  ")).toBeNull();
   });
 });
 

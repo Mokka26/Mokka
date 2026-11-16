@@ -1,4 +1,3 @@
-import type { Prisma } from "@prisma/client";
 import { CATEGORIES } from "@/lib/categories";
 
 /**
@@ -27,19 +26,14 @@ function stem(w: string): string {
 }
 
 /**
- * De database vergelijkt accenten exact ("boucle" vindt "Bouclé" niet). Voor de
- * woorden die in de catalogus mét accent staan, zoeken we beide schrijfwijzen.
+ * Woorden die in de catalogus mét accent staan; stem() laat hun slot-e staan
+ * ("boucle" niet inkorten tot "boucl").
  */
 const ACCENTED: Record<string, string> = {
   boucle: "bouclé",
   creme: "crème",
   cafe: "café",
 };
-
-function variantsOf(term: string): string[] {
-  const accented = ACCENTED[term];
-  return accented && accented !== term ? [term, accented] : [term];
-}
 
 /** Product-categorieën (DB-waarden) waarvan slug of label het woord bevat. */
 function categoriesFor(term: string): string[] {
@@ -52,38 +46,15 @@ function categoriesFor(term: string): string[] {
   return [...out];
 }
 
-/**
- * Prisma-filter: élk woord moet ergens voorkomen (naam, kleur, specificaties
- * zoals materiaal/maat, of de categorie). "eettafel eiken" vindt zo eiken
- * eettafels, "salon tafel" de salontafels en "hoekbanken" de hoekbanken.
- */
-export function buildSearchWhere(q: string): Prisma.ProductWhereInput | null {
-  const terms = searchTerms(q);
-  if (terms.length === 0) return null;
-  return {
-    AND: terms.map((t) => {
-      const cats = categoriesFor(t);
-      return {
-        OR: [
-          ...variantsOf(t).flatMap((v) => [
-            { name: { contains: v, mode: "insensitive" as const } },
-            { colorName: { contains: v, mode: "insensitive" as const } },
-            { specs: { contains: v, mode: "insensitive" as const } },
-          ]),
-          ...(cats.length > 0 ? [{ category: { in: cats } }] : []),
-        ],
-      };
-    }),
-  };
-}
-
 function fold(s: string): string {
   return s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");
 }
 
 /**
- * Zelfde logica als buildSearchWhere, maar in het geheugen (voor gecachte
- * productlijsten, bv. /products). Accenten tellen hier niet mee.
+ * Zoeken in het geheugen (gecachte productlijsten, bv. /products): élk woord
+ * moet ergens voorkomen (naam, kleur, specificaties zoals materiaal/maat, of
+ * de categorie). "eettafel eiken" vindt zo eiken eettafels, "salon tafel" de
+ * salontafels. Accenten tellen niet mee.
  */
 export function matchesSearch(
   p: { name: string; colorName?: string | null; specs?: string | null; category: string },

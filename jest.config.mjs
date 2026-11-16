@@ -7,8 +7,9 @@ const createJestConfig = nextJest({ dir: "./" });
 
 /** @type {import('jest').Config} */
 const config = {
-  // Alle bibliotheek- en route-tests draaien in Node. Een component-test zet
-  // bovenaan het bestand: /** @jest-environment jsdom */
+  // Alle bibliotheek- en route-tests draaien in Node. Voor component-tests in
+  // een DOM: installeer eerst jest-environment-jsdom (+ @testing-library/react)
+  // en zet bovenaan het testbestand: /** @jest-environment jsdom */
   testEnvironment: "node",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   moduleNameMapper: {

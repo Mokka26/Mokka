@@ -30,7 +30,7 @@ function first(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
-/** Zoekterm uit ?q=, opgeschoond (max. 80 tekens, zoals /api/products). */
+/** Zoekterm uit ?q=, opgeschoond (max. 80 tekens). */
 function readQuery(sp: SearchParams): string {
   return (first(sp.q) ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
 }

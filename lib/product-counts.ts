@@ -12,8 +12,8 @@ export type ProductCounts = Record<string, number>;
  * kleur-/maatvarianten met dezelfde colorGroup zijn één model (countModels),
  * zodat "Eettafels 100" op de homepage hetzelfde zegt als op /eettafels. Gecachet op
  * PRODUCTS_TAG: één query per 5 minuten of tot een productmutatie
- * `revalidateProduct()` aanroept. Gedeeld door de homepage (CategoriesGrid)
- * en /api/products/counts (FilterBar).
+ * `revalidateProduct()` aanroept. Gedeeld door de root-layout (lege
+ * categorieën uit het menu), de homepage (CategoriesGrid, RoomStory).
  */
 export const getProductCounts = unstable_cache(
   async (): Promise<ProductCounts> => {
@@ -40,8 +40,6 @@ export const getProductCounts = unstable_cache(
       if (!c.isUmbrella) continue;
       counts[c.slug] = countModels(c.dbCategories.flatMap((db) => rowsByCategory.get(db) ?? []));
     }
-    // Legacy-sleutel voor de FilterBar ("alle-banken" = umbrella banken).
-    counts["alle-banken"] = counts["banken"] ?? 0;
     return counts;
   },
   ["product-counts"],
