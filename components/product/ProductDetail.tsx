@@ -19,6 +19,8 @@ import { VariantPicker } from "@/components/product/VariantPicker";
 import type { ModelVariant } from "@/lib/variants";
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
 import type { CheckoutMethod } from "@/lib/mollie";
+import { nachtkastAddon, priceLine, voetbankAddon } from "@/lib/pricing";
+import { fromCents } from "@/lib/money";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { orientationOf } from "@/components/product/imageAspect";
 import { useFooterInView } from "@/components/product/useFooterInView";
@@ -116,24 +118,38 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const activePrice = activeVariant?.price ?? product.price;
   const activeListPrice = activeVariant?.listPrice ?? product.listPrice ?? null;
 
-  // Nachtkast-optie (bedden): "included" = inbegrepen, "optional" = 0/1/2 tegen toeslag.
-  const nkPrice1 = product.nachtkastPrice ?? 0;
-  const nkPrice2 = product.nachtkastPrice2 ?? nkPrice1 * 2;
-  const isNkOptional = product.nachtkastMode === "optional" && nkPrice1 > 0;
-  const nkAddon = (n: number) => (n === 1 ? nkPrice1 : n === 2 ? nkPrice2 : 0);
+  // Nachtkast-optie (bedden): "included" = inbegrepen, "optional" = 0/1/2 tegen
+  // toeslag. Toeslagen en regelprijs komen uit lib/pricing — dezelfde functie
+  // waarmee de checkout afrekent, dus getoond bedrag = af te rekenen bedrag.
+  const nkAddon = (n: number) => nachtkastAddon(product, n);
+  const isNkOptional = product.nachtkastMode === "optional" && nkAddon(1) > 0;
+  const nkChoices = [0, 1, 2].filter((n) => n === 0 || nkAddon(n) > 0);
   const [nachtkast, setNachtkast] = useState(0);
 
   // Voetbank-optie (bedden): 0/1 tegen voetbankPrice.
-  const vbPrice = product.voetbankPrice ?? 0;
-  const isVbOptional = product.voetbankMode === "optional" && vbPrice > 0;
+  const vbPrice = voetbankAddon(product, 1);
+  const isVbOptional = vbPrice > 0;
   const [voetbank, setVoetbank] = useState(0);
 
-  const lineUnitPrice = activePrice + (isNkOptional ? nkAddon(nachtkast) : 0) + (isVbOptional ? voetbank * vbPrice : 0);
+  const priced = priceLine(
+    {
+      price: product.price,
+      sizeVariants: product.sizeVariants ?? null,
+      nachtkastMode: product.nachtkastMode ?? null,
+      nachtkastPrice: product.nachtkastPrice ?? null,
+      nachtkastPrice2: product.nachtkastPrice2 ?? null,
+      voetbankMode: product.voetbankMode ?? null,
+      voetbankPrice: product.voetbankPrice ?? null,
+    },
+    { variantLabel: activeVariant?.label ?? null, nachtkast, voetbank },
+  );
+  const lineUnitPrice = priced.ok ? fromCents(priced.unitCents) : activePrice;
   const hasOptions = (isNkOptional && nachtkast > 0) || (isVbOptional && voetbank > 0);
 
   const stock = product.stock ?? 0;
   const inStock = stock > 0;
-  const priceOnRequest = activePrice <= 0;
+  // Geen geldige regelprijs (bv. kapotte maatdata) = niet online te kopen.
+  const priceOnRequest = activePrice <= 0 || !priced.ok;
   const canBuy = inStock && !priceOnRequest;
   const requestUrl = `/contact?product=${encodeURIComponent(product.slug)}&naam=${encodeURIComponent(product.name)}`;
   // Geen koopknop (prijs op aanvraag of tijdelijk uitverkocht) → een vraag i.p.v. een dode, grijze knop.
@@ -289,7 +305,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               <div className="mb-6" role="group" aria-labelledby="pdp-nk-label">
                 <p id="pdp-nk-label" className="text-[15px] text-stone mb-3">Nachtkast erbij?</p>
                 <div className="flex flex-wrap gap-2">
-                  {[0, 1, 2].map((n) => {
+                  {nkChoices.map((n) => {
                     const active = n === nachtkast;
                     return (
                       <button

@@ -1,0 +1,85 @@
+import { makeProduct, sizeVariantsJson } from "@/__tests__/helpers/fixtures";
+import { clampOptions, nachtkastAddon, priceLine, readSizeVariants, voetbankAddon } from "@/lib/pricing";
+
+const bed = makeProduct({
+  id: "bed",
+  price: 599,
+  sizeVariants: sizeVariantsJson([
+    { label: "140 × 200", price: 599 },
+    { label: "160 × 200", price: 699 },
+  ]),
+  nachtkastMode: "optional",
+  nachtkastPrice: 89,
+  nachtkastPrice2: 159,
+  voetbankMode: "optional",
+  voetbankPrice: 129,
+});
+
+describe("lib/pricing", () => {
+  describe("priceLine — maten (CODE-6, CODE-9)", () => {
+    it("weigert een product met maten zonder maatlabel (VARIANT_MISSING)", () => {
+      expect(priceLine(bed, {})).toEqual({ ok: false, reason: "VARIANT_MISSING" });
+      expect(priceLine(bed, { variantLabel: null })).toEqual({ ok: false, reason: "VARIANT_MISSING" });
+    });
+
+    it("vergelijkt maatlabels getrimd, aan beide kanten (zoals de PDP)", () => {
+      const p = makeProduct({ price: 599, sizeVariants: JSON.stringify([{ label: " 160 × 200 ", price: 699 }]) });
+      expect(priceLine(p, { variantLabel: "160 × 200" })).toMatchObject({ ok: true, unitCents: 69900, variantLabel: "160 × 200" });
+      expect(priceLine(p, { variantLabel: "  160 × 200\n" })).toMatchObject({ ok: true, unitCents: 69900 });
+    });
+
+    it("valt bij een maat zonder eigen prijs terug op de productprijs", () => {
+      const p = makeProduct({ price: 499, sizeVariants: JSON.stringify([{ label: "90 × 200" }]) });
+      expect(priceLine(p, { variantLabel: "90 × 200" })).toMatchObject({ ok: true, unitCents: 49900 });
+    });
+
+    it("markeert kapotte maatdata als corrupt", () => {
+      expect(priceLine(makeProduct({ sizeVariants: "{kapot" }), { variantLabel: "x" })).toEqual({ ok: false, reason: "VARIANT_MISSING", corrupt: true });
+      expect(readSizeVariants("{\"a\":1}")).toBeNull();
+      expect(readSizeVariants("")).toEqual([]);
+    });
+  });
+
+  describe("priceLine — opties (CODE-7)", () => {
+    it("weigert een nachtkast zonder positieve toeslag (nooit gratis meeleveren)", () => {
+      const zero = makeProduct({ ...bed, nachtkastPrice: 0, nachtkastPrice2: null });
+      expect(priceLine(zero, { variantLabel: "140 × 200", nachtkast: 1 })).toEqual({ ok: false, reason: "NO_PRICE" });
+      expect(priceLine(zero, { variantLabel: "140 × 200", nachtkast: 2 })).toEqual({ ok: false, reason: "NO_PRICE" });
+      const nullPrice = makeProduct({ ...bed, nachtkastPrice: null, nachtkastPrice2: null });
+      expect(priceLine(nullPrice, { variantLabel: "140 × 200", nachtkast: 1 })).toEqual({ ok: false, reason: "NO_PRICE" });
+      // Zonder nachtkast gewoon te koop.
+      expect(priceLine(zero, { variantLabel: "140 × 200" })).toMatchObject({ ok: true, unitCents: 59900 });
+    });
+
+    it("weigert een voetbank zonder positieve toeslag", () => {
+      const zero = makeProduct({ ...bed, voetbankPrice: 0 });
+      expect(priceLine(zero, { variantLabel: "140 × 200", voetbank: 1 })).toEqual({ ok: false, reason: "NO_PRICE" });
+      expect(priceLine(zero, { variantLabel: "140 × 200", voetbank: 0 })).toMatchObject({ ok: true });
+    });
+
+    it("telt maat + nachtkasten + voetbank in centen op", () => {
+      expect(priceLine(bed, { variantLabel: "160 × 200", nachtkast: 2, voetbank: 1 })).toEqual({
+        ok: true,
+        unitCents: 69900 + 15900 + 12900,
+        variantLabel: "160 × 200",
+        fullLabel: "160 × 200 · 2 nachtkasten · voetbank",
+      });
+    });
+  });
+
+  describe("helpers voor de PDP", () => {
+    it("nachtkastAddon/voetbankAddon geven alleen bij modus optional een toeslag", () => {
+      expect(nachtkastAddon(bed, 1)).toBe(89);
+      expect(nachtkastAddon(bed, 2)).toBe(159);
+      expect(nachtkastAddon({ ...bed, nachtkastPrice2: null }, 2)).toBe(178);
+      expect(nachtkastAddon({ ...bed, nachtkastMode: "included" }, 1)).toBe(0);
+      expect(voetbankAddon(bed, 1)).toBe(129);
+      expect(voetbankAddon({ voetbankMode: undefined, voetbankPrice: 129 }, 1)).toBe(0);
+    });
+
+    it("clampOptions begrenst nachtkasten op 0-2 en voetbank op 0-1", () => {
+      expect(clampOptions(bed, { nachtkast: 7, voetbank: 3 })).toEqual({ nk: 2, vb: 1 });
+      expect(clampOptions({ nachtkastMode: null, voetbankMode: "included" }, { nachtkast: 1, voetbank: 1 })).toEqual({ nk: 0, vb: 0 });
+    });
+  });
+});

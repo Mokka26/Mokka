@@ -394,6 +394,18 @@ const fullUpdateSchema = z.object({
   colorHex: hexSchema,
   sizeName: z.string().max(40).nullable(),
   source: z.string().max(60).nullable(),
+}).superRefine((d, ctx) => {
+  // Een los bij te bestellen optie zonder toeslag wordt in de checkout
+  // geweigerd (lib/pricing: NO_PRICE) — dus hier al een prijs > 0 eisen.
+  if (d.nachtkastMode === "optional" && !((d.nachtkastPrice ?? 0) > 0)) {
+    ctx.addIssue({ code: "custom", path: ["nachtkastPrice"], message: "Vul een nachtkastprijs hoger dan € 0 in (of kies niet \"apart bij te bestellen\")" });
+  }
+  if (d.nachtkastMode === "optional" && d.nachtkastPrice2 !== null && !(d.nachtkastPrice2 > 0)) {
+    ctx.addIssue({ code: "custom", path: ["nachtkastPrice2"], message: "Prijs voor 2 nachtkasten moet hoger zijn dan € 0 (of leeg)" });
+  }
+  if (d.voetbankMode === "optional" && !((d.voetbankPrice ?? 0) > 0)) {
+    ctx.addIssue({ code: "custom", path: ["voetbankPrice"], message: "Vul een voetbankprijs hoger dan € 0 in (of kies niet \"apart bij te bestellen\")" });
+  }
 });
 
 type FullField = keyof z.infer<typeof fullUpdateSchema>;

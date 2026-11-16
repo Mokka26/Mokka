@@ -49,8 +49,9 @@ describe("lib/orders", () => {
       expect(priceLine(bed, { variantLabel: "180 × 200" })).toEqual({ ok: false, reason: "VARIANT_MISSING" });
     });
 
-    it("valt op de basisprijs terug als er varianten zijn maar geen maat gekozen is", () => {
-      expect(priceLine(bed, {})).toMatchObject({ ok: true, unitCents: 59900 });
+    it("weigert een product met maten als er geen maat gekozen is (geen stille basisprijs)", () => {
+      expect(priceLine(bed, {})).toEqual({ ok: false, reason: "VARIANT_MISSING" });
+      expect(priceLine(bed, { variantLabel: "  " })).toEqual({ ok: false, reason: "VARIANT_MISSING" });
     });
 
     it("telt nachtkasten alleen bij modus optional, met prijs uit de DB en max 2", () => {
@@ -62,25 +63,25 @@ describe("lib/orders", () => {
         unitCents: 59900 + 15900,
         fullLabel: "140 × 200 · 2 nachtkasten",
       });
-      expect(priceLine(bed, { nachtkast: 5 })).toMatchObject({ unitCents: 59900 + 15900 });
-      expect(priceLine(bed, { nachtkast: -1 })).toMatchObject({ unitCents: 59900 });
+      expect(priceLine(bed, { variantLabel: "140 × 200", nachtkast: 5 })).toMatchObject({ unitCents: 59900 + 15900 });
+      expect(priceLine(bed, { variantLabel: "140 × 200", nachtkast: -1 })).toMatchObject({ unitCents: 59900 });
     });
 
     it("rekent twee nachtkasten als 2 × enkelprijs zonder nachtkastPrice2", () => {
       const p = makeProduct({ ...bed, nachtkastPrice2: null });
-      expect(priceLine(p, { nachtkast: 2 })).toMatchObject({ unitCents: 59900 + 2 * 8900 });
+      expect(priceLine(p, { variantLabel: "140 × 200", nachtkast: 2 })).toMatchObject({ unitCents: 59900 + 2 * 8900 });
     });
 
     it("geeft geen toeslag bij nachtkastMode included of none", () => {
-      expect(priceLine(makeProduct({ ...bed, nachtkastMode: "included" }), { nachtkast: 2 })).toMatchObject({
+      expect(priceLine(makeProduct({ ...bed, nachtkastMode: "included" }), { variantLabel: "140 × 200", nachtkast: 2 })).toMatchObject({
         unitCents: 59900,
-        fullLabel: null,
+        fullLabel: "140 × 200",
       });
-      expect(priceLine(makeProduct({ ...bed, nachtkastMode: null }), { nachtkast: 1 })).toMatchObject({ unitCents: 59900 });
+      expect(priceLine(makeProduct({ ...bed, nachtkastMode: null }), { variantLabel: "140 × 200", nachtkast: 1 })).toMatchObject({ unitCents: 59900 });
     });
 
     it("telt een voetbank alleen bij modus optional", () => {
-      const p = makeProduct({ ...bed, voetbankMode: "optional", voetbankPrice: 129 });
+      const p = makeProduct({ ...bed, sizeVariants: null, voetbankMode: "optional", voetbankPrice: 129 });
       expect(priceLine(p, { voetbank: 1 })).toMatchObject({ unitCents: 59900 + 12900, fullLabel: "voetbank" });
       expect(priceLine(p, { voetbank: 3 })).toMatchObject({ unitCents: 59900 + 12900 });
       expect(priceLine(makeProduct({ ...p, voetbankMode: "included" }), { voetbank: 1 })).toMatchObject({ unitCents: 59900 });
@@ -91,8 +92,8 @@ describe("lib/orders", () => {
     });
 
     it("weigert kapotte sizeVariants-JSON in plaats van stil de basisprijs te rekenen", () => {
-      expect(priceLine(makeProduct({ sizeVariants: "{niet json" }), { variantLabel: "x" })).toEqual({ ok: false, reason: "VARIANT_MISSING" });
-      expect(priceLine(makeProduct({ sizeVariants: "{\"a\":1}" }), {})).toEqual({ ok: false, reason: "VARIANT_MISSING" });
+      expect(priceLine(makeProduct({ sizeVariants: "{niet json" }), { variantLabel: "x" })).toMatchObject({ ok: false, reason: "VARIANT_MISSING" });
+      expect(priceLine(makeProduct({ sizeVariants: "{\"a\":1}" }), {})).toMatchObject({ ok: false, reason: "VARIANT_MISSING" });
     });
 
     it("gebruikt de basisprijs bij een lege maatlijst", () => {
@@ -163,8 +164,8 @@ describe("lib/orders", () => {
 
     it("geeft gratis verzending boven de drempel in NL en BE", async () => {
       db.product.findMany.mockResolvedValue([bed]);
-      const nl = await computeOrder([{ productId: "bed", quantity: 1 }], "NL");
-      const be = await computeOrder([{ productId: "bed", quantity: 1 }], "BE");
+      const nl = await computeOrder([{ productId: "bed", variantLabel: "140 × 200", quantity: 1 }], "NL");
+      const be = await computeOrder([{ productId: "bed", variantLabel: "140 × 200", quantity: 1 }], "BE");
       expect(nl.shippingCents).toBe(0);
       expect(be.shippingCents).toBe(0);
       expect(nl.totalCents).toBe(59900);
@@ -180,7 +181,7 @@ describe("lib/orders", () => {
       expect(under.shipping).toBe(shippingInfo.rates.standard);
 
       db.product.findMany.mockResolvedValue([bed]);
-      const abroad = await computeOrder([{ productId: "bed", quantity: 1 }], "DE");
+      const abroad = await computeOrder([{ productId: "bed", variantLabel: "140 × 200", quantity: 1 }], "DE");
       expect(abroad.shippingCents).toBe(STANDARD_SHIPPING_CENTS);
     });
 

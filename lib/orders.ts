@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
 import { toCents, fromCents, vatFromGrossCents } from "@/lib/money";
 import { captureWarning } from "@/lib/sentry";
+import { priceLine } from "@/lib/pricing";
 
 export type CheckoutLineInput = {
   productId: string;
@@ -40,83 +41,7 @@ export type ComputedOrder = {
   country: string;
 };
 
-type SizeVariant = { label: string; price?: number };
-
-/** Minimale productvelden die nodig zijn om één regel te prijzen. */
-export type PriceableProduct = {
-  price: number;
-  sizeVariants: string | null;
-  nachtkastMode: string | null;
-  nachtkastPrice: number | null;
-  nachtkastPrice2: number | null;
-  voetbankMode: string | null;
-  voetbankPrice: number | null;
-};
-
-export type LinePricing =
-  | { ok: true; unitCents: number; variantLabel: string | null; fullLabel: string | null }
-  | { ok: false; reason: "VARIANT_MISSING" | "NO_PRICE" };
-
-/**
- * Prijs voor de gekozen maat. Geeft `null` als het product maat-varianten heeft
- * maar het meegestuurde label op géén enkele variant matcht (bv. maat hernoemd
- * of verwijderd in de admin) — dan mag NIET stilletjes op de basisprijs worden
- * teruggevallen; de checkout hoort te weigeren.
- */
-function variantPrice(sizeVariants: string | null, label: string | null, fallback: number): number | null {
-  if (!sizeVariants) return fallback;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(sizeVariants);
-  } catch {
-    // Kapotte maat-data: NIET stil de basisprijs (vaak de kleinste maat)
-    // rekenen — weigeren en melden, zodat de admin het kan herstellen.
-    captureWarning("sizeVariants is geen geldige JSON", { label });
-    return null;
-  }
-  if (!Array.isArray(parsed)) {
-    captureWarning("sizeVariants is geen lijst", { label });
-    return null;
-  }
-  const arr = parsed as SizeVariant[];
-  if (arr.length === 0) return fallback;
-  if (!label) return fallback; // varianten aanwezig maar geen maat gekozen → basisprijs
-  const match = arr.find((v) => v.label === label);
-  if (!match) return null; // maat bestaat niet (meer) → fout
-  return typeof match.price === "number" && match.price > 0 ? match.price : fallback;
-}
-
-/**
- * Prijst één regel (maat + nachtkast + voetbank) vers uit de productdata.
- * Gedeeld door computeOrder (checkout) en getCartSnapshot (cart-sync) zodat
- * beide altijd dezelfde prijs geven.
- */
-export function priceLine(
-  p: PriceableProduct,
-  opts: { variantLabel?: string | null; nachtkast?: number; voetbank?: number },
-): LinePricing {
-  const label = opts.variantLabel?.trim() || null;
-  const sizePrice = variantPrice(p.sizeVariants, label, p.price);
-  if (sizePrice === null) return { ok: false, reason: "VARIANT_MISSING" };
-  if (!(sizePrice > 0)) return { ok: false, reason: "NO_PRICE" };
-  // Nachtkast-toeslag — alleen bij modus "optional" (apart bij te bestellen);
-  // prijs komt vers uit de DB (client-bedrag wordt nooit vertrouwd). Max 2.
-  // "included" en "none" geven geen toeslag.
-  const nk = p.nachtkastMode === "optional" ? Math.max(0, Math.min(2, Math.floor(opts.nachtkast ?? 0))) : 0;
-  const nkAddon = nk === 1 ? (p.nachtkastPrice ?? 0)
-    : nk === 2 ? (p.nachtkastPrice2 ?? (p.nachtkastPrice ?? 0) * 2)
-    : 0;
-  // Voetbank-toeslag — alleen bij modus "optional", 0/1.
-  const vb = p.voetbankMode === "optional" ? Math.max(0, Math.min(1, Math.floor(opts.voetbank ?? 0))) : 0;
-  const vbAddon = vb * (p.voetbankPrice ?? 0);
-  const unitCents = toCents(sizePrice) + toCents(nkAddon) + toCents(vbAddon);
-  const extras = [
-    nk > 0 ? `${nk} nachtkast${nk > 1 ? "en" : ""}` : "",
-    vb > 0 ? "voetbank" : "",
-  ].filter(Boolean).join(" · ");
-  const fullLabel = extras ? `${label ?? ""}${label ? " · " : ""}${extras}`.trim() : label;
-  return { ok: true, unitCents, variantLabel: label, fullLabel };
-}
+export { priceLine, type PriceableProduct, type LinePricing } from "@/lib/pricing";
 
 /**
  * Berekent het ordertotaal SERVER-SIDE uit de database, in centen. De prijs
@@ -145,6 +70,8 @@ export async function computeOrder(items: CheckoutLineInput[], country = "NL"): 
     if (qty > p.stock) throw new Error(`${p.name}: nog ${p.stock} op voorraad`);
     const priced = priceLine(p, item);
     if (!priced.ok) {
+      // Kapotte maat-data: weigeren én melden, zodat de admin het kan herstellen.
+      if (priced.corrupt) captureWarning("sizeVariants is geen geldige maatlijst", { productId: p.id });
       throw new Error(
         priced.reason === "VARIANT_MISSING"
           ? `De gekozen maat voor ${p.name} is niet meer beschikbaar`

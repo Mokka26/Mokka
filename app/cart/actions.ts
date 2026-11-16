@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { priceLine } from "@/lib/orders";
+import { priceLine } from "@/lib/pricing";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { rateLimitIp } from "@/lib/rate-limit";
 import { captureError } from "@/lib/sentry";

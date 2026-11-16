@@ -238,6 +238,14 @@ describe("app/admin/products/actions", () => {
       expect(db.$transaction).not.toHaveBeenCalled();
     });
 
+    it("eist een toeslag > 0 bij een los bij te bestellen nachtkast of voetbank", async () => {
+      const nk = (await updateProductFull({}, fullForm({ nachtkastMode: "optional", nachtkastPrice: "0" }))) as FullUpdateState;
+      expect(nk.fieldErrors?.nachtkastPrice).toContain("hoger dan");
+      const vb = (await updateProductFull({}, fullForm({ voetbankMode: "optional", voetbankPrice: "" }))) as FullUpdateState;
+      expect(vb.fieldErrors?.voetbankPrice).toContain("hoger dan");
+      expect(db.product.findUnique).not.toHaveBeenCalled();
+    });
+
     it("maakt van onleesbare prijzen veldfouten in plaats van stil terug te vallen", async () => {
       const result = (await updateProductFull({}, fullForm({ price: "abc", listPrice: "10" }))) as FullUpdateState;
       expect(result.fieldErrors?.price).toBeTruthy();
