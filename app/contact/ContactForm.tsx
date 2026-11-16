@@ -26,8 +26,28 @@ const SUBJECT_MAX = 60;
 
 const NETWORK_FAILED = "Versturen is niet gelukt. Controleer je internetverbinding en probeer het opnieuw, of bel ons.";
 
-function productSubject(label: string): string {
-  return `Prijs en levertijd aanvragen voor ${label}`.slice(0, SUBJECT_MAX);
+/**
+ * Soort productvraag vanaf de PDP: `prijs` (prijs/levertijd aanvragen,
+ * default) of `uitvoering` (`?vraag=uitvoering`: andere stof of hoek links/
+ * rechts, link onder de koopknop bij hoekbanken).
+ */
+type ProductQuestion = "prijs" | "uitvoering";
+
+function productQuestion(param: string | null): ProductQuestion {
+  return param === "uitvoering" ? "uitvoering" : "prijs";
+}
+
+function productSubject(label: string, kind: ProductQuestion = "prijs"): string {
+  const text = kind === "uitvoering" ? `Andere stof of hoek voor ${label}` : `Prijs en levertijd aanvragen voor ${label}`;
+  return text.slice(0, SUBJECT_MAX);
+}
+
+function productMessage(slug: string, name: string | null, kind: ProductQuestion): string {
+  const product = name ? `${name} (${slug})` : slug;
+  if (kind === "uitvoering") {
+    return `Ik wil graag weten of dit product ook in een andere stof of met de hoek links/rechts kan: ${product}\n\n`;
+  }
+  return `Ik wil graag de prijs en levertijd weten van: ${product}\n\n`;
 }
 
 /** `?naam=` (productnaam vanaf de PDP): alleen leesbare tekst, max. 100 tekens. */
@@ -47,7 +67,12 @@ function presetSubject(param: string | null): string {
   return SUBJECT_OPTIONS.some((o) => o.value === value) ? value : "";
 }
 
-function initialForm(productSlug: string | null, productName: string | null, subject: string): FormState {
+function initialForm(
+  productSlug: string | null,
+  productName: string | null,
+  subject: string,
+  kind: ProductQuestion,
+): FormState {
   if (productSlug) {
     // Naam voor de klant leesbaar; slug tussen haakjes zodat wij het product terugvinden.
     const label = productName ?? productSlug;
@@ -55,10 +80,8 @@ function initialForm(productSlug: string | null, productName: string | null, sub
       name: "",
       email: "",
       phone: "",
-      subject: productSubject(label),
-      message: productName
-        ? `Ik wil graag de prijs en levertijd weten van: ${productName} (${productSlug})\n\n`
-        : `Ik wil graag de prijs en levertijd weten van: ${productSlug}\n\n`,
+      subject: productSubject(label, kind),
+      message: productMessage(productSlug, productName, kind),
     };
   }
   return {
@@ -87,14 +110,16 @@ function validate(form: FormState): FieldErrors {
  */
 export default function ContactForm() {
   // ?product=<slug> vanaf een productpagina → onderwerp en bericht voorvullen;
+  // &vraag=uitvoering erbij (hoekbank-PDP) → vraag over andere stof/hoek;
   // ?subject=showroom vanaf de showroompagina → "Showroomafspraak".
   const searchParams = useSearchParams();
   const productSlug = cleanSlug(searchParams.get("product"));
   const productName = cleanName(searchParams.get("naam"));
   const productLabel = productName ?? productSlug;
   const subjectParam = presetSubject(searchParams.get("subject"));
+  const questionKind = productQuestion(searchParams.get("vraag"));
 
-  const [form, setForm] = useState<FormState>(() => initialForm(productSlug, productName, subjectParam));
+  const [form, setForm] = useState<FormState>(() => initialForm(productSlug, productName, subjectParam, questionKind));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
@@ -301,7 +326,7 @@ export default function ContactForm() {
         >
           <option value="">Kies een onderwerp</option>
           {productLabel && (
-            <option value={productSubject(productLabel)}>{productSubject(productLabel)}</option>
+            <option value={productSubject(productLabel, questionKind)}>{productSubject(productLabel, questionKind)}</option>
           )}
           {SUBJECT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
