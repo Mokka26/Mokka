@@ -6,6 +6,7 @@ import { formatCents, toCents } from "@/lib/money";
 import { deliverySummary } from "@/lib/delivery";
 import { WITHDRAWAL_FORM_TITLE, withdrawalFormLines } from "@/lib/withdrawal";
 import { listUnsubscribeHeaders, unsubscribePageUrl } from "@/lib/newsletter-unsubscribe";
+import { TERMS_VERSION, termsPlainText } from "@/lib/terms";
 
 /**
  * E-mail via SMTP (server-only). Afzender en interne ontvanger zijn
@@ -241,6 +242,18 @@ export function withdrawalLines(): string[] {
   ];
 }
 
+const TERMS_FILENAME = "algemene-voorwaarden-mokka-home.txt";
+const TERMS_ATTACHMENT_NOTE = `De algemene voorwaarden (versie ${TERMS_VERSION}) zitten als bijlage bij deze mail (${TERMS_FILENAME}), zodat je ze kunt bewaren.`;
+
+/**
+ * Algemene voorwaarden als tekstbijlage: een duurzame drager (art. 6:230v
+ * BW), uit dezelfde bron als de pagina. Platte tekst i.p.v. PDF: geen extra
+ * dependency en spamfilters laten .txt ongemoeid.
+ */
+export function termsAttachment(): { filename: string; content: string; contentType: string } {
+  return { filename: TERMS_FILENAME, content: termsPlainText(), contentType: "text/plain; charset=utf-8" };
+}
+
 /**
  * Orderbevestiging naar de klant + interne kopie naar info@.
  * Retourneert true als de KLANT-mail is verstuurd. De interne kopie gaat
@@ -275,6 +288,8 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     `Hartelijke groet,`,
     businessInfo.name,
     ``,
+    TERMS_ATTACHMENT_NOTE,
+    ``,
     `────────────`,
     ...withdrawalLines(),
   ].join("\n");
@@ -299,6 +314,7 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     p(`<strong style="color:#14110D;">Hoe nu verder?</strong><br>${escapeHtml(NEXT_STEP_AFTER_PAYMENT)}`),
     p(`Vragen? Mail naar <a href="mailto:${businessInfo.contact.email}" style="color:#14110D;">${escapeHtml(businessInfo.contact.email)}</a>${escapeHtml(phoneLine)}.`),
     p(`Hartelijke groet,<br>${escapeHtml(businessInfo.name)}`),
+    p(`<span style="font-size:14px;">${escapeHtml(TERMS_ATTACHMENT_NOTE)}</span>`),
     withdrawalHtml,
   ].join(""));
 
@@ -307,6 +323,7 @@ export async function sendOrderConfirmation(order: OrderMailData): Promise<boole
     subject: `Bevestiging van je bestelling ${order.orderNumber} — ${businessInfo.name}`,
     text,
     html,
+    attachments: [termsAttachment()],
   });
   if (!sent) return false;
 
