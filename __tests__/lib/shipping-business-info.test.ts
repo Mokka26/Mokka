@@ -10,6 +10,13 @@ import {
 } from "@/lib/business-info";
 
 describe("lib/shipping-info", () => {
+  it("terugbetaling volgt de wet (vanaf de herroeping, wachten mag tot retour of bewijs) en garantie noemt de wettelijke rechten", () => {
+    expect(shippingInfo.refundCopy).toContain(`${shippingInfo.refundDays} dagen na de dag waarop je ons laat weten`);
+    expect(shippingInfo.refundCopy).toMatch(/wachten/);
+    expect(shippingInfo.refundCopy).not.toMatch(/nadat we het product hebben ontvangen/);
+    expect(shippingInfo.legalRightsCopy).toMatch(/wettelijke rechten/);
+  });
+
   it("bron van waarheid: drempel, tarief, btw en retourtermijn zijn consistent met de copy", () => {
     expect(shippingInfo.freeShippingThreshold).toBeGreaterThan(0);
     expect(shippingInfo.freeShippingCopyShort).toContain(String(shippingInfo.freeShippingThreshold));

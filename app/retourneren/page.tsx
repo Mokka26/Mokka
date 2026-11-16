@@ -69,14 +69,15 @@ export default function RetourPage() {
           </li>
           <li>{shippingInfo.returnConfirmationCopy}</li>
           <li>Breng het product naar onze showroom, of stuur het goed verpakt op naar het retouradres hieronder. Voor grote meubels kunnen we het op afspraak ophalen; de kosten daarvan hoor je vooraf.</li>
-          <li>Na ontvangst en controle betalen we binnen {days} dagen terug.</li>
+          <li>We betalen je terug binnen {shippingInfo.refundDays} dagen na je retouraanmelding. We mogen wachten tot het product terug is of tot je laat zien dat je het hebt verstuurd.</li>
         </ol>
       </LegalSection>
 
       <LegalSection heading="Kosten en terugbetaling">
         <p>
-          We betalen het aankoopbedrag terug, inclusief de standaard verzendkosten van de heenzending ({formatShippingCost(shippingInfo.rates.standard)} onder de gratis-verzendgrens van €{shippingInfo.freeShippingThreshold}). Dat doen we binnen {days} dagen nadat we het product hebben ontvangen, via dezelfde betaalmethode als waarmee je betaald hebt.
+          We betalen het aankoopbedrag terug, inclusief de standaard verzendkosten van de heenzending ({formatShippingCost(shippingInfo.rates.standard)} onder de gratis-verzendgrens van €{shippingInfo.freeShippingThreshold}).
         </p>
+        <p>{shippingInfo.refundCopy}</p>
         <p>{shippingInfo.returnFeesCopy}</p>
         <p>
           Is het product gebruikt of beschadigd op een manier die verder gaat dan nodig om het te beoordelen, dan mogen we de waardevermindering verrekenen met het bedrag dat je terugkrijgt. We laten je dan vooraf weten om welk bedrag het gaat.

@@ -17,6 +17,8 @@ type Usp = {
 // teksten hieronder worden hieruit opgebouwd: "vanaf", want de code rekent met >=.
 const FREE_SHIPPING_THRESHOLD = 100;
 const FREE_FROM = `vanaf €${FREE_SHIPPING_THRESHOLD}`;
+// Wettelijke terugbetaaltermijn na herroeping (art. 6:230r BW).
+const REFUND_DAYS = 14;
 
 export const shippingInfo = {
   // ─── Verzending ───────────────────────────────────────────────
@@ -68,6 +70,10 @@ export const shippingInfo = {
   } as Record<string, number>,
   warrantyCopyShort: "Garantie",
   warrantyCopyLong: "Op fabrieks- en materiaalfouten.",
+  // Verplicht naast elke garantietoezegging (art. 7:6a BW): de garantie
+  // beperkt de wettelijke rechten niet. Juridisch toetsen door de eigenaar.
+  legalRightsCopy:
+    "Naast deze garantie heb je altijd je wettelijke rechten: een product moet doen wat je er redelijkerwijs van mag verwachten. Is dat niet zo, dan heb je recht op herstel of vervanging, en als dat niet lukt op prijsvermindering of ontbinding. De garantie beperkt die rechten niet.",
 
   // ─── Retour ───────────────────────────────────────────────────
   // Wettelijk herroepingsrecht (art. 6:230o BW): 14 dagen bedenktijd, de klant
@@ -89,6 +95,15 @@ export const shippingInfo = {
   returnFeesCopy: "De kosten voor het terugsturen zijn voor jouw rekening; terugbrengen naar de showroom is gratis.",
   /** Landen waarvoor het retourbeleid geldt (los van de gratis-verzendlanden). */
   returnCountries: ["NL", "BE"] as ReadonlyArray<string>,
+  /**
+   * Terugbetaling bij herroeping (art. 6:230r BW): binnen 14 dagen na de dag
+   * waarop je de herroeping meldt; wij mogen wachten tot het product terug is
+   * of tot je aantoont dat je het hebt teruggestuurd (wat het eerst komt).
+   * De termijn volgt de wet, niet returnWindowDays (die kan ruimer worden).
+   */
+  refundDays: REFUND_DAYS,
+  refundCopy:
+    `We betalen je terug binnen ${REFUND_DAYS} dagen na de dag waarop je ons laat weten dat je de koop herroept, via dezelfde betaalmethode als waarmee je betaalde. We mogen wachten met terugbetalen tot we het product terug hebben, of tot je hebt laten zien dat je het hebt teruggestuurd — wat het eerst gebeurt.`,
   /** Hoe snel een retouraanmelding wordt bevestigd; bewust zonder harde termijn. */
   returnConfirmationCopy: "Je ontvangt zo snel mogelijk een bevestiging met instructies.",
 

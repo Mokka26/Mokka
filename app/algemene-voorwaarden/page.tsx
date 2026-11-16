@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/LegalPage";
 import { businessInfo, getFullAddress } from "@/lib/business-info";
+import { shippingInfo } from "@/lib/shipping-info";
+
+// Juridisch toetsen door de eigenaar. Art. 6 en 7 komen uit lib/shipping-info.ts
+// (zelfde bron als /retourneren en de orderbevestiging); wijzig ze daar.
 
 export const metadata: Metadata = {
   title: "Algemene voorwaarden voor je bestelling",
@@ -11,6 +15,8 @@ export const metadata: Metadata = {
 };
 
 export default function VoorwaardenPage() {
+  const days = shippingInfo.returnWindowDays;
+  const { customMade } = shippingInfo;
   return (
     <LegalPage
       title="Algemene voorwaarden"
@@ -52,11 +58,25 @@ export default function VoorwaardenPage() {
       </LegalSection>
       <LegalSection heading="6. Herroepingsrecht">
         <p>
-          Je hebt 14 dagen bedenktijd om de overeenkomst zonder opgave van reden te ontbinden.
-          Retourneren kan mits het product ongebruikt is en in de originele, ongeopende verpakking
-          zit. Op maat gemaakte of speciaal bestelde artikelen zijn wettelijk uitgesloten van het
-          herroepingsrecht. De volledige procedure en voorwaarden lees je op de pagina{" "}
-          <Link href="/retourneren" className="text-accent-dark underline underline-offset-2 hover:text-ink">
+          Je hebt {days} dagen bedenktijd om de overeenkomst zonder opgave van reden te ontbinden.
+          De bedenktijd gaat in na ontvangst van het product (bij meerdere leveringen: het laatste
+          product). Meld je herroeping binnen die termijn per e-mail aan {businessInfo.contact.email}
+          of met het modelformulier; daarna heb je nog {days} dagen om het product terug te sturen
+          of naar de showroom te brengen.
+        </p>
+        <p>{shippingInfo.returnInspectionCopy}</p>
+        <p>
+          {shippingInfo.returnFeesCopy} We betalen het aankoopbedrag terug, inclusief de standaard
+          verzendkosten van de heenzending. {shippingInfo.refundCopy}
+        </p>
+        <p>
+          Uitgezonderd is alleen {customMade.label.toLowerCase()}: {customMade.definition}.{" "}
+          {customMade.returnNote} Producten in een standaarduitvoering die we voor je bij de
+          fabrikant bestellen, vallen gewoon onder de bedenktijd.
+        </p>
+        <p>
+          De procedure, het retouradres en het modelformulier vind je op de pagina{" "}
+          <Link href={businessInfo.legal.returnPolicyUrl} className="text-accent-dark underline underline-offset-2 hover:text-ink">
             Retourneren
           </Link>
           .
@@ -66,6 +86,10 @@ export default function VoorwaardenPage() {
         <p>
           Onze producten voldoen aan de overeenkomst en aan de wettelijke eisen. Je hebt de
           wettelijke garantie: een product moet doen wat je er redelijkerwijs van mag verwachten.
+        </p>
+        <p>
+          Daarnaast geven we garantie op fabrieks- en materiaalfouten; de duur staat bij het
+          product. {shippingInfo.legalRightsCopy}
         </p>
       </LegalSection>
       <LegalSection heading="8. Klachten">

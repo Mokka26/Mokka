@@ -174,7 +174,7 @@ export default function BezorgingPage() {
 
       <ContentSection heading="Garantie en voorwaarden">
         <p>
-          Op fabrieks- en materiaalfouten geldt garantie. De precieze voorwaarden, ook voor retourneren, staan op de pagina{" "}
+          Op fabrieks- en materiaalfouten geldt garantie. {shippingInfo.legalRightsCopy} De precieze voorwaarden, ook voor retourneren, staan op de pagina{" "}
           <Link href={businessInfo.legal.returnPolicyUrl} className={contentLinkClass}>
             retourneren
           </Link>{" "}
