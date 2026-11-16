@@ -110,10 +110,14 @@ body:has(dialog:modal) {
   overflow: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.02em;
+/* In @layer base, zodat utilities (font-sans, font-medium, tracking-label)
+   op een kop voorgaan; zonder laag won deze regel van elke class. */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
 }
 
 /* Focusring — 2px ink met 2px offset, plus paper-halo zodat de ring ook op
