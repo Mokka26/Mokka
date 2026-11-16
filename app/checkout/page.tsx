@@ -329,7 +329,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[80dvh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
+      <div className="min-h-[70dvh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-16 pb-20">
         <div className="text-center max-w-xl">
           <h1 className="display-md text-ink mb-6">Niets om af te rekenen</h1>
           <p className="body-lg text-slate mb-12">Je winkelwagen is leeg.</p>
@@ -385,7 +385,7 @@ export default function CheckoutPage() {
   const fieldsetClass = "bg-white border border-line rounded-[10px] p-5 sm:p-8 lg:p-12";
 
   return (
-    <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-32 lg:pt-40 pb-28 lg:pb-40">
+    <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-10 lg:pt-16 pb-28 lg:pb-40">
       {/* Editorial header */}
       <div className="mb-10 lg:mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
@@ -650,7 +650,7 @@ export default function CheckoutPage() {
 
         {/* Samenvatting — alleen lg+ (op kleinere schermen staat hij ingeklapt boven het formulier) */}
         <div className="hidden lg:block lg:col-span-4">
-          <div className="bg-white border border-line rounded-[10px] p-8 lg:p-10 sticky top-32">
+          <div className="bg-white border border-line rounded-[10px] p-8 lg:p-10 sticky top-8">
             <h2 className="font-serif text-2xl text-ink mb-8">Je bestelling</h2>
             <OrderSummaryLines items={items} totals={totals} />
           </div>

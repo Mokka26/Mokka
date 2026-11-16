@@ -13,6 +13,7 @@ import { trackSearch } from "@/lib/analytics";
 import { pruneEmptyLinks } from "@/lib/nav-prune";
 import { Dialog, Drawer } from "@/components/ui/Dialog";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
+import { isCheckoutFlow } from "@/components/checkout/CheckoutGate";
 
 interface SubLink { label: string; href: string }
 interface NavItem {
@@ -221,7 +222,8 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
     return () => window.removeEventListener(OPEN_CART_EVENT, openCart);
   }, []);
 
-  if (pathname?.startsWith("/admin")) return null;
+  // /admin heeft een eigen layout; /checkout een kale header (app/checkout/layout.tsx).
+  if (pathname?.startsWith("/admin") || isCheckoutFlow(pathname)) return null;
 
   const phoneLink = getPhoneLink();
   const phoneFormatted = businessInfo.contact.phoneFormatted;

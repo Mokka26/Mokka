@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { businessInfo } from "@/lib/business-info";
+import { CheckoutFooter, CheckoutHeader } from "@/components/checkout/CheckoutChrome";
+import { CheckoutOnly } from "@/components/checkout/CheckoutGate";
 
 export const metadata: Metadata = {
   title: "Afrekenen: bestelling afronden in drie stappen",
@@ -9,6 +11,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Kale omlijsting op /checkout (UX: geen megamenu/USP-balk/nieuwsbrief tijdens
+// het afrekenen); de gewone Navbar en Footer verbergen zich daar zelf.
 export default function CheckoutLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <CheckoutOnly>
+        <CheckoutHeader />
+      </CheckoutOnly>
+      {children}
+      <CheckoutOnly>
+        <CheckoutFooter />
+      </CheckoutOnly>
+    </>
+  );
 }
