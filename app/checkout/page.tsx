@@ -614,7 +614,7 @@ export default function CheckoutPage() {
                 type="submit"
                 disabled={submitting}
                 aria-busy={submitting || undefined}
-                className="btn-primary w-full min-h-12 !px-4 sm:!px-8 !text-base !normal-case !tracking-normal disabled:cursor-not-allowed"
+                className="btn-primary-lg w-full"
               >
                 {submitting ? "Even geduld…" : `Bestellen en betalen — ${formatPrice(total)}`}
               </button>

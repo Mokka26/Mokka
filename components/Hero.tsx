@@ -14,7 +14,8 @@ import { stagger } from "@/components/home/motion";
 
 // Server component. Filmische hero zonder video: één foto die bij het laden
 // rustig inzoomt (.hero-settle) en bij scrollen trager meebeweegt dan de
-// pagina (.hero-drift, scroll-gekoppeld). De kop verschijnt woord voor woord.
+// pagina (.hero-drift, scroll-gekoppeld). De kop schuift woord voor woord
+// op zijn plek (alleen transform: de tekst is vanaf de eerste paint leesbaar).
 // Alle beweging staat in globals.css achter prefers-reduced-motion; de
 // server-HTML is volledig zichtbaar.
 //
@@ -67,20 +68,25 @@ export default function Hero({ product }: { product?: HeroProduct | null }) {
         </picture>
       </HeroVideo>
 
-      {/* Leesbaarheid: donker onderin waar de tekst staat (wit op ink/80 ≥ 4.5:1),
-          links iets donkerder voor de kop op brede schermen. */}
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/30 to-ink/0" aria-hidden />
-      <div className="absolute inset-0 hidden lg:block bg-gradient-to-r from-ink/45 via-ink/10 to-transparent" aria-hidden />
+      {/* Leesbaarheid: een scrim achter het hele tekstblok, niet alleen onderin.
+          Onderste 55% minimaal ink/70 (wit erop ≥ 4,5:1, ook op de lichtste
+          pixel van de foto); daarboven loopt hij af naar ink/20. Vanaf lg
+          extra links-verloop onder de kop, die daar hoger begint. */}
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/70 via-55% to-ink/20" aria-hidden />
+      <div className="absolute inset-0 hidden lg:block bg-gradient-to-r from-ink/60 via-ink/30 via-50% to-transparent" aria-hidden />
 
       <div className="relative z-10 w-full max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-40 lg:pt-48 pb-12 sm:pb-16 lg:pb-20 hero-content-out">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end">
           <div className="lg:col-span-8 text-white">
-            <p className="hero-fade [--delay:100ms] text-sm font-medium uppercase tracking-label text-white/90 mb-6 flex items-center gap-3">
-              <span className="h-px w-10 bg-accent-light" aria-hidden />
-              Showroom in {city} · online bestellen
+            <p className="hero-fade [--delay:0ms] text-sm font-medium uppercase tracking-label text-white text-balance mb-6 flex items-center gap-3">
+              <span className="hidden sm:block h-px w-10 shrink-0 bg-accent-light" aria-hidden />
+              <span>
+                Showroom in {city}
+                <span className="hidden sm:inline"> · online bestellen</span>
+              </span>
             </p>
 
-            <h1 className="font-serif text-[clamp(2.5rem,6.6vw,6rem)] leading-[1.02] tracking-[-0.035em] mb-7 [perspective:900px]">
+            <h1 className="font-serif text-[clamp(2.5rem,6.6vw,6rem)] leading-[1.02] tracking-[-0.035em] text-balance mb-7">
               {/* Spatie buiten de inline-block span, anders valt hij weg. */}
               {HEADLINE_WORDS.map((word, i) => (
                 <Fragment key={`${word}-${i}`}>
@@ -90,11 +96,11 @@ export default function Hero({ product }: { product?: HeroProduct | null }) {
               ))}
             </h1>
 
-            <p className="hero-fade [--delay:900ms] text-lg lg:text-xl leading-[1.6] text-white/90 max-w-xl mb-10">
+            <p className="hero-fade [--delay:250ms] text-lg lg:text-xl leading-[1.6] text-white max-w-xl mb-10">
               {`Bestel online of bekijk de collectie in onze showroom in ${city}. Gratis verzending vanaf €${threshold}, prijzen incl. btw.`}
             </p>
 
-            <div className="hero-fade [--delay:1100ms] flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+            <div className="hero-fade [--delay:350ms] flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
               <Link
                 href="/banken"
                 className="group inline-flex items-center justify-center gap-3 min-h-11 bg-white text-ink px-8 py-4 rounded-[10px] text-sm font-medium tracking-label uppercase hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
@@ -116,7 +122,7 @@ export default function Hero({ product }: { product?: HeroProduct | null }) {
             <div className="lg:col-span-4 hidden lg:flex justify-end">
               <Link
                 href={productUrl(product)}
-                className="hero-fade [--delay:1400ms] group flex items-center gap-5 rounded-[14px] bg-ink/55 backdrop-blur-md border border-white/20 pl-5 pr-4 py-4 text-white hover:bg-ink/70 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
+                className="hero-fade [--delay:450ms] group flex items-center gap-5 rounded-[14px] bg-ink/55 backdrop-blur-md border border-white/20 pl-5 pr-4 py-4 text-white hover:bg-ink/70 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
               >
                 <span className="min-w-0">
                   <span className="block text-sm text-white/80">Op de foto</span>
