@@ -20,9 +20,10 @@ interface NavItem {
   href: string;
   subLinks?: { heading: string; links: SubLink[] }[];
   /**
-   * Secundaire items staan tussen lg (1024px) en xl (1280px) samen in een
-   * "Meer"-dropdown, zodat de desktopnavigatie op 1024px past zonder onder
-   * 16px te gaan. Vanaf xl staan ze gewoon naast de andere items.
+   * Secundaire items staan tussen lg (1024px) en 2xl (1536px) samen in een
+   * "Meer"-dropdown, zodat de desktopnavigatie (met vanaf xl het
+   * telefoonnummer als tekst) past zonder onder 16px te gaan. Vanaf 2xl
+   * staan ze gewoon naast de andere items.
    */
   secondary?: boolean;
 }
@@ -137,7 +138,7 @@ const navItems: NavItem[] = [
 
 const MORE_LABEL = "Meer";
 
-// "Meer"-item (alleen lg–xl): bundelt de secundaire items in één dropdown.
+// "Meer"-item (alleen lg–2xl): bundelt de secundaire items in één dropdown.
 const moreItem: NavItem = {
   label: MORE_LABEL,
   href: navItems.find((i) => i.secondary)?.href ?? "/",
@@ -155,11 +156,16 @@ const POPULAR_SEARCHES = ["Hoekbank", "Eettafel", "Fauteuil", "Boxspring"];
 const iconButton =
   "relative inline-flex items-center justify-center w-11 h-11 rounded-full text-ink hover:text-accent-dark hover:bg-bone transition-colors duration-[280ms]";
 
-// Desktop-navigatie-item: 16px, compacte spacing op lg (1024px), ruimer vanaf xl.
+// Desktop-navigatie-item: 16px, compacte spacing op lg (1024px), ruimer vanaf 2xl.
 const desktopItemClass =
-  "relative flex items-center gap-1 lg:px-2 xl:gap-1.5 xl:px-3 min-h-11 text-base font-medium whitespace-nowrap transition-colors duration-300";
+  "relative flex items-center gap-1 lg:px-2 xl:gap-1.5 xl:px-2.5 2xl:px-3 min-h-11 text-base font-medium whitespace-nowrap transition-colors duration-300";
 const desktopUnderlineClass =
-  "pointer-events-none absolute bottom-1 left-2 right-2 xl:left-3 xl:right-3 h-px bg-accent-dark origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
+  "pointer-events-none absolute bottom-1 left-2 right-2 xl:left-2.5 xl:right-2.5 2xl:left-3 2xl:right-3 h-px bg-accent-dark origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
+// Item mét submenu: link (naar de categorie) + losse chevron-knop ernaast.
+const desktopSplitLinkClass =
+  "relative flex items-center lg:pl-2 lg:pr-1 xl:pl-2.5 2xl:pl-3 min-h-11 text-base font-medium whitespace-nowrap transition-colors duration-300";
+const desktopSplitUnderlineClass =
+  "pointer-events-none absolute bottom-1 left-2 right-1 xl:left-2.5 2xl:left-3 h-px bg-accent-dark origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -256,7 +262,7 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
         </div>
 
         <div className="max-w-page mx-auto">
-          <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-4 h-16 lg:h-20 px-6 sm:px-10 lg:px-8 xl:px-14">
+          <nav aria-label="Hoofdnavigatie" className="flex items-center justify-between gap-2 min-[375px]:gap-4 h-16 lg:h-20 px-4 min-[375px]:px-6 sm:px-10 lg:px-8 2xl:px-14">
             {/* Logo links */}
             <Link href="/" className="flex-shrink-0 inline-flex items-center min-h-11" aria-label="Mokka Home Interior — naar de homepage">
               {/* 480×166 PNG (20 kB). Geen priority/preload: het logo is klein
@@ -266,7 +272,7 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
                 alt=""
                 width={160}
                 height={55}
-                className="h-10 sm:h-12 xl:h-14 w-auto"
+                className="h-10 sm:h-12 2xl:h-14 w-auto"
                 loading="eager"
               />
             </Link>
@@ -278,63 +284,80 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
                 const isOpen = activeDropdown === item.label;
                 const panelId = `submenu-${slug(item.label)}`;
                 const isMore = item.label === MORE_LABEL;
-                const visibility = isMore ? "xl:hidden" : item.secondary ? "hidden xl:block" : "";
+                const visibility = isMore ? "2xl:hidden" : item.secondary ? "hidden 2xl:block" : "";
+                const toggle = () => setActiveDropdown(isOpen ? null : item.label);
+                const chevron = (
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                );
                 return (
                   <li
                     key={item.label}
-                    className={`relative group ${visibility}`}
+                    className={`relative group ${item.subLinks && !isMore ? "flex items-center" : ""} ${visibility}`}
+                    // Muis: submenu opent bij hover. Toetsenbord: disclosure-patroon,
+                    // het submenu opent alleen via de chevron-knop (niet bij focus),
+                    // dus geen tientallen extra tabstops voor de content.
                     onMouseEnter={() => item.subLinks && setActiveDropdown(item.label)}
                     onMouseLeave={() => item.subLinks && setActiveDropdown(null)}
-                    // Toetsenbord: open het submenu wanneer het item (of een link
-                    // erin) focus krijgt, en sluit zodra de focus de groep verlaat.
-                    onFocus={() => item.subLinks && setActiveDropdown(item.label)}
+                    // Sluit zodra de focus de groep verlaat.
                     onBlur={(e) => {
-                      if (item.subLinks && !e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                      if (item.subLinks && isOpen && !e.currentTarget.contains(e.relatedTarget as Node | null)) {
                         setActiveDropdown(null);
                       }
                     }}
-                    // Esc sluit het submenu en zet de focus terug op het hoofditem (WCAG 1.4.13).
+                    // Esc sluit het submenu en zet de focus terug op de knop (WCAG 1.4.13).
                     onKeyDown={(e) => {
                       if (e.key !== "Escape" || !item.subLinks || !isOpen) return;
                       e.stopPropagation();
                       setActiveDropdown(null);
-                      e.currentTarget.querySelector<HTMLElement>("a, button")?.focus();
+                      e.currentTarget.querySelector<HTMLElement>("button")?.focus();
                     }}
                   >
                     {isMore ? (
                       // "Meer" is geen pagina: een knop die alleen het menu opent.
                       <button
                         type="button"
-                        onClick={() => setActiveDropdown(isOpen ? null : item.label)}
+                        onClick={toggle}
                         aria-expanded={isOpen}
                         aria-controls={panelId}
                         className={`${desktopItemClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
                       >
                         {item.label}
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                          strokeWidth={1.5}
-                          aria-hidden="true"
-                        />
+                        {chevron}
                         <span aria-hidden="true" className={`${desktopUnderlineClass} ${isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
                       </button>
+                    ) : item.subLinks ? (
+                      <>
+                        {/* Hoofdlink blijft een gewone link naar de categorie. */}
+                        <Link
+                          href={item.href}
+                          className={`${desktopSplitLinkClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
+                        >
+                          {item.label}
+                          <span aria-hidden="true" className={`${desktopSplitUnderlineClass} ${isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={toggle}
+                          aria-expanded={isOpen}
+                          aria-controls={panelId}
+                          aria-label={`Submenu ${item.label}`}
+                          className={`inline-flex items-center justify-center w-6 min-h-11 rounded-[6px] transition-colors duration-300 ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
+                        >
+                          {chevron}
+                        </button>
+                      </>
                     ) : (
-                      // Gewone link (navigeert naar de categorie). Het submenu opent bij
-                      // hover/focus en is daarna met Tab bereikbaar; geen menu-ARIA op een link.
                       <Link
                         href={item.href}
-                        className={`${desktopItemClass} ${isOpen ? "text-accent-dark" : "text-ink group-hover:text-accent-dark"}`}
+                        className={`${desktopItemClass} text-ink group-hover:text-accent-dark`}
                       >
                         {item.label}
-                        {item.subLinks && (
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                            strokeWidth={1.5}
-                            aria-hidden="true"
-                          />
-                        )}
-                        {/* Fijne onderlijn — verschijnt bij hover/actief */}
-                        <span aria-hidden="true" className={`${desktopUnderlineClass} ${isOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+                        {/* Fijne onderlijn, verschijnt bij hover */}
+                        <span aria-hidden="true" className={`${desktopUnderlineClass} scale-x-0 group-hover:scale-x-100`} />
                       </Link>
                     )}
 
@@ -368,16 +391,19 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
               })}
             </ul>
 
-            {/* Acties rechts: bellen, zoeken, winkelwagen, menu */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            {/* Acties rechts: bellen, zoeken, winkelwagen, menu. Onder 375px valt
+                het bel-icoon weg (het nummer staat in het mobiele menu), zodat de
+                menuknop op 320–374px binnen beeld blijft. Vanaf xl staat het nummer
+                als tekst in de header. */}
+            <div className="flex items-center gap-0.5 min-[375px]:gap-1 sm:gap-2">
               {phoneLink && phoneFormatted && (
                 <a
                   href={phoneLink}
-                  className={`${iconButton} 2xl:w-auto 2xl:px-4 2xl:gap-2 2xl:rounded-full`}
+                  className={`${iconButton} max-[374px]:hidden xl:w-auto xl:px-4 xl:gap-2 xl:rounded-full`}
                   aria-label={`Bel ons: ${phoneFormatted}`}
                 >
                   <Phone className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
-                  <span className="hidden 2xl:inline text-base font-medium whitespace-nowrap">{phoneFormatted}</span>
+                  <span className="hidden xl:inline text-base font-medium whitespace-nowrap tabular-nums">{phoneFormatted}</span>
                 </a>
               )}
               <button
