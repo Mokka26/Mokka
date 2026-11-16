@@ -8,7 +8,7 @@ import { trackBeginCheckout, trackViewCart } from "@/lib/analytics";
 import { useCart } from "@/context/CartContext";
 import { frameMode, parseImages } from "@/lib/imageHelpers";
 import { cldOptimize } from "@/lib/cloudinary-url";
-import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { productUrl } from "@/lib/categories";
 import { Drawer, DialogCloseButton } from "@/components/ui/Dialog";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
@@ -36,8 +36,8 @@ const PROGRESS_WIDTH = [
  */
 export default function CartDrawer({ open, onClose }: Props) {
   const { items, totalItems, totalPrice, removeWithUndo, updateQuantity } = useCart();
-  const freeShipping = isEligibleForFreeShipping(totalPrice);
-  const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
+  const shipping = shippingCostFor(totalPrice);
+  const freeShipping = shipping === 0;
   const total = totalPrice + shipping;
   const remaining = Math.max(0, shippingInfo.freeShippingThreshold - totalPrice);
   const progress = Math.min(100, Math.round((totalPrice / shippingInfo.freeShippingThreshold) * 100));

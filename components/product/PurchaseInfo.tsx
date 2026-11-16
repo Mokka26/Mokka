@@ -1,5 +1,5 @@
 import { Truck, Clock, ShieldCheck } from "lucide-react";
-import { shippingInfo, warrantyYearsFor } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor, warrantyYearsFor } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { MolliePaymentChips, PaymentIconRow } from "@/components/PaymentIcons";
@@ -22,7 +22,7 @@ interface Props {
  * /retourneren. Alle waarden uit lib/shipping-info — nergens hardcoded.
  */
 export function PurchaseInfo({ price, stock, deliveryTime, category, mollieMethods = [] }: Props) {
-  const freeShipping = price >= shippingInfo.freeShippingThreshold;
+  const freeShipping = shippingCostFor(price) === 0;
   const inStock = stock > 0;
   const warrantyYears = warrantyYearsFor(category);
   const phoneLink = getPhoneLink();

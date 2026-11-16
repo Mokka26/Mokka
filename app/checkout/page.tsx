@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCart, useCartSync, syncCart, announceCartChanges } from "@/context/CartContext";
-import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { formatPrice } from "@/components/ui/price";
 import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
@@ -154,8 +154,8 @@ export default function CheckoutPage() {
     trackBeginCheckout(items, totalPrice);
   }, [items, totalPrice]);
 
-  const freeShipping = isEligibleForFreeShipping(totalPrice, form.country);
-  const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
+  const shipping = shippingCostFor(totalPrice, form.country);
+  const freeShipping = shipping === 0;
   const total = totalPrice + shipping;
   const totals = { subtotal: totalPrice, shipping, total };
   const phoneLink = getPhoneLink();
@@ -241,7 +241,7 @@ export default function CheckoutPage() {
           ...(delivery.notes.trim() ? { notes: delivery.notes.trim().slice(0, 500) } : {}),
           assembly: delivery.assembly,
         },
-        expectedTotal: totalPrice,
+        expectedTotal: total,
         ...(selectedMethod ? { method: selectedMethod } : {}),
         items: items.map((i) => ({
           productId: i.productId,

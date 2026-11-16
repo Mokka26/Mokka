@@ -9,6 +9,7 @@ import { PaymentLineType, type PaymentMethod } from "@mollie/api-client";
 import { getMollie, toMollieAmountCents, listEnabledMethods, type CheckoutMethod } from "@/lib/mollie";
 import { computeOrder, generateOrderNumber, generatePublicToken, type CheckoutLineInput } from "@/lib/orders";
 import { businessInfo } from "@/lib/business-info";
+import { toCents } from "@/lib/money";
 import { shippingInfo } from "@/lib/shipping-info";
 import { rateLimitIp } from "@/lib/rate-limit";
 import { captureError, captureWarning } from "@/lib/sentry";
@@ -74,7 +75,7 @@ const checkoutSchema = z.object({
   website: z.string().max(200).optional(),
   elapsedMs: z.number().finite().nonnegative().optional(),
   startedAt: z.number().int().nonnegative().optional(),
-  // Het bedrag dat de klant op het scherm zag (subtotaal excl. verzending) —
+  // Het totaalbedrag dat de klant op het scherm zag (subtotaal + verzending) —
   // puur ter controle. De server rekent zelf het echte totaal uit.
   expectedTotal: z.number().nonnegative().optional(),
   // Gekozen betaalmethode (Mollie method-id, bv. "ideal", "klarna"). Komt uit
@@ -301,10 +302,11 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
   }
   if (!(computed.totalCents > 0)) return fail("Ongeldig bestelbedrag");
 
-  // Getoond bedrag = af te rekenen bedrag. Wijkt het server-subtotaal af van
-  // wat de klant op het scherm zag (prijs gewijzigd sinds toevoegen), dan niet
-  // stil doorbelasten maar weigeren zodat de klant het nieuwe bedrag bevestigt.
-  if (typeof expectedTotal === "number" && Math.round(expectedTotal * 100) !== computed.subtotalCents) {
+  // Getoond bedrag = af te rekenen bedrag. Wijkt het server-totaal (incl.
+  // verzending) af van wat de klant op het scherm zag (prijs gewijzigd sinds
+  // toevoegen), dan niet stil doorbelasten maar weigeren zodat de klant het
+  // nieuwe bedrag bevestigt.
+  if (typeof expectedTotal === "number" && toCents(expectedTotal) !== computed.totalCents) {
     return {
       ok: false,
       error: "PRICE_CHANGED",

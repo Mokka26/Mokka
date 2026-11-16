@@ -128,7 +128,7 @@ describe("app/checkout/actions · createCheckout", () => {
     expect(db.order.create).not.toHaveBeenCalled();
   });
 
-  it("geeft PRICE_CHANGED met het nieuwe bedrag als het getoonde subtotaal afwijkt", async () => {
+  it("geeft PRICE_CHANGED met het nieuwe bedrag als het getoonde totaal afwijkt", async () => {
     const result = await createCheckout(validInput({ expectedTotal: 549 }));
     expect(result).toEqual({
       ok: false,
@@ -141,10 +141,20 @@ describe("app/checkout/actions · createCheckout", () => {
     expect(paymentsCreate).not.toHaveBeenCalled();
   });
 
-  it("accepteert een kloppend expectedTotal (subtotaal excl. verzending)", async () => {
+  it("accepteert een kloppend expectedTotal (subtotaal + verzending)", async () => {
+    db.product.findMany.mockResolvedValue([lamp]);
+    const result = await createCheckout(
+      validInput({ items: [{ productId: "lamp", quantity: 1 }], expectedTotal: 49.95 + shippingInfo.rates.standard }),
+    );
+    expect(result).toEqual({ ok: true, url: CHECKOUT_URL });
+  });
+
+  it("weigert als het getoonde bedrag de verzendkosten mist (vergelijkt incl. verzending)", async () => {
     db.product.findMany.mockResolvedValue([lamp]);
     const result = await createCheckout(validInput({ items: [{ productId: "lamp", quantity: 1 }], expectedTotal: 49.95 }));
-    expect(result).toEqual({ ok: true, url: CHECKOUT_URL });
+    expect(result).toMatchObject({ ok: false, error: "PRICE_CHANGED", subtotal: 49.95 });
+    if (!result.ok && "total" in result) expect(toCents(result.total)).toBe(4995 + toCents(shippingInfo.rates.standard));
+    expect(db.order.create).not.toHaveBeenCalled();
   });
 
   it("maakt de order en de Mollie-betaling aan met server-side bedragen", async () => {

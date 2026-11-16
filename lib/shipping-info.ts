@@ -13,17 +13,21 @@ type Usp = {
   description: string;
 };
 
+// Drempel vanaf welke verzending gratis is (EUR, subtotaal >= drempel). Alle
+// teksten hieronder worden hieruit opgebouwd: "vanaf", want de code rekent met >=.
+const FREE_SHIPPING_THRESHOLD = 100;
+const FREE_FROM = `vanaf €${FREE_SHIPPING_THRESHOLD}`;
+
 export const shippingInfo = {
   // ─── Verzending ───────────────────────────────────────────────
-  // Drempel boven welke verzending gratis is (EUR). UI-belofte = €100.
-  freeShippingThreshold: 100,
+  freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
   freeShippingCountries: ["NL", "BE"] as ReadonlyArray<string>,
-  freeShippingCopyShort: "Gratis verzending vanaf €100",
-  freeShippingCopyLong: "Bij bestellingen boven €100 binnen Nederland en België.",
+  freeShippingCopyShort: `Gratis verzending ${FREE_FROM}`,
+  freeShippingCopyLong: `Bij bestellingen ${FREE_FROM} binnen Nederland en België.`,
 
   // Verzendbeleid (bevestigd door klant, 2026-07): één vlak tarief onder de
-  // gratis-verzendgrens; boven €100 altijd gratis — óók grote meubels. Geen
-  // aparte toeslag per formaat.
+  // gratis-verzendgrens; vanaf de grens altijd gratis — óók grote meubels. Geen
+  // aparte toeslag per formaat. Bereken altijd via shippingCostFor().
   rates: {
     standard: 4.95,
   },
@@ -103,7 +107,7 @@ export const shippingInfo = {
     {
       key: "shipping",
       title: "Gratis verzending",
-      description: "Bij bestellingen boven €100 binnen Nederland en België.",
+      description: `Bij bestellingen ${FREE_FROM} binnen Nederland en België.`,
     },
     {
       key: "return",
@@ -136,14 +140,14 @@ export const shippingInfo = {
   // Bewust zonder bedenktijd en "proefzitten" (eigenaar, 2026-10-13): die
   // staan alleen nog op /retourneren en in de algemene voorwaarden.
   marqueeMessages: [
-    "Gratis verzending vanaf €100",
+    `Gratis verzending ${FREE_FROM}`,
     "Persoonlijk advies in onze showroom",
     "Veilig betalen",
   ] as ReadonlyArray<string>,
 
   // Footer USP-balk (4 items, korte sub-tekst)
   footerUsps: [
-    { title: "Gratis verzending", sub: "Vanaf €100 in NL en BE" },
+    { title: "Gratis verzending", sub: `Vanaf €${FREE_SHIPPING_THRESHOLD} in NL en BE` },
     { title: "Persoonlijk advies", sub: "Over maten, stoffen en kleuren" },
     { title: "Garantie", sub: "Op fabrieks- en materiaalfouten" },
     { title: "Veilig betalen", sub: "iDEAL, creditcard, Klarna" },
@@ -166,6 +170,15 @@ export function isEligibleForFreeShipping(
 ): boolean {
   if (!shippingInfo.freeShippingCountries.includes(country)) return false;
   return subtotal >= shippingInfo.freeShippingThreshold;
+}
+
+/**
+ * Verzendkosten (EUR) voor een subtotaal (incl. btw) en verzendland. Eén
+ * formule voor winkelwagen, lade, checkout, PDP, JSON-LD, Shopping-feed en de
+ * server-side orderberekening.
+ */
+export function shippingCostFor(subtotal: number, country = "NL"): number {
+  return isEligibleForFreeShipping(subtotal, country) ? 0 : shippingInfo.rates.standard;
 }
 
 export function getUspsByKey(...keys: Usp["key"][]): Usp[] {

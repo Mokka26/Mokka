@@ -9,7 +9,7 @@
  * Spec: https://support.google.com/merchants/answer/7052112
  */
 import { businessInfo } from "@/lib/business-info";
-import { shippingInfo } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { getCategory, productUrl } from "@/lib/categories";
 import { parseImages } from "@/lib/imageHelpers";
 import {
@@ -293,7 +293,7 @@ function buildItem(product: FeedProduct, offer: Offer): string {
   // Maatvariant: het label is de matrasmaat ("160 × 200") → "160 × 200 cm" in de titel.
   const dimensionLabel = offer.size ? `${offer.size} cm` : (formatDimensions(dims) ?? specs.Afmetingen ?? null);
   const handling = parseHandlingDays(product.deliveryTime);
-  const shippingCost = offer.price >= shippingInfo.freeShippingThreshold ? 0 : shippingInfo.rates.standard;
+  const shippingCost = shippingCostFor(offer.price);
   const isNew = Date.now() - product.createdAt.getTime() < NEW_PRODUCT_DAYS * 86400e3;
 
   // Prijs: verkoopprijs. Alleen met USE_LIST_PRICE_AS_REFERENCE wordt de

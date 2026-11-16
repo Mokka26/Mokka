@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { toCents, fromCents, vatFromGrossCents } from "@/lib/money";
 import { captureWarning } from "@/lib/sentry";
 import { priceLine } from "@/lib/pricing";
@@ -102,9 +102,7 @@ export async function computeOrder(items: CheckoutLineInput[], country = "NL"): 
   }
 
   const subtotalCents = lines.reduce((s, l) => s + l.totalCents, 0);
-  const shippingCents = isEligibleForFreeShipping(fromCents(subtotalCents), country)
-    ? 0
-    : toCents(shippingInfo.rates.standard);
+  const shippingCents = toCents(shippingCostFor(fromCents(subtotalCents), country));
   const totalCents = subtotalCents + shippingCents;
   const vatCents = lines.reduce((s, l) => s + l.vatCents, 0) + vatFromGrossCents(shippingCents, vat);
   return {

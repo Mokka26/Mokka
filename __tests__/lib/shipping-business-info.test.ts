@@ -1,4 +1,4 @@
-import { shippingInfo, formatShippingCost, isEligibleForFreeShipping, getUspsByKey, warrantyYearsFor } from "@/lib/shipping-info";
+import { shippingInfo, formatShippingCost, isEligibleForFreeShipping, shippingCostFor, getUspsByKey, warrantyYearsFor } from "@/lib/shipping-info";
 import {
   businessInfo,
   getFullAddress,
@@ -30,6 +30,30 @@ describe("lib/shipping-info", () => {
     expect(isEligibleForFreeShipping(t - 0.01)).toBe(false);
     expect(isEligibleForFreeShipping(t, "BE")).toBe(true);
     expect(isEligibleForFreeShipping(t * 10, "DE")).toBe(false);
+  });
+
+  it("shippingCostFor: gratis vanaf de drempel (>=) in NL/BE, anders het vaste tarief", () => {
+    const t = shippingInfo.freeShippingThreshold;
+    expect(shippingCostFor(t)).toBe(0);
+    expect(shippingCostFor(t, "BE")).toBe(0);
+    expect(shippingCostFor(t - 0.01)).toBe(shippingInfo.rates.standard);
+    expect(shippingCostFor(t * 10, "DE")).toBe(shippingInfo.rates.standard);
+  });
+
+  it("verzendcopy volgt de drempel en zegt 'vanaf' (de code rekent met >=)", () => {
+    const t = `€${shippingInfo.freeShippingThreshold}`;
+    const texts = [
+      shippingInfo.freeShippingCopyShort,
+      shippingInfo.freeShippingCopyLong,
+      ...shippingInfo.marqueeMessages.filter((m) => m.includes("verzending")),
+      ...shippingInfo.usps.filter((u) => u.key === "shipping").map((u) => u.description),
+      ...shippingInfo.footerUsps.filter((u) => u.title.includes("verzending")).map((u) => u.sub),
+    ];
+    for (const text of texts) {
+      expect(text).toContain(t);
+      expect(text.toLowerCase()).toContain("vanaf");
+      expect(text.toLowerCase()).not.toContain("boven");
+    }
   });
 
   it("getUspsByKey filtert op sleutel in display-volgorde", () => {

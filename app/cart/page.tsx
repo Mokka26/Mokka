@@ -3,7 +3,7 @@
 import Link from "next/link";
 import CartItem, { cartDeliverySummary } from "@/components/CartItem";
 import { useCart, useCartSync } from "@/context/CartContext";
-import { shippingInfo, isEligibleForFreeShipping } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { formatPrice } from "@/components/ui/price";
 import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
 
@@ -12,8 +12,8 @@ export default function CartPage() {
   // Prijzen/voorraad verversen tegen de server (meldingen via toasts).
   useCartSync();
 
-  const freeShipping = isEligibleForFreeShipping(totalPrice);
-  const shipping = freeShipping ? 0 : shippingInfo.rates.standard;
+  const shipping = shippingCostFor(totalPrice);
+  const freeShipping = shipping === 0;
   const total = totalPrice + shipping;
   const remaining = Math.max(0, shippingInfo.freeShippingThreshold - totalPrice);
 

@@ -1,5 +1,5 @@
 import { businessInfo, getActiveSocials } from "@/lib/business-info";
-import { shippingInfo } from "@/lib/shipping-info";
+import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { parseImages } from "@/lib/imageHelpers";
 import { parsePricedSizeVariants, parseSpecs } from "@/lib/specs";
 
@@ -135,7 +135,6 @@ function quantitative(min: number, max: number) {
 }
 
 function buildShippingDetails(price: number, deliveryTime: string | null | undefined, inStock: boolean) {
-  const free = price >= shippingInfo.freeShippingThreshold;
   const transit = parseTransitDays(deliveryTime ?? (inStock ? shippingInfo.deliveryTime.inStock : null));
   const deliveryTimeSpec: Record<string, unknown> = {
     "@type": "ShippingDeliveryTime",
@@ -146,7 +145,7 @@ function buildShippingDetails(price: number, deliveryTime: string | null | undef
     "@type": "OfferShippingDetails",
     shippingRate: {
       "@type": "MonetaryAmount",
-      value: free ? 0 : shippingInfo.rates.standard,
+      value: shippingCostFor(price),
       currency: "EUR",
     },
     // Zelfde tarief en drempel voor alle bezorglanden (NL + BE), zie shipping-info.
