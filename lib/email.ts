@@ -5,6 +5,7 @@ import { captureError } from "@/lib/sentry";
 import { formatCents, toCents } from "@/lib/money";
 import { deliverySummary } from "@/lib/delivery";
 import { WITHDRAWAL_FORM_TITLE, withdrawalFormLines } from "@/lib/withdrawal";
+import { listUnsubscribeHeaders, unsubscribePageUrl } from "@/lib/newsletter-unsubscribe";
 
 /**
  * E-mail via SMTP (server-only). Afzender en interne ontvanger zijn
@@ -59,6 +60,10 @@ type MailInput = {
   text: string;
   html?: string;
   replyTo?: string;
+  /** Extra headers, bv. List-Unsubscribe voor nieuwsbriefmails. */
+  headers?: Record<string, string>;
+  /** Bijlagen (nodemailer-vorm, alleen inhoud in het geheugen). */
+  attachments?: { filename: string; content: string; contentType: string }[];
 };
 
 let warnedMissingSmtp = false;
@@ -67,7 +72,7 @@ let warnedMissingSmtp = false;
  * Verstuur een mail. Retourneert false (nooit een throw) als het niet lukt;
  * de fout gaat naar Sentry zodat een stille SMTP-storing niet onopgemerkt blijft.
  */
-export async function sendMail({ to, subject, text, html, replyTo }: MailInput): Promise<boolean> {
+export async function sendMail({ to, subject, text, html, replyTo, headers, attachments }: MailInput): Promise<boolean> {
   const t = getTransporter();
   if (!t) {
     if (!warnedMissingSmtp) {
@@ -84,6 +89,10 @@ export async function sendMail({ to, subject, text, html, replyTo }: MailInput):
       text,
       ...(html ? { html } : {}),
       ...(replyTo ? { replyTo: sanitizeHeader(replyTo) } : {}),
+      ...(headers
+        ? { headers: Object.fromEntries(Object.entries(headers).map(([k, v]) => [sanitizeHeader(k), sanitizeHeader(v)])) }
+        : {}),
+      ...(attachments?.length ? { attachments } : {}),
     });
     return true;
   } catch (e) {
@@ -405,8 +414,32 @@ export async function sendNewsletterConfirmation(email: string, confirmUrl: stri
   return sendMail({ to: email, subject: `Bevestig je aanmelding — ${businessInfo.name}`, text, html });
 }
 
-/** Welkomstmail na bevestiging. */
+/**
+ * Afmeldregel + List-Unsubscribe-headers. Verplicht voor ELKE nieuwsbriefmail
+ * (welkomstmail en latere nieuwsbrieven): `headers` mee aan sendMail, `text`
+ * en `html` onderaan de inhoud.
+ */
+export function newsletterUnsubscribe(email: string): {
+  headers: Record<string, string>;
+  text: string[];
+  html: string;
+} {
+  const url = unsubscribePageUrl(email);
+  const fallback = `Afmelden? Mail naar ${businessInfo.contact.email} met als onderwerp "Afmelden nieuwsbrief".`;
+  return {
+    headers: listUnsubscribeHeaders(email),
+    text: [``, `────────────`, url ? `Geen nieuwsbrief meer ontvangen? Meld je hier af: ${url}` : fallback],
+    html: `<p style="margin:24px 0 0 0;padding-top:16px;border-top:1px solid #E5E1D9;font-size:14px;color:#5A5854;">${
+      url
+        ? `Geen nieuwsbrief meer ontvangen? <a href="${escapeHtml(url)}" style="color:#14110D;">Meld je hier af</a>.`
+        : escapeHtml(fallback)
+    }</p>`,
+  };
+}
+
+/** Welkomstmail na bevestiging (eerste nieuwsbriefmail: met afmeldlink). */
 export async function sendNewsletterWelcome(email: string): Promise<boolean> {
+  const unsub = newsletterUnsubscribe(email);
   const text = [
     `Welkom bij de nieuwsbrief van ${businessInfo.name}!`,
     ``,
@@ -417,6 +450,7 @@ export async function sendNewsletterWelcome(email: string): Promise<boolean> {
     ``,
     `Hartelijke groet,`,
     businessInfo.name,
+    ...unsub.text,
   ].join("\n");
   const html = layout("Welkom", [
     h1("Welkom"),
@@ -424,6 +458,7 @@ export async function sendNewsletterWelcome(email: string): Promise<boolean> {
     p(`Kom je langs? Onze showroom vind je aan ${escapeHtml(getFullAddress())}.`),
     button(`${businessInfo.siteUrl}/products`, "Bekijk de collectie"),
     p(`Hartelijke groet,<br>${escapeHtml(businessInfo.name)}`),
+    unsub.html,
   ].join(""));
-  return sendMail({ to: email, subject: `Welkom bij ${businessInfo.name}`, text, html });
+  return sendMail({ to: email, subject: `Welkom bij ${businessInfo.name}`, text, html, headers: unsub.headers });
 }
