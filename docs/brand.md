@@ -144,37 +144,58 @@ Wie past expliciet NIET bij Mokka Home?
 
 
 
-\[VUL IN op basis van tailwind.config.ts]
+Volledige tabel met contrastwaarden: `docs/design-tokens.md`. Bron: het
+`@theme`-blok in `app/globals.css` (Tailwind v4, er is geen tailwind.config.ts).
 
 
 
-\### Primary
+\### Primary (tekst en vlakken)
 
-\- 
+\- `ink` #14110D — koppen, primaire knoppen, focusring
+
+\- `graphite` #3D3D3D — standaard bodytekst, logo-kleur
+
+\- `paper` #F4F0E8 — primaire achtergrond (warm wit)
 
 
 
 \### Secondary
 
-\- 
+\- `white` #FBF9F4 — kaarten en lichte blokken
+
+\- `bone` #EEEAE3 — foto-placeholders, subtiele achtergrond
 
 
 
 \### Accent
 
-\- 
+\- `accent` #B96B4C — terracotta, alleen decoratief (lijnen, iconen, koppen vanaf 24px)
+
+\- `accent-dark` #9A5639 — accenttekst, links, hover van knoppen (4,9:1)
+
+\- `accent-light` #C9876C — accent op donkere achtergrond
 
 
 
 \### Neutrals (grijs-ladder)
 
-\- 
+\- `slate` #5A5854 — secundaire bodytekst
+
+\- `stone` #6B675F — labels, meta, placeholders (4,96:1, laagste tekstkleur)
+
+\- `line-strong` #8A857D — veld- en UI-randen (3,2:1)
+
+\- `mist` #D6D2CB — sterkere decoratieve randen
+
+\- `line` #E5E1D9 — dividers, niet voor veldranden
 
 
 
 \### Feedback (success, warning, error, info)
 
-\- 
+\- `success` #3D6B4A · `warning` #8C5A14 · `error` #8B3A3A · `error-light` #D98C8C (op ink)
+
+\- Geen aparte info-kleur: gebruik `ink` of `slate`
 
 
 
@@ -188,31 +209,31 @@ Wie past expliciet NIET bij Mokka Home?
 
 
 
-\[VUL IN op basis van next/font configuratie]
+Zelf gehost via `next/font/google` (`app/layout.tsx`); details in `docs/design-tokens.md`.
 
 
 
 \### Hierarchie
 
-\- H1: 
+\- H1: serif, `display-md` op content-pagina's (clamp 32–48px), `display-xl`/`display-lg` in de hero
 
-\- H2: 
+\- H2: serif, `display-sm` (clamp 24–36px) of `text-2xl`
 
-\- H3: 
+\- H3: serif `text-2xl`/`text-lg`, of sans `text-base font-medium` in kaarten en lijsten
 
-\- H4: 
+\- H4: wordt nu niet gebruikt
 
-\- Body: minimaal 16px mobile, 17-18px desktop
+\- Body: 16px mobiel (`--text-body`), 17px vanaf 1024px (`--text-body-lg`), regelhoogte 1,65
 
-\- Small: niet onder 14px
+\- Small: niet onder 14px (eyebrows en knoppen: 14px hoofdletters)
 
 
 
 \### Functie per font
 
-\- 
+\- Source Serif 4 (`font-serif`) — koppen en `display-*`, geen italic
 
-\- 
+\- Geist (`font-sans`) — lopende tekst, navigatie, knoppen, labels en formulieren
 
 
 
