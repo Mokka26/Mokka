@@ -14,45 +14,33 @@
  *
  * De vuistregels met maten (GUIDELINES) staan hier één keer en worden
  * gebruikt in de categorie-teksten én in de woongidsen (app/gids/**).
+ *
+ * Slugs, weergavenamen (label) en de URL-helpers staan in de lichte module
+ * lib/category-routes.ts (die mag in client-bundels); hier worden ze
+ * re-geëxporteerd en aangevuld met alle teksten.
  */
 
-export type CategorySlug =
-  | "banken"           // umbrella: hoekbanken + bankstellen
-  | "hoekbanken"
-  | "bankstellen"
-  | "fauteuils"
-  | "bedden"
-  | "matrassen"
-  | "slaapkamers"
-  | "jeugdkamers"
-  | "kasten"           // umbrella: kledingkasten + dressoirs + nachtkastjes + ladekasten + kapstokken
-  | "kledingkasten"
-  | "dressoirs"
-  | "nachtkastjes"
-  | "ladekasten"
-  | "kapstokken"
-  | "schoenenkasten"
-  | "tafels"
-  | "eettafels"
-  | "salontafels"
-  | "bijzettafels"
-  | "tv-meubels"
-  | "stoelen"           // umbrella: eetkamerstoelen + fauteuils
-  | "eetkamerstoelen"
-  | "poefs"
-  | "spiegels"
-  | "verlichting"      // umbrella: plafondlampen + vloerlampen + tafellampen + wandlampen
-  | "plafondlampen"
-  | "vloerlampen"
-  | "tafellampen"
-  | "wandlampen";
+import { CATEGORY_LABELS, type CategorySlug, categoryUrl, isCategorySlug } from "@/lib/category-routes";
+
+export type { CategorySlug } from "@/lib/category-routes";
+export {
+  CATEGORY_LABELS,
+  categoryLabelOf,
+  categoryUrl,
+  dbCategoryToRouteSlug,
+  isCategorySlug,
+  productUrl,
+} from "@/lib/category-routes";
 
 /** Slugs van de woongidsen (app/gids/guides.ts is de registry met titels). */
 export type GuideSlug = "eettafel-maat-kiezen" | "hoekbank-kiezen" | "bed-en-matras-kiezen" | "salontafel-afmetingen";
 
 export type Category = {
   slug: CategorySlug;
-  /** Weergavenaam in navigatie/koppen, bv. "Alle banken" of "TV-meubels". */
+  /**
+   * Weergavenaam in navigatie/koppen, bv. "Alle banken" of "TV-meubels".
+   * Bron: CATEGORY_LABELS in lib/category-routes.ts (wordt hieronder ingevuld).
+   */
   label: string;
   /**
    * Naam in lopende tekst, meervoud en kleine letters, bv. "banken",
@@ -165,11 +153,13 @@ const SOFA_GAP = cmRange(G.sofaToCoffeeTableCm);
 const TABLE_CLEAR = cmRange(G.tableClearanceCm);
 const MATTRESS_RANGE = `${G.mattressWidthsCm[0]} x ${G.mattressLengthCm} tot ${G.mattressWidthsCm[G.mattressWidthsCm.length - 1]} x ${G.mattressLengthCm} cm`;
 
-export const CATEGORIES: ReadonlyArray<Category> = [
+/** Categorie zonder label: dat komt uit CATEGORY_LABELS (lib/category-routes). */
+type CategoryDef = Omit<Category, "label">;
+
+const CATEGORY_DEFS: ReadonlyArray<CategoryDef> = [
   // ─── Banken ──────────────────────────────────────────────────
   {
     slug: "banken",
-    label: "Alle banken",
     name: "banken",
     intro: "De volledige bank-collectie — hoekbanken en bankstellen samen op één plek.",
     dbCategories: ["banken", "hoekbanken", "bankstellen"],
@@ -197,7 +187,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "hoekbanken",
-    label: "Hoekbanken",
     name: "hoekbanken",
     intro: "De volledige collectie — losse banken, L- en U-vormige hoekbanken en lage loungebanken.",
     dbCategories: ["hoekbanken"],
@@ -225,7 +214,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "bankstellen",
-    label: "Bankstellen",
     name: "bankstellen",
     intro: "Complete zitcombinaties in 3+2+1 of 3+2 opstelling, in dezelfde stof en kleur.",
     dbCategories: ["bankstellen"],
@@ -253,7 +241,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "fauteuils",
-    label: "Fauteuils",
     name: "fauteuils",
     intro: "Losse fauteuils en armstoelen — een comfortabele zit naast de bank.",
     dbCategories: ["fauteuils"],
@@ -281,7 +268,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "poefs",
-    label: "Poefs",
     name: "poefs",
     intro: "Poefs en zithockers — een zachte extra zit of voetensteun, in diverse kleuren en stoffen.",
     dbCategories: ["poefs"],
@@ -295,7 +281,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Tafels ──────────────────────────────────────────────────
   {
     slug: "tafels",
-    label: "Tafels",
     name: "tafels",
     intro: "Om de tafel wordt geleefd. Eettafels, salontafels en bijzettafels — filter op type.",
     dbCategories: ["tafels", "eettafels", "salontafels", "bijzettafels"],
@@ -321,7 +306,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "eettafels",
-    label: "Eettafels",
     name: "eettafels",
     intro: "De plek waar dagen beginnen en eindigen. Eettafels in eik, marmer en steen.",
     dbCategories: ["eettafels"],
@@ -348,7 +332,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "salontafels",
-    label: "Salontafels",
     name: "salontafels",
     intro: "Salontafels voor vóór de bank, rond en rechthoekig. Kies de maat op de lengte van je bank.",
     dbCategories: ["salontafels"],
@@ -375,7 +358,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "bijzettafels",
-    label: "Bijzettafels",
     name: "bijzettafels",
     intro: "Kleine tafels voor naast de bank, de fauteuil of het bed, binnen handbereik.",
     dbCategories: ["bijzettafels"],
@@ -402,7 +384,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "tv-meubels",
-    label: "TV-meubels",
     name: "tv-meubels",
     intro: "Lage kasten voor de televisie, met ruimte voor apparatuur en kabels.",
     dbCategories: ["tv-meubels"],
@@ -430,7 +411,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Stoelen ─────────────────────────────────────────────────
   {
     slug: "stoelen",
-    label: "Stoelen",
     name: "stoelen",
     intro: "Eetkamerstoelen en fauteuils op één plek. Filter op type.",
     dbCategories: ["stoelen", "eetkamerstoelen", "fauteuils"],
@@ -458,7 +438,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "eetkamerstoelen",
-    label: "Eetkamerstoelen",
     name: "eetkamerstoelen",
     intro: "De stoel waar je aan tafel op zit — comfortabel, stevig en mooi van lijn.",
     dbCategories: ["eetkamerstoelen"],
@@ -488,7 +467,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Slapen ──────────────────────────────────────────────────
   {
     slug: "bedden",
-    label: "Bedden",
     name: "bedden",
     intro: `Boxsprings en bedframes in de gangbare maten van ${G.mattressWidthsCm[0]} tot ${G.mattressWidthsCm[G.mattressWidthsCm.length - 1]} cm breed.`,
     dbCategories: ["bedden"],
@@ -515,7 +493,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "matrassen",
-    label: "Matrassen",
     name: "matrassen",
     intro: "Matrassen in de gangbare maten. Kies op breedte, lengte en hardheid.",
     dbCategories: ["matrassen"],
@@ -542,7 +519,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "slaapkamers",
-    label: "Slaapkamers",
     name: "slaapkamers",
     intro: "Complete slaapkamers: bed, nachtkastjes en kast in één stijl.",
     dbCategories: ["slaapkamers"],
@@ -553,7 +529,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "jeugdkamers",
-    label: "Jeugdkamers",
     name: "jeugdkamers",
     intro: "Complete kamers voor kinderen en tieners — bed, kast en bureau in één stijl.",
     dbCategories: ["jeugdkamers"],
@@ -565,7 +540,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Opbergen ────────────────────────────────────────────────
   {
     slug: "kasten",
-    label: "Alle kasten",
     name: "kasten",
     intro: "Kledingkasten, dressoirs, nachtkastjes, ladekasten en kapstokken — filter op type.",
     dbCategories: ["kasten", "kledingkasten", "dressoirs", "nachtkastjes", "ladekasten", "kapstokken", "schoenenkasten"],
@@ -590,7 +564,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "kledingkasten",
-    label: "Kledingkasten",
     name: "kledingkasten",
     intro: "Ruime garderobekasten met schuif- of draaideuren — orde in de slaapkamer.",
     dbCategories: ["kledingkasten"],
@@ -618,7 +591,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "dressoirs",
-    label: "Dressoirs",
     name: "dressoirs",
     intro: "Lage opbergkasten voor de woon- of eetkamer — opbergruimte met allure.",
     dbCategories: ["dressoirs"],
@@ -629,7 +601,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "nachtkastjes",
-    label: "Nachtkastjes",
     name: "nachtkastjes",
     intro: "Het kleine meubel naast je bed — voor wat altijd binnen handbereik moet zijn.",
     dbCategories: ["nachtkastjes"],
@@ -656,7 +627,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "ladekasten",
-    label: "Ladekasten en commodes",
     name: "ladekasten",
     intro: "Lades vol opbergruimte — commodes en ladekasten voor slaapkamer en hal.",
     dbCategories: ["ladekasten"],
@@ -667,7 +637,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "kapstokken",
-    label: "Kapstokken",
     name: "kapstokken",
     intro: "Een warm welkom in de hal — kapstokken en garderobe-oplossingen.",
     dbCategories: ["kapstokken"],
@@ -678,7 +647,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "schoenenkasten",
-    label: "Schoenenkasten",
     name: "schoenenkasten",
     intro: "Schoenen netjes uit het zicht — slanke kasten en lades voor in de hal.",
     dbCategories: ["schoenenkasten"],
@@ -691,7 +659,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   // ─── Sfeer ───────────────────────────────────────────────────
   {
     slug: "verlichting",
-    label: "Alle verlichting",
     name: "verlichting",
     intro: "Sfeer maken begint bij licht. Plafond-, vloer-, tafel- en wandlampen met karakter.",
     dbCategories: ["verlichting", "plafondlampen", "vloerlampen", "tafellampen", "wandlampen"],
@@ -716,7 +683,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "plafondlampen",
-    label: "Plafondlampen",
     name: "plafondlampen",
     intro: "Het licht van bovenaf — hang- en plafondlampen die de ruimte definiëren.",
     dbCategories: ["plafondlampen"],
@@ -742,7 +708,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "vloerlampen",
-    label: "Vloerlampen",
     name: "vloerlampen",
     intro: "Staand licht voor een leeshoek of naast de bank.",
     dbCategories: ["vloerlampen"],
@@ -753,7 +718,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "tafellampen",
-    label: "Tafellampen",
     name: "tafellampen",
     intro: "Warm licht op ooghoogte — voor op het dressoir, bureau of nachtkastje.",
     dbCategories: ["tafellampen"],
@@ -764,7 +728,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "wandlampen",
-    label: "Wandlampen",
     name: "wandlampen",
     intro: "Subtiel licht aan de muur — wandlampen en appliques voor sfeer en accent.",
     dbCategories: ["wandlampen"],
@@ -775,7 +738,6 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
   {
     slug: "spiegels",
-    label: "Spiegels",
     name: "spiegels",
     intro: "Wandspiegels voor hal, slaapkamer en woonkamer; een spiegel tegenover een raam maakt een ruimte lichter.",
     dbCategories: ["spiegels"],
@@ -802,36 +764,18 @@ export const CATEGORIES: ReadonlyArray<Category> = [
   },
 ] as const;
 
+export const CATEGORIES: ReadonlyArray<Category> = CATEGORY_DEFS.map((def) => ({
+  ...def,
+  label: CATEGORY_LABELS[def.slug],
+}));
+
 // ─── Lookup helpers ─────────────────────────────────────────────────
-
-const VALID_SLUGS = new Set<string>(CATEGORIES.map((c) => c.slug));
-
-export function isCategorySlug(slug: string): slug is CategorySlug {
-  return VALID_SLUGS.has(slug);
-}
+// isCategorySlug, dbCategoryToRouteSlug, productUrl en categoryUrl staan in
+// lib/category-routes.ts (bovenaan re-geëxporteerd).
 
 export function getCategory(slug: string): Category | null {
+  if (!isCategorySlug(slug)) return null;
   return CATEGORIES.find((c) => c.slug === slug) ?? null;
-}
-
-/**
- * Geeft de canonieke route-slug voor een DB-product categorie, of `null` als
- * er geen route voor bestaat. Voorbeeld: db.category="hoekbanken" → "hoekbanken".
- * Nooit stilzwijgend terugvallen op een andere categorie: dat gaf een
- * redirect-lus op de productpagina.
- */
-export function dbCategoryToRouteSlug(dbCategory: string): CategorySlug | null {
-  return isCategorySlug(dbCategory) ? dbCategory : null;
-}
-
-/**
- * Bouwt de canonieke product-URL: /<categorie>/<slug>. Zonder bekende
- * categorie valt de link terug op de legacy-route /products/<slug>, die dan
- * een 404 geeft in plaats van naar een verkeerde categorie te sturen.
- */
-export function productUrl(product: { category: string; slug: string }): string {
-  const route = dbCategoryToRouteSlug(product.category);
-  return route ? `/${route}/${product.slug}` : `/products/${product.slug}`;
 }
 
 /**
@@ -850,13 +794,6 @@ const COMPLEMENTARY_CATEGORY: Readonly<Record<string, CategorySlug>> = {
 export function complementaryCategoryFor(dbCategory: string): Category | null {
   const slug = COMPLEMENTARY_CATEGORY[dbCategory];
   return slug ? getCategory(slug) : null;
-}
-
-/**
- * Bouwt categorie-URL: /<categorie>
- */
-export function categoryUrl(slug: CategorySlug): string {
-  return `/${slug}`;
 }
 
 /**

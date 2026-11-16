@@ -7,6 +7,7 @@ import {
   complementaryCategoryFor,
   categoryUrl,
 } from "@/lib/categories";
+import { CATEGORY_LABELS, categoryLabelOf } from "@/lib/category-routes";
 
 describe("lib/categories", () => {
   it("heeft unieke slugs en voor elke umbrella meerdere DB-categorieën", () => {
@@ -63,6 +64,20 @@ describe("lib/categories", () => {
       expect(getCategory("spiegels")?.label).toBe("Spiegels");
       expect(getCategory("nope")).toBeNull();
       expect(categoryUrl("spiegels")).toBe("/spiegels");
+    });
+  });
+
+  describe("lib/category-routes (lichte client-module)", () => {
+    it("heeft voor elke slug precies één volledige categorie en andersom", () => {
+      const routeSlugs = Object.keys(CATEGORY_LABELS).sort();
+      const fullSlugs = CATEGORIES.map((c) => c.slug).sort();
+      expect(fullSlugs).toEqual(routeSlugs);
+    });
+
+    it("label komt uit CATEGORY_LABELS", () => {
+      for (const c of CATEGORIES) expect(c.label).toBe(CATEGORY_LABELS[c.slug]);
+      expect(categoryLabelOf("ladekasten")).toBe("Ladekasten en commodes");
+      expect(categoryLabelOf("onbekend")).toBe("onbekend");
     });
   });
 });

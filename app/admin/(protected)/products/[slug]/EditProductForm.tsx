@@ -7,7 +7,7 @@ import { Check, AlertTriangle } from "lucide-react";
 import SpecsEditor from "@/components/admin/SpecsEditor";
 import SizePriceEditor, { type SizeVariant } from "@/components/admin/SizePriceEditor";
 import { subscribeProductUpdated } from "@/components/admin/productUpdated";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { parsePrice } from "@/lib/parse-price";
 import { slugify } from "@/lib/specs";
 import { updateProductFull, type FullUpdateState } from "../actions";

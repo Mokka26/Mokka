@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/components/product/ProductDetail";
-import { productUrl } from "@/lib/categories";
+import { getCategory, productUrl } from "@/lib/categories";
 import { MODEL_VARIANT_SELECT } from "@/lib/variants";
 
 interface Props {
@@ -86,6 +86,7 @@ export default async function AdminProductPreview({ params }: Props) {
           product={product}
           relatedProducts={relatedProducts}
           colorVariants={colorVariants}
+          categorySubtitle={getCategory(product.category)?.cardSubtitle ?? null}
         />
       </div>
     </>

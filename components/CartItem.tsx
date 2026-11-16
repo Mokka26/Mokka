@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCart, type CartItemType } from "@/context/CartContext";
 import { frameMode, parseImages } from "@/lib/imageHelpers";
 import { cldOptimize } from "@/lib/cloudinary-url";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { Price, formatPrice } from "@/components/ui/price";
 import { deliveryLine } from "@/components/product/deliveryTime";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";

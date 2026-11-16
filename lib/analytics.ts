@@ -13,7 +13,8 @@
 //
 // Documentatie voor de eigenaar: docs/tracking.md.
 
-import { getCategory } from "@/lib/categories";
+// Lichte module (geen categorie-teksten): dit bestand zit in de client-bundel.
+import { categoryLabelOf } from "@/lib/category-routes";
 
 export const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 export const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
@@ -117,7 +118,7 @@ function round2(n: number): number {
 }
 
 function categoryLabel(slug: string): string {
-  return getCategory(slug)?.label ?? slug;
+  return categoryLabelOf(slug);
 }
 
 /** Variantlabel: maat + opties (nachtkast/voetbank), gescheiden door " · ". */

@@ -21,6 +21,7 @@ import {
   type VariantTraits,
 } from "@/lib/filters";
 import { getGuide, guidePath } from "@/app/gids/guides";
+import { cardSpecsJson } from "@/components/product/specs";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import CategoryListing, { type ListingProduct, type ListingVariant } from "./CategoryListing";
 
@@ -210,7 +211,10 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
   }
 
   const start = (page - 1) * PAGE_SIZE;
-  const pageProducts: ListingProduct[] = sorted.slice(start, start + PAGE_SIZE);
+  // Naar de client-listing alleen de specs die de kaart toont (payload-trim).
+  const pageProducts: ListingProduct[] = sorted
+    .slice(start, start + PAGE_SIZE)
+    .map((p) => ({ ...p, specs: cardSpecsJson(p.specs) }));
   const pageVariants: Record<string, ListingVariant[]> = {};
   for (const p of pageProducts) {
     if (p.colorGroup && variants[p.colorGroup]) pageVariants[p.colorGroup] = variants[p.colorGroup];
@@ -324,7 +328,8 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
         )}
 
         <CategoryListing
-          category={category}
+          // Alleen slug + label: het hele Category-object (seoIntro, FAQ) hoeft niet in de RSC-payload.
+          category={{ slug: category.slug, label: category.label }}
           products={pageProducts}
           variants={pageVariants}
           page={page}

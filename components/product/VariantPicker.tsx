@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { buildVariantOptions, swatchBackground, type ModelVariant } from "@/lib/variants";
 import { formatPrice } from "@/components/ui/price";
 

@@ -24,6 +24,31 @@ export function findSpec(specs: SpecMap, ...keys: string[]): string | undefined 
 }
 
 export const DIMENSION_KEYS = ["Afmetingen", "Afmeting", "Maten", "Maat", "Size", "Dimensions"] as const;
+
+/**
+ * Spec-sleutels die ProductCard leest (serie, afmetingen, materiaalregel).
+ * Hoofdletterongevoelig, zoals findSpec.
+ */
+export const CARD_SPEC_KEYS = [
+  "Serie", "Series",
+  ...DIMENSION_KEYS,
+  "Materiaal", "Material",
+  "Stoffering", "Bekleding",
+  "Patroon", "Pattern",
+] as const;
+
+const CARD_SPEC_KEYS_LOWER = new Set<string>(CARD_SPEC_KEYS.map((k) => k.toLowerCase()));
+
+/**
+ * Specs-JSON ingekort tot de sleutels die de kaart toont. Voor lijsten die
+ * als props naar een client-component gaan (categorie, zoeken): de volledige
+ * specs (beschrijvingen, levertijd, onderhoud) hoeven niet in de RSC-payload.
+ */
+export function cardSpecsJson(json: string | null | undefined): string | null {
+  const specs = parseSpecs(json);
+  const picked = Object.entries(specs).filter(([k]) => CARD_SPEC_KEYS_LOWER.has(k.toLowerCase()));
+  return picked.length > 0 ? JSON.stringify(Object.fromEntries(picked)) : null;
+}
 export const DELIVERY_KEY_RE = /^\s*(levertijd|levering|leverdatum|levertermijn)\s*$/i;
 
 /**

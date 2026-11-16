@@ -10,7 +10,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/context/CartContext";
 import { parseImages } from "@/lib/imageHelpers";
-import { getCategory } from "@/lib/categories";
+import { categoryLabelOf } from "@/lib/category-routes";
 import { Price, formatPrice } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
@@ -73,6 +73,11 @@ interface Props {
   complementaryProducts?: ProductCardProduct[];
   /** Live Mollie-betaalmethoden voor het koopblok (zelfde chips als de footer). */
   mollieMethods?: CheckoutMethod[];
+  /**
+   * Korte regel onder de productnaam (Category.cardSubtitle). Komt van de
+   * server zodat de volledige categorieconfig niet in de client-bundel zit.
+   */
+  categorySubtitle?: string | null;
 }
 
 /**
@@ -96,13 +101,11 @@ const OPTION_BTN = "inline-flex items-center justify-center px-4 py-2.5 min-h-11
 const OPTION_ACTIVE = "bg-ink text-paper border-ink";
 const OPTION_IDLE = "bg-transparent text-ink border-line hover:border-ink";
 
-export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [], mollieMethods = [] }: Props) {
+export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [], mollieMethods = [], categorySubtitle = null }: Props) {
   const router = useRouter();
   const images = parseImages(product.images);
   const orientation = orientationOf(images[0]);
-  const categoryInfo = getCategory(product.category);
-  const categoryLabel = categoryInfo?.label ?? product.category;
-  const categorySubtitle = categoryInfo?.cardSubtitle ?? null;
+  const categoryLabel = categoryLabelOf(product.category);
 
   // Specs één keer parsen; levertijd niet dubbel tonen (staat in het koopblok).
   const specs = parseSpecs(product.specs);

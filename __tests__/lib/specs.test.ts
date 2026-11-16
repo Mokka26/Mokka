@@ -14,6 +14,19 @@ import {
   productTypeLabel,
   nameHasType,
 } from "@/lib/specs";
+import { cardSpecsJson } from "@/components/product/specs";
+
+describe("cardSpecsJson (payload-trim voor de kaart)", () => {
+  it("houdt alleen de sleutels die ProductCard leest, hoofdletterongevoelig", () => {
+    const json = JSON.stringify({ Afmetingen: "200 x 100 cm", materiaal: "Eiken", Onderhoud: "Lang verhaal", Levertijd: "2 weken" });
+    expect(JSON.parse(cardSpecsJson(json) ?? "{}")).toEqual({ Afmetingen: "200 x 100 cm", materiaal: "Eiken" });
+  });
+
+  it("geeft null zonder relevante specs", () => {
+    expect(cardSpecsJson(null)).toBeNull();
+    expect(cardSpecsJson(JSON.stringify({ Onderhoud: "x" }))).toBeNull();
+  });
+});
 
 describe("lib/specs", () => {
   describe("parseDimensions", () => {

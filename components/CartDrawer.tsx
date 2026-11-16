@@ -9,7 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { frameMode, parseImages } from "@/lib/imageHelpers";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { Drawer, DialogCloseButton } from "@/components/ui/Dialog";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Price, formatPrice } from "@/components/ui/price";

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { frameMode, parseImages } from "@/lib/imageHelpers";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { Price } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { deliveryLine } from "@/components/product/deliveryTime";

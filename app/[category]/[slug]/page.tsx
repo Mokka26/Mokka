@@ -243,6 +243,7 @@ export default async function ProductPageInCategory({ params }: Props) {
         complementaryProducts={complementaryProducts}
         colorVariants={colorVariants}
         mollieMethods={mollieMethods}
+        categorySubtitle={getCategory(product.category)?.cardSubtitle ?? null}
       />
       <RecentlyViewed currentSlug={product.slug} />
     </>

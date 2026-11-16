@@ -7,6 +7,7 @@ import { inStockFirst } from "@/lib/variants";
 import { matchesSearch, searchTerms } from "@/lib/search";
 import { getCategoryProducts, groupModels, type SearchParams } from "@/app/[category]/category-page";
 import CategoryListing, { type ListingProduct, type ListingVariant } from "@/app/[category]/CategoryListing";
+import { cardSpecsJson } from "@/components/product/specs";
 
 /**
  * /products — alle producten én zoekresultaten (?q=). Zelfde server-side
@@ -85,7 +86,10 @@ export default async function ProductsPage({ searchParams }: Props) {
   if (page > totalPages) redirect(query ? `/products?${query}` : "/products");
 
   const start = (page - 1) * PAGE_SIZE;
-  const pageProducts: ListingProduct[] = sorted.slice(start, start + PAGE_SIZE);
+  // Naar de client-listing alleen de specs die de kaart toont (payload-trim).
+  const pageProducts: ListingProduct[] = sorted
+    .slice(start, start + PAGE_SIZE)
+    .map((p) => ({ ...p, specs: cardSpecsJson(p.specs) }));
   const pageVariants: Record<string, ListingVariant[]> = {};
   for (const p of pageProducts) {
     if (p.colorGroup && variants[p.colorGroup]) pageVariants[p.colorGroup] = variants[p.colorGroup];

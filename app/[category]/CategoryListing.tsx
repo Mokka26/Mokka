@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import ProductCard, { type ProductCardVariant } from "@/components/ProductCard";
 import { ProductGrid } from "@/components/ProductGrid";
 import { useFooterInView } from "@/components/product/useFooterInView";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { trackSelectItem, trackViewItemList } from "@/lib/analytics";
 import {
   activeFilterCount,
