@@ -36,6 +36,8 @@ const paymentsCreate = jest.fn();
 const paymentsGet = jest.fn();
 const CHECKOUT_URL = "https://www.mollie.com/checkout/select-method/abc123";
 const IDEMPOTENCY_KEY = "7f1c2a4e-5b6d-4c8e-9f0a-1b2c3d4e5f60";
+/** Opgeslagen sleutel = client-uuid + ":" + vingerafdruk (32 hex) van de inhoud. */
+const STORED_KEY_RE = new RegExp(`^${IDEMPOTENCY_KEY}:[a-f0-9]{32}$`);
 const ORIGINAL_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const bed = makeProduct({ id: "bed", name: "Bed Oslo", price: 599, stock: 5 });
@@ -269,10 +271,10 @@ describe("app/checkout/actions · createCheckout", () => {
   });
 
   describe("idempotentie, cookie-akkoord en honeypot", () => {
-    it("slaat idempotencyKey en analyticsConsent op de order op (consent default false)", async () => {
+    it("slaat idempotencyKey (+ vingerafdruk) en analyticsConsent op de order op (consent default false)", async () => {
       await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY, analyticsConsent: true }));
       expect((db.order.create.mock.calls[0][0] as { data: Record<string, unknown> }).data).toMatchObject({
-        idempotencyKey: IDEMPOTENCY_KEY,
+        idempotencyKey: expect.stringMatching(STORED_KEY_RE),
         analyticsConsent: true,
       });
       await createCheckout(validInput());
@@ -284,30 +286,71 @@ describe("app/checkout/actions · createCheckout", () => {
       expect(db.order.create).not.toHaveBeenCalled();
     });
 
-    it("geeft bij een herhaalde submit met dezelfde sleutel de bestaande open Mollie-checkout terug, zonder nieuwe order", async () => {
-      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "open", molliePaymentId: "tr_old" });
+    it("geeft bij een herhaalde submit met dezelfde sleutel én inhoud de bestaande open Mollie-checkout terug, zonder nieuwe order", async () => {
+      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "open", molliePaymentId: "tr_old", createdAt: new Date() });
       paymentsGet.mockResolvedValue({ status: "open", getCheckoutUrl: () => "https://www.mollie.com/checkout/select-method/old" });
       const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
       expect(result).toEqual({ ok: true, url: "https://www.mollie.com/checkout/select-method/old" });
-      expect(db.order.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { idempotencyKey: IDEMPOTENCY_KEY } }));
+      expect(db.order.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { idempotencyKey: expect.stringMatching(STORED_KEY_RE) } }));
       expect(paymentsGet).toHaveBeenCalledWith("tr_old");
       expect(db.order.create).not.toHaveBeenCalled();
       expect(paymentsCreate).not.toHaveBeenCalled();
     });
 
+    it("CODE-1: dezelfde sleutel met gewijzigde klant, adres, methode, land of wagen zoekt op een andere opgeslagen sleutel", async () => {
+      const lookup = async (overrides: Record<string, unknown>): Promise<string> => {
+        db.order.findUnique.mockClear();
+        await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY, ...overrides }));
+        return (db.order.findUnique.mock.calls[0][0] as { where: { idempotencyKey: string } }).where.idempotencyKey;
+      };
+      const base = await lookup({});
+      expect(await lookup({})).toBe(base); // deterministisch
+      const variants: Record<string, unknown>[] = [
+        { customer: makeCustomer({ address: "Andere straat" }) },
+        { customer: makeCustomer({ email: "ander@example.nl" }) },
+        { customer: makeCustomer({ country: "BE", zipCode: "2000" }) },
+        { method: "creditcard" },
+        { items: [{ productId: "bed", quantity: 2 }] },
+        { items: [{ productId: "bed", quantity: 1 }, { productId: "lamp", quantity: 1 }] },
+        { delivery: { assembly: true } },
+      ];
+      for (const v of variants) {
+        const key = await lookup(v);
+        expect(key).toMatch(STORED_KEY_RE);
+        expect(key).not.toBe(base);
+      }
+    });
+
     it("maakt een nieuwe order als de bestaande niet meer open is en geeft de sleutel vrij", async () => {
-      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "expired", molliePaymentId: "tr_old" });
+      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "expired", molliePaymentId: "tr_old", createdAt: new Date() });
       const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
       expect(result).toEqual({ ok: true, url: CHECKOUT_URL });
       expect(paymentsGet).not.toHaveBeenCalled();
-      expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "order_old", idempotencyKey: IDEMPOTENCY_KEY }, data: { idempotencyKey: null } });
-      expect((db.order.create.mock.calls[0][0] as { data: Record<string, unknown> }).data.idempotencyKey).toBe(IDEMPOTENCY_KEY);
+      const stored = (db.order.create.mock.calls[0][0] as { data: Record<string, unknown> }).data.idempotencyKey;
+      expect(stored).toMatch(STORED_KEY_RE);
+      expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "order_old", idempotencyKey: stored }, data: { idempotencyKey: null } });
     });
 
     it("maakt ook een nieuwe order als de oude Mollie-checkout niet meer open is", async () => {
-      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "open", molliePaymentId: "tr_old" });
+      db.order.findUnique.mockResolvedValue({ id: "order_old", orderNumber: "MOK-OLD", status: "open", molliePaymentId: "tr_old", createdAt: new Date() });
       paymentsGet.mockResolvedValue({ status: "expired", getCheckoutUrl: () => null });
       expect(await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }))).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(db.order.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("CODE-2: geeft de sleutel NIET vrij zolang een verse order nog geen Mollie-betaling heeft (geen tweede order)", async () => {
+      db.order.findUnique.mockResolvedValue({ id: "order_a", orderNumber: "MOK-A", status: "open", molliePaymentId: null, createdAt: new Date(Date.now() - 30_000) });
+      const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
+      expect(result).toMatchObject({ ok: false, message: expect.stringContaining("al verwerkt") });
+      expect(db.order.updateMany).not.toHaveBeenCalled();
+      expect(db.order.create).not.toHaveBeenCalled();
+      expect(paymentsCreate).not.toHaveBeenCalled();
+    });
+
+    it("CODE-2: geeft de sleutel wél vrij bij een order zonder betaling die ouder is dan 2 minuten", async () => {
+      db.order.findUnique.mockResolvedValue({ id: "order_a", orderNumber: "MOK-A", status: "open", molliePaymentId: null, createdAt: new Date(Date.now() - 3 * 60_000) });
+      expect(await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }))).toEqual({ ok: true, url: CHECKOUT_URL });
+      expect(db.order.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ id: "order_a" }), data: { idempotencyKey: null } }));
       expect(db.order.create).toHaveBeenCalledTimes(1);
     });
 
@@ -321,21 +364,25 @@ describe("app/checkout/actions · createCheckout", () => {
       // Eerste lookup: nog geen order (de andere submit is net bezig); na de botsing wél.
       db.order.findUnique
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: "order_other", orderNumber: "MOK-OTHER", status: "open", molliePaymentId: "tr_other" });
+        .mockResolvedValueOnce({ id: "order_other", orderNumber: "MOK-OTHER", status: "open", molliePaymentId: "tr_other", createdAt: new Date() });
       paymentsGet.mockResolvedValue({ status: "open", getCheckoutUrl: () => "https://www.mollie.com/checkout/select-method/other" });
       const result = await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }));
       expect(result).toEqual({ ok: true, url: "https://www.mollie.com/checkout/select-method/other" });
-      expect(db.order.create).toHaveBeenCalledTimes(1); // géén retry op idempotencyKey-botsing
+      expect(db.order.create).toHaveBeenCalledTimes(1); // geen retry op idempotencyKey-botsing
       expect(paymentsCreate).not.toHaveBeenCalled();
       expect(captureError).not.toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ scope: "createCheckout.order" }));
     });
 
-    it("vraagt de klant even te wachten als de andere submit nog geen Mollie-betaling heeft", async () => {
+    it("CODE-2: vraagt in het P2002-pad te wachten en geeft de sleutel van de verse order niet vrij", async () => {
       db.order.create.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002", clientVersion: "test", meta: { target: ["idempotencyKey"] } }),
       );
-      db.order.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: "o", orderNumber: "MOK-O", status: "open", molliePaymentId: null });
+      db.order.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: "o", orderNumber: "MOK-O", status: "open", molliePaymentId: null, createdAt: new Date() });
       expect(await createCheckout(validInput({ idempotencyKey: IDEMPOTENCY_KEY }))).toMatchObject({ ok: false, message: expect.stringContaining("al verwerkt") });
+      expect(db.order.updateMany).not.toHaveBeenCalled();
+      expect(paymentsCreate).not.toHaveBeenCalled();
     });
 
     it("weigert bij een gevulde honeypot zonder order of betaling, en logt dat", async () => {

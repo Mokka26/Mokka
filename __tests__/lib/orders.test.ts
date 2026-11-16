@@ -223,8 +223,16 @@ describe("lib/orders", () => {
 
   describe("generateOrderNumber", () => {
     it("heeft het formaat MOK-YYMMDD-XXXXX met de gegeven datum", () => {
-      const now = new Date(2026, 9, 12, 12, 0, 0).getTime(); // lokale tijd, 12 oktober 2026
+      const now = Date.UTC(2026, 9, 12, 10, 0, 0); // 12 oktober 2026, 12:00 Nederlandse tijd
       expect(generateOrderNumber(now)).toMatch(/^MOK-261012-[A-Z0-9]{5}$/);
+    });
+
+    it("gebruikt de datum in Europe/Amsterdam, niet UTC (CODE-12)", () => {
+      // 31 dec 2026 23:30 UTC = 1 jan 2027 00:30 in Amsterdam (wintertijd).
+      expect(generateOrderNumber(Date.UTC(2026, 11, 31, 23, 30))).toMatch(/^MOK-270101-/);
+      // 15 jul 2026 22:15 UTC = 16 jul 00:15 in Amsterdam (zomertijd, UTC+2).
+      expect(generateOrderNumber(Date.UTC(2026, 6, 15, 22, 15))).toMatch(/^MOK-260716-/);
+      expect(generateOrderNumber(Date.UTC(2026, 6, 15, 21, 59))).toMatch(/^MOK-260715-/);
     });
 
     it("gebruikt nooit 0, O, 1, I of L in het willekeurige deel", () => {

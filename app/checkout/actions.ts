@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { DELIVERY_FLOORS } from "@/lib/delivery";
 import { z } from "zod";
@@ -115,6 +116,7 @@ const fail = (error: string): CheckoutResult => ({ ok: false, error, message: er
 
 const phone = businessInfo.contact.phoneFormatted;
 const PAYMENT_START_FAILED = `De betaling kon niet worden gestart. Probeer het opnieuw${phone ? ` of bel ons op ${phone}` : ""}.`;
+const IN_FLIGHT = "Je bestelling wordt al verwerkt. Wacht een moment en probeer het dan opnieuw.";
 const ORDER_SAVE_FAILED = `We konden je bestelling niet opslaan. Probeer het opnieuw${phone ? ` of bel ons op ${phone}` : ""}.`;
 
 // Betaalmethoden die "achteraf betalen" zijn — deze eisen orderregels +
@@ -234,21 +236,66 @@ async function createOrderRecord(draft: OrderDraft) {
 }
 
 /**
- * Bestaande open order met deze idempotencyKey waarvan de Mollie-checkout nog
- * open is → de bestaande betaal-URL. Anders null (dan maken we een nieuwe
- * order; een oude, niet meer herbruikbare order raakt zijn sleutel kwijt).
+ * Vingerafdruk van alles wat de betaling bepaalt: regels + opties, klant- en
+ * adresgegevens, bezorgvragen, betaalmethode en land. Dezelfde client-sleutel
+ * met een ándere inhoud (bv. terug van Mollie via bfcache, adres of wagen
+ * aangepast) mag NOOIT de oude Mollie-checkout hergebruiken.
  */
-async function findReusableCheckout(key: string): Promise<{ orderId: string; url: string } | null> {
+function checkoutFingerprint(data: {
+  customer: z.infer<typeof customerSchema>;
+  delivery?: z.infer<typeof deliverySchema>;
+  method?: string;
+  items: CheckoutLineInput[];
+}): string {
+  const c = data.customer;
+  const items = data.items
+    .map((i) => [i.productId, i.variantLabel?.trim() ?? "", i.nachtkast ?? 0, i.voetbank ?? 0, i.quantity] as const)
+    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  const canonical = JSON.stringify({
+    items,
+    customer: [c.firstName, c.lastName, c.email.toLowerCase(), c.phone, c.address, c.houseNumber, c.city, c.zipCode.toUpperCase().replace(/\s+/g, ""), c.country],
+    delivery: data.delivery ? [data.delivery.floor ?? "", data.delivery.elevator ?? "", data.delivery.notes ?? "", data.delivery.assembly] : null,
+    method: data.method ?? "",
+  });
+  return createHash("sha256").update(canonical).digest("hex").slice(0, 32);
+}
+
+/** Wat in Order.idempotencyKey staat: client-uuid + vingerafdruk van de inhoud. */
+function storedIdempotencyKey(clientKey: string, fingerprint: string): string {
+  return `${clientKey}:${fingerprint}`;
+}
+
+/**
+ * Een order zonder Mollie-betaling die jonger is dan dit, wordt nog door een
+ * andere submit verwerkt: sleutel dan NIET vrijgeven (anders tweede order +
+ * tweede betaling), maar de klant even laten wachten.
+ */
+const IN_FLIGHT_MS = 2 * 60 * 1000;
+
+type ReuseResult = { kind: "reuse"; url: string } | { kind: "in_flight" } | null;
+
+/**
+ * Bestaande order met deze (opgeslagen) idempotencyKey:
+ * - open met nog open Mollie-checkout → die betaal-URL hergebruiken;
+ * - open, nog zonder betaling en jonger dan 2 min → "in_flight" (de eerste
+ *   submit is nog bezig met Mollie);
+ * - anders null: de sleutel wordt vrijgegeven en er komt een nieuwe order.
+ */
+async function findReusableCheckout(key: string, now = Date.now()): Promise<ReuseResult> {
   const existing = await prisma.order.findUnique({
     where: { idempotencyKey: key },
-    select: { id: true, orderNumber: true, status: true, molliePaymentId: true },
+    select: { id: true, orderNumber: true, status: true, molliePaymentId: true, createdAt: true },
   });
   if (!existing) return null;
+  if (existing.status === "open" && !existing.molliePaymentId) {
+    const age = existing.createdAt instanceof Date ? now - existing.createdAt.getTime() : Number.POSITIVE_INFINITY;
+    if (age < IN_FLIGHT_MS) return { kind: "in_flight" };
+  }
   if (existing.status === "open" && existing.molliePaymentId) {
     try {
       const payment = await getMollie().payments.get(existing.molliePaymentId);
       const url = payment.getCheckoutUrl();
-      if (payment.status === "open" && url) return { orderId: existing.id, url };
+      if (payment.status === "open" && url) return { kind: "reuse", url };
     } catch (e) {
       captureError(e, { scope: "createCheckout.reuse", orderNumber: existing.orderNumber });
     }
@@ -282,12 +329,17 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
     captureWarning("Checkout: elapsedMs ontbreekt (verdacht, wel verwerkt)", { hasStartedAt: parsed.data.startedAt !== undefined });
   }
 
-  // Idempotentie: dezelfde sleutel nogmaals (dubbelklik, retry) → de
-  // bestaande open order en Mollie-checkout teruggeven, geen tweede order.
-  if (idempotencyKey) {
+  // Idempotentie: dezelfde sleutel én dezelfde inhoud nogmaals (dubbelklik,
+  // retry) → de bestaande open order en Mollie-checkout teruggeven, geen
+  // tweede order. Andere inhoud = andere opgeslagen sleutel = nieuwe order.
+  const storedKey = idempotencyKey
+    ? storedIdempotencyKey(idempotencyKey, checkoutFingerprint({ customer, delivery: parsed.data.delivery, method, items }))
+    : null;
+  if (storedKey) {
     try {
-      const reusable = await findReusableCheckout(idempotencyKey);
-      if (reusable) return { ok: true, url: reusable.url };
+      const reusable = await findReusableCheckout(storedKey);
+      if (reusable?.kind === "reuse") return { ok: true, url: reusable.url };
+      if (reusable?.kind === "in_flight") return fail(IN_FLIGHT);
     } catch (e) {
       captureError(e, { scope: "createCheckout.idempotency" });
     }
@@ -324,21 +376,21 @@ export async function createCheckout(input: unknown): Promise<CheckoutResult> {
       delivery: parsed.data.delivery,
       computed,
       gclid: await resolveGclid(parsed.data.gclid),
-      idempotencyKey: idempotencyKey ?? null,
+      idempotencyKey: storedKey,
       analyticsConsent,
     });
   } catch (e) {
-    if (idempotencyKey && isUniqueViolation(e, "idempotencyKey")) {
+    if (storedKey && isUniqueViolation(e, "idempotencyKey")) {
       // Twee gelijktijdige submits: de andere heeft de order al aangemaakt.
       // Als die al een open Mollie-checkout heeft, die teruggeven; anders
       // de klant even laten wachten (de eerste submit is nog bezig).
       try {
-        const reusable = await findReusableCheckout(idempotencyKey);
-        if (reusable) return { ok: true, url: reusable.url };
+        const reusable = await findReusableCheckout(storedKey);
+        if (reusable?.kind === "reuse") return { ok: true, url: reusable.url };
       } catch (inner) {
         captureError(inner, { scope: "createCheckout.idempotencyRace" });
       }
-      return fail("Je bestelling wordt al verwerkt. Wacht een moment en probeer het dan opnieuw.");
+      return fail(IN_FLIGHT);
     }
     captureError(e, { scope: "createCheckout.order", items: items.length });
     return fail(ORDER_SAVE_FAILED);

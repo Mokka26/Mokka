@@ -128,11 +128,21 @@ const ORDER_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
  * het ordernummer mag nooit voorspelbaar zijn. Bij een (extreem zeldzame)
  * botsing vangt de checkout P2002 af en probeert één keer opnieuw.
  */
+// Datum in het ordernummer volgt de winkel (Nederlandse tijd), niet de
+// server (UTC op Vercel): een bestelling om 00:30 hoort bij de nieuwe dag.
+const ORDER_DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/Amsterdam",
+  year: "2-digit",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 export function generateOrderNumber(now: number = Date.now()): string {
-  const d = new Date(now);
-  const yy = String(d.getFullYear() % 100).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const parts = ORDER_DATE_FORMAT.formatToParts(new Date(now));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "00";
+  const yy = part("year");
+  const mm = part("month");
+  const dd = part("day");
   const bytes = randomBytes(5);
   let rand = "";
   for (let i = 0; i < 5; i++) rand += ORDER_ALPHABET[bytes[i] % ORDER_ALPHABET.length];

@@ -89,7 +89,12 @@ function readGclid(): string | null {
   }
 }
 
-/** Eén sleutel per paginabezoek: een tweede klik (of retry) maakt geen tweede order. */
+/**
+ * Sleutel per checkout-poging: een tweede klik (of retry) met dezelfde inhoud
+ * maakt geen tweede order. Bij elke wijziging van formulier, methode of wagen
+ * en bij terugkeer via bfcache komt er een nieuwe sleutel (de server
+ * controleert daarnaast een vingerafdruk van de inhoud).
+ */
 function makeIdempotencyKey(): string {
   try {
     return crypto.randomUUID();
@@ -97,6 +102,31 @@ function makeIdempotencyKey(): string {
     // Oude WebView zonder randomUUID: zonder sleutel verder (server accepteert optioneel).
     return "";
   }
+}
+
+/** Apple Pay alleen tonen als dit apparaat/deze browser er écht mee kan betalen. */
+function canUseApplePay(): boolean {
+  try {
+    const session = (window as unknown as { ApplePaySession?: { canMakePayments?: () => boolean } }).ApplePaySession;
+    return session?.canMakePayments?.() === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Methoden die in dit land en op dit apparaat zinvol zijn. */
+function usableMethods(list: CheckoutMethod[], country: Country): CheckoutMethod[] {
+  return list.filter((m) => {
+    if (m.id === "applepay") return canUseApplePay();
+    if (m.id === "bancontact") return country === "BE";
+    return true;
+  });
+}
+
+/** Standaardkeuze: iDEAL in Nederland, Bancontact in België, anders de eerste. */
+function defaultMethod(list: CheckoutMethod[], country: Country): string {
+  const preferred = country === "BE" ? "bancontact" : "ideal";
+  return list.find((m) => m.id === preferred)?.id ?? list[0]?.id ?? "";
 }
 
 const NETWORK_FAILED = "Controleer je internetverbinding en probeer het opnieuw. Er is nog niets afgeschreven.";
@@ -131,7 +161,6 @@ export default function CheckoutPage() {
   useEffect(() => {
     mountedAtRef.current = performance.now();
     gclidRef.current = readGclid();
-    idempotencyKeyRef.current = makeIdempotencyKey();
   }, []);
 
   // bfcache: komt de klant met "terug" van de betaalpagina, dan wordt deze
@@ -139,7 +168,10 @@ export default function CheckoutPage() {
   // blijft de knop voor altijd op "Even geduld…".
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) setSubmitting(false);
+      if (!e.persisted) return;
+      setSubmitting(false);
+      // Terug van Mollie: nieuwe poging = nieuwe sleutel (nooit de oude checkout).
+      idempotencyKeyRef.current = makeIdempotencyKey();
     };
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
@@ -162,6 +194,14 @@ export default function CheckoutPage() {
 
   const [methods, setMethods] = useState<CheckoutMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>("");
+  // Heeft de klant zelf een methode gekozen? Dan die houden zolang hij beschikbaar is.
+  const methodPickedRef = useRef(false);
+
+  // Nieuwe idempotency-sleutel bij elke wijziging van wat de betaling bepaalt
+  // (ook bij mount). Dubbelklikken zonder wijziging houdt dezelfde sleutel.
+  useEffect(() => {
+    idempotencyKeyRef.current = makeIdempotencyKey();
+  }, [form, delivery, selectedMethod, items]);
 
   // Haal de in Mollie ingeschakelde betaalmethoden op voor dit bedrag.
   useEffect(() => {
@@ -177,8 +217,11 @@ export default function CheckoutPage() {
         return;
       }
       if (!active) return;
-      setMethods(m);
-      setSelectedMethod((cur) => (cur && m.some((x) => x.id === cur) ? cur : m[0]?.id ?? ""));
+      const usable = usableMethods(m, form.country);
+      setMethods(usable);
+      setSelectedMethod((cur) =>
+        methodPickedRef.current && cur && usable.some((x) => x.id === cur) ? cur : defaultMethod(usable, form.country),
+      );
     };
     void load();
     return () => { active = false; };
@@ -539,7 +582,10 @@ export default function CheckoutPage() {
                         name="payment"
                         value={m.id}
                         checked={active}
-                        onChange={() => setSelectedMethod(m.id)}
+                        onChange={() => {
+                          methodPickedRef.current = true;
+                          setSelectedMethod(m.id);
+                        }}
                         className="accent-accent w-4 h-4"
                       />
                       {m.image ? (
