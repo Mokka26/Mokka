@@ -1,10 +1,11 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
 // Content-Security-Policy — alleen in productie (dev/Turbopack heeft losse
-// eval/HMR-websockets nodig). 'unsafe-eval' staat nog aan omdat dit de
-// strengere Vercel-platform-default overrult; three.js/gsap (de oorspronkelijke
-// reden) zijn verwijderd — kandidaat om te schrappen na een test met de
-// Sentry-SDK.
+// eval/HMR-websockets nodig). Géén 'unsafe-eval': three.js/gsap (de
+// oorspronkelijke reden) zijn weg, de eigen code gebruikt geen eval/new
+// Function, en Next (productie), de Sentry-SDK, gtag.js en Vercel Speed
+// Insights hebben het niet nodig. Zie je na een deploy CSP-meldingen
+// "unsafe-eval" in de console of Sentry, meld de bron dan hier.
 // Google Ads + GA4 (gtag.js, components/Analytics.tsx): het script komt van
 // googletagmanager.com; conversie-pings gaan als image/fetch naar google.com,
 // googleadservices.com en doubleclick.net; GA4 stuurt naar
@@ -18,7 +19,7 @@ const googleAdsHosts = {
 
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com ${googleAdsHosts.script}`,
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com ${googleAdsHosts.script}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://res.cloudinary.com https://www.mollie.com ${googleAdsHosts.ping}`,
   "font-src 'self' data:",
@@ -51,10 +52,13 @@ const securityHeaders = [
 // (logo-2027.png) i.p.v. het te overschrijven. Voor /_next/static regelt
 // Next dit zelf (gehashte namen).
 const immutableCache = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
-const immutableStaticPaths = ["/images/:path*", "/icon.png", "/apple-icon.png", "/mokka-poster.jpg"];
+// /video/*: de hero-clips (lib/hero-image.ts). Nieuwe clip = nieuwe bestandsnaam.
+const immutableStaticPaths = ["/images/:path*", "/video/:path*", "/icon.png", "/apple-icon.png", "/mokka-poster.jpg"];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Geen "X-Powered-By: Next.js": vertelt aanvallers alleen welk framework draait.
+  poweredByHeader: false,
   // Trimt barrel-imports van zware libs (alleen gebruikte exports bundelen).
   experimental: {
     optimizePackageImports: ["framer-motion", "lucide-react"],
