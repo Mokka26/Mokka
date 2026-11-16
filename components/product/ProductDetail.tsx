@@ -221,9 +221,10 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
     ].filter(Boolean);
     toast.success("Toegevoegd aan je winkelwagen", {
       description: extras.join(" · "),
-      // Met een knop erin: langer zichtbaar (WCAG 2.2.1); sonner pauzeert ook bij hover/focus.
-      duration: 9000,
-      action: { label: "Bekijk winkelwagen", onClick: openCart },
+      // Met knoppen erin: 10 s zichtbaar (WCAG 2.2.1); sonner pauzeert ook bij hover/focus.
+      duration: 10_000,
+      action: { label: "Afrekenen", onClick: () => router.push("/checkout") },
+      cancel: { label: "Bekijk winkelwagen", onClick: openCart },
     });
     setAdded(true);
   };
@@ -464,15 +465,17 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
             footerInView ? "translate-y-full opacity-0 pointer-events-none" : ""
           }`}
         >
-          <div className="flex items-center gap-4">
-            <div className="shrink-0 min-w-0">
-              <Price price={lineUnitPrice} listPrice={hasOptions ? null : activeListPrice} vat size="sm" inline showSavings={false} />
+          {/* Prijsblok mag krimpen en afkappen; de knop nooit (375-390 px). De
+              doorgestreepte adviesprijs staat bewust alleen in het koopblok. */}
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
+              <Price price={lineUnitPrice} listPrice={null} vat size="sm" inline showSavings={false} />
               {(activeVariant?.label ?? product.sizeName) && (
-                <p className="text-[14px] text-stone leading-none mt-1">Maat {activeVariant?.label ?? product.sizeName}</p>
+                <p className="text-[14px] text-stone leading-none mt-1 truncate">Maat {activeVariant?.label ?? product.sizeName}</p>
               )}
             </div>
             {askInstead ? (
-              <Link href={requestUrl} className="btn-primary flex-1 !px-4 text-center">
+              <Link href={requestUrl} className="btn-primary shrink-0 !px-4 text-center">
                 {priceOnRequest ? "Vraag prijs aan" : "Vraag levertijd"}
               </Link>
             ) : (
@@ -480,7 +483,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 type="button"
                 onClick={handleAddToCart}
                 disabled={!inStock}
-                className={`btn-primary flex-1 !px-4 min-h-11 ${added ? "!bg-success !border-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-ink`}
+                className={`btn-primary shrink-0 !px-4 min-h-11 ${added ? "!bg-success !border-success" : ""} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-ink`}
               >
                 {buyButtonLabel}
               </button>
