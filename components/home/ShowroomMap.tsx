@@ -37,54 +37,60 @@ export function ShowroomMap({ embedUrl, mapsUrl, posterSrc, address, showroomNam
   const showMap = requested || consent === "accepted";
 
   return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-bone">
-      {showMap ? (
-        <iframe
-          src={embedUrl}
-          title={`Kaart met de locatie van ${showroomName}, ${address}`}
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-          className="absolute inset-0 h-full w-full border-0 saturate-[.35]"
-        />
-      ) : (
-        <>
-          <Image
-            src={posterSrc}
-            alt={`De showroom van ${showroomName}`}
-            fill
-            sizes="(max-width: 1024px) 100vw, 58vw"
-            className="object-cover"
+    // Mobiel: foto vrij (het gevelbord blijft zichtbaar) met adres en knoppen
+    // eronder op ink; vanaf sm liggen tekst en knoppen als overlay op de foto.
+    <div className="relative overflow-hidden rounded-[14px] bg-ink">
+      <div className="relative aspect-[4/3] bg-bone">
+        {showMap ? (
+          <iframe
+            src={embedUrl}
+            title={`Kaart met de locatie van ${showroomName}, ${address}`}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full border-0 saturate-[.35]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-ink/5" aria-hidden />
-          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 text-white">
-            <p className="flex items-start gap-2 text-base sm:text-lg font-medium mb-1">
-              <MapPin className="w-5 h-5 mt-0.5 shrink-0" strokeWidth={1.5} aria-hidden />
-              {address}
-            </p>
-            <p className="text-sm text-white/85 mb-5 max-w-md">
-              De kaart komt van Google Maps. Bij het laden kan Google cookies plaatsen.
-            </p>
-            <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-              <button
-                type="button"
-                onClick={() => setRequested(true)}
-                className="inline-flex items-center justify-center min-h-11 px-6 rounded-[10px] bg-white text-ink text-sm font-medium uppercase tracking-label hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
-              >
-                Kaart laden
-              </button>
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 min-h-11 text-sm font-medium uppercase tracking-label text-white underline decoration-white/50 underline-offset-[6px] hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-              >
-                Open in Google Maps
-                <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />
-              </a>
-            </div>
+        ) : (
+          <>
+            <Image
+              src={posterSrc}
+              alt={`De showroom van ${showroomName}`}
+              fill
+              sizes="(max-width: 1024px) 100vw, 58vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 hidden sm:block bg-gradient-to-t from-ink/80 via-ink/30 to-ink/5" aria-hidden />
+          </>
+        )}
+      </div>
+      {!showMap && (
+        <div className="p-5 sm:absolute sm:inset-x-0 sm:bottom-0 sm:p-8 text-white">
+          <p className="flex items-start gap-2 text-base sm:text-lg font-medium mb-1">
+            <MapPin className="w-5 h-5 mt-0.5 shrink-0" strokeWidth={1.5} aria-hidden />
+            {address}
+          </p>
+          <p className="text-sm text-white/85 mb-5 max-w-md">
+            De kaart komt van Google Maps. Bij het laden kan Google cookies plaatsen.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+            <button
+              type="button"
+              onClick={() => setRequested(true)}
+              className="inline-flex items-center justify-center min-h-11 px-6 rounded-[10px] bg-white text-ink text-sm font-medium uppercase tracking-label hover:bg-accent-dark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white transition-colors"
+            >
+              Kaart laden
+            </button>
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 min-h-11 text-sm font-medium uppercase tracking-label text-white underline decoration-white/50 underline-offset-[6px] hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            >
+              Open in Google Maps
+              <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} aria-hidden />
+            </a>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

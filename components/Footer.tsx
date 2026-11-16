@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Phone } from "lucide-react";
+import { ChevronDown, Phone } from "lucide-react";
 import {
   businessInfo,
   getEmailLink,
@@ -9,7 +10,6 @@ import {
   getOpeningHoursCompact,
   getActiveSocials,
 } from "@/lib/business-info";
-import { shippingInfo } from "@/lib/shipping-info";
 import { CATEGORIES, GROUP_ORDER, categoryUrl } from "@/lib/categories";
 import { MolliePaymentChips, PaymentIconRow } from "@/components/PaymentIcons";
 import { FooterNewsletterForm } from "@/components/FooterNewsletterForm";
@@ -34,10 +34,35 @@ const shopGroups = GROUP_ORDER.map((group) => {
   };
 });
 
-const footerHeading = "text-sm uppercase tracking-label text-white/70 mb-5";
+// Footerkoppen zijn labels, geen display-koppen: sans (de globale h-regel zou
+// ze serif maken), 14px hoofdletters zoals de eyebrow-utility.
+const footerHeading = "font-sans text-sm font-medium uppercase tracking-label text-white/70 mb-5";
 // Elke tekstlink is een touch target van ≥ 44px hoog (WCAG 2.5.8 / CLAUDE.md §7).
 const footerLink =
   "inline-flex min-h-11 items-center text-white/85 hover:text-white underline-offset-4 hover:underline transition-colors";
+
+/**
+ * Linkgroep: op mobiel (< sm) een dichtgeklapte <details>-accordeon zodat de
+ * footer kort blijft; vanaf sm de gewone kop met lijst. Twee varianten in de
+ * DOM, de verborgen (display:none) telt niet mee voor toetsenbord of AT.
+ */
+function FooterGroup({ title, className = "", children }: { title: string; className?: string; children: ReactNode }) {
+  return (
+    <>
+      <details className="group sm:hidden border-b border-white/10">
+        <summary className="flex items-center justify-between gap-4 min-h-14 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <h2 className="font-sans text-sm font-medium uppercase tracking-label text-white">{title}</h2>
+          <ChevronDown className="w-5 h-5 shrink-0 text-white/70 transition-transform duration-300 group-open:rotate-180" strokeWidth={1.5} aria-hidden="true" />
+        </summary>
+        <div className="pb-6">{children}</div>
+      </details>
+      <div className={`hidden sm:block ${className}`}>
+        <h2 className={footerHeading}>{title}</h2>
+        {children}
+      </div>
+    </>
+  );
+}
 
 export default function Footer({
   mollieMethods = [],
@@ -57,23 +82,10 @@ export default function Footer({
   return (
     <FooterGate>
       <footer className="bg-ink text-white/85 pb-[env(safe-area-inset-bottom)]">
-        {/* Pre-footer: USP balk */}
-        <div className="border-b border-white/10">
-          <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
-            <ul className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/10 list-none m-0 p-0">
-              {shippingInfo.footerUsps.map((item) => (
-                <li key={item.title} className="py-8 lg:py-10 lg:px-8 first:lg:pl-0 last:lg:pr-0">
-                  <p className="text-white text-base font-medium mb-1">{item.title}</p>
-                  <p className="text-sm text-white/75">{item.sub}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
+        {/* Geen USP-strip meer: die staan al in de TopBanner (en TrustBar op home). */}
         {/* Hoofdinhoud */}
-        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-20 lg:pt-24 pb-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16 lg:mb-20 pb-12 border-b border-white/10">
+        <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14 pt-12 sm:pt-20 lg:pt-24 pb-8 sm:pb-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-12 mb-8 sm:mb-16 lg:mb-20 pb-10 sm:pb-12 border-b border-white/10">
             {/* Logo + statement */}
             <div className="lg:col-span-5">
               <Image
@@ -81,7 +93,7 @@ export default function Footer({
                 alt={name}
                 width={160}
                 height={55}
-                className="h-14 w-auto mb-7 brightness-0 invert opacity-80"
+                className="h-12 sm:h-14 w-auto mb-6 sm:mb-7 brightness-0 invert opacity-80"
               />
               <p className="font-serif text-2xl lg:text-3xl text-white/90 leading-snug max-w-md mb-6">
                 {tagline.split("ziel").length > 1 ? (
@@ -109,8 +121,8 @@ export default function Footer({
           </div>
 
           {/* Shop — alle categorieën per groep (bron: lib/categories.ts) */}
-          <nav aria-label="Categorieën" className="mb-16">
-            <h2 className={footerHeading}>Shop</h2>
+          <nav aria-label="Categorieën" className="sm:mb-16">
+            <FooterGroup title="Shop">
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-y-10 gap-x-6">
               {shopGroups.map((g) => (
                 <div key={g.group}>
@@ -137,12 +149,12 @@ export default function Footer({
               <li><Link href="/nieuw" className={footerLink}>Nieuw binnen</Link></li>
               <li><Link href="/products" className={footerLink}>Bekijk alle producten</Link></li>
             </ul>
+            </FooterGroup>
           </nav>
 
           {/* Service / Over ons / Bezoek */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-12 gap-y-10 gap-x-6 mb-16">
-            <div className="lg:col-span-3">
-              <h2 className={footerHeading}>Service</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-12 sm:gap-y-10 gap-x-6 mb-6 sm:mb-16">
+            <FooterGroup title="Service" className="lg:col-span-3">
               <ul className="text-base list-none m-0 p-0">
                 <li><Link href={legal.returnPolicyUrl} className={footerLink}>Retourneren</Link></li>
                 <li><Link href="/bezorging" className={footerLink}>Bezorging &amp; montage</Link></li>
@@ -151,10 +163,9 @@ export default function Footer({
                 <li><Link href="/contact" className={footerLink}>Vragen? Neem contact op</Link></li>
                 <li><Link href={legal.termsUrl} className={footerLink}>Algemene voorwaarden</Link></li>
               </ul>
-            </div>
+            </FooterGroup>
 
-            <div className="lg:col-span-3">
-              <h2 className={footerHeading}>Over ons</h2>
+            <FooterGroup title="Over ons" className="lg:col-span-3">
               <ul className="text-base list-none m-0 p-0">
                 <li><Link href="/about" className={footerLink}>Over Mokka Home</Link></li>
                 <li><Link href="/showroom" className={footerLink}>Showroom in {address.city}</Link></li>
@@ -163,10 +174,9 @@ export default function Footer({
                 <li><Link href={legal.cookiePolicyUrl} className={footerLink}>Cookiebeleid</Link></li>
                 <li><CookieSettingsButton className={`${footerLink} cursor-pointer`} /></li>
               </ul>
-            </div>
+            </FooterGroup>
 
-            <div className="sm:col-span-3 lg:col-span-6 lg:col-start-7">
-              <h2 className={footerHeading}>Showroom</h2>
+            <FooterGroup title="Showroom" className="sm:col-span-3 lg:col-span-6 lg:col-start-7">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6 text-base">
                 <address className="not-italic space-y-2.5">
                   <a
@@ -209,8 +219,22 @@ export default function Footer({
                   </div>
                 )}
               </div>
-            </div>
+            </FooterGroup>
           </div>
+
+          {/* Mobiel: het telefoonnummer blijft zichtbaar, ook met de accordeons dicht. */}
+          {phoneLink && businessInfo.contact.phoneFormatted && (
+            <p className="sm:hidden mb-8 text-base">
+              <a
+                href={phoneLink}
+                className={`gap-2 ${footerLink}`}
+                aria-label={`Bel ons: ${businessInfo.contact.phoneFormatted}`}
+              >
+                <Phone className="w-4 h-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                <span>Bel ons: {businessInfo.contact.phoneFormatted}</span>
+              </a>
+            </p>
+          )}
 
           {/* Payment methods + social */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-8 border-b border-white/10">
@@ -230,7 +254,7 @@ export default function Footer({
             {/* Social — alleen renderen als er actieve URLs zijn */}
             {socials.length > 0 && (
               <div className="flex items-center gap-3">
-                <p className="text-sm uppercase tracking-label text-white/70 mr-2">Volg ons</p>
+                <p className="font-sans text-sm uppercase tracking-label text-white/70 mr-2">Volg ons</p>
                 {socials.map(({ platform, url }) => (
                   <a
                     key={platform}

@@ -63,7 +63,7 @@ export default function ContactPage() {
                     <p className="eyebrow mb-1">Telefoon</p>
                     <a
                       href={phoneLink}
-                      className="inline-flex items-center min-h-11 font-serif text-xl text-ink hover:text-accent-dark transition-colors"
+                      className="inline-flex items-center min-h-11 font-sans text-lg text-ink tabular-nums hover:text-accent-dark transition-colors"
                       aria-label={`Bel ons: ${businessInfo.contact.phoneFormatted}`}
                     >
                       {businessInfo.contact.phoneFormatted}
@@ -80,7 +80,7 @@ export default function ContactPage() {
                     <p className="eyebrow mb-1">E-mail</p>
                     <a
                       href={emailLink}
-                      className="inline-flex items-center min-h-11 font-serif text-xl text-ink hover:text-accent-dark transition-colors break-all"
+                      className="inline-flex items-center max-w-full min-h-11 font-sans text-base sm:text-lg text-ink hover:text-accent-dark transition-colors break-all"
                     >
                       {businessInfo.contact.email}
                     </a>
@@ -97,7 +97,7 @@ export default function ContactPage() {
                     href={getMapsUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block font-serif text-xl text-ink leading-snug hover:text-accent-dark transition-colors py-1"
+                    className="inline-block font-sans text-lg text-ink leading-snug tabular-nums hover:text-accent-dark transition-colors py-1"
                   >
                     {businessInfo.address.street}<br />
                     {businessInfo.address.postalCode} {businessInfo.address.city}
@@ -111,7 +111,7 @@ export default function ContactPage() {
                 <Clock className="w-5 h-5 text-accent-dark flex-shrink-0 mt-1" strokeWidth={1.5} aria-hidden="true" />
                 <div>
                   <p className="eyebrow mb-1">Openingstijden</p>
-                  <dl className="font-serif text-xl text-ink leading-snug">
+                  <dl className="font-sans text-lg text-ink leading-snug tabular-nums">
                     {hours.map((line) => {
                       const [days, ...rest] = line.split(" ");
                       return (
