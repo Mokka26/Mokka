@@ -37,6 +37,8 @@ const SOURCES: { path: string; cat: string }[] = [
   { path: "woonkamer/salontafels", cat: "salontafels" },
   { path: "woonkamer/bijzettafels", cat: "bijzettafels" },
   { path: "woonkamer/consoletafels", cat: "bijzettafels" },
+  { path: "woonkamer/tv-meubels", cat: "tv-meubels" },
+  { path: "eetkamer/tafelsets", cat: "eettafels" },
   { path: "eetkamer/eetkamerstoelen", cat: "eetkamerstoelen" },
   { path: "eetkamer/eetkamerstoelen-met-armleuningen", cat: "eetkamerstoelen" },
   { path: "eetkamer/houten-stoelen", cat: "eetkamerstoelen" },
@@ -160,7 +162,9 @@ async function listSkus(path: string): Promise<string[]> {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function existingRousseau(): Promise<{ skus: Set<string>; slugs: Set<string> }> {
-  const rows = await prisma.product.findMany({ where: { source: "Rousseau", deletedAt: null }, select: { slug: true, specs: true } });
+  // Ook producten in de prullenbak (deletedAt gezet): die heeft de eigenaar
+  // bewust verwijderd, dus niet opnieuw importeren of overschrijven.
+  const rows = await prisma.product.findMany({ where: { source: "Rousseau" }, select: { slug: true, specs: true } });
   const skus = new Set<string>(); const slugs = new Set<string>();
   for (const r of rows) {
     slugs.add(r.slug);
