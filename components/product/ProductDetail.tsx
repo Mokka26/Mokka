@@ -456,13 +456,14 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
           </section>
         )}
 
-        {/* Sticky mobile CTA — schuift boven de cookiebanner (--cookie-banner-h,
-            gezet door CookieBanner) en verdwijnt zodra de footer in beeld is. */}
+        {/* Sticky mobile CTA — schuift met translate (geen layout, geen CLS)
+            boven de cookiebanner (--cookie-banner-h, gezet door CookieBanner)
+            en verdwijnt zodra de footer in beeld is. */}
         <div
           aria-hidden={footerInView || undefined}
           inert={footerInView || undefined}
-          className={`lg:hidden fixed inset-x-0 bottom-[var(--cookie-banner-h,0px)] bg-white/95 backdrop-blur-md border-t border-line z-40 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] transition-[transform,opacity,bottom] duration-[280ms] ${
-            footerInView ? "translate-y-full opacity-0 pointer-events-none" : ""
+          className={`lg:hidden fixed inset-x-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-line z-40 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] transition-[translate,opacity] duration-[280ms] ${
+            footerInView ? "translate-y-full opacity-0 pointer-events-none" : "-translate-y-[var(--cookie-banner-h,0px)]"
           }`}
         >
           {/* Prijsblok mag krimpen en afkappen; de knop nooit (375-390 px). De

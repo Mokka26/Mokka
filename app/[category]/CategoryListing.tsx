@@ -280,13 +280,14 @@ export default function CategoryListing({
       {/* Ruimte voor de zwevende filterknop (mobiel), incl. safe-area. */}
       <div className="lg:hidden h-[calc(5rem+env(safe-area-inset-bottom))]" aria-hidden="true" />
 
-      {/* MOBILE FILTER — zwevende knop; schuift boven de cookiebanner uit
-          (--cookie-banner-h) en verdwijnt zodra de footer in beeld is. */}
+      {/* MOBILE FILTER — zwevende knop; schuift met translate (geen CLS) boven
+          de cookiebanner uit (--cookie-banner-h) en verdwijnt zodra de footer
+          in beeld is. */}
       <div
         aria-hidden={footerInView || undefined}
         inert={footerInView || undefined}
-        className={`lg:hidden fixed inset-x-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--cookie-banner-h,0px))] z-30 flex justify-center pointer-events-none transition-[transform,opacity,bottom] duration-[280ms] ${
-          footerInView ? "translate-y-[150%] opacity-0" : ""
+        className={`lg:hidden fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex justify-center pointer-events-none transition-[translate,opacity] duration-[280ms] ${
+          footerInView ? "translate-y-[150%] opacity-0" : "-translate-y-[var(--cookie-banner-h,0px)]"
         }`}
       >
         <button

@@ -10,8 +10,11 @@ const STORAGE_KEY = "mokka_cookie_consent_v1";
 
 /**
  * CSS-variabele op <html> met de actuele hoogte van de banner (0 als dicht).
- * Vaste balken onderaan (PDP-koopbalk, filterknop) schuiven hiermee omhoog:
- * `bottom-[var(--cookie-banner-h,0px)]`.
+ * Vaste balken onderaan (PDP-koopbalk, filterknop) schuiven hiermee omhoog
+ * met translate (geen layout-shift): `-translate-y-[var(--cookie-banner-h,0px)]`.
+ * globals.css geeft <body> dezelfde padding-bottom en <html> extra
+ * scroll-padding-bottom, zodat de banner geen content of focus bedekt
+ * (WCAG 2.4.11).
  */
 export const COOKIE_BANNER_HEIGHT_VAR = "--cookie-banner-h";
 
@@ -117,7 +120,7 @@ export default function CookieBanner() {
         >
           <div className="max-w-page mx-auto px-4 sm:px-10 lg:px-14 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))] sm:py-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-10">
-              <p className="text-[15px] sm:text-base text-slate leading-[1.5] lg:flex-1">
+              <p className="text-base text-slate leading-[1.6] lg:flex-1">
                 We gebruiken functionele cookies en, na je akkoord, cookies voor statistiek en advertenties.{" "}
                 <Link
                   href={businessInfo.legal.cookiePolicyUrl}

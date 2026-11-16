@@ -77,7 +77,9 @@ html {
   font-optical-sizing: auto;
   /* Ankers landen onder de vaste header; mobiele filterbalk onderaan vrijhouden. */
   scroll-padding-top: 8rem;
-  scroll-padding-bottom: 5rem;
+  /* --cookie-banner-h staat alleen op <html> zolang de cookiebanner open is
+     (CookieBanner.tsx); gefocuste elementen scrollen dan boven de banner uit. */
+  scroll-padding-bottom: calc(5rem + var(--cookie-banner-h, 0px));
 }
 
 body {
@@ -92,6 +94,8 @@ body {
   font-size: var(--text-body);
   line-height: 1.65;
   letter-spacing: -0.005em;
+  /* Open cookiebanner: de onderkant van de pagina (footer) blijft bereikbaar. */
+  padding-bottom: var(--cookie-banner-h, 0px);
 }
 
 @media (width >= 64rem) {
