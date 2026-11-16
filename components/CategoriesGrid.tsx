@@ -144,7 +144,10 @@ function CategoryTile({ tile, index }: { tile: Tile; index: number }) {
           <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8 flex items-end justify-between gap-4 text-white tilt-float">
             <div className="min-w-0">
               <h3
-                className={`font-serif leading-[1.05] tracking-[-0.02em] ${
+                // hyphens-auto: lange labels ("Eetkamerstoelen") breken op een
+                // halve tegel van 375px af in plaats van uit de tegel te lopen;
+                // minimaal 5 tekens na het streepje (Eetkamer-stoelen, niet -len).
+                className={`font-serif leading-[1.05] tracking-[-0.02em] hyphens-auto break-words [hyphenate-limit-chars:auto_4_5] ${
                   layout.big ? "text-3xl sm:text-4xl lg:text-5xl" : "text-xl sm:text-2xl lg:text-3xl"
                 }`}
               >
