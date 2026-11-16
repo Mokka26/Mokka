@@ -118,7 +118,7 @@ model Order {
   orderNumber String     @unique
   total      Float
   shipping   Float       @default(0)
-  status     String      @default("open") // open | paid | failed | canceled | expired | refunded
+  status     String      @default("open") // open | paid | failed | canceled | expired | partially_refunded | refunded | review
   molliePaymentId String?
   // Betaalmethode zoals Mollie die meldt (ideal, creditcard, klarna…), gezet bij paid.
   paymentMethod   String?

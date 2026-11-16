@@ -2,7 +2,7 @@
  * Labels en token-klassen voor bestelstatussen. Eén plek, zodat lijst, detail,
  * dashboard en CSV-export dezelfde Nederlandse termen gebruiken.
  */
-export const ORDER_STATUSES = ["open", "paid", "failed", "canceled", "expired", "refunded"] as const;
+export const ORDER_STATUSES = ["open", "paid", "failed", "canceled", "expired", "partially_refunded", "refunded", "review"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const FULFILLMENT_STATUSES = ["pending", "processing", "shipped", "delivered", "returned"] as const;
@@ -14,7 +14,10 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   failed: "Mislukt",
   canceled: "Geannuleerd",
   expired: "Verlopen",
+  partially_refunded: "Deels terugbetaald",
   refunded: "Terugbetaald",
+  // Betaling past niet bij de order (bedrag/valuta/payment-id): handmatig nakijken.
+  review: "Controle nodig",
 };
 
 export const FULFILLMENT_LABEL: Record<FulfillmentStatus, string> = {
@@ -49,6 +52,7 @@ export function orderStatusClass(status: string): string {
     case "open":
       return "bg-accent/10 text-accent-dark";
     case "failed":
+    case "review":
       return "bg-error/10 text-error";
     default:
       return "bg-stone/10 text-stone";

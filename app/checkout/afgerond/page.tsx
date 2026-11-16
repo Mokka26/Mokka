@@ -17,12 +17,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const COPY: Record<string, { eyebrow: string; title: string; body: string; tone: "ok" | "wait" | "bad" }> = {
+const COPY: Record<string, { eyebrow: string; title: string; body: string; tone: "ok" | "wait" | "bad" | "neutral" }> = {
   paid: { eyebrow: "Bedankt", title: "Betaling geslaagd", body: `Je bestelling is bevestigd. ${NEXT_STEP_AFTER_PAYMENT}`, tone: "ok" },
   open: { eyebrow: "In behandeling", title: "Betaling wordt verwerkt", body: "We wachten op de bevestiging van je betaling. Dit kan een paar minuten duren. Je hoeft niet opnieuw te betalen: deze pagina ververst vanzelf en je ontvangt een e-mail zodra het rond is.", tone: "wait" },
   failed: { eyebrow: "Mislukt", title: "Betaling niet gelukt", body: "De betaling is niet voltooid. Er is niets afgeschreven. Probeer het opnieuw.", tone: "bad" },
   canceled: { eyebrow: "Geannuleerd", title: "Betaling geannuleerd", body: "Je hebt de betaling afgebroken. Je winkelwagen staat nog klaar.", tone: "bad" },
   expired: { eyebrow: "Verlopen", title: "Betaling verlopen", body: "De betaaltijd is verstreken. Probeer het opnieuw.", tone: "bad" },
+  review: { eyebrow: "In behandeling", title: "We controleren je betaling", body: "Je betaling is binnen, maar we kijken hem nog even na. We nemen zo snel mogelijk contact met je op; je hoeft niet opnieuw te betalen.", tone: "wait" },
+  partially_refunded: { eyebrow: "Terugbetaling", title: "Deels terugbetaald", body: "Een deel van het bedrag is aan je terugbetaald. Vragen hierover? Neem gerust contact met ons op.", tone: "neutral" },
+  refunded: { eyebrow: "Terugbetaling", title: "Terugbetaald", body: "Het bedrag van deze bestelling is aan je terugbetaald. Vragen hierover? Neem gerust contact met ons op.", tone: "neutral" },
 };
 
 const TOKEN_RE = /^[a-f0-9]{32}$/;

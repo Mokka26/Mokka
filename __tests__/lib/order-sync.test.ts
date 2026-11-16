@@ -2,12 +2,12 @@ import type { MollieClient } from "@mollie/api-client";
 import { asPrismaMock, createTxMock, useTransaction } from "@/__tests__/helpers/prisma-mock";
 import { makeOrder, makeOrderItem } from "@/__tests__/helpers/fixtures";
 import { prisma } from "@/lib/prisma";
-import { getMollie } from "@/lib/mollie";
+import { getMollie, isMollieNotFound } from "@/lib/mollie";
 import { sendOrderConfirmation } from "@/lib/email";
 import { captureError, captureWarning } from "@/lib/sentry";
 import { revalidateProduct } from "@/lib/revalidate";
 import { queueServerPurchase } from "@/lib/analytics-server";
-import { syncOrderByPaymentId, getOrderForReturnPage, reconcileOpenOrders, resendPendingConfirmations, paymentMismatch } from "@/lib/order-sync";
+import { syncOrderByPaymentId, getOrderForReturnPage, reconcileOpenOrders, resendPendingConfirmations, paymentMismatch, refundStatusOf } from "@/lib/order-sync";
 
 describe("paymentMismatch", () => {
   const order = { total: 1299, molliePaymentId: "tr_1" };
@@ -29,7 +29,7 @@ jest.mock("@/lib/prisma", () => ({
     .requireActual<typeof import("@/__tests__/helpers/prisma-mock")>("@/__tests__/helpers/prisma-mock")
     .createPrismaMock(),
 }));
-jest.mock("@/lib/mollie", () => ({ getMollie: jest.fn() }));
+jest.mock("@/lib/mollie", () => ({ getMollie: jest.fn(), isMollieNotFound: jest.fn(() => false) }));
 jest.mock("@/lib/email", () => ({ sendOrderConfirmation: jest.fn() }));
 jest.mock("@/lib/sentry", () => ({ captureError: jest.fn(), captureWarning: jest.fn() }));
 jest.mock("@/lib/revalidate", () => ({ revalidateProduct: jest.fn() }));
@@ -41,6 +41,9 @@ const sendMail = jest.mocked(sendOrderConfirmation);
 
 type FakePayment = {
   status: string;
+  amount?: { value: string; currency: string };
+  amountRefunded?: { value: string; currency: string };
+  amountChargedBack?: { value: string; currency: string };
   metadata: { orderId?: string } | null;
   paidAt?: string;
   authorizedAt?: string;
@@ -155,7 +158,7 @@ describe("lib/order-sync · syncOrderByPaymentId", () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it("boekt NIET af en mailt NIET als een andere aanroep de claim al won (count 0)", async () => {
+  it("boekt NIET af en mailt NIET als een andere aanroep de claim al won (count 0), maar ververst wel de pagina's", async () => {
     mockPayment();
     db.order.findUnique.mockResolvedValue(makeOrder({ status: "open" }));
     tx.order.updateMany.mockResolvedValue({ count: 0 });
@@ -164,8 +167,86 @@ describe("lib/order-sync · syncOrderByPaymentId", () => {
     expect(tx.product.updateMany).not.toHaveBeenCalled();
     expect(sendMail).not.toHaveBeenCalled();
     expect(db.order.update).not.toHaveBeenCalled();
-    expect(revalidateProduct).not.toHaveBeenCalled();
     expect(queueServerPurchase).not.toHaveBeenCalled();
+    // CODE-3: de winnaar was mogelijk de bedankpagina (zonder revalidatie).
+    expect(revalidateProduct).toHaveBeenCalledWith({ slug: "bed-oslo", category: "bedden" }, undefined, { mode: "background" });
+  });
+
+  describe("CODE-3: revalidatie als de bedankpagina eerst synct", () => {
+    it("webhook ververst de pagina's alsnog bij een order die net (< 1 uur) betaald is", async () => {
+      mockPayment();
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "paid", paidAt: new Date(Date.now() - 60_000) }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
+      expect(db.$transaction).not.toHaveBeenCalled();
+      expect(sendMail).not.toHaveBeenCalled();
+      expect(revalidateProduct).toHaveBeenCalledWith({ slug: "bed-oslo", category: "bedden" }, undefined, { mode: "background" });
+    });
+
+    it("niet bij een oude betaling (ISR is dan al verlopen) en nooit met revalidate: false", async () => {
+      mockPayment();
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "paid", paidAt: new Date(Date.now() - 2 * 60 * 60_000) }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "paid", paidAt: new Date() }));
+      expect(await syncOrderByPaymentId("tr_test123", { revalidate: false })).toBe("paid");
+      expect(revalidateProduct).not.toHaveBeenCalled();
+    });
+
+    it("de bedankpagina claimt zonder te revalideren; de webhook daarna wel", async () => {
+      mockPayment();
+      db.order.findUnique.mockResolvedValueOnce(makeOrder({ status: "open" }));
+      expect(await syncOrderByPaymentId("tr_test123", { revalidate: false })).toBe("paid");
+      expect(revalidateProduct).not.toHaveBeenCalled();
+      db.order.findUnique.mockResolvedValueOnce(makeOrder({ status: "paid", paidAt: new Date() }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("paid");
+      expect(revalidateProduct).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("CODE-4: terugbetaling en chargeback", () => {
+    it("refundStatusOf telt terugbetaald + teruggeboekt op t.o.v. het totaal", () => {
+      expect(refundStatusOf(599, {})).toBeNull();
+      expect(refundStatusOf(599, { amountRefunded: { value: "0.00" } })).toBeNull();
+      expect(refundStatusOf(599, { amountRefunded: { value: "100.00" } })).toBe("partially_refunded");
+      expect(refundStatusOf(599, { amountRefunded: { value: "599.00" } })).toBe("refunded");
+      expect(refundStatusOf(599, { amountRefunded: { value: "300.00" }, amountChargedBack: { value: "299.00" } })).toBe("refunded");
+      expect(refundStatusOf(599, { amountChargedBack: { value: "599.00" } })).toBe("refunded");
+    });
+
+    it("zet een betaalde order op refunded bij een volledige terugbetaling, zonder voorraad terug te boeken", async () => {
+      mockPayment({ amountRefunded: { value: "599.00", currency: "EUR" } });
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "paid", paidAt: new Date() }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("refunded");
+      expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "order_1", status: "paid" }, data: { status: "refunded" } });
+      expect(db.$transaction).not.toHaveBeenCalled();
+      expect(db.product.update).not.toHaveBeenCalled();
+      expect(captureWarning).toHaveBeenCalledWith(expect.stringContaining("Terugbetaling"), expect.objectContaining({ status: "refunded" }));
+    });
+
+    it("zet een deels terugbetaalde order op partially_refunded, en daarna op refunded", async () => {
+      mockPayment({ amountRefunded: { value: "99.00", currency: "EUR" } });
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "paid" }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("partially_refunded");
+      mockPayment({ amountRefunded: { value: "99.00", currency: "EUR" }, amountChargedBack: { value: "500.00", currency: "EUR" } });
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "partially_refunded" }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("refunded");
+      expect(db.order.updateMany).toHaveBeenLastCalledWith({ where: { id: "order_1", status: "partially_refunded" }, data: { status: "refunded" } });
+    });
+
+    it("doet niets als de terugbetaalstatus al klopt", async () => {
+      mockPayment({ status: "paid", amountRefunded: { value: "599.00", currency: "EUR" } });
+      db.order.findUnique.mockResolvedValue(makeOrder({ status: "refunded" }));
+      expect(await syncOrderByPaymentId("tr_test123")).toBe("refunded");
+      expect(db.order.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  it("CODE-5: markeert een betaling die niet bij de order past als 'review' (uit de cron), zonder af te boeken", async () => {
+    mockPayment({ amount: { value: "1.00", currency: "EUR" } });
+    db.order.findUnique.mockResolvedValue(makeOrder({ status: "open" }));
+    expect(await syncOrderByPaymentId("tr_test123")).toBe("review");
+    expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "order_1", status: "open" }, data: { status: "review" } });
+    expect(db.$transaction).not.toHaveBeenCalled();
+    expect(sendMail).not.toHaveBeenCalled();
   });
 
   it("downgradet een betaalde order nooit (bv. canceled na authorized)", async () => {
@@ -328,7 +409,7 @@ describe("lib/order-sync · reconcileOpenOrders", () => {
     db.order.findUnique.mockImplementation(async ({ where }: { where: { id: string } }) => makeOrder({ id: where.id, status: "open" }));
 
     const result = await reconcileOpenOrders(30);
-    expect(result).toEqual({ checked: 3, updated: 1, expiredWithoutPayment: 2, errors: 1 });
+    expect(result).toEqual({ checked: 3, updated: 1, expiredWithoutPayment: 2, notFound: 0, errors: 1 });
     expect(db.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ status: "open", molliePaymentId: { not: null } }), take: 50 }),
     );
@@ -337,6 +418,36 @@ describe("lib/order-sync · reconcileOpenOrders", () => {
       data: { status: "expired" },
     });
     expect(captureError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ scope: "reconcileOpenOrders", orderNumber: "MOK-3" }));
+  });
+});
+
+describe("lib/order-sync · reconcileOpenOrders (CODE-5)", () => {
+  beforeEach(() => {
+    jest.mocked(getMollie).mockReturnValue({ payments: { get: paymentsGet } } as unknown as MollieClient);
+    db.order.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it("zet orders waarvan Mollie de betaling niet kent (404) op expired, in plaats van ze eeuwig te blijven proberen", async () => {
+    db.order.findMany.mockResolvedValue([{ id: "o1", orderNumber: "MOK-1", molliePaymentId: "tr_test" }]);
+    const notFound = new Error("404");
+    paymentsGet.mockRejectedValueOnce(notFound);
+    jest.mocked(isMollieNotFound).mockImplementation((e) => e === notFound);
+    const result = await reconcileOpenOrders(15);
+    expect(result).toMatchObject({ checked: 1, notFound: 1, errors: 0 });
+    expect(db.order.updateMany).toHaveBeenCalledWith({ where: { id: "o1", status: "open" }, data: { status: "expired" } });
+    expect(captureError).not.toHaveBeenCalled();
+    jest.mocked(isMollieNotFound).mockImplementation(() => false);
+  });
+
+  it("selecteert alleen open orders van hooguit 30 dagen oud", async () => {
+    db.order.findMany.mockResolvedValue([]);
+    const before = Date.now();
+    await reconcileOpenOrders(15);
+    const where = (db.order.findMany.mock.calls[0][0] as { where: { status: string; createdAt: { lt: Date; gte: Date } } }).where;
+    expect(where.status).toBe("open");
+    const days = (before - where.createdAt.gte.getTime()) / 86_400_000;
+    expect(days).toBeGreaterThan(29.9);
+    expect(days).toBeLessThan(30.1);
   });
 });
 

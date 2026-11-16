@@ -1,13 +1,52 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getMollie } from "@/lib/mollie";
+import { getMollie, isMollieNotFound } from "@/lib/mollie";
 import { sendOrderConfirmation } from "@/lib/email";
 import { captureError, captureWarning } from "@/lib/sentry";
 import { revalidateProduct } from "@/lib/revalidate";
 import { queueServerPurchase } from "@/lib/analytics-server";
 import { toCents } from "@/lib/money";
 
-export type OrderStatus = "open" | "paid" | "failed" | "canceled" | "expired";
+export type OrderStatus =
+  | "open"
+  | "paid"
+  | "failed"
+  | "canceled"
+  | "expired"
+  // Betaald, daarna (deels) terugbetaald of teruggeboekt (chargeback) in Mollie.
+  | "partially_refunded"
+  | "refunded"
+  // Betaling past niet bij de order (bedrag/valuta/payment-id): handmatig
+  // controleren. Valt buiten de reconcile-cron.
+  | "review";
+
+/** Statussen waarin de order als verkocht geldt (voorraad is afgeboekt). */
+const PAID_LIKE: ReadonlySet<string> = new Set(["paid", "partially_refunded", "refunded"]);
+
+/**
+ * PDP's en categoriepagina's zijn ISR met 1 uur revalidate: binnen dat venster
+ * na de betaling heeft een (extra) revalidatie zin, daarna niet meer.
+ */
+const REVALIDATE_WINDOW_MS = 60 * 60 * 1000;
+
+type MollieAmountLike = { value?: string; currency?: string } | null | undefined;
+
+/**
+ * Terugbetaalstatus volgens Mollie: som van terugbetaald + teruggeboekt
+ * (chargeback) t.o.v. het ordertotaal. null = niets terugbetaald.
+ */
+export function refundStatusOf(
+  orderTotal: number,
+  payment: { amountRefunded?: MollieAmountLike; amountChargedBack?: MollieAmountLike },
+): "refunded" | "partially_refunded" | null {
+  const cents = (a: MollieAmountLike) => {
+    const n = Number(a?.value ?? 0);
+    return Number.isFinite(n) && n > 0 ? toCents(n) : 0;
+  };
+  const back = cents(payment.amountRefunded) + cents(payment.amountChargedBack);
+  if (back <= 0) return null;
+  return back >= toCents(orderTotal) ? "refunded" : "partially_refunded";
+}
 
 function mapStatus(mollieStatus: string): OrderStatus {
   switch (mollieStatus) {
@@ -75,12 +114,32 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
   if (!order) return null;
 
   const next = mapStatus(payment.status);
-  if (order.status === next) return next;
+  const refund = refundStatusOf(order.total, payment);
 
-  // Eenmaal betaald = betaald: nooit terug-downgraden (bv. een authorized
-  // Klarna-betaling die later canceled meldt). Voorraad is al afgeboekt;
-  // terugdraaien vergt handmatige opvolging, geen stille status-flip.
-  if (order.status === "paid") return "paid";
+  // Terugbetaling of chargeback op een betaalde order: status volgen, de
+  // eigenaar waarschuwen. Voorraad wordt NIET automatisch teruggeboekt (het
+  // product kan beschadigd of nooit verstuurd zijn) — dat blijft handwerk.
+  if (PAID_LIKE.has(order.status)) {
+    const target: OrderStatus = refund ?? "paid";
+    if (order.status !== target) {
+      await prisma.order.updateMany({ where: { id: order.id, status: order.status }, data: { status: target } });
+      if (refund) {
+        captureWarning("Terugbetaling/chargeback in Mollie verwerkt (voorraad niet teruggeboekt)", {
+          orderNumber: order.orderNumber,
+          status: target,
+        });
+      }
+    } else if (target === "paid" && opts.revalidate !== false && paidRecently(order.paidAt)) {
+      // De bedankpagina claimde 'paid' al (zonder te mogen revalideren): de
+      // webhook ververst de voorraad op PDP/categorie alsnog.
+      await revalidateStockPages(order.items.map((i) => i.productId));
+    }
+    // Eenmaal betaald = betaald: nooit terug-downgraden naar open/failed/
+    // canceled (bv. een authorized Klarna-betaling die later canceled meldt).
+    return target;
+  }
+
+  if (order.status === next) return next;
 
   if (next !== "paid") {
     // Niet-betaalde overgangen (failed/canceled/expired) hebben geen eenmalig
@@ -98,7 +157,10 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
       scope: "orderSync.paymentMismatch",
       orderNumber: order.orderNumber,
     });
-    return order.status as OrderStatus;
+    // Apart markeren: blijft zichtbaar voor de admin, maar verstopt de
+    // reconcile-cron niet meer (die pakt alleen 'open').
+    await prisma.order.updateMany({ where: { id: order.id, status: "open" }, data: { status: "review" } });
+    return "review";
   }
 
   const paidAt = new Date(payment.paidAt ?? payment.authorizedAt ?? Date.now());
@@ -132,7 +194,12 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
     return { claimed: true as const, oversold };
   });
 
-  if (!result.claimed) return "paid";
+  if (!result.claimed) {
+    // Een andere aanroep (meestal de bedankpagina, zonder revalidatie) won de
+    // claim: de webhook/cron ververst de pagina's dan alsnog.
+    if (opts.revalidate !== false) await revalidateStockPages(order.items.map((i) => i.productId));
+    return "paid";
+  }
 
   for (const productId of result.oversold) {
     captureWarning("Overselling: order betaald maar voorraad was al (bijna) 0", {
@@ -156,7 +223,18 @@ export async function syncOrderByPaymentId(paymentId: string, opts: SyncOptions 
   // invocatie komt hier). Mislukt de mail, dan gaat confirmationSentAt terug
   // naar null en probeert resendPendingConfirmations() het later opnieuw.
   await claimAndSendConfirmation({ ...order, status: "paid", paidAt, paymentMethod });
+
+  // Gemiste webhook en intussen al (deels) terugbetaald: meteen volgen.
+  if (refund) {
+    await prisma.order.updateMany({ where: { id: order.id, status: "paid" }, data: { status: refund } });
+    captureWarning("Terugbetaling/chargeback in Mollie verwerkt (voorraad niet teruggeboekt)", { orderNumber: order.orderNumber, status: refund });
+    return refund;
+  }
   return "paid";
+}
+
+function paidRecently(paidAt: Date | null, now = Date.now()): boolean {
+  return paidAt instanceof Date && now - paidAt.getTime() < REVALIDATE_WINDOW_MS;
 }
 
 type OrderWithItems = Prisma.OrderGetPayload<{ include: { items: true } }>;
@@ -244,20 +322,28 @@ export async function getOrderForReturnPage(
 
 // ─── Reconcile (cron) ──────────────────────────────────────────────
 
-export type ReconcileResult = { checked: number; updated: number; expiredWithoutPayment: number; errors: number };
+export type ReconcileResult = { checked: number; updated: number; expiredWithoutPayment: number; notFound: number; errors: number };
+
+/** Orders ouder dan dit neemt de cron niet meer mee (Mollie-betalingen verlopen ruim eerder). */
+const RECONCILE_MAX_AGE_DAYS = 30;
 
 /**
  * Vangnet voor gemiste webhooks: synct open orders mét Mollie-betaling die
- * ouder zijn dan `olderThanMinutes`, en zet open orders ZONDER betaling
- * (Mollie-aanmaak mislukt vóór het payment-id werd opgeslagen) na 24 uur op
- * 'expired' zodat ze niet eeuwig 'in behandeling' blijven.
+ * ouder zijn dan `olderThanMinutes` (en hooguit 30 dagen oud), en zet open
+ * orders ZONDER betaling (Mollie-aanmaak mislukt vóór het payment-id werd
+ * opgeslagen) na 24 uur op 'expired' zodat ze niet eeuwig 'in behandeling'
+ * blijven. Kent Mollie de betaling niet (404, bv. een testbetaling met een
+ * andere API-key), dan gaat de order ook op 'expired' — anders blijft hij
+ * vooraan in de selectie staan en verstopt hij de cron.
  */
 export async function reconcileOpenOrders(olderThanMinutes: number): Promise<ReconcileResult> {
-  const result: ReconcileResult = { checked: 0, updated: 0, expiredWithoutPayment: 0, errors: 0 };
-  const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+  const result: ReconcileResult = { checked: 0, updated: 0, expiredWithoutPayment: 0, notFound: 0, errors: 0 };
+  const now = Date.now();
+  const cutoff = new Date(now - olderThanMinutes * 60 * 1000);
+  const oldest = new Date(now - RECONCILE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000);
 
   const open = await prisma.order.findMany({
-    where: { status: "open", molliePaymentId: { not: null }, createdAt: { lt: cutoff } },
+    where: { status: "open", molliePaymentId: { not: null }, createdAt: { lt: cutoff, gte: oldest } },
     select: { id: true, orderNumber: true, molliePaymentId: true },
     orderBy: { createdAt: "asc" },
     take: 50,
@@ -268,6 +354,12 @@ export async function reconcileOpenOrders(olderThanMinutes: number): Promise<Rec
       const status = await syncOrderByPaymentId(o.molliePaymentId!);
       if (status && status !== "open") result.updated += 1;
     } catch (e) {
+      if (isMollieNotFound(e)) {
+        await prisma.order.updateMany({ where: { id: o.id, status: "open" }, data: { status: "expired" } });
+        result.notFound += 1;
+        captureWarning("Reconcile: Mollie kent de betaling niet (404), order op expired", { orderNumber: o.orderNumber });
+        continue;
+      }
       result.errors += 1;
       captureError(e, { scope: "reconcileOpenOrders", orderNumber: o.orderNumber });
     }
