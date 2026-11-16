@@ -86,7 +86,7 @@ export type Category = {
    */
   typeOrder?: ReadonlyArray<string>;
   /**
-   * Optioneel: korte regel onder de productnaam op de kaart + PDP. Bv.
+   * Optioneel: korte regel onder de productnaam op de PDP (niet op de kaart). Bv.
    * banken → "In diverse uitvoeringen en kleuren.". Per categorie gezet
    * zodat de tekst op één plek staat (geen hardcode in componenten).
    */

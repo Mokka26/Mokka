@@ -74,7 +74,7 @@ export default function AboutPage() {
         <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <div className="mb-16 lg:mb-24">
             <SectionHeader
-              number="02"
+              number="01"
               label="Hoe we werken"
               title="Wat je van ons"
               titleItalic="mag verwachten"
@@ -99,7 +99,7 @@ export default function AboutPage() {
         <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
           <div className="mb-16 lg:mb-24">
             <SectionHeader
-              number="03"
+              number="02"
               label="Het assortiment"
               title="Wat je bij ons"
               titleItalic="vindt"

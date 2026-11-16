@@ -152,6 +152,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const priceOnRequest = activePrice <= 0 || !priced.ok;
   const canBuy = inStock && !priceOnRequest;
   const requestUrl = `/contact?product=${encodeURIComponent(product.slug)}&naam=${encodeURIComponent(product.name)}`;
+  // Hoekbanken: andere stof of hoekkant is vaak mogelijk → vraag het ons.
+  const variantQuestionUrl = product.category === "hoekbanken" ? `${requestUrl}&vraag=uitvoering` : null;
   // Geen koopknop (prijs op aanvraag of tijdelijk uitverkocht) → een vraag i.p.v. een dode, grijze knop.
   const askInstead = priceOnRequest || !inStock;
   const askLabel = priceOnRequest ? "Vraag prijs en levertijd aan" : "Vraag naar levertijd";
@@ -242,15 +244,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       <div className="pt-8 lg:pt-12 pb-28 lg:pb-40">
         {/* Product — magazine-spread: beeld links, sticky info rechts */}
         <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] lg:gap-12 items-start">
-          <div className="hidden lg:block absolute left-6 top-6 z-10 pointer-events-none" aria-hidden="true">
-            <span className="block origin-top-left rotate-90 translate-x-[2px] eyebrow-lg text-stone whitespace-nowrap">
-              <span className="text-accent">— </span>
-              {categoryLabel}
-            </span>
-          </div>
-
-          {/* Galerij */}
-          <div className="px-6 sm:px-10 lg:pl-24 lg:pr-0">
+          {/* Galerij — linkerrand gelijk aan max-w-page + lg:px-14 elders */}
+          <div className="px-6 sm:px-10 lg:pl-[max(56px,calc((100vw-1600px)/2+56px))] lg:pr-0">
             <ProductGallery images={images} productName={product.name} orientation={orientation} onOpen={setLightbox} />
           </div>
 
@@ -386,6 +381,15 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               </div>
             )}
 
+            {variantQuestionUrl && (
+              <Link
+                href={variantQuestionUrl}
+                className="inline-flex items-center self-start min-h-11 mb-2 text-base text-ink underline underline-offset-4 decoration-line-strong hover:text-accent-dark hover:decoration-accent-dark transition-colors"
+              >
+                Andere stof of hoek links/rechts? Vraag het ons
+              </Link>
+            )}
+
             <PurchaseInfo price={lineUnitPrice} stock={stock} deliveryTime={product.deliveryTime ?? null} category={product.category} mollieMethods={mollieMethods} />
 
             {specEntries.length > 0 && (
@@ -422,9 +426,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
           <section className="mt-24 lg:mt-36" aria-labelledby="pdp-complementary">
             <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
               <div className="mb-10 lg:mb-14">
-                <h2 id="pdp-complementary" className="font-serif text-3xl lg:text-4xl text-ink">
-                  Past er goed bij
-                </h2>
+                <SectionHeader id="pdp-complementary" title="Past er goed bij" />
               </div>
               <ProductGrid as="ul" columns={4}>
                 {complementaryProducts.slice(0, 4).map((p) => (
@@ -436,11 +438,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         )}
 
         {relatedProducts.length > 0 && (
-          <section className="mt-24 lg:mt-36">
+          <section className="mt-24 lg:mt-36" aria-labelledby="pdp-related">
             <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
               <div className="mb-10 lg:mb-14">
                 <SectionHeader
-                  number="02"
+                  id="pdp-related"
                   label="Meer uit deze collectie"
                   title={`Meer ${categoryLabel.toLowerCase()}`}
                   linkHref={`/${product.category}`}

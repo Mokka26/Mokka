@@ -113,7 +113,7 @@ export function Price({
         <span className={`inline-flex flex-wrap items-baseline gap-x-2 ${LIST_SIZE_CLASS[size]} text-stone`}>
           <s className="tabular-nums">Adviesprijs {formatPrice(listPrice)}</s>
           {showSavings && (
-            <span className="font-medium text-success whitespace-nowrap">
+            <span className="font-medium text-accent-dark whitespace-nowrap">
               -{pct}%<span className="sr-only"> korting</span>
             </span>
           )}

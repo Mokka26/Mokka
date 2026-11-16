@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { frameMode, parseImages } from "@/lib/imageHelpers";
-import { getCategory, productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/categories";
 import { Price } from "@/components/ui/price";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { deliveryLine } from "@/components/product/deliveryTime";
@@ -101,10 +101,6 @@ export default function ProductCard({ product, variants, priority = false, sizes
 
   // Titel = volledige productnaam (incl. kleur indien aanwezig).
   const title = product.name;
-
-  // Korte categorie-regel onder de titel (bv. banken → "In diverse
-  // uitvoeringen en kleuren."). Komt uit lib/categories.ts.
-  const cardSubtitle = getCategory(product.category)?.cardSubtitle ?? null;
 
   // Eyebrow toont serie/collectie alleen als die niet al in de naam zit.
   const eyebrow = serie && !product.name.toLowerCase().includes(serie.toLowerCase()) ? serie : null;
@@ -209,10 +205,9 @@ export default function ProductCard({ product, variants, priority = false, sizes
             <span className="card-name">{title}</span>
           </h3>
 
-          {/* Standaardzin ("In diverse kleuren.") niet als de kleurbolletjes het al laten zien. */}
-          {cardSubtitle && colorDots.length === 0 && (
-            <p className="hidden sm:block text-[14px] text-stone leading-snug mb-2">{cardSubtitle}</p>
-          )}
+          {/* Geen standaardzin per categorie ("In diverse uitvoeringen en
+              kleuren.") meer: ruis op de kaart en belooft keuze die er per
+              product niet altijd is. De kleurbolletjes tonen echte varianten. */}
 
           {/* SIGNATURE: hairline-marker */}
           <div className="hidden sm:block w-4 h-px bg-accent-light mb-3" aria-hidden="true" />

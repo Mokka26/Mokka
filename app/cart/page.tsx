@@ -23,10 +23,7 @@ export default function CartPage() {
       <div className="mb-12 lg:mb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">
           <div className="lg:col-span-8">
-            <div className="flex items-center gap-4 mb-6">
-              <span className="font-serif italic text-stone text-base">— 01</span>
-              <span className="eyebrow">Jouw selectie</span>
-            </div>
+            <p className="eyebrow mb-6">Jouw selectie</p>
             <h1 className="display-lg text-ink">Winkelwagen</h1>
           </div>
           {items.length > 0 && (
@@ -53,6 +50,8 @@ export default function CartPage() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
             <div className="lg:col-span-8 min-w-0">
+              {/* Kopvolgorde h1 → h2 → h3 (productnamen in CartItem zijn h3). */}
+              <h2 className="sr-only">Artikelen</h2>
               <div className="border-b border-line pb-5 mb-2 hidden md:grid grid-cols-12 gap-4 eyebrow-lg">
                 <div className="col-span-6">Product</div>
                 <div className="col-span-2 text-center">Aantal</div>

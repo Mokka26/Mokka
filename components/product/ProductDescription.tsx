@@ -60,7 +60,7 @@ export function ProductDescription({ name, description }: Props) {
 
   return (
     <section className="mt-24 lg:mt-36 bg-bone/40 py-16 lg:py-28" aria-labelledby={`${id}-title`}>
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14">
+      <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
           <div className="lg:col-span-4">
             <h2 id={`${id}-title`} className="font-serif text-3xl lg:text-4xl text-ink leading-[1.1] mb-6">

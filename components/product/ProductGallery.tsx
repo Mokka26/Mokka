@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
-import { Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
 import { frameMode, type ProductImage } from "@/lib/imageHelpers";
 import { GALLERY_ASPECT_CLASS, GALLERY_ASPECT_RATIO, type Orientation } from "@/components/product/imageAspect";
@@ -15,6 +15,9 @@ interface Props {
   /** Opent de lightbox op de gegeven foto. */
   onOpen: (index: number) => void;
 }
+
+/** Vanaf dit aantal foto's geen bolletjes meer (lopen anders over op 2 regels) maar een voortgangsbalk. */
+const MAX_DOTS = 6;
 
 export function galleryAlt(productName: string, img: ProductImage | undefined, index: number, total: number): string {
   if (img?.alt) return `${productName} — ${img.alt}`;
@@ -40,6 +43,27 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
   const total = images.length;
 
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
+  const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Thumbnails: roving tabindex — één tabstop; pijltjes, Home en End wisselen
+  // van foto en verplaatsen de focus mee.
+  const onThumbKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
+    const last = total - 1;
+    const keyTarget: Record<string, number> = {
+      ArrowDown: Math.min(active + 1, last),
+      ArrowRight: Math.min(active + 1, last),
+      ArrowUp: Math.max(active - 1, 0),
+      ArrowLeft: Math.max(active - 1, 0),
+      Home: 0,
+      End: last,
+    };
+    const next = keyTarget[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    scrollTo(next);
+    setActive(next);
+    thumbRefs.current[next]?.focus();
+  };
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -64,14 +88,18 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
     <div className="lg:flex lg:gap-5">
       {/* Thumbnails — desktop */}
       {total > 1 && (
-        <ul className="hidden lg:flex flex-col gap-3 shrink-0 w-[88px]" aria-label="Foto's">
+        <ul className="hidden lg:flex flex-col gap-3 shrink-0 w-[88px]" aria-label="Foto's (pijltjestoetsen om te wisselen)" onKeyDown={onThumbKeyDown}>
           {images.map((img, i) => {
             const current = active === i;
             return (
               <li key={`${img.url}-${i}`}>
                 <button
+                  ref={(el) => {
+                    thumbRefs.current[i] = el;
+                  }}
                   type="button"
                   onClick={() => scrollTo(i)}
+                  tabIndex={current ? 0 : -1}
                   aria-label={`Toon foto ${i + 1} van ${total}`}
                   aria-current={current ? "true" : undefined}
                   className={`relative block w-[80px] h-[80px] overflow-hidden bg-bone rounded-md border transition-[opacity,border-color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
@@ -138,7 +166,7 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                       desktop met tekst bij hover/focus. De teller staat rechtsboven. */}
                   <span
                     aria-hidden="true"
-                    className="absolute bottom-3 right-3 inline-flex items-center justify-center gap-1.5 bg-white/90 text-ink text-sm w-10 h-10 lg:w-auto lg:h-auto lg:px-3 lg:py-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover/zoom:opacity-100 lg:group-focus-visible/zoom:opacity-100 transition-opacity"
+                    className="absolute bottom-3 right-3 inline-flex items-center justify-center gap-1.5 bg-white/90 text-ink text-sm w-11 h-11 lg:w-auto lg:h-auto lg:px-3 lg:py-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover/zoom:opacity-100 lg:group-focus-visible/zoom:opacity-100 transition-opacity"
                   >
                     <Maximize2 className="w-4 h-4 lg:w-3.5 lg:h-3.5" strokeWidth={1.75} />
                     <span className="hidden lg:inline">Vergroten</span>
@@ -159,9 +187,11 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
           )}
         </div>
 
-        {/* Dots — mobiel: visueel klein, klikgebied 44×44px */}
-        {total > 1 && (
-          <div className="lg:hidden flex justify-center flex-wrap mt-1" role="group" aria-label="Foto kiezen">
+        {/* Dots — mobiel: visueel klein, klikgebied 44×44px. Bij meer dan
+            MAX_DOTS foto's een voortgangsbalk met vorige/volgende-knoppen
+            (alternatief voor swipen, WCAG 2.5.7). */}
+        {total > 1 && total <= MAX_DOTS && (
+          <div className="lg:hidden flex justify-center mt-1" role="group" aria-label="Foto kiezen">
             {images.map((img, i) => (
               <button
                 key={`${img.url}-dot-${i}`}
@@ -177,6 +207,38 @@ export function ProductGallery({ images, productName, orientation, onOpen }: Pro
                 />
               </button>
             ))}
+          </div>
+        )}
+        {total > MAX_DOTS && (
+          <div className="lg:hidden flex items-center gap-2 mt-1" role="group" aria-label="Foto kiezen">
+            <button
+              type="button"
+              onClick={() => scrollTo(Math.max(active - 1, 0))}
+              disabled={active === 0}
+              aria-label="Vorige foto"
+              className="inline-flex items-center justify-center w-11 h-11 shrink-0 rounded-full text-ink disabled:text-line-strong focus-visible:outline-2 focus-visible:outline-ink"
+            >
+              <ChevronLeft className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
+            </button>
+            {/* Voortgangsbalk in segmenten (geen inline style nodig); de teller
+                staat rechtsboven in de foto en de sr-only live-regio meldt de foto. */}
+            <span aria-hidden="true" className="flex flex-1 gap-1">
+              {images.map((img, i) => (
+                <span
+                  key={`${img.url}-bar-${i}`}
+                  className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i <= active ? "bg-ink" : "bg-mist"}`}
+                />
+              ))}
+            </span>
+            <button
+              type="button"
+              onClick={() => scrollTo(Math.min(active + 1, total - 1))}
+              disabled={active === total - 1}
+              aria-label="Volgende foto"
+              className="inline-flex items-center justify-center w-11 h-11 shrink-0 rounded-full text-ink disabled:text-line-strong focus-visible:outline-2 focus-visible:outline-ink"
+            >
+              <ChevronRight className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
+            </button>
           </div>
         )}
       </div>
