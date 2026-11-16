@@ -3,6 +3,7 @@ import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/components/product/ProductDetail";
+import ToastProvider from "@/components/ToastProvider";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import {
@@ -246,6 +247,8 @@ export default async function ProductPageInCategory({ params }: Props) {
         categorySubtitle={getCategory(product.category)?.cardSubtitle ?? null}
       />
       <RecentlyViewed currentSlug={product.slug} />
+      {/* Toasts (sonner) alleen waar ze gebruikt worden: PDP, checkout, admin. */}
+      <ToastProvider />
     </>
   );
 }

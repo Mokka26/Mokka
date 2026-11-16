@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { IntentLink } from "@/components/ui/IntentLink";
 import { cldOptimize } from "@/lib/cloudinary-url";
 import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 import { frameMode, parseImages } from "@/lib/imageHelpers";
@@ -154,7 +154,9 @@ export default function ProductCard({ product, variants, priority = false, sizes
 
   return (
     <article className="product-card group h-full min-w-0">
-      <Link href={productUrl(product)} className="flex flex-col h-full min-w-0 rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
+      {/* Prefetch pas bij hover/focus/touch: een lijst van 24 kaarten gaf
+          anders tientallen _rsc-prefetches (300+ kB) per categoriepagina. */}
+      <IntentLink href={productUrl(product)} className="flex flex-col h-full min-w-0 rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
         <figure className="relative aspect-[4/3] overflow-hidden bg-bone mb-3 sm:mb-4 rounded-[10px]">
           {first ? (
             <CloudinaryImage
@@ -277,7 +279,7 @@ export default function ProductCard({ product, variants, priority = false, sizes
             {delivery && <p className="text-[14px] text-stone leading-snug">{delivery}</p>}
           </div>
         </div>
-      </Link>
+      </IntentLink>
     </article>
   );
 }

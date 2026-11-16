@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import ToastProvider from "@/components/ToastProvider";
 
 export const metadata = {
   title: "Admin · Mokka Home Interior",
@@ -38,6 +39,8 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
       <main className="lg:ml-64 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-10 py-6 sm:py-8 lg:py-14">{children}</div>
       </main>
+      {/* Toasts (sonner) staan niet meer in de root layout; admin heeft ze hier. */}
+      <ToastProvider />
     </div>
   );
 }

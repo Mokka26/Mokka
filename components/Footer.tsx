@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
+import type { ComponentProps, ReactNode } from "react";
+import NextLink from "next/link";
 import Image from "next/image";
 import { ChevronDown, Phone } from "lucide-react";
 import {
@@ -21,6 +21,13 @@ import type { CheckoutMethod } from "@/lib/mollie";
 // nieuwsbriefform (FooterNewsletterForm) en de /admin-check (FooterGate).
 // Het <footer>-element moet blijven: components/product/useFooterInView.ts
 // zoekt 'm met document.querySelector("footer").
+
+// Footerlinks prefetchen niet: zodra de footer in beeld scrolt gaf dat ~25
+// _rsc-prefetches voor pagina's die zelden de volgende stap zijn. Next prefetcht
+// dan alsnog niets bij hover; de navigatie zelf blijft gewoon client-side.
+function Link({ prefetch = false, ...props }: ComponentProps<typeof NextLink>) {
+  return <NextLink prefetch={prefetch} {...props} />;
+}
 
 // Shop-kolommen: per groep de umbrella (als die er is) als kop-link plus alle
 // niet-umbrella categorieën. Eén bron: lib/categories.ts.

@@ -15,13 +15,13 @@ import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { Price, formatPrice } from "@/components/ui/price";
 import { PaymentMethodChips } from "@/components/PaymentMethodsProvider";
 import { cartLineDelivery, cartLineOptions } from "@/components/CartItem";
+import { CART_DRAWER_ID } from "@/lib/events";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-export const CART_DRAWER_ID = "cart-drawer";
 
 // Voortgangsbalk in stappen van 10% — statische klassen i.p.v. inline width.
 const PROGRESS_WIDTH = [

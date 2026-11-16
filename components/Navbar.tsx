@@ -1,33 +1,31 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { Search, ShoppingBag, Menu, ChevronDown, Phone } from "lucide-react";
 import TopBanner from "./TopBanner";
-import CartDrawer, { CART_DRAWER_ID } from "./CartDrawer";
-import { OPEN_CART_EVENT } from "@/lib/events";
-import { trackSearch } from "@/lib/analytics";
+import { CART_DRAWER_ID, MOBILE_MENU_ID, OPEN_CART_EVENT, SEARCH_DIALOG_ID } from "@/lib/events";
 import { pruneEmptyLinks } from "@/lib/nav-prune";
-import { Dialog, Drawer } from "@/components/ui/Dialog";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { isCheckoutFlow } from "@/components/checkout/CheckoutGate";
+import { navSlug as slug, type NavItem } from "@/components/nav/nav-types";
 
-interface SubLink { label: string; href: string }
-interface NavItem {
-  label: string;
-  href: string;
-  subLinks?: { heading: string; links: SubLink[] }[];
-  /**
-   * Secundaire items staan tussen lg (1024px) en 2xl (1536px) samen in een
-   * "Meer"-dropdown, zodat de desktopnavigatie (met vanaf xl het
-   * telefoonnummer als tekst) past zonder onder 16px te gaan. Vanaf 2xl
-   * staan ze gewoon naast de andere items.
-   */
-  secondary?: boolean;
-}
+// Winkelwagen-lade, zoekdialoog en mobiel menu zitten niet in de basisbundel:
+// ze laden pas bij de eerste klik (of al bij hover/focus/touch op de knop,
+// zie `warm`). Daarna blijven ze gemount zodat sluit-animaties en state werken.
+const CartDrawer = dynamic(() => import("./CartDrawer"), { ssr: false });
+const SearchDialog = dynamic(() => import("./nav/SearchDialog"), { ssr: false });
+const MobileMenu = dynamic(() => import("./nav/MobileMenu"), { ssr: false });
+
+const warm = {
+  cart: () => void import("./CartDrawer"),
+  search: () => void import("./nav/SearchDialog"),
+  menu: () => void import("./nav/MobileMenu"),
+};
 
 const navItems: NavItem[] = [
   {
@@ -151,8 +149,6 @@ const moreItem: NavItem = {
   ],
 };
 
-const POPULAR_SEARCHES = ["Hoekbank", "Eettafel", "Fauteuil", "Boxspring"];
-
 // Icoonknop in de header: 44×44 touch target, zichtbare hover + focus.
 const iconButton =
   "relative inline-flex items-center justify-center w-11 h-11 rounded-full text-ink hover:text-accent-dark hover:bg-bone transition-colors duration-[280ms]";
@@ -168,8 +164,6 @@ const desktopSplitLinkClass =
 const desktopSplitUnderlineClass =
   "pointer-events-none absolute bottom-1 left-2 right-1 xl:left-2.5 2xl:left-3 h-px bg-accent-dark origin-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
 
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-
 // Bewegingen in de header zijn puur CSS (geen framer-motion in de root-bundle):
 //  - dropdown: fade-in via de mk-fade-in keyframes uit globals.css
 //  - mobiel submenu: grid-template-rows 0fr → 1fr (animatie naar height:auto)
@@ -177,15 +171,6 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 // `motion-safe:` respecteert prefers-reduced-motion.
 const dropdownPanelClass =
   "absolute top-full pt-2 z-50 motion-safe:animate-[mk-fade-in_200ms_var(--ease-out-soft)]";
-
-/** Service-pagina's in het mobiele menu (bestaande routes). */
-const SERVICE_LINKS: ReadonlyArray<{ href: string; label: string }> = [
-  { href: "/showroom", label: "Showroom" },
-  { href: "/bezorging", label: "Bezorging" },
-  { href: "/retourneren", label: "Retourneren" },
-  { href: "/gids", label: "Koopgidsen" },
-  { href: "/contact", label: "Contact" },
-];
 
 /** `emptyCategoryHrefs`: categorieën zonder zichtbare producten (uit de root-layout). */
 export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs?: ReadonlyArray<string> }) {
@@ -198,13 +183,24 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Pas na de eerste keer openen gemount (en dus pas dan geladen).
+  const [mounted, setMounted] = useState({ cart: false, search: false, menu: false });
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [activeMobileItem, setActiveMobileItem] = useState<string | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const { totalItems } = useCart();
-  const router = useRouter();
+
+  const openCartDrawer = () => {
+    setMounted((m) => (m.cart ? m : { ...m, cart: true }));
+    setCartDrawerOpen(true);
+  };
+  const openSearch = () => {
+    setMounted((m) => (m.search ? m : { ...m, search: true }));
+    setSearchOpen(true);
+  };
+  const openMobileMenu = () => {
+    setMounted((m) => (m.menu ? m : { ...m, menu: true }));
+    setMobileMenuOpen(true);
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -216,6 +212,7 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
   useEffect(() => {
     const openCart = (e: Event) => {
       e.preventDefault();
+      setMounted((m) => (m.cart ? m : { ...m, cart: true }));
       setCartDrawerOpen(true);
     };
     window.addEventListener(OPEN_CART_EVENT, openCart);
@@ -227,16 +224,6 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
 
   const phoneLink = getPhoneLink();
   const phoneFormatted = businessInfo.contact.phoneFormatted;
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (!q) return;
-    trackSearch(q);
-    router.push(`/products?q=${encodeURIComponent(q)}`);
-    setSearchOpen(false);
-    setSearchQuery("");
-  };
 
   const cartLabel =
     totalItems === 0
@@ -410,23 +397,27 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
               )}
               <button
                 type="button"
-                onClick={() => setSearchOpen(true)}
+                onClick={openSearch}
+                onPointerEnter={warm.search}
+                onFocus={warm.search}
                 className={iconButton}
                 aria-label="Zoeken"
                 aria-haspopup="dialog"
                 aria-expanded={searchOpen}
-                aria-controls="site-search"
+                aria-controls={mounted.search ? SEARCH_DIALOG_ID : undefined}
               >
                 <Search className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={() => setCartDrawerOpen(true)}
+                onClick={openCartDrawer}
+                onPointerEnter={warm.cart}
+                onFocus={warm.cart}
                 className={iconButton}
                 aria-label={cartLabel}
                 aria-haspopup="dialog"
                 aria-expanded={cartDrawerOpen}
-                aria-controls={CART_DRAWER_ID}
+                aria-controls={mounted.cart ? CART_DRAWER_ID : undefined}
               >
                 <ShoppingBag className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
                 {totalItems > 0 && (
@@ -440,12 +431,15 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
               </button>
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(true)}
+                onClick={openMobileMenu}
+                onPointerEnter={warm.menu}
+                onFocus={warm.menu}
+                onTouchStart={warm.menu}
                 className={`lg:hidden ${iconButton}`}
                 aria-label="Menu openen"
                 aria-haspopup="dialog"
                 aria-expanded={mobileMenuOpen}
-                aria-controls="mobile-menu"
+                aria-controls={mounted.menu ? MOBILE_MENU_ID : undefined}
               >
                 <Menu className="w-6 h-6" strokeWidth={1.5} aria-hidden="true" />
               </button>
@@ -454,196 +448,23 @@ export default function Navbar({ emptyCategoryHrefs = [] }: { emptyCategoryHrefs
         </div>
       </header>
 
-      {/* Mobiel menu — native dialog: focus blijft erin, Esc sluit, focus terug naar de knop */}
-      <Drawer
-        id="mobile-menu"
-        side="left"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        title="Menu"
-      >
-        <nav aria-label="Mobiele navigatie" className="px-6 py-6">
-          {/* Zoeken ook vanuit het menu (op mobiel staat de zoekknop klein in de balk). */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              setSearchOpen(true);
-            }}
-            className="w-full flex items-center gap-3 min-h-12 px-4 mb-4 rounded-[10px] border border-line-strong text-base text-graphite hover:border-ink transition-colors"
-          >
-            <Search className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
-            Zoek een product
-          </button>
-          <ul className="list-none m-0 p-0">
-            {menuItems.map((item) => {
-              const expanded = activeMobileItem === item.label;
-              const panelId = `mobile-submenu-${slug(item.label)}`;
-              return (
-                <li key={item.label} className="border-b border-line last:border-b-0">
-                  {item.subLinks ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setActiveMobileItem(expanded ? null : item.label)}
-                        className="w-full flex items-center justify-between gap-4 py-4 min-h-14 text-left"
-                        aria-expanded={expanded}
-                        aria-controls={panelId}
-                      >
-                        <span className="font-serif text-2xl text-ink">{item.label}</span>
-                        <ChevronDown
-                          className={`w-5 h-5 text-stone transition-transform ${expanded ? "rotate-180" : ""}`}
-                          strokeWidth={1.5}
-                          aria-hidden="true"
-                        />
-                      </button>
-                      {/* Altijd gerenderd; ingeklapt via grid-rows 0fr + inert
-                          (niet focusbaar, niet in de accessibility tree). */}
-                      <div
-                        id={panelId}
-                        className={`grid motion-safe:transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                        }`}
-                        inert={!expanded}
-                      >
-                        <div className="overflow-hidden min-h-0">
-                          <div className="pb-5 space-y-5">
-                            {item.subLinks.map((group) => (
-                              <div key={group.heading}>
-                                <p className="eyebrow mb-2">{group.heading}</p>
-                                <ul className="list-none m-0 p-0">
-                                  {group.links.map((l) => (
-                                    <li key={l.label}>
-                                      <Link
-                                        href={l.href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="inline-flex items-center min-h-11 text-base text-slate hover:text-accent-dark"
-                                      >
-                                        {l.label}
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center py-4 min-h-14 font-serif text-2xl text-ink hover:text-accent-dark"
-                    >
-                      {item.label}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+      {/* Mobiel menu, zoeken en winkelwagen: lui geladen, pas gemount na de
+          eerste keer openen (zie de dynamic-imports bovenaan). */}
+      {mounted.menu && (
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          items={menuItems}
+          onOpenSearch={() => {
+            setMobileMenuOpen(false);
+            openSearch();
+          }}
+        />
+      )}
 
-          {/* Service: showroom en praktische info ook in het mobiele menu. */}
-          <div className="mt-8 pt-6 border-t border-line">
-            <p className="eyebrow mb-3">Service</p>
-            <ul className="space-y-1 text-base text-slate list-none m-0 p-0">
-              {SERVICE_LINKS.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="inline-flex items-center min-h-11 hover:text-ink transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+      {mounted.search && <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />}
 
-          {/* Contact onderaan in het menu */}
-          <div className="mt-8 pt-6 border-t border-line">
-            <p className="eyebrow mb-3">Contact</p>
-            <ul className="space-y-1 text-base text-slate list-none m-0 p-0">
-              {phoneLink && phoneFormatted && (
-                <li>
-                  <a href={phoneLink} className="inline-flex items-center gap-2 min-h-11 hover:text-ink transition-colors" aria-label={`Bel ons: ${phoneFormatted}`}>
-                    <Phone className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
-                    {phoneFormatted}
-                  </a>
-                </li>
-              )}
-              {businessInfo.contact.email && (
-                <li>
-                  <a href={`mailto:${businessInfo.contact.email}`} className="inline-flex items-center min-h-11 hover:text-ink transition-colors break-all">
-                    {businessInfo.contact.email}
-                  </a>
-                </li>
-              )}
-            </ul>
-          </div>
-        </nav>
-      </Drawer>
-
-      {/* Zoeken — volledig scherm, focus direct in het veld */}
-      <Dialog
-        id="site-search"
-        size="full"
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        title="Zoeken"
-        initialFocusRef={searchInputRef}
-      >
-        {/* Het veld staat bovenaan, direct onder de titelbalk — niet verticaal
-            gecentreerd (op mobiel met toetsenbord open is de helft van het
-            scherm anders leeg). */}
-        <div>
-          <form onSubmit={handleSearch} role="search" className="w-full max-w-4xl mx-auto px-6 sm:px-10 lg:px-14 pt-4 sm:pt-8 pb-10">
-            <label htmlFor="site-search-input" className="sr-only">Zoek in de webshop</label>
-            <div className="relative">
-              <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 text-stone" strokeWidth={1.25} aria-hidden="true" />
-              <input
-                ref={searchInputRef}
-                id="site-search-input"
-                type="search"
-                name="q"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Wat zoek je?"
-                autoComplete="off"
-                enterKeyHint="search"
-                className="w-full text-2xl sm:text-4xl lg:text-5xl font-serif py-6 pl-12 sm:pl-16 bg-transparent border-0 border-b border-line-strong focus:outline-none focus:border-ink transition-colors"
-              />
-            </div>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <p className="eyebrow w-full mb-1">Veel gezocht</p>
-              {POPULAR_SEARCHES.map((term) => (
-                <button
-                  key={term}
-                  type="button"
-                  onClick={() => {
-                    // Direct zoeken (voorheen vulde de chip alleen het veld).
-                    trackSearch(term);
-                    router.push(`/products?q=${encodeURIComponent(term)}`);
-                    setSearchOpen(false);
-                    setSearchQuery("");
-                  }}
-                  className="inline-flex items-center min-h-11 px-4 rounded-full border border-line-strong text-base text-ink hover:border-ink hover:bg-bone transition-colors"
-                >
-                  {term}
-                </button>
-              ))}
-              <button type="submit" className="btn-primary btn-sm ml-auto">
-                Zoeken
-              </button>
-            </div>
-          </form>
-        </div>
-      </Dialog>
-
-      {/* Cart drawer */}
-      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
+      {mounted.cart && <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />}
     </>
   );
 }

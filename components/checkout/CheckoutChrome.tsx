@@ -54,9 +54,10 @@ export function CheckoutFooter() {
           {kvk && <> · KvK {kvk}</>}
         </p>
         <ul className="flex flex-wrap gap-x-6 list-none m-0 p-0">
-          <li><Link href={legal.termsUrl} className={link}>Algemene voorwaarden</Link></li>
-          <li><Link href={legal.privacyPolicyUrl} className={link}>Privacybeleid</Link></li>
-          <li><Link href={legal.returnPolicyUrl} className={link}>Retourneren</Link></li>
+          {/* Juridische links: geen prefetch (zelden de volgende stap). */}
+          <li><Link href={legal.termsUrl} prefetch={false} className={link}>Algemene voorwaarden</Link></li>
+          <li><Link href={legal.privacyPolicyUrl} prefetch={false} className={link}>Privacybeleid</Link></li>
+          <li><Link href={legal.returnPolicyUrl} prefetch={false} className={link}>Retourneren</Link></li>
         </ul>
       </div>
     </footer>

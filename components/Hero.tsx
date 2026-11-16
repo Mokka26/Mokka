@@ -1,14 +1,13 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { getImageProps } from "next/image";
-import { preload } from "react-dom";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
 import { HERO_IMAGE_ALT, HERO_IMAGE_SOURCE, HERO_VIDEO } from "@/lib/hero-image";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
-import { productUrl } from "@/lib/categories";
+import { productUrl } from "@/lib/category-routes";
 import { Price } from "@/components/ui/price";
 import { stagger } from "@/components/home/motion";
 
@@ -21,7 +20,8 @@ import { stagger } from "@/components/home/motion";
 //
 // Art direction met één <picture>: op mobiel een staande 3:4-crop, vanaf md
 // een liggende 16:9. Beide srcSets uit next/image (getImageProps +
-// cloudinaryLoader) en beide gepreload met een media-query. Het <img> is de
+// cloudinaryLoader) en beide gepreload met een media-query (<link> in JSX,
+// zie hieronder). Het <img> is de
 // LCP-kandidaat: loading="eager" + fetchpriority="high".
 const MD_QUERY = "(min-width: 768px)";
 const MOBILE_QUERY = "(max-width: 767.98px)";
@@ -55,11 +55,14 @@ export default function Hero({ product }: { product?: HeroProduct | null }) {
   const { props: mobile } = getImageProps({ ...shared, src: MOBILE_SRC });
   const { props: desktop } = getImageProps({ ...shared, src: DESKTOP_SRC });
 
-  preload(mobile.src, { as: "image", imageSrcSet: mobile.srcSet, imageSizes: mobile.sizes, media: MOBILE_QUERY, fetchPriority: "high" });
-  preload(desktop.src, { as: "image", imageSrcSet: desktop.srcSet, imageSizes: desktop.sizes, media: MD_QUERY, fetchPriority: "high" });
-
   return (
     <section className="relative isolate flex items-end min-h-[92svh] md:min-h-[100svh] bg-ink overflow-hidden">
+      {/* Preload als JSX-<link> (React hoist 'm naar <head>), niet via
+          react-dom preload(): die hint reist mee in de RSC-payload, waardoor
+          élke pagina die "/" prefetcht (logo-link) de hero-foto downloadde.
+          Een <link> in de boom geldt alleen als de home echt rendert. */}
+      <link rel="preload" as="image" href={mobile.src} imageSrcSet={mobile.srcSet} imageSizes={mobile.sizes} media={MOBILE_QUERY} fetchPriority="high" />
+      <link rel="preload" as="image" href={desktop.src} imageSrcSet={desktop.srcSet} imageSizes={desktop.sizes} media={MD_QUERY} fetchPriority="high" />
       {/* Foto (LCP) met daaroverheen, na het laden, de stille sfeervideo. */}
       <HeroVideo srcLarge={HERO_VIDEO.large} srcSmall={HERO_VIDEO.small}>
         <picture>

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ProductDetailClient from "@/components/product/ProductDetail";
+import ToastProvider from "@/components/ToastProvider";
 import { getCategory, productUrl } from "@/lib/categories";
 import { MODEL_VARIANT_SELECT } from "@/lib/variants";
 
@@ -89,6 +90,7 @@ export default async function AdminProductPreview({ params }: Props) {
           categorySubtitle={getCategory(product.category)?.cardSubtitle ?? null}
         />
       </div>
+      <ToastProvider />
     </>
   );
 }

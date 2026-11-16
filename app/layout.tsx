@@ -13,7 +13,6 @@ import { CATEGORIES } from "@/lib/categories";
 import { PaymentMethodsProvider } from "@/components/PaymentMethodsProvider";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/PageTransition";
-import ToastProvider from "@/components/ToastProvider";
 import CookieBanner from "@/components/CookieBanner";
 import { PhoneLeadTracking } from "@/components/PhoneLeadTracking";
 import { Analytics } from "@/components/Analytics";
@@ -114,7 +113,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CartProvider>
             {/* Zelfde Mollie-lijst voor footer, winkelwagen, drawer en checkout. */}
             <PaymentMethodsProvider methods={footerMethods}>
-              <ToastProvider />
               <Navbar emptyCategoryHrefs={emptyHrefs} />
               <main id="main" className="flex-1">
                 <PageTransition>{children}</PageTransition>

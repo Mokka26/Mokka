@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { businessInfo } from "@/lib/business-info";
 import { CheckoutFooter, CheckoutHeader } from "@/components/checkout/CheckoutChrome";
 import { CheckoutOnly } from "@/components/checkout/CheckoutGate";
+import ToastProvider from "@/components/ToastProvider";
 
 export const metadata: Metadata = {
   title: "Afrekenen: bestelling afronden in drie stappen",
@@ -20,6 +21,8 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
         <CheckoutHeader />
       </CheckoutOnly>
       {children}
+      {/* Toasts (sonner) staan niet in de root layout; de checkout gebruikt ze. */}
+      <ToastProvider />
       <CheckoutOnly>
         <CheckoutFooter />
       </CheckoutOnly>
