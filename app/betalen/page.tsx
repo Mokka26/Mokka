@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentCta, ContentPage, ContentSection, contentLinkClass } from "@/components/content/ContentPage";
-import { PaymentIconRow } from "@/components/PaymentIcons";
+import { MolliePaymentChips } from "@/components/PaymentIcons";
+import { getFooterMethods } from "@/lib/mollie";
+import { fallbackPaymentMethods, paymentMethodSentence } from "@/lib/payment-methods";
 import { businessInfo, getPhoneLink } from "@/lib/business-info";
 import { NEXT_STEP_AFTER_PAYMENT, shippingInfo } from "@/lib/shipping-info";
 import type { BreadcrumbItem } from "@/lib/jsonLd";
@@ -9,7 +11,7 @@ import { ogDefaults } from "@/lib/seo";
 
 const PATH = "/betalen";
 const TITLE = "Veilig betalen: iDEAL, creditcard en Klarna";
-const DESCRIPTION = `Betaal bij ${businessInfo.name} met iDEAL, creditcard, Bancontact, Apple Pay, Klarna of PayPal via een versleutelde verbinding. Alle prijzen incl. ${shippingInfo.vatRatePercent}% btw.`;
+const DESCRIPTION = `Betaal bij ${businessInfo.name} met ${paymentMethodSentence(fallbackPaymentMethods()).replace(/ en ([^,]+)$/, " of $1")} via een versleutelde verbinding. Alle prijzen incl. ${shippingInfo.vatRatePercent}% btw.`;
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -23,30 +25,26 @@ const breadcrumbs: BreadcrumbItem[] = [
   { name: "Veilig betalen", url: PATH },
 ];
 
-// Korte uitleg per betaalmethode uit lib/business-info.ts. Methoden zonder
-// uitleg krijgen alleen hun naam; nieuwe methoden hoef je hier dus niet
+// Korte uitleg per betaalmethode (sleutel = Mollie-methode-id). Methoden
+// zonder uitleg krijgen alleen hun naam; nieuwe methoden hoef je hier dus niet
 // verplicht toe te voegen.
 const METHOD_NOTES: Record<string, string> = {
   ideal: "Betaal direct vanuit je eigen bank. Je rekent af in de app of omgeving van je bank en komt daarna terug op onze site.",
-  visa: "Creditcard; het bedrag wordt via een beveiligde betaalpagina afgeschreven.",
-  mastercard: "Creditcard; het bedrag wordt via een beveiligde betaalpagina afgeschreven.",
+  creditcard: "Visa of Mastercard; het bedrag wordt via een beveiligde betaalpagina afgeschreven.",
   bancontact: "De gangbare bankbetaling voor klanten in België.",
   applepay: "Betaal met de kaart in je Apple Wallet op een iPhone, iPad of Mac.",
   klarna: "Achteraf betalen of in delen, volgens de voorwaarden van Klarna. Klarna beoordeelt zelf of je ervoor in aanmerking komt.",
+  in3: "Betaal in drie termijnen, volgens de voorwaarden van in3. in3 beoordeelt zelf of je ervoor in aanmerking komt.",
   paypal: "Betaal vanuit je PayPal-saldo of een gekoppelde kaart of rekening.",
 };
 
-function methodKey(name: string): string {
-  return name.toLowerCase().replace(/[^a-z]/g, "");
-}
-
-export default function BetalenPage() {
+export default async function BetalenPage() {
   const phoneLink = getPhoneLink();
   const phone = businessInfo.contact.phoneFormatted;
-  const methods = businessInfo.paymentMethods;
-  const methodNames = methods.map((m) => m.name);
-  const methodList =
-    methodNames.length > 1 ? `${methodNames.slice(0, -1).join(", ")} en ${methodNames[methodNames.length - 1]}` : methodNames[0] ?? "";
+  // Dezelfde lijst als de footer: live uit Mollie (gecachet), anders vast.
+  const live = await getFooterMethods();
+  const methods = live.length > 0 ? live : fallbackPaymentMethods();
+  const methodList = paymentMethodSentence(methods);
 
   const faq = [
     {
@@ -108,14 +106,14 @@ export default function BetalenPage() {
       <ContentSection heading="Betaalmethoden">
         <p>Je kiest tijdens het afrekenen zelf hoe je betaalt. Dit zijn de mogelijkheden:</p>
         <div className="py-2">
-          <PaymentIconRow tone="dark" compact={false} />
+          <MolliePaymentChips methods={methods} tone="dark" />
         </div>
         <ul>
           {methods.map((m) => {
-            const note = METHOD_NOTES[methodKey(m.name)];
+            const note = METHOD_NOTES[m.id];
             return (
-              <li key={m.name}>
-                <strong>{m.name}</strong>
+              <li key={m.id}>
+                <strong>{m.description}</strong>
                 {note ? `: ${note}` : ""}
               </li>
             );

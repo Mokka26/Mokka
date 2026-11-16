@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createMollieClient, Locale, MollieApiError, type MollieClient } from "@mollie/api-client";
 import { centsToMollieValue, toCents } from "@/lib/money";
+import { localPaymentIcon } from "@/lib/payment-methods";
 
 // Mollie-client (server-only). Leest MOLLIE_API_KEY (test_… of live_…).
 let client: MollieClient | null = null;
@@ -51,7 +52,8 @@ export async function listEnabledMethods(
     return methods.map((m) => ({
       id: m.id,
       description: m.description,
-      image: m.image?.svg ?? null,
+      // Zelf gehost kleuricoon (lib/payment-methods), niet van mollie.com.
+      image: localPaymentIcon(m.id),
     }));
   } catch {
     return null;
@@ -65,6 +67,6 @@ export async function listEnabledMethods(
  */
 export const getFooterMethods = unstable_cache(
   async (): Promise<CheckoutMethod[]> => (await listEnabledMethods()) ?? [],
-  ["footer-payment-methods"],
+  ["footer-payment-methods-v2"],
   { revalidate: 21600 },
 );

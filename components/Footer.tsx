@@ -11,7 +11,7 @@ import {
 } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
 import { CATEGORIES, GROUP_ORDER, categoryUrl } from "@/lib/categories";
-import { MolliePaymentChips, PaymentIcon } from "@/components/PaymentIcons";
+import { MolliePaymentChips, PaymentIconRow } from "@/components/PaymentIcons";
 import { FooterNewsletterForm } from "@/components/FooterNewsletterForm";
 import { FooterGate } from "@/components/FooterGate";
 import { CookieSettingsButton } from "@/components/CookieSettingsButton";
@@ -52,7 +52,7 @@ export default function Footer({
   const emailLink = getEmailLink();
   const socials = getActiveSocials();
   const hoursLines = getOpeningHoursCompact();
-  const { address, foundingYear, foundingCity, kvk, btw, legalName, name, tagline, paymentMethods, legal } = businessInfo;
+  const { address, foundingYear, foundingCity, kvk, btw, legalName, name, tagline, legal } = businessInfo;
 
   return (
     <FooterGate>
@@ -222,12 +222,8 @@ export default function Footer({
                 // chips staan in het koopblok op de productpagina.
                 <MolliePaymentChips methods={mollieMethods} />
               ) : (
-                // Fallback (bv. zonder Mollie-key): vaste witte wordmarks.
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                  {paymentMethods.map((method) => (
-                    <PaymentIcon key={method.name} name={method.name} />
-                  ))}
-                </div>
+                // Fallback (bv. zonder Mollie-key): dezelfde chips, vaste lijst.
+                <PaymentIconRow tone="light" />
               )}
             </div>
 
