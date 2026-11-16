@@ -23,8 +23,10 @@ import { CATEGORY_TILE_IMAGES } from "@/lib/home-scenes";
 // bij scrollen (.reveal) — beide alleen zonder "minder beweging".
 
 const PRIMARY: ReadonlyArray<CategorySlug> = ["banken", "bedden"];
+// Eetkamerstoelen vóór slaapkamers: het grootste assortiment hoort op home.
 const SECONDARY: ReadonlyArray<CategorySlug> = [
   "eettafels",
+  "eetkamerstoelen",
   "slaapkamers",
   "salontafels",
   "fauteuils",
