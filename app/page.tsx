@@ -8,6 +8,7 @@ import FeaturedStory from "@/components/FeaturedStory";
 import ShowroomSection from "@/components/ShowroomSection";
 import { RoomStory } from "@/components/home/RoomStory";
 import { HERO_PRODUCT_SLUG } from "@/lib/hero-image";
+import { HOME_IMAGE_SLUGS } from "@/lib/home-scenes";
 import { prisma } from "@/lib/prisma";
 import { businessInfo } from "@/lib/business-info";
 import { shippingInfo } from "@/lib/shipping-info";
@@ -102,13 +103,19 @@ const getCollection = unstable_cache(
 );
 
 // Spotlight: nieuwste uitgelichte bank uit álle bank-DB-categorieën
-// (banken, hoekbanken, bankstellen — zie lib/categories "banken").
+// (banken, hoekbanken, bankstellen — zie lib/categories "banken"), maar niet
+// een bank die al elders op de homepage in beeld is (hero, tegels, kamers).
 const BANK_DB_CATEGORIES = [...(getCategory("banken")?.dbCategories ?? ["banken"])];
 
 const getSpotlightProduct = unstable_cache(
   async () =>
     prisma.product.findFirst({
-      where: { ...visibleWhere, featured: true, category: { in: BANK_DB_CATEGORIES } },
+      where: {
+        ...visibleWhere,
+        featured: true,
+        category: { in: BANK_DB_CATEGORIES },
+        slug: { notIn: [HERO_PRODUCT_SLUG, ...HOME_IMAGE_SLUGS] },
+      },
       select: {
         id: true,
         slug: true,
@@ -123,7 +130,7 @@ const getSpotlightProduct = unstable_cache(
       },
       orderBy: { createdAt: "desc" },
     }),
-  ["home-spotlight"],
+  ["home-spotlight-v3"],
   { tags: [PRODUCTS_TAG], revalidate: 3600 },
 );
 

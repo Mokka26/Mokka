@@ -2,13 +2,15 @@ import Link from "next/link";
 import { ArrowUpRight, MapPin, Phone, Clock } from "lucide-react";
 import {
   businessInfo,
+  getFullAddress,
+  getMapsEmbedUrl,
   getMapsUrl,
   getOpeningHoursCompact,
   getPhoneLink,
 } from "@/lib/business-info";
-import ShowroomVideo from "@/components/ShowroomVideo";
+import { ShowroomMap } from "@/components/home/ShowroomMap";
 
-// Server component; alleen de video (pauzeknop) is client-side. Alle
+// Server component; alleen de kaart (laden na toestemming/klik) is client-side. Alle
 // adres-, openingstijd- en telefoongegevens komen uit lib/business-info.
 export default function ShowroomSection() {
   const phoneLink = getPhoneLink();
@@ -20,10 +22,12 @@ export default function ShowroomSection() {
       <div className="max-w-page mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           <div className="lg:col-span-7 reveal">
-            <ShowroomVideo
-              src="/mokka.mp4"
-              poster="/mokka-poster.jpg"
-              label={`Sfeerbeelden van de showroom van ${businessInfo.name} in ${city}`}
+            <ShowroomMap
+              embedUrl={getMapsEmbedUrl()}
+              mapsUrl={getMapsUrl()}
+              posterSrc="/mokka-poster.jpg"
+              address={getFullAddress()}
+              showroomName={businessInfo.name}
             />
           </div>
 

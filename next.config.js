@@ -23,7 +23,9 @@ const csp = [
   `img-src 'self' data: blob: https://res.cloudinary.com https://www.mollie.com ${googleAdsHosts.ping}`,
   "font-src 'self' data:",
   `connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.sentry.io https://*.ingest.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com ${googleAdsHosts.script} ${googleAdsHosts.ping}`,
-  `frame-src ${googleAdsHosts.frame}`,
+  // www.google.com: Google Maps-kaart van de showroom (components/home/ShowroomMap),
+  // laadt pas na cookie-akkoord of een klik.
+  `frame-src ${googleAdsHosts.frame} https://www.google.com`,
   "media-src 'self' https://res.cloudinary.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",

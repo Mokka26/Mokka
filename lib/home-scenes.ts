@@ -17,16 +17,35 @@ export interface HomeRoom {
 /** Vaste tegelfoto's voor CategoriesGrid waar de automatische keuze minder
  *  mooi is (dubbel met de hero, of een close-up met merknaam). Andere
  *  categorieën kiezen zelf de nieuwste sfeerfoto uit de DB. */
-export const CATEGORY_TILE_IMAGES: Partial<Record<CategorySlug, { url: string; productName: string }>> = {
+export const CATEGORY_TILE_IMAGES: Partial<
+  Record<CategorySlug, { url: string; productName: string; slug: string }>
+> = {
   banken: {
     url: "https://res.cloudinary.com/diaksxzey/image/upload/v1793233836/mokka/bankstellen/soprano-bank/sfeer-01.jpg",
     productName: "Soprano Bank",
+    slug: "soprano-bank",
   },
   bedden: {
     url: "https://res.cloudinary.com/diaksxzey/image/upload/v1780263797/mokka/bedden/ow-julie/03.jpg",
     productName: "Julie Boxspring",
+    slug: "ow-julie",
+  },
+  slaapkamers: {
+    url: "https://res.cloudinary.com/diaksxzey/image/upload/v1783524728/mokka/slaapkamers/sk-nirvana/12.jpg",
+    productName: "Nirvana Slaapkamer",
+    slug: "sk-nirvana",
   },
 };
+
+/** Producten die al met een vaste foto op de homepage staan (tegels en
+ *  "Kamer voor kamer"). De spotlight slaat ze over, zodat geen beeld dubbel
+ *  op de pagina komt. */
+export const HOME_IMAGE_SLUGS: ReadonlyArray<string> = [
+  ...Object.values(CATEGORY_TILE_IMAGES).map((tile) => tile.slug),
+  "nora-hoekbank",
+  "tafel-apollo-180-cm-deens-ovaal-glanzend-steen-shakespear-beige",
+  "vanilla-loop-boxspring",
+];
 
 export const HOME_ROOMS: ReadonlyArray<HomeRoom> = [
   {

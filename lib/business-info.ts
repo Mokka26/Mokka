@@ -111,6 +111,13 @@ export function getMapsUrl(): string {
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
+/** Insluitbare Google Maps-kaart (iframe, geen API-sleutel nodig). Laadt
+ *  pas na toestemming of een klik — zie components/home/ShowroomMap. */
+export function getMapsEmbedUrl(): string {
+  const query = encodeURIComponent(`${businessInfo.name}, ${getFullAddress()}`);
+  return `https://www.google.com/maps?q=${query}&hl=nl&z=15&output=embed`;
+}
+
 export function getPhoneLink(): string | null {
   const { phone } = businessInfo.contact;
   if (!phone) return null;
