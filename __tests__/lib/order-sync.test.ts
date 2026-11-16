@@ -7,7 +7,15 @@ import { sendOrderConfirmation } from "@/lib/email";
 import { captureError, captureWarning } from "@/lib/sentry";
 import { revalidateProduct } from "@/lib/revalidate";
 import { queueServerPurchase } from "@/lib/analytics-server";
-import { syncOrderByPaymentId, getOrderForReturnPage, reconcileOpenOrders, resendPendingConfirmations, paymentMismatch, refundStatusOf } from "@/lib/order-sync";
+import {
+  syncOrderByPaymentId,
+  getOrderForReturnPage,
+  reconcileOpenOrders,
+  resendPendingConfirmations,
+  paymentMismatch,
+  refundStatusOf,
+  isPublicTokenFresh,
+} from "@/lib/order-sync";
 
 describe("paymentMismatch", () => {
   const order = { total: 1299, molliePaymentId: "tr_1" };
@@ -345,6 +353,15 @@ describe("lib/order-sync · syncOrderByPaymentId", () => {
     db.$transaction.mockRejectedValue(new Error("transactie mislukt"));
     await expect(syncOrderByPaymentId("tr_test123")).rejects.toThrow("transactie mislukt");
     expect(sendMail).not.toHaveBeenCalled();
+  });
+});
+
+describe("lib/order-sync · isPublicTokenFresh (SEC-1)", () => {
+  it("geeft de token 30 dagen toegang tot de details", () => {
+    const now = Date.UTC(2026, 10, 16);
+    expect(isPublicTokenFresh(new Date(now - 29 * 86_400_000), now)).toBe(true);
+    expect(isPublicTokenFresh(new Date(now - 31 * 86_400_000), now)).toBe(false);
+    expect(isPublicTokenFresh(null, now)).toBe(false);
   });
 });
 

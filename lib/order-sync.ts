@@ -295,7 +295,16 @@ export type ReturnOrderView = {
   total: number;
   firstName: string;
   email: string;
+  createdAt: Date;
 };
+
+/** Zo lang geeft de publieke token van de bedankpagina toegang tot de orderdetails. */
+export const PUBLIC_TOKEN_TTL_DAYS = 30;
+
+export function isPublicTokenFresh(createdAt: Date | null | undefined, now = Date.now()): boolean {
+  if (!(createdAt instanceof Date)) return false;
+  return now - createdAt.getTime() <= PUBLIC_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
+}
 
 /**
  * Voor de bedankpagina. Zoekt de order op publicToken (voorkeur) of
@@ -307,7 +316,7 @@ export async function getOrderForReturnPage(
   where: { publicToken: string } | { orderNumber: string },
   opts: { allowSync: boolean },
 ): Promise<ReturnOrderView | null> {
-  const select = { orderNumber: true, status: true, total: true, firstName: true, email: true, molliePaymentId: true } as const;
+  const select = { orderNumber: true, status: true, total: true, firstName: true, email: true, molliePaymentId: true, createdAt: true } as const;
   const order = await prisma.order.findUnique({ where, select });
   if (!order) return null;
   if (order.status === "paid" || !order.molliePaymentId || !opts.allowSync) return order;

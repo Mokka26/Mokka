@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimitIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,15 @@ const SLUG_PATTERN = /^[a-z0-9-]{1,120}$/;
 const NO_STORE = { "Cache-Control": "private, no-store" } as const;
 
 export async function POST(req: NextRequest) {
+  // Publieke DB-query: begrenzen per IP, net als /api/products.
+  const rl = await rateLimitIp("api-products-by-slugs", 60, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het zo opnieuw.", products: [] },
+      { status: 429, headers: { ...NO_STORE, "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const body = (await req.json().catch(() => null)) as { slugs?: unknown } | null;
   const slugs = Array.isArray(body?.slugs)
     ? Array.from(

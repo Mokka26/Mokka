@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getOrderForReturnPage, type ReturnOrderView } from "@/lib/order-sync";
+import { cookies } from "next/headers";
+import { getOrderForReturnPage, isPublicTokenFresh, type ReturnOrderView } from "@/lib/order-sync";
 import { prisma } from "@/lib/prisma";
 import { rateLimitIp } from "@/lib/rate-limit";
 import { maskEmail } from "@/lib/email";
@@ -10,6 +11,8 @@ import { formatPrice } from "@/components/ui/price";
 import ClearCart from "./ClearCart";
 import { PurchaseConversion } from "./PurchaseConversion";
 import { AutoRefresh } from "./AutoRefresh";
+import { StripToken } from "./StripToken";
+import { ORDER_TOKEN_COOKIE, ORDER_TOKEN_RE, stripTokenScript } from "./token";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -28,7 +31,6 @@ const COPY: Record<string, { eyebrow: string; title: string; body: string; tone:
   refunded: { eyebrow: "Terugbetaling", title: "Terugbetaald", body: "Het bedrag van deze bestelling is aan je terugbetaald. Vragen hierover? Neem gerust contact met ons op.", tone: "neutral" },
 };
 
-const TOKEN_RE = /^[a-f0-9]{32}$/;
 const ORDER_RE = /^MOK-[A-Z0-9-]{6,20}$/;
 
 export default async function CheckoutDonePage({
@@ -36,7 +38,11 @@ export default async function CheckoutDonePage({
 }: {
   searchParams: Promise<{ t?: string; order?: string }>;
 }) {
-  const { t, order: orderParam } = await searchParams;
+  const { t: tParam, order: orderParam } = await searchParams;
+  // De token staat alleen bij de eerste aanroep (redirect van Mollie) in de
+  // URL; daarna haalt het script hieronder hem eruit en leest de server hem uit
+  // een kortlevende cookie (zie ./token.ts).
+  const t = tParam ?? (orderParam ? undefined : (await cookies()).get(ORDER_TOKEN_COOKIE)?.value);
 
   // Het syncen triggert een Mollie-call: begrens het per IP (30/min) zodat de
   // bedankpagina niet als gratis Mollie-proxy misbruikt kan worden.
@@ -47,9 +53,11 @@ export default async function CheckoutDonePage({
   // uitsluitend de status — geen naam, e-mail of bedrag.
   let order: ReturnOrderView | null = null;
   let trusted = false;
-  if (t && TOKEN_RE.test(t)) {
+  if (t && ORDER_TOKEN_RE.test(t)) {
     order = await getOrderForReturnPage({ publicToken: t }, { allowSync });
-    trusted = order !== null;
+    // Een token is 30 dagen geldig voor de details (naam, adres, bedrag);
+    // daarna toont een oude link alleen nog de status.
+    trusted = order !== null && isPublicTokenFresh(order.createdAt);
   } else if (orderParam && ORDER_RE.test(orderParam.toUpperCase())) {
     order = await getOrderForReturnPage({ orderNumber: orderParam.toUpperCase() }, { allowSync });
   }
@@ -102,6 +110,11 @@ export default async function CheckoutDonePage({
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 sm:px-10 lg:px-14 pt-32 pb-20">
+      {/* Token uit de adresbalk vóórdat analytics de pagina meet: dit script
+          staat in <main> en draait dus vóór de Google-tag-bootstrap onderaan
+          <body> (en ruim vóór gtag.js, dat pas na window.load laadt). */}
+      {tParam && <script id="strip-order-token" dangerouslySetInnerHTML={{ __html: stripTokenScript() }} />}
+      {tParam && <StripToken />}
       {copy.tone === "ok" && <ClearCart orderNumber={order?.orderNumber} />}
       {copy.tone === "wait" && <AutoRefresh />}
       {order && trusted && status === "paid" && (
