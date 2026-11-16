@@ -382,6 +382,9 @@ const fullUpdateSchema = z.object({
   nachtkastPrice2: z.number().nonnegative().max(999999).nullable(),
   voetbankMode: z.union([z.literal("included"), z.literal("optional")]).nullable(),
   voetbankPrice: z.number().nonnegative().max(999999).nullable(),
+  // Extra 1-zitsbank (bankstellen): alleen "apart bij te bestellen" of niets.
+  zitbankMode: z.literal("optional").nullable(),
+  zitbankPrice: z.number().nonnegative().max(999999).nullable(),
   category: categorySchema,
   featured: z.boolean(),
   hidden: z.boolean(),
@@ -405,6 +408,9 @@ const fullUpdateSchema = z.object({
   }
   if (d.voetbankMode === "optional" && !((d.voetbankPrice ?? 0) > 0)) {
     ctx.addIssue({ code: "custom", path: ["voetbankPrice"], message: "Vul een voetbankprijs hoger dan € 0 in (of kies niet \"apart bij te bestellen\")" });
+  }
+  if (d.zitbankMode === "optional" && !((d.zitbankPrice ?? 0) > 0)) {
+    ctx.addIssue({ code: "custom", path: ["zitbankPrice"], message: "Vul een prijs voor de 1-zitsbank hoger dan € 0 in (of kies niet \"los te bestellen\")" });
   }
 });
 
@@ -439,6 +445,8 @@ export async function updateProductFull(_prev: FullUpdateState, formData: FormDa
   if (nachtkastPrice2.error) fieldErrors.nachtkastPrice2 = nachtkastPrice2.error;
   const voetbankPrice = parseAddonPrice(formData.get("voetbankPrice"));
   if (voetbankPrice.error) fieldErrors.voetbankPrice = voetbankPrice.error;
+  const zitbankPrice = parseAddonPrice(formData.get("zitbankPrice"));
+  if (zitbankPrice.error) fieldErrors.zitbankPrice = zitbankPrice.error;
   const sizeVariants = parseSizeVariants(formData.get("sizeVariants"));
   if (sizeVariants.error) fieldErrors.sizeVariants = sizeVariants.error;
   const stockRaw = String(formData.get("stock") ?? "").trim();
@@ -459,6 +467,8 @@ export async function updateProductFull(_prev: FullUpdateState, formData: FormDa
     nachtkastPrice2: nachtkastPrice2.value,
     voetbankMode: parseOptionMode(formData.get("voetbankMode")),
     voetbankPrice: voetbankPrice.value,
+    zitbankMode: formData.get("zitbankMode") === "optional" ? "optional" : null,
+    zitbankPrice: zitbankPrice.value,
     category: formData.get("category"),
     featured: formData.get("featured") === "on",
     hidden: formData.get("hidden") === "on",
@@ -531,7 +541,7 @@ export async function updateProductFull(_prev: FullUpdateState, formData: FormDa
       // Prijs + adviesprijs werken door op de andere kleuren van hetzelfde
       // model in dezelfde maat (zelfde colorGroup + sizeName, niet verwijderd).
       // Bewust NIET gedeeld: andere maten (eigen prijs), sizeVariants,
-      // nachtkast/voetbank-opties, voorraad, foto's.
+      // nachtkast/voetbank/1-zitsbank-opties, voorraad, foto's.
       if (row.colorGroup) {
         await tx.product.updateMany({
           where: { colorGroup: row.colorGroup, sizeName: rest.sizeName, deletedAt: null, id: { not: id } },

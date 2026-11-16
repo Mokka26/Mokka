@@ -10,6 +10,7 @@ export type CheckoutLineInput = {
   variantLabel?: string | null;
   nachtkast?: number;
   voetbank?: number;
+  zitbank?: number;
   quantity: number;
 };
 
@@ -55,7 +56,7 @@ export async function computeOrder(items: CheckoutLineInput[], country = "NL"): 
   const ids = [...new Set(items.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, hidden: false, deletedAt: null },
-    select: { id: true, name: true, price: true, stock: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true },
+    select: { id: true, name: true, price: true, stock: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true, zitbankMode: true, zitbankPrice: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 

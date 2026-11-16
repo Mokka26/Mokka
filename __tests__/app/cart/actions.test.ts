@@ -50,7 +50,30 @@ describe("app/cart/actions · getCartSnapshot", () => {
       expect(line.available).toBe(false);
       expect(line).toMatchObject({ productId: null, slug: null, name: null, category: null, image: null, price: null, basePrice: null, listPrice: null, stock: 0, label: null });
     }
-    expect(lines[0].key).toEqual({ productId: "verborgen", variantLabel: null, nachtkast: 0, voetbank: 0 });
+    expect(lines[0].key).toEqual({ productId: "verborgen", variantLabel: null, nachtkast: 0, voetbank: 0, zitbank: 0 });
+  });
+
+  it("rekent de extra 1-zitsbank server-side mee en geeft hem terug in key en label", async () => {
+    db.product.findMany.mockResolvedValue([
+      makeProduct({ id: "bankstel", category: "bankstellen", price: 1899, zitbankMode: "optional", zitbankPrice: 250 }),
+    ]);
+    const [withSeat, without] = await getCartSnapshot([
+      { productId: "bankstel", zitbank: 1 },
+      { productId: "bankstel" },
+    ]);
+    expect(withSeat).toMatchObject({
+      key: { productId: "bankstel", variantLabel: null, nachtkast: 0, voetbank: 0, zitbank: 1 },
+      variantValid: true,
+      price: 2149,
+      basePrice: 1899,
+      label: "1-zitsbank",
+    });
+    expect(without).toMatchObject({ key: { zitbank: 0 }, price: 1899, label: null });
+  });
+
+  it("weigert meer dan één 1-zitsbank per regel (ongeldige invoer)", async () => {
+    expect(await getCartSnapshot([{ productId: "bankstel", zitbank: 2 }])).toEqual([]);
+    expect(db.product.findMany).not.toHaveBeenCalled();
   });
 
   it("markeert een verdwenen maat als variantValid: false zonder prijs", async () => {

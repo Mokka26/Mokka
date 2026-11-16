@@ -28,6 +28,15 @@ const bed = makeProduct({
   nachtkastPrice: 89,
   nachtkastPrice2: 159,
 });
+const bankstel = makeProduct({
+  id: "bankstel",
+  name: "Bankstel Milano 3+2",
+  category: "bankstellen",
+  price: 1899,
+  stock: 4,
+  zitbankMode: "optional",
+  zitbankPrice: 250,
+});
 const lamp = makeProduct({ id: "lamp", name: "Tafellamp Noor", category: "tafellampen", price: 49.95, stock: 3 });
 
 describe("lib/orders", () => {
@@ -85,6 +94,12 @@ describe("lib/orders", () => {
       expect(priceLine(p, { voetbank: 1 })).toMatchObject({ unitCents: 59900 + 12900, fullLabel: "voetbank" });
       expect(priceLine(p, { voetbank: 3 })).toMatchObject({ unitCents: 59900 + 12900 });
       expect(priceLine(makeProduct({ ...p, voetbankMode: "included" }), { voetbank: 1 })).toMatchObject({ unitCents: 59900 });
+    });
+
+    it("telt een extra 1-zitsbank alleen bij modus optional, max 1", () => {
+      expect(priceLine(bankstel, { zitbank: 1 })).toMatchObject({ unitCents: 189900 + 25000, fullLabel: "1-zitsbank" });
+      expect(priceLine(bankstel, { zitbank: 2 })).toMatchObject({ unitCents: 189900 + 25000 });
+      expect(priceLine(makeProduct({ ...bankstel, zitbankMode: null }), { zitbank: 1 })).toMatchObject({ unitCents: 189900, fullLabel: null });
     });
 
     it("weigert een product zonder geldige prijs", () => {
@@ -160,6 +175,29 @@ describe("lib/orders", () => {
         totalCents: 85800,
         price: 858,
       });
+    });
+
+    it("prijst de extra 1-zitsbank uit de database en zet hem in het orderregel-label", async () => {
+      db.product.findMany.mockResolvedValue([bankstel]);
+      const order = await computeOrder([{ productId: "bankstel", zitbank: 1, quantity: 2 }]);
+      expect(order.lines[0]).toMatchObject({
+        productId: "bankstel",
+        variantLabel: "1-zitsbank",
+        quantity: 2,
+        unitCents: 189900 + 25000,
+        totalCents: (189900 + 25000) * 2,
+        price: 2149,
+      });
+      expect(db.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ select: expect.objectContaining({ zitbankMode: true, zitbankPrice: true }) }),
+      );
+    });
+
+    it("weigert een gekozen 1-zitsbank zonder geldige toeslag", async () => {
+      db.product.findMany.mockResolvedValue([makeProduct({ ...bankstel, zitbankPrice: 0 })]);
+      await expect(computeOrder([{ productId: "bankstel", zitbank: 1, quantity: 1 }])).rejects.toThrow(
+        "Geen geldige prijs voor Bankstel Milano 3+2",
+      );
     });
 
     it("geeft gratis verzending boven de drempel in NL en BE", async () => {

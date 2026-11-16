@@ -19,7 +19,7 @@ import { VariantPicker } from "@/components/product/VariantPicker";
 import type { ModelVariant } from "@/lib/variants";
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
 import type { CheckoutMethod } from "@/lib/mollie";
-import { nachtkastAddon, priceLine, voetbankAddon } from "@/lib/pricing";
+import { nachtkastAddon, priceLine, voetbankAddon, zitbankAddon } from "@/lib/pricing";
 import { fromCents } from "@/lib/money";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { orientationOf } from "@/components/product/imageAspect";
@@ -55,6 +55,8 @@ export interface Product {
   nachtkastPrice2?: number | null;
   voetbankMode?: string | null;
   voetbankPrice?: number | null;
+  zitbankMode?: string | null;
+  zitbankPrice?: number | null;
   featured: boolean;
   stock?: number;
   deliveryTime?: string | null;
@@ -97,7 +99,10 @@ function SizeFromQuery({ variants, onSelect }: { variants: SizeVariant[]; onSele
   return null;
 }
 
-const OPTION_BTN = "inline-flex items-center justify-center px-4 py-2.5 min-h-11 text-[15px] border rounded-[8px] transition-colors";
+const OPTION_BTN_BASE = "inline-flex items-center justify-center px-4 py-2.5 min-h-11 border rounded-[8px] transition-colors";
+const OPTION_BTN = `${OPTION_BTN_BASE} text-[15px]`;
+// Nieuwe opties (1-zitsbank) op 16px, conform de minimale body-tekstmaat.
+const OPTION_BTN_BODY = `${OPTION_BTN_BASE} text-base`;
 const OPTION_ACTIVE = "bg-ink text-paper border-ink";
 const OPTION_IDLE = "bg-transparent text-ink border-line hover:border-ink";
 
@@ -134,6 +139,11 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
   const isVbOptional = vbPrice > 0;
   const [voetbank, setVoetbank] = useState(0);
 
+  // Extra 1-zitsbank (bankstellen) in dezelfde stof en kleur: 0/1 tegen zitbankPrice.
+  const zbPrice = zitbankAddon(product, 1);
+  const isZbOptional = zbPrice > 0;
+  const [zitbank, setZitbank] = useState(0);
+
   const priced = priceLine(
     {
       price: product.price,
@@ -143,11 +153,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       nachtkastPrice2: product.nachtkastPrice2 ?? null,
       voetbankMode: product.voetbankMode ?? null,
       voetbankPrice: product.voetbankPrice ?? null,
+      zitbankMode: product.zitbankMode ?? null,
+      zitbankPrice: product.zitbankPrice ?? null,
     },
-    { variantLabel: activeVariant?.label ?? null, nachtkast, voetbank },
+    { variantLabel: activeVariant?.label ?? null, nachtkast, voetbank, zitbank },
   );
   const lineUnitPrice = priced.ok ? fromCents(priced.unitCents) : activePrice;
-  const hasOptions = (isNkOptional && nachtkast > 0) || (isVbOptional && voetbank > 0);
+  const hasOptions = (isNkOptional && nachtkast > 0) || (isVbOptional && voetbank > 0) || (isZbOptional && zitbank > 0);
 
   const stock = product.stock ?? 0;
   const inStock = stock > 0;
@@ -208,12 +220,13 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       variantLabel,
       nachtkast,
       voetbank,
+      zitbank,
       quantity,
     );
     trackAddToCart(
       { id: product.id, slug: product.slug, name: product.name, category: product.category, price: lineUnitPrice },
       quantity,
-      variantLabelOf({ variantLabel, nachtkast, voetbank }),
+      variantLabelOf({ variantLabel, nachtkast, voetbank, zitbank }),
     );
     // Korte titel, één regel beschrijving (productnaam + opties + aantal; de
     // ToastProvider kapt lange namen af).
@@ -222,6 +235,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
       variantLabel ? `maat ${variantLabel}` : null,
       nachtkast > 0 ? `${nachtkast} nachtkast${nachtkast > 1 ? "en" : ""}` : null,
       voetbank > 0 ? "voetbank" : null,
+      zitbank > 0 ? "1-zitsbank" : null,
       `${quantity}×`,
     ].filter(Boolean);
     toast.success("Toegevoegd aan je winkelwagen", {
@@ -337,6 +351,28 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                         className={`${OPTION_BTN} ${active ? OPTION_ACTIVE : OPTION_IDLE}`}
                       >
                         {n === 0 ? "Geen" : `Voetbank (+${formatPrice(vbPrice)})`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isZbOptional && (
+              <div className="mb-6" role="group" aria-labelledby="pdp-zb-label">
+                <p id="pdp-zb-label" className="text-base text-stone mb-3">Extra 1-zitsbank in dezelfde stof en kleur?</p>
+                <div className="flex flex-wrap gap-2">
+                  {[0, 1].map((n) => {
+                    const active = n === zitbank;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setZitbank(n)}
+                        aria-pressed={active}
+                        className={`${OPTION_BTN_BODY} ${active ? OPTION_ACTIVE : OPTION_IDLE}`}
+                      >
+                        {n === 0 ? "Geen" : `1-zitsbank (+${formatPrice(zbPrice)})`}
                       </button>
                     );
                   })}

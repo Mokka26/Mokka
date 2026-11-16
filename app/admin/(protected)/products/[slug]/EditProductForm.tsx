@@ -28,6 +28,8 @@ type Props = {
     nachtkastPrice2: number | null;
     voetbankMode: string | null;
     voetbankPrice: number | null;
+    zitbankMode: string | null;
+    zitbankPrice: number | null;
     category: string;
     featured: boolean;
     hidden: boolean;
@@ -62,6 +64,8 @@ const FIELD_ORDER = [
   "nachtkastPrice2",
   "voetbankMode",
   "voetbankPrice",
+  "zitbankMode",
+  "zitbankPrice",
   "category",
   "stock",
   "deliveryTime",
@@ -396,6 +400,43 @@ export default function EditProductForm({ product, categories, validCategories, 
                 defaultValue={money(product.voetbankPrice)}
                 placeholder="350,00"
                 aria-invalid={!!err.voetbankPrice}
+                className={`${inputCls} bg-white font-serif tabular-nums pl-8`}
+              />
+            </PrefixedInput>
+          </Field>
+
+          <Field
+            id={fid("zitbankMode")}
+            label="1-zitsbank los te bestellen (bankstellen)"
+            error={err.zitbankMode}
+            help={
+              <>
+                <strong>Los te bestellen</strong> geeft de klant de keuze voor één extra 1-zitsbank in dezelfde stof
+                en kleur, tegen onderstaande prijs.
+              </>
+            }
+          >
+            <select
+              id={fid("zitbankMode")}
+              name="zitbankMode"
+              defaultValue={product.zitbankMode === "optional" ? "optional" : "none"}
+              className={`${inputCls} bg-white`}
+            >
+              <option value="none">Geen 1-zitsbank</option>
+              <option value="optional">Los te bestellen</option>
+            </select>
+          </Field>
+
+          <Field id={fid("zitbankPrice")} label="Prijs 1-zitsbank" error={err.zitbankPrice}>
+            <PrefixedInput prefix="€">
+              <input
+                id={fid("zitbankPrice")}
+                name="zitbankPrice"
+                type="text"
+                inputMode="decimal"
+                defaultValue={money(product.zitbankPrice)}
+                placeholder="250,00"
+                aria-invalid={!!err.zitbankPrice}
                 className={`${inputCls} bg-white font-serif tabular-nums pl-8`}
               />
             </PrefixedInput>

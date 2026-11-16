@@ -14,12 +14,13 @@ interface Props {
   item: CartItemType;
 }
 
-/** Korte opties-regel: maat · nachtkasten · voetbank. */
+/** Korte opties-regel: maat · nachtkasten · voetbank · 1-zitsbank. */
 export function cartLineOptions(item: CartItemType): string[] {
   const parts: string[] = [];
   if (item.variantLabel) parts.push(`Maat ${item.variantLabel}`);
   if (item.nachtkast > 0) parts.push(`${item.nachtkast} nachtkast${item.nachtkast > 1 ? "en" : ""}`);
   if (item.voetbank > 0) parts.push("Voetbank");
+  if (item.zitbank > 0) parts.push("1-zitsbank");
   return parts;
 }
 

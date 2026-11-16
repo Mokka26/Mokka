@@ -22,6 +22,7 @@ const itemSchema = z
     variantLabel: z.string().max(60).nullable().optional(),
     nachtkast: z.number().int().min(0).max(2).optional(),
     voetbank: z.number().int().min(0).max(1).optional(),
+    zitbank: z.number().int().min(0).max(1).optional(),
   })
   .refine((i) => !!i.productId || !!i.slug, { message: "productId of slug is verplicht" });
 
@@ -31,7 +32,7 @@ export type CartSnapshotInput = z.input<typeof inputSchema>;
 
 export type CartSnapshotLine = {
   /** Zoals meegestuurd — om de regel in de client terug te vinden. */
-  key: { productId?: string; slug?: string; variantLabel: string | null; nachtkast: number; voetbank: number };
+  key: { productId?: string; slug?: string; variantLabel: string | null; nachtkast: number; voetbank: number; zitbank: number };
   /**
    * false = product bestaat niet (meer), is verborgen of verwijderd → regel
    * verwijderen. Alle andere velden zijn dan null/0: een verborgen product
@@ -45,7 +46,7 @@ export type CartSnapshotLine = {
   name: string | null;
   category: string | null;
   image: string | null;
-  /** Actuele regel-stukprijs in euro's (maat + nachtkast + voetbank). null als niet prijsbaar. */
+  /** Actuele regel-stukprijs in euro's (maat + nachtkast + voetbank + 1-zitsbank). null als niet prijsbaar. */
   price: number | null;
   /** Basisprijs van het product (zonder maat/opties). */
   basePrice: number | null;
@@ -80,6 +81,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
     stock: number; hidden: boolean; deletedAt: Date | null; sizeVariants: string | null;
     nachtkastMode: string | null; nachtkastPrice: number | null; nachtkastPrice2: number | null;
     voetbankMode: string | null; voetbankPrice: number | null;
+    zitbankMode: string | null; zitbankPrice: number | null;
   }>;
   try {
     products = await prisma.product.findMany({
@@ -88,6 +90,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
         id: true, slug: true, name: true, category: true, images: true, price: true, listPrice: true,
         stock: true, hidden: true, deletedAt: true, sizeVariants: true,
         nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true,
+        zitbankMode: true, zitbankPrice: true,
       },
     });
   } catch (e) {
@@ -104,6 +107,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
       variantLabel: i.variantLabel ?? null,
       nachtkast: i.nachtkast ?? 0,
       voetbank: i.voetbank ?? 0,
+      zitbank: i.zitbank ?? 0,
     };
     const unavailable: CartSnapshotLine = {
       key, available: false, variantValid: false,

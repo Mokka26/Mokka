@@ -64,6 +64,8 @@ const PRODUCT_SELECT = {
   nachtkastPrice2: true,
   voetbankMode: true,
   voetbankPrice: true,
+  zitbankMode: true,
+  zitbankPrice: true,
   featured: true,
   stock: true,
   deliveryTime: true,

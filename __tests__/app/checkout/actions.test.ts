@@ -100,6 +100,7 @@ describe("app/checkout/actions · createCheckout", () => {
       ["te korte voornaam", { customer: makeCustomer({ firstName: "J" }) }],
       ["hoeveelheid 0", { items: [{ productId: "bed", quantity: 0 }] }],
       ["te veel nachtkasten", { items: [{ productId: "bed", quantity: 1, nachtkast: 3 }] }],
+      ["meer dan één 1-zitsbank", { items: [{ productId: "bed", quantity: 1, zitbank: 2 }] }],
       ["onbekend land", { customer: makeCustomer({ country: "DE" }) }],
       ["ongeldige betaalmethode", { method: "ideal; drop" }],
       ["geen object", null],
@@ -192,6 +193,24 @@ describe("app/checkout/actions · createCheckout", () => {
 
     expect(db.order.update).toHaveBeenCalledWith({ where: { id: "order_1" }, data: { molliePaymentId: "tr_abc123" } });
     expect(db.order.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rekent de extra 1-zitsbank server-side mee (prijs uit de database, label in de orderregel)", async () => {
+    const bankstel = makeProduct({ id: "bankstel", name: "Bankstel Milano 3+2", category: "bankstellen", price: 1899, stock: 2, zitbankMode: "optional", zitbankPrice: 250 });
+    db.product.findMany.mockResolvedValue([bankstel]);
+    // Een te lage clientprijs (zonder toeslag) wordt niet vertrouwd.
+    const low = await createCheckout(validInput({ items: [{ productId: "bankstel", quantity: 1, zitbank: 1 }], expectedTotal: 1899 }));
+    expect(low).toMatchObject({ ok: false, error: "PRICE_CHANGED", subtotal: 2149, total: 2149 });
+    expect(db.order.create).not.toHaveBeenCalled();
+
+    const result = await createCheckout(validInput({ items: [{ productId: "bankstel", quantity: 1, zitbank: 1 }], expectedTotal: 2149 }));
+    expect(result).toEqual({ ok: true, url: CHECKOUT_URL });
+    const createArgs = db.order.create.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(createArgs.data).toMatchObject({
+      total: 2149,
+      items: { create: [{ productId: "bankstel", productName: "Bankstel Milano 3+2", quantity: 1, price: 2149, variantLabel: "1-zitsbank" }] },
+    });
+    expect(lastPaymentArgs()).toMatchObject({ amount: { currency: "EUR", value: "2149.00" } });
   });
 
   it("geeft de webhook-URL alleen mee bij een publieke https-basis", async () => {

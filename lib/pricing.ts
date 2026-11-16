@@ -1,5 +1,6 @@
 /**
- * Regelprijs van één winkelwagenregel (maat + nachtkast + voetbank), puur en
+ * Regelprijs van één winkelwagenregel (maat + nachtkast + voetbank + extra
+ * 1-zitsbank), puur en
  * zonder Prisma of Next-runtime. Eén bron voor de productpagina (wat de klant
  * ziet), de cart-sync en de checkout (wat de klant betaalt): beide moeten
  * altijd hetzelfde bedrag geven.
@@ -20,9 +21,11 @@ export type PriceableProduct = {
   nachtkastPrice2: number | null;
   voetbankMode: string | null;
   voetbankPrice: number | null;
+  zitbankMode: string | null;
+  zitbankPrice: number | null;
 };
 
-export type LineOptions = { variantLabel?: string | null; nachtkast?: number; voetbank?: number };
+export type LineOptions = { variantLabel?: string | null; nachtkast?: number; voetbank?: number; zitbank?: number };
 
 export type LinePricing =
   | { ok: true; unitCents: number; variantLabel: string | null; fullLabel: string | null }
@@ -61,18 +64,31 @@ export function voetbankAddon(p: { voetbankMode?: string | null; voetbankPrice?:
   return p.voetbankPrice ?? 0;
 }
 
-/** Klemt het gevraagde aantal nachtkasten (0-2) en voetbanken (0-1); 0 als de optie niet los te bestellen is. */
-export function clampOptions(p: { nachtkastMode?: string | null; voetbankMode?: string | null }, opts: LineOptions): { nk: number; vb: number } {
+/** Toeslag in euro's voor een extra 1-zitsbank (0 als de modus niet "optional" is). */
+export function zitbankAddon(p: { zitbankMode?: string | null; zitbankPrice?: number | null }, n: number): number {
+  if (p.zitbankMode !== "optional" || n <= 0) return 0;
+  return p.zitbankPrice ?? 0;
+}
+
+/**
+ * Klemt het gevraagde aantal nachtkasten (0-2), voetbanken (0-1) en extra
+ * 1-zitsbanken (0-1); 0 als de optie niet los te bestellen is.
+ */
+export function clampOptions(
+  p: { nachtkastMode?: string | null; voetbankMode?: string | null; zitbankMode?: string | null },
+  opts: LineOptions,
+): { nk: number; vb: number; zb: number } {
   const nk = p.nachtkastMode === "optional" ? Math.max(0, Math.min(2, Math.floor(opts.nachtkast ?? 0))) : 0;
   const vb = p.voetbankMode === "optional" ? Math.max(0, Math.min(1, Math.floor(opts.voetbank ?? 0))) : 0;
-  return { nk, vb };
+  const zb = p.zitbankMode === "optional" ? Math.max(0, Math.min(1, Math.floor(opts.zitbank ?? 0))) : 0;
+  return { nk, vb, zb };
 }
 
 /**
  * Prijst één regel vers uit de productdata.
  * - Product met maten maar zonder (bestaand) maatlabel → VARIANT_MISSING.
  * - Kapotte maatdata → VARIANT_MISSING met `corrupt: true` (aanroeper meldt).
- * - Geen positieve verkoopprijs, of een gekozen nachtkast/voetbank zonder
+ * - Geen positieve verkoopprijs, of een gekozen nachtkast/voetbank/1-zitsbank zonder
  *   positieve toeslag → NO_PRICE (nooit gratis meeleveren).
  */
 export function priceLine(p: PriceableProduct, opts: LineOptions): LinePricing {
@@ -89,13 +105,22 @@ export function priceLine(p: PriceableProduct, opts: LineOptions): LinePricing {
   }
   if (!(sizePrice > 0)) return { ok: false, reason: "NO_PRICE" };
 
-  const { nk, vb } = clampOptions(p, opts);
+  const { nk, vb, zb } = clampOptions(p, opts);
   const nkAddon = nachtkastAddon(p, nk);
   const vbAddon = voetbankAddon(p, vb);
-  if ((nk > 0 && !(nkAddon > 0)) || (vb > 0 && !(vbAddon > 0))) return { ok: false, reason: "NO_PRICE" };
+  const zbAddon = zitbankAddon(p, zb);
+  if ((nk > 0 && !(nkAddon > 0)) || (vb > 0 && !(vbAddon > 0)) || (zb > 0 && !(zbAddon > 0))) {
+    return { ok: false, reason: "NO_PRICE" };
+  }
 
-  const unitCents = toCents(sizePrice) + toCents(nkAddon) + toCents(vbAddon);
-  const extras = [nk > 0 ? `${nk} nachtkast${nk > 1 ? "en" : ""}` : "", vb > 0 ? "voetbank" : ""].filter(Boolean).join(" · ");
+  const unitCents = toCents(sizePrice) + toCents(nkAddon) + toCents(vbAddon) + toCents(zbAddon);
+  const extras = [
+    nk > 0 ? `${nk} nachtkast${nk > 1 ? "en" : ""}` : "",
+    vb > 0 ? "voetbank" : "",
+    zb > 0 ? "1-zitsbank" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const fullLabel = extras ? `${label ?? ""}${label ? " · " : ""}${extras}`.trim() : label;
   return { ok: true, unitCents, variantLabel: label, fullLabel };
 }

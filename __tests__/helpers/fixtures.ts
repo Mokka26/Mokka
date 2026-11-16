@@ -20,6 +20,8 @@ export type DbProduct = {
   nachtkastPrice2: number | null;
   voetbankMode: string | null;
   voetbankPrice: number | null;
+  zitbankMode: string | null;
+  zitbankPrice: number | null;
   featured: boolean;
   stock: number;
   deliveryTime: string | null;
@@ -53,6 +55,8 @@ export function makeProduct(overrides: Partial<DbProduct> = {}): DbProduct {
     nachtkastPrice2: null,
     voetbankMode: null,
     voetbankPrice: null,
+    zitbankMode: null,
+    zitbankPrice: null,
     featured: false,
     stock: 10,
     deliveryTime: "2-3 werkdagen",

@@ -91,6 +91,7 @@ const checkoutSchema = z.object({
         variantLabel: z.string().max(60).nullable().optional(),
         nachtkast: z.number().int().min(0).max(2).optional(),
         voetbank: z.number().int().min(0).max(1).optional(),
+        zitbank: z.number().int().min(0).max(1).optional(),
         quantity: z.number().int().min(1).max(99),
       }),
     )
@@ -249,7 +250,7 @@ function checkoutFingerprint(data: {
 }): string {
   const c = data.customer;
   const items = data.items
-    .map((i) => [i.productId, i.variantLabel?.trim() ?? "", i.nachtkast ?? 0, i.voetbank ?? 0, i.quantity] as const)
+    .map((i) => [i.productId, i.variantLabel?.trim() ?? "", i.nachtkast ?? 0, i.voetbank ?? 0, i.zitbank ?? 0, i.quantity] as const)
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   const canonical = JSON.stringify({
     items,

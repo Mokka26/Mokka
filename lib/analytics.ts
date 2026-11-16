@@ -100,6 +100,7 @@ export type AnalyticsCartLine = {
   variantLabel: string | null;
   nachtkast: number;
   voetbank: number;
+  zitbank: number;
   quantity: number;
   product: { id: string; slug: string; name: string; category: string; price: number };
 };
@@ -121,12 +122,18 @@ function categoryLabel(slug: string): string {
   return categoryLabelOf(slug);
 }
 
-/** Variantlabel: maat + opties (nachtkast/voetbank), gescheiden door " · ". */
-export function variantLabelOf(line: { variantLabel?: string | null; nachtkast?: number; voetbank?: number }): string | undefined {
+/** Variantlabel: maat + opties (nachtkast/voetbank/1-zitsbank), gescheiden door " · ". */
+export function variantLabelOf(line: {
+  variantLabel?: string | null;
+  nachtkast?: number;
+  voetbank?: number;
+  zitbank?: number;
+}): string | undefined {
   const parts = [
     line.variantLabel ? line.variantLabel : null,
     line.nachtkast && line.nachtkast > 0 ? `${line.nachtkast} nachtkast${line.nachtkast > 1 ? "en" : ""}` : null,
     line.voetbank && line.voetbank > 0 ? "voetbank" : null,
+    line.zitbank && line.zitbank > 0 ? "1-zitsbank" : null,
   ].filter((p): p is string => Boolean(p));
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }

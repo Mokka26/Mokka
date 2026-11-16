@@ -291,6 +291,7 @@ export default function CheckoutPage() {
           variantLabel: i.variantLabel,
           nachtkast: i.nachtkast,
           voetbank: i.voetbank,
+          zitbank: i.zitbank,
           quantity: i.quantity,
         })),
         website,

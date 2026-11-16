@@ -1,5 +1,5 @@
 import { makeProduct, sizeVariantsJson } from "@/__tests__/helpers/fixtures";
-import { clampOptions, nachtkastAddon, priceLine, readSizeVariants, voetbankAddon } from "@/lib/pricing";
+import { clampOptions, nachtkastAddon, priceLine, readSizeVariants, voetbankAddon, zitbankAddon } from "@/lib/pricing";
 
 const bed = makeProduct({
   id: "bed",
@@ -13,6 +13,16 @@ const bed = makeProduct({
   nachtkastPrice2: 159,
   voetbankMode: "optional",
   voetbankPrice: 129,
+});
+
+const bankstel = makeProduct({
+  id: "bankstel",
+  slug: "bankstel-milano",
+  name: "Bankstel Milano 3+2",
+  category: "bankstellen",
+  price: 1899,
+  zitbankMode: "optional",
+  zitbankPrice: 250,
 });
 
 describe("lib/pricing", () => {
@@ -78,8 +88,61 @@ describe("lib/pricing", () => {
     });
 
     it("clampOptions begrenst nachtkasten op 0-2 en voetbank op 0-1", () => {
-      expect(clampOptions(bed, { nachtkast: 7, voetbank: 3 })).toEqual({ nk: 2, vb: 1 });
-      expect(clampOptions({ nachtkastMode: null, voetbankMode: "included" }, { nachtkast: 1, voetbank: 1 })).toEqual({ nk: 0, vb: 0 });
+      expect(clampOptions(bed, { nachtkast: 7, voetbank: 3 })).toEqual({ nk: 2, vb: 1, zb: 0 });
+      expect(clampOptions({ nachtkastMode: null, voetbankMode: "included" }, { nachtkast: 1, voetbank: 1 })).toEqual({ nk: 0, vb: 0, zb: 0 });
+    });
+
+    it("zitbankAddon geeft alleen bij modus optional een toeslag", () => {
+      expect(zitbankAddon(bankstel, 1)).toBe(250);
+      expect(zitbankAddon(bankstel, 0)).toBe(0);
+      expect(zitbankAddon({ zitbankMode: null, zitbankPrice: 250 }, 1)).toBe(0);
+      expect(zitbankAddon({ zitbankMode: "none", zitbankPrice: 250 }, 1)).toBe(0);
+    });
+
+    it("clampOptions begrenst de 1-zitsbank op 0-1, en 0 als hij niet los te bestellen is", () => {
+      expect(clampOptions(bankstel, { zitbank: 5 })).toEqual({ nk: 0, vb: 0, zb: 1 });
+      expect(clampOptions(bankstel, { zitbank: -2 })).toEqual({ nk: 0, vb: 0, zb: 0 });
+      expect(clampOptions(bankstel, { zitbank: 0.9 })).toEqual({ nk: 0, vb: 0, zb: 0 });
+      expect(clampOptions({ zitbankMode: null }, { zitbank: 1 })).toEqual({ nk: 0, vb: 0, zb: 0 });
+    });
+  });
+
+  describe("priceLine — extra 1-zitsbank (bankstellen)", () => {
+    it("telt de toeslag op en zet '1-zitsbank' in het label", () => {
+      expect(priceLine(bankstel, { zitbank: 1 })).toEqual({
+        ok: true,
+        unitCents: 189900 + 25000,
+        variantLabel: null,
+        fullLabel: "1-zitsbank",
+      });
+      expect(priceLine(bankstel, { zitbank: 0 })).toEqual({ ok: true, unitCents: 189900, variantLabel: null, fullLabel: null });
+    });
+
+    it("rekent nooit meer dan één 1-zitsbank per regel", () => {
+      expect(priceLine(bankstel, { zitbank: 3 })).toMatchObject({ ok: true, unitCents: 189900 + 25000 });
+    });
+
+    it("negeert een gevraagde 1-zitsbank als de optie uit staat", () => {
+      const off = makeProduct({ ...bankstel, zitbankMode: null });
+      expect(priceLine(off, { zitbank: 1 })).toEqual({ ok: true, unitCents: 189900, variantLabel: null, fullLabel: null });
+    });
+
+    it("weigert een gekozen 1-zitsbank zonder positieve toeslag (NO_PRICE)", () => {
+      const zero = makeProduct({ ...bankstel, zitbankPrice: 0 });
+      expect(priceLine(zero, { zitbank: 1 })).toEqual({ ok: false, reason: "NO_PRICE" });
+      const nullPrice = makeProduct({ ...bankstel, zitbankPrice: null });
+      expect(priceLine(nullPrice, { zitbank: 1 })).toEqual({ ok: false, reason: "NO_PRICE" });
+      expect(priceLine(zero, { zitbank: 0 })).toMatchObject({ ok: true, unitCents: 189900 });
+    });
+
+    it("zet de 1-zitsbank achter maat en andere opties in het label", () => {
+      const p = makeProduct({ ...bed, zitbankMode: "optional", zitbankPrice: 250 });
+      expect(priceLine(p, { variantLabel: "140 × 200", voetbank: 1, zitbank: 1 })).toEqual({
+        ok: true,
+        unitCents: 59900 + 12900 + 25000,
+        variantLabel: "140 × 200",
+        fullLabel: "140 × 200 · voetbank · 1-zitsbank",
+      });
     });
   });
 });

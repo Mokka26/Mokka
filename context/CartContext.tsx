@@ -37,7 +37,7 @@ export interface CartProduct {
 }
 
 export interface CartItemType {
-  /** Unieke regel-sleutel: productId(::maat)(::nkN) — maat + nachtkast-keuze. */
+  /** Unieke regel-sleutel: productId(::maat)(::nkN)(::vbN)(::zbN), zie makeLineKey. */
   lineKey: string;
   productId: string;
   /** Gekozen maat (bv. "140 × 200"); null bij producten zonder maatkeuze. */
@@ -46,15 +46,21 @@ export interface CartItemType {
   nachtkast: number;
   /** Voetbank erbij (0/1); 0 = geen. */
   voetbank: number;
+  /** Extra 1-zitsbank erbij (0/1, bankstellen); 0 = geen. */
+  zitbank: number;
   quantity: number;
   product: CartProduct;
 }
 
-/** Regel-sleutel: productId, + ::maat, + ::nkN (nachtkast), + ::vbN (voetbank). */
-export function makeLineKey(productId: string, variantLabel?: string | null, nachtkast = 0, voetbank = 0): string {
+/**
+ * Regel-sleutel: productId, + ::maat, + ::nkN (nachtkast), + ::vbN (voetbank),
+ * + ::zbN (extra 1-zitsbank).
+ */
+export function makeLineKey(productId: string, variantLabel?: string | null, nachtkast = 0, voetbank = 0, zitbank = 0): string {
   let key = variantLabel ? `${productId}::${variantLabel}` : productId;
   if (nachtkast > 0) key += `::nk${nachtkast}`;
   if (voetbank > 0) key += `::vb${voetbank}`;
+  if (zitbank > 0) key += `::zb${zitbank}`;
   return key;
 }
 
@@ -103,11 +109,12 @@ export function addToCart(
   variantLabel?: string | null,
   nachtkast = 0,
   voetbank = 0,
+  zitbank = 0,
   quantity = 1,
 ) {
-  // product.price moet al de regel-prijs zijn (maatprijs + nachtkast + voetbank).
+  // product.price moet al de regel-prijs zijn (maatprijs + nachtkast + voetbank + 1-zitsbank).
   const qty = Math.max(1, Math.min(MAX_QTY, Math.floor(quantity)));
-  const lineKey = makeLineKey(product.id, variantLabel, nachtkast, voetbank);
+  const lineKey = makeLineKey(product.id, variantLabel, nachtkast, voetbank, zitbank);
   const existing = items.find((i) => i.lineKey === lineKey);
   if (existing) {
     persist(
@@ -119,7 +126,7 @@ export function addToCart(
   }
   persist([
     ...items,
-    { lineKey, productId: product.id, variantLabel: variantLabel ?? null, nachtkast, voetbank, quantity: qty, product },
+    { lineKey, productId: product.id, variantLabel: variantLabel ?? null, nachtkast, voetbank, zitbank, quantity: qty, product },
   ]);
 }
 
@@ -188,7 +195,7 @@ const sameCents = (a: number, b: number) => Math.round(a * 100) === Math.round(b
 function snapshotKey(line: CartSnapshotLine): string | null {
   const pid = line.key.productId ?? line.productId;
   if (!pid) return null;
-  return makeLineKey(pid, line.key.variantLabel, line.key.nachtkast, line.key.voetbank);
+  return makeLineKey(pid, line.key.variantLabel, line.key.nachtkast, line.key.voetbank, line.key.zitbank);
 }
 
 /**
@@ -294,6 +301,7 @@ export async function syncCart(): Promise<CartSyncChange[]> {
           variantLabel: i.variantLabel,
           nachtkast: i.nachtkast,
           voetbank: i.voetbank,
+          zitbank: i.zitbank,
         })),
       );
       return applyCartSnapshot(snapshot, requested);
@@ -354,8 +362,9 @@ function normalize(arr: unknown): CartItemType[] {
       variantLabel: i.variantLabel ?? null,
       nachtkast: typeof i.nachtkast === "number" ? i.nachtkast : 0,
       voetbank: typeof i.voetbank === "number" ? i.voetbank : 0,
+      zitbank: typeof i.zitbank === "number" ? i.zitbank : 0,
       quantity: typeof i.quantity === "number" && i.quantity > 0 ? Math.min(MAX_QTY, Math.floor(i.quantity)) : 1,
-      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null, i.nachtkast ?? 0, i.voetbank ?? 0),
+      lineKey: i.lineKey ?? makeLineKey(i.productId, i.variantLabel ?? null, i.nachtkast ?? 0, i.voetbank ?? 0, i.zitbank ?? 0),
     }));
 }
 

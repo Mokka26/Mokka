@@ -50,6 +50,8 @@ function fullForm(overrides: Record<string, string> = {}): FormData {
     nachtkastPrice2: "",
     voetbankMode: "",
     voetbankPrice: "",
+    zitbankMode: "",
+    zitbankPrice: "",
     category: "bedden",
     stock: "10",
     deliveryTime: "2-3 werkdagen",
@@ -244,6 +246,30 @@ describe("app/admin/products/actions", () => {
       const vb = (await updateProductFull({}, fullForm({ voetbankMode: "optional", voetbankPrice: "" }))) as FullUpdateState;
       expect(vb.fieldErrors?.voetbankPrice).toContain("hoger dan");
       expect(db.product.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("eist een prijs > 0 bij een los te bestellen 1-zitsbank en weigert een onleesbare prijs", async () => {
+      const empty = (await updateProductFull({}, fullForm({ zitbankMode: "optional", zitbankPrice: "" }))) as FullUpdateState;
+      expect(empty.fieldErrors?.zitbankPrice).toContain("hoger dan");
+      const zero = (await updateProductFull({}, fullForm({ zitbankMode: "optional", zitbankPrice: "0" }))) as FullUpdateState;
+      expect(zero.fieldErrors?.zitbankPrice).toContain("hoger dan");
+      const bad = (await updateProductFull({}, fullForm({ zitbankMode: "optional", zitbankPrice: "abc" }))) as FullUpdateState;
+      expect(bad.fieldErrors?.zitbankPrice).toBeTruthy();
+      expect(db.product.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("slaat de 1-zitsbank-optie op (mode + prijs), en 'none' als null", async () => {
+      db.product.findUnique.mockResolvedValueOnce({ ...existing, category: "bankstellen" });
+      tx.product.update.mockResolvedValue({ slug: "bed-oslo", category: "bankstellen", colorGroup: null, updatedAt: new Date() });
+      await updateProductFull({}, fullForm({ category: "bankstellen", zitbankMode: "optional", zitbankPrice: "250,00" }));
+      const args = tx.product.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(args.data).toMatchObject({ zitbankMode: "optional", zitbankPrice: 250 });
+
+      db.product.findUnique.mockResolvedValueOnce(existing);
+      tx.product.update.mockResolvedValue({ slug: "bed-oslo", category: "bedden", colorGroup: null, updatedAt: new Date() });
+      await updateProductFull({}, fullForm({ zitbankMode: "none", zitbankPrice: "" }));
+      const off = tx.product.update.mock.calls[1][0] as { data: Record<string, unknown> };
+      expect(off.data).toMatchObject({ zitbankMode: null, zitbankPrice: null });
     });
 
     it("maakt van onleesbare prijzen veldfouten in plaats van stil terug te vallen", async () => {

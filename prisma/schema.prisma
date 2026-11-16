@@ -32,7 +32,11 @@ model Product {
   // "optional" (0/1 tegen voetbankPrice) of null/"none".
   voetbankMode    String?
   voetbankPrice   Float?
-  featured     Boolean  @default(false)
+  // Extra 1-zitsbank (bankstellen) in dezelfde stof en kleur: "optional"
+  // (0/1 tegen zitbankPrice) of null/"none".
+  zitbankMode     String?
+  zitbankPrice    Float?
+  featured    Boolean  @default(false)
   // Handmatige volgorde op de categoriepagina (admin → Categorieën). Laag
   // nummer = eerst; null = geen handmatige positie (komt na de gesorteerde
   // producten, in featured/nieuwste-volgorde).
