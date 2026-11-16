@@ -10,6 +10,7 @@ import { buildBreadcrumbJsonLd, buildFaqJsonLd, jsonLdHtml, type BreadcrumbItem 
 import { categoryDescription, categoryTitle, ogDefaults } from "@/lib/seo";
 import { PRODUCTS_TAG } from "@/lib/revalidate";
 import { inStockFirst } from "@/lib/variants";
+import { countModels } from "@/lib/model-count";
 import {
   filterModels,
   filtersToQuery,
@@ -221,6 +222,7 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
   // Home > [umbrella >] categorie; dezelfde items voor HTML en BreadcrumbList.
   const breadcrumbs: BreadcrumbItem[] = categoryBreadcrumbs(category);
   const guide = category.guide ? getGuide(category.guide) : null;
+  const helpFaq = !guide && category.faqLink ? category.faq?.[0] ?? null : null;
 
   const collectionSchema = {
     "@context": "https://schema.org",
@@ -280,6 +282,16 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
               </Link>
             </p>
           )}
+          {helpFaq && (
+            <p className="mt-4 text-[16px] text-graphite">
+              <Link
+                href="#veelgestelde-vragen"
+                className="inline-flex items-center min-h-11 text-accent-dark underline underline-offset-2 hover:text-ink focus-visible:text-ink"
+              >
+                {helpFaq.q}
+              </Link>
+            </p>
+          )}
         </header>
 
         {subcategories.length > 0 && (
@@ -292,17 +304,17 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
                 <li key={sub.slug}>
                   <Link
                     href={`/${sub.slug}`}
-                    className="inline-flex items-center min-h-11 px-4 border border-line bg-white text-ink text-[15px] hover:border-ink focus-visible:border-ink transition-colors"
+                    className="inline-flex items-center min-h-11 px-4 rounded-full border border-line-strong bg-white text-ink text-base hover:border-ink hover:bg-bone focus-visible:border-ink transition-colors"
                   >
                     {sub.label}
-                    <span className="ml-2 text-stone text-sm">({sub.count})</span>
+                    <span className="ml-2 text-stone text-sm tabular-nums">({sub.count})</span>
                   </Link>
                 </li>
               ))}
               <li>
                 <Link
                   href="/nieuw"
-                  className="inline-flex items-center min-h-11 px-4 border border-line bg-white text-ink text-[15px] hover:border-ink focus-visible:border-ink transition-colors"
+                  className="inline-flex items-center min-h-11 px-4 rounded-full border border-line-strong bg-white text-ink text-base hover:border-ink hover:bg-bone focus-visible:border-ink transition-colors"
                 >
                   Nieuw binnen
                 </Link>
@@ -340,7 +352,7 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
               )}
               {category.faq && category.faq.length > 0 && (
                 <div className="mt-12">
-                  <h2 className="display-sm text-ink mb-5">Veelgestelde vragen</h2>
+                  <h2 id="veelgestelde-vragen" className="display-sm text-ink mb-5">Veelgestelde vragen</h2>
                   <div className="divide-y divide-line border-y border-line">
                     {category.faq.map((item) => (
                       <details key={item.q} className="group py-1">
@@ -373,15 +385,21 @@ export async function CategoryPageView({ categorySlug, sp }: { categorySlug: str
 
 function buildSubcategoryLinks(
   category: Category,
-  products: ReadonlyArray<{ category: string }>,
+  products: ReadonlyArray<{ category: string; colorGroup: string | null }>,
 ): Array<{ slug: string; label: string; count: number }> {
-  const counts = new Map<string, number>();
-  for (const p of products) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+  // Modellen tellen (varianten samen), net als de lijst en de homepage-tegels.
+  const rows = new Map<string, Array<{ colorGroup: string | null; count: number }>>();
+  for (const p of products) {
+    const row = { colorGroup: p.colorGroup, count: 1 };
+    const list = rows.get(p.category);
+    if (list) list.push(row);
+    else rows.set(p.category, [row]);
+  }
   const out: Array<{ slug: string; label: string; count: number }> = [];
   for (const dbCategory of category.dbCategories) {
     if (dbCategory === category.slug) continue;
     const sub = getCategory(dbCategory);
-    const count = counts.get(dbCategory) ?? 0;
+    const count = countModels(rows.get(dbCategory) ?? []);
     if (!sub || count === 0) continue;
     out.push({ slug: sub.slug, label: sub.label, count });
   }

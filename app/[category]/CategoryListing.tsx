@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import ProductCard, { type ProductCardVariant } from "@/components/ProductCard";
 import { ProductGrid } from "@/components/ProductGrid";
 import { useFooterInView } from "@/components/product/useFooterInView";
@@ -161,10 +161,10 @@ export default function CategoryListing({
             <div className="hidden lg:block min-w-0 flex-1">
               <FilterToolbar {...filterProps} />
             </div>
-            <p className="lg:hidden text-base text-graphite tabular-nums" aria-hidden="true">
-              {productsLabel(totalCount)}
-            </p>
-            <SortSelect value={filters.sort} onChange={(sort) => applyFilters({ ...filters, sort })} />
+            {/* Eén telling: die staat in de resultaatregel hieronder. */}
+            <div className="ml-auto">
+              <SortSelect value={filters.sort} onChange={(sort) => applyFilters({ ...filters, sort })} />
+            </div>
           </div>
         </div>
 
@@ -226,16 +226,23 @@ export default function CategoryListing({
 
         {totalPages > 1 && (
           <nav aria-label="Paginering" className="mt-16 border-t border-line pt-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Eén gecentreerde rij. Mobiel: vorige · "Pagina 2 van 3" · volgende;
+                vanaf sm: Vorige · paginanummers · Volgende. */}
+            <div className="flex items-center justify-center gap-2 sm:gap-4">
               {prevHref ? (
-                <Link href={prevHref} rel="prev" className="btn-ghost text-center">
-                  Vorige
+                <Link href={prevHref} rel="prev" className="btn-ghost max-sm:px-3" aria-label="Vorige pagina">
+                  <ChevronLeft className="w-4 h-4 sm:hidden" strokeWidth={1.5} aria-hidden="true" />
+                  <span className="max-sm:sr-only">Vorige</span>
                 </Link>
               ) : (
-                <span aria-hidden="true" />
+                <span aria-hidden="true" className="w-11 sm:hidden" />
               )}
 
-              <ol className="flex items-center gap-1 list-none m-0 p-0 order-last w-full justify-center sm:order-none sm:w-auto">
+              <p className="sm:hidden px-2 text-base text-graphite tabular-nums">
+                Pagina {page} van {totalPages}
+              </p>
+
+              <ol className="hidden sm:flex items-center gap-1 list-none m-0 p-0">
                 {pageNumbers(page, totalPages).map((n, i) =>
                   n === null ? (
                     <li key={`gap-${i}`} aria-hidden="true" className="inline-flex items-center justify-center min-w-8 min-h-11 text-stone">
@@ -266,11 +273,12 @@ export default function CategoryListing({
               </ol>
 
               {nextHref ? (
-                <Link href={nextHref} rel="next" className="btn-primary text-center">
-                  Volgende
+                <Link href={nextHref} rel="next" className="btn-primary max-sm:px-3" aria-label="Volgende pagina">
+                  <span className="max-sm:sr-only">Volgende</span>
+                  <ChevronRight className="w-4 h-4 sm:hidden" strokeWidth={1.5} aria-hidden="true" />
                 </Link>
               ) : (
-                <span aria-hidden="true" />
+                <span aria-hidden="true" className="w-11 sm:hidden" />
               )}
             </div>
           </nav>

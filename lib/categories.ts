@@ -79,6 +79,11 @@ export type Category = {
   /** Woongids die bij deze categorie past (link onder het intro). */
   guide?: GuideSlug;
   /**
+   * Geen passende gids: toon de eerste FAQ-vraag als hulplink onder het intro
+   * (naar de veelgestelde vragen onderaan). Bv. stoelen → zithoogte.
+   */
+  faqLink?: boolean;
+  /**
    * Optioneel: gewenste display-volgorde van DB-sub-categorieën op een
    * umbrella-pagina. Producten van een hier genoemde categorie komen eerst,
    * in deze volgorde; niet-genoemde categorieën volgen daarna (in hun
@@ -431,7 +436,8 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     dbCategories: ["stoelen", "eetkamerstoelen", "fauteuils"],
     isUmbrella: true,
     group: "Stoelen",
-    guide: "eettafel-maat-kiezen",
+    // De eettafelgids gaat over tafelmaten; voor stoelen past de zithoogte-FAQ.
+    faqLink: true,
     cardSubtitle: "In diverse kleuren.",
     seoIntro: `Een eetkamerstoel kies je op de hoogte van je tafel: bij een tafelhoogte van ${cmRange(G.tableHeightCm)} past een zithoogte van ${cmRange(G.chairSeatHeightCm)}. Reken per stoel op ${G.seatWidthCm} cm tafelbreedte; stoelen met armleuningen vragen iets meer en schuiven alleen onder tafel als de armleuning lager is dan het blad. Een fauteuil kies je op de zithoogte van je bank (${cmRange(G.sofaSeatHeightCm)}), zodat je op gelijke hoogte zit. Let bij stof op de slijtvastheid als je kinderen of huisdieren hebt; leer is makkelijk schoon te maken.`,
     metaDescription: `Eetkamerstoelen en fauteuils in stof, velours en leer. Kies de zithoogte op je tafel (${cmRange(G.chairSeatHeightCm)} bij ${G.tableHeightCm.min} cm) of op je bank. Prijzen incl. btw.`,
@@ -459,7 +465,7 @@ export const CATEGORIES: ReadonlyArray<Category> = [
     isUmbrella: false,
     parent: "stoelen",
     group: "Stoelen",
-    guide: "eettafel-maat-kiezen",
+    faqLink: true,
     cardSubtitle: "In diverse kleuren.",
     seoIntro: `Een eetkamerstoel koop je op maat van je tafel: bij een tafelhoogte van ${cmRange(G.tableHeightCm)} past een zithoogte van ${cmRange(G.chairSeatHeightCm)}, zodat je zo'n 28 tot 30 cm beenruimte overhoudt. Reken per stoel op ${G.seatWidthCm} cm tafelbreedte; aan een tafel van 180 cm passen dus zes stoelen (drie per lange zijde). Stoelen met armleuningen vragen iets meer ruimte en schuiven alleen onder tafel als de armleuning lager is dan het tafelblad. Of een stoel per stuk of per set wordt verkocht en in welke kleuren hij leverbaar is, staat bij het product.`,
     metaDescription: `Eetkamerstoelen in stof, velours en leer. Let op de zithoogte (${cmRange(G.chairSeatHeightCm)} bij een tafel van ${G.tableHeightCm.min} cm) en reken ${G.seatWidthCm} cm breedte per stoel. Prijzen incl. btw.`,
