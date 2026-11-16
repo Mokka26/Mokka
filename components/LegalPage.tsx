@@ -12,7 +12,7 @@ import { buildBreadcrumbJsonLd, jsonLdHtml, type BreadcrumbItem } from "@/lib/js
  */
 
 // Bijwerken wanneer een juridische tekst inhoudelijk wijzigt.
-const LAST_UPDATED = "juli 2026";
+const LAST_UPDATED = "november 2026";
 export function LegalPage({
   title,
   intro,
