@@ -5,7 +5,9 @@
 // Run:
 //   npx tsx scripts/check-dead-images.ts
 //   npx tsx scripts/check-dead-images.ts --concurrency=8
-//   npx tsx scripts/check-dead-images.ts --fix       # verwijder dode URLs uit product.images
+//   npx tsx scripts/check-dead-images.ts --apply     # verwijder dode URLs uit product.images
+//
+// Zonder --apply (of het oude --fix) alleen rapporteren: geen DB-write.
 
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -18,7 +20,8 @@ const concurrency = parseInt(
   args.find((a) => a.startsWith("--concurrency="))?.split("=")[1] ?? "5",
   10,
 );
-const fix = args.includes("--fix");
+// --apply is de vaste vlag in scripts/; --fix blijft werken als alias.
+const fix = args.includes("--apply") || args.includes("--fix");
 
 interface DeadImage {
   productId: string;
@@ -42,7 +45,8 @@ async function check(url: string): Promise<number | "error"> {
 
 async function main() {
   console.log("\n═══ Scan dode product-image URLs ═══\n");
-  if (fix) console.log("⚠ --fix actief — dode URLs worden uit DB verwijderd\n");
+  if (fix) console.log("⚠ --apply actief — dode URLs worden uit DB verwijderd\n");
+  else console.log("Dry-run: alleen rapporteren (gebruik --apply om de DB bij te werken)\n");
 
   const products = await prisma.product.findMany({
     where: { deletedAt: null },
@@ -110,11 +114,11 @@ async function main() {
   }
 
   if (!fix) {
-    console.log("\nGeen wijzigingen doorgevoerd. Run met --fix om dode URLs uit DB te halen.");
+    console.log("\nGeen wijzigingen doorgevoerd. Run met --apply om dode URLs uit DB te halen.");
     process.exit(0);
   }
 
-  console.log("\n--fix actief, dode URLs verwijderen uit product.images...");
+  console.log("\n--apply actief, dode URLs verwijderen uit product.images...");
   for (const [productId, items] of perProduct.entries()) {
     const product = products.find((p) => p.id === productId)!;
     const all = parseImages(product.images);

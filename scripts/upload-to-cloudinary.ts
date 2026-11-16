@@ -2,7 +2,11 @@
  * Upload alle productfoto's naar Cloudinary
  *
  * Gebruik:
- *   npx tsx scripts/upload-to-cloudinary.ts
+ *   npx tsx scripts/upload-to-cloudinary.ts            # dry-run: toont wat er zou gebeuren
+ *   npx tsx scripts/upload-to-cloudinary.ts --apply    # echt uploaden + DB bijwerken
+ *
+ * Let op: met --apply worden bestaande Cloudinary-assets overschreven
+ * (overwrite: true) en Product.images per gevonden slug vervangen.
  */
 
 import { v2 as cloudinary } from "cloudinary";
@@ -20,6 +24,7 @@ cloudinary.config({
   secure: true,
 });
 
+const APPLY = process.argv.includes("--apply");
 const prisma = new PrismaClient();
 const BASE_DIR = path.join(process.cwd(), "temp_extract");
 
@@ -44,6 +49,20 @@ async function uploadProductImages() {
   });
 
   console.log(`📂 Gevonden: ${dirs.length} productmappen\n`);
+
+  if (!APPLY) {
+    // Dry-run: alleen tonen welke foto's waarheen zouden gaan en welke slugs in de DB staan.
+    for (const dirName of dirs) {
+      const slug = slugify(dirName);
+      const count = fs.readdirSync(path.join(BASE_DIR, dirName)).filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f)).length;
+      if (count === 0) continue;
+      const inDb = await prisma.product.findUnique({ where: { slug }, select: { id: true } });
+      console.log(`  ${dirName} → mokka/banken/${slug}/ (${count} foto's)${inDb ? "" : "  ⚠ slug niet in DB"}`);
+    }
+    console.log("\nDry-run: niets geüpload en de DB is niet gewijzigd. Gebruik --apply om uit te voeren.");
+    await prisma.$disconnect();
+    return;
+  }
 
   let totalUploaded = 0;
   const allUploads: Record<string, { slug: string; name: string; urls: string[] }> = {};

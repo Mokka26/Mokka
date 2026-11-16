@@ -3,14 +3,17 @@
  * Per product: HEAD-request elke URL, behoud alleen 200's.
  *
  * Gebruik:
- *   npx tsx scripts/remove-dead-images.ts
+ *   npx tsx scripts/remove-dead-images.ts            # dry-run: alleen tonen
+ *   npx tsx scripts/remove-dead-images.ts --apply    # dode URLs echt uit de DB halen
  */
 
 import { PrismaClient } from "@prisma/client";
 import { config } from "dotenv";
-import { parseImages } from "@/lib/imageHelpers";
+import { parseImages, type ProductImage } from "@/lib/imageHelpers";
 
 config({ path: ".env.local" });
+
+const APPLY = process.argv.includes("--apply");
 
 const prisma = new PrismaClient();
 
@@ -28,7 +31,7 @@ async function main() {
     select: { id: true, slug: true, images: true },
   });
 
-  console.log(`Scan ${products.length} producten...\n`);
+  console.log(`Scan ${products.length} producten...${APPLY ? "" : " (dry-run, geen DB-write; gebruik --apply)"}\n`);
   let removed = 0;
 
   for (const p of products) {
@@ -46,16 +49,19 @@ async function main() {
       }
     }
 
-    if (dropped > 0) {
-      await prisma.product.update({
-        where: { id: p.id },
-        data: { images: JSON.stringify(checked) },
-      });
-      console.log(`  ${p.slug}: ${dropped} dode foto's weggehaald (${checked.length} over)`);
+    if (dropped === 0) continue;
+    if (!APPLY) {
+      console.log(`  ${p.slug}: ${dropped} dode foto's zouden weggehaald worden (${checked.length} over)`);
+      continue;
     }
+    await prisma.product.update({
+      where: { id: p.id },
+      data: { images: JSON.stringify(checked) },
+    });
+    console.log(`  ${p.slug}: ${dropped} dode foto's weggehaald (${checked.length} over)`);
   }
 
-  console.log(`\n${removed} dode URLs verwijderd`);
+  console.log(APPLY ? `\n${removed} dode URLs verwijderd` : `\n${removed} dode URLs gevonden; niets gewijzigd (gebruik --apply)`);
 }
 
 main()
