@@ -111,7 +111,8 @@ function countLabel(n: number): string {
 function CategoryTile({ tile, index }: { tile: Tile; index: number }) {
   const layout = LAYOUT[index] ?? LAYOUT[LAYOUT.length - 1];
   const src = tile.image
-    ? cldOptimize(tile.image.url, { ar: layout.ar, w: layout.w, mode: frameMode(tile.image) })
+    ? // Decoratief, onder de vouw: q_auto:eco en max. 1080 breed (zie CloudinaryImage maxWidth).
+      cldOptimize(tile.image.url, { ar: layout.ar, w: layout.w, mode: frameMode(tile.image), quality: "auto:eco" })
     : null;
 
   return (
@@ -131,6 +132,7 @@ function CategoryTile({ tile, index }: { tile: Tile; index: number }) {
                   alt={`${tile.label}: ${tile.image.productName}`}
                   fill
                   sizes={layout.sizes}
+                  maxWidth={1080}
                   className="object-cover"
                 />
               )}

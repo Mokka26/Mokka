@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { getImageProps } from "next/image";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
+import { cappedCloudinaryLoader, cldOptimize, cloudinaryLoader } from "@/lib/cloudinary-url";
 import { HERO_IMAGE_ALT, HERO_IMAGE_SOURCE, HERO_VIDEO } from "@/lib/hero-image";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { businessInfo } from "@/lib/business-info";
@@ -26,8 +26,11 @@ import { stagger } from "@/components/home/motion";
 const MD_QUERY = "(min-width: 768px)";
 const MOBILE_QUERY = "(max-width: 767.98px)";
 
-const MOBILE_SRC = cldOptimize(HERO_IMAGE_SOURCE, { ar: "3:4", w: 828, mode: "fill", quality: "auto:good" });
+// Mobiel: q_auto (niet auto:good) en max. 1080 breed — bij DPR 2,6 vroeg
+// sizes="100vw" anders w_1440 (3:4 = 1440×1920) voor een scherm van ~412px.
+const MOBILE_SRC = cldOptimize(HERO_IMAGE_SOURCE, { ar: "3:4", w: 828, mode: "fill", quality: "auto" });
 const DESKTOP_SRC = cldOptimize(HERO_IMAGE_SOURCE, { ar: "16:9", w: 1920, mode: "fill", quality: "auto:good" });
+const MOBILE_MAX_WIDTH = 1080;
 
 const shared = {
   alt: HERO_IMAGE_ALT,
@@ -52,7 +55,7 @@ export default function Hero({ product }: { product?: HeroProduct | null }) {
   const city = businessInfo.address.city;
   const threshold = shippingInfo.freeShippingThreshold;
 
-  const { props: mobile } = getImageProps({ ...shared, src: MOBILE_SRC });
+  const { props: mobile } = getImageProps({ ...shared, src: MOBILE_SRC, loader: cappedCloudinaryLoader(MOBILE_MAX_WIDTH) });
   const { props: desktop } = getImageProps({ ...shared, src: DESKTOP_SRC });
 
   return (

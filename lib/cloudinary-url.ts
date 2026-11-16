@@ -53,6 +53,17 @@ export function cloudinaryLoader({ src, width }: { src: string; width: number })
 }
 
 /**
+ * cloudinaryLoader met een plafond: srcSet-breedtes boven `maxWidth` krijgen
+ * de `maxWidth`-variant. Voor decoratieve sfeerbeelden (homepage onder de
+ * vouw): een telefoon met DPR 2,6 en `sizes="100vw"` kiest anders w_1440.
+ * Niet voor productfoto's op de PDP — die houden de volle resolutie.
+ */
+export function cappedCloudinaryLoader(maxWidth: number) {
+  return ({ src, width }: { src: string; width: number }): string =>
+    cloudinaryLoader({ src, width: Math.min(width, maxWidth) });
+}
+
+/**
  * Voeg transformaties toe aan een bestaande Cloudinary URL.
  * Niet-Cloudinary URLs worden ongewijzigd teruggegeven.
  *

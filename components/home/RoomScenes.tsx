@@ -49,10 +49,11 @@ export function RoomScenes({ rooms }: { rooms: RoomSceneData[] }) {
               aria-hidden={i !== active}
             >
               <CloudinaryImage
-                src={cldOptimize(room.image, { ar: "4:5", w: 1200, mode: "fill" })}
+                src={cldOptimize(room.image, { ar: "4:5", w: 1200, mode: "fill", quality: "auto:eco" })}
                 alt={room.alt}
                 fill
                 sizes="(max-width: 1024px) 1px, 55vw"
+                maxWidth={1080}
                 className="object-cover"
               />
             </div>
@@ -93,10 +94,11 @@ export function RoomScenes({ rooms }: { rooms: RoomSceneData[] }) {
             <div className="reveal w-full">
               <div className="lg:hidden relative aspect-[4/5] overflow-hidden rounded-[14px] bg-bone mb-8">
                 <CloudinaryImage
-                  src={cldOptimize(room.image, { ar: "4:5", w: 900, mode: "fill" })}
+                  src={cldOptimize(room.image, { ar: "4:5", w: 900, mode: "fill", quality: "auto:eco" })}
                   alt={room.alt}
                   fill
                   sizes="(min-width: 1024px) 1px, 100vw"
+                  maxWidth={1080}
                   className="object-cover"
                 />
               </div>

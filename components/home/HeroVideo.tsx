@@ -6,11 +6,13 @@ import { Pause, Play } from "lucide-react";
 interface Props {
   /** De hero-foto (server-gerenderd <picture>); blijft het LCP-beeld. */
   children: ReactNode;
-  /** Video voor brede schermen (≥ 1280px), 1920×1080. */
+  /** Video voor brede schermen (≥ 1600px), 1920×1080. */
   srcLarge: string;
-  /** Video voor tablets en kleinere laptops, 1280×720. */
+  /** Video voor tablets en laptops (768–1599px), 1280×720. */
   srcSmall: string;
 }
+
+const LARGE_VIDEO_QUERY = "(min-width: 1600px)";
 
 type NetworkInfo = { saveData?: boolean; effectiveType?: string };
 
@@ -50,7 +52,9 @@ export function HeroVideo({ children, srcLarge, srcSmall }: Props) {
 
     const start = () => {
       if (cancelled) return;
-      video.src = window.matchMedia("(min-width: 1280px)").matches ? srcLarge : srcSmall;
+      // De 1920-versie (±1,2 MB) pas vanaf 1600px: op 1280–1599px is het
+      // verschil met de 1280-versie (±0,4 MB) onder de scrim niet te zien.
+      video.src = window.matchMedia(LARGE_VIDEO_QUERY).matches ? srcLarge : srcSmall;
       setActive(true);
       video.play().catch(() => {
         // Autoplay geweigerd: de foto blijft staan.

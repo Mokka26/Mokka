@@ -20,15 +20,18 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Source Serif 4 (display-serif) — leesbaar voor brede doelgroep (27-70),
 // behoudt serif-karakter (industrial-luxe brand) zonder Fraunces' ornament.
-// preload=false: titles zijn niet altijd above-the-fold; display:swap geeft
-// directe paint met system-fallback.
+// Alleen de normale stijl: de italic-file (52 kB) werd alleen voor een paar
+// decoratieve woorden gebruikt (Footer "ziel", SectionHeader, RoomScenes,
+// about/contact/404-koppen); daar maakt de browser nu een synthetische
+// schuine stand van. preload=true: de serif staat in de H1 van home, PDP en
+// categoriepagina's, zonder preload kwam hij laat binnen (swap-verschuiving).
 const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
   weight: "variable",
-  style: ["normal", "italic"],
+  style: ["normal"],
   variable: "--font-serif-display",
   display: "swap",
-  preload: false,
+  preload: true,
 });
 
 // Geist (sans) — body text op elke pagina, preload=true (default) terecht.

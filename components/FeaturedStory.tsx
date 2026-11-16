@@ -37,7 +37,8 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
 
   // 4:3 zonder band: vrijstaande foto opvullen in randkleur, sfeerfoto slim
   // bijsnijden (zie frameMode in lib/imageHelpers.ts).
-  const src = cldOptimize(mainImage.url, { ar: "4:3", w: 1400, mode: frameMode(mainImage) });
+  // Decoratief, onder de vouw: q_auto:eco en max. 1080 breed (CloudinaryImage maxWidth).
+  const src = cldOptimize(mainImage.url, { ar: "4:3", w: 1400, mode: frameMode(mainImage), quality: "auto:eco" });
   const href = productUrl(product);
   const categoryLabel = getCategory(product.category)?.label ?? product.category;
   const inStock = product.stock > 0;
@@ -60,6 +61,7 @@ export default function FeaturedStory({ product }: { product: Product | null }) 
                     alt={product.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 60vw"
+                    maxWidth={1080}
                     className="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"
                   />
                 </div>

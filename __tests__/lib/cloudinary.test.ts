@@ -1,4 +1,4 @@
-import { cldUrl, cloudinaryLoader, cldOptimize } from "@/lib/cloudinary-url";
+import { cappedCloudinaryLoader, cldUrl, cloudinaryLoader, cldOptimize } from "@/lib/cloudinary-url";
 import { extractPublicId } from "@/lib/cloudinary-helpers";
 
 const BASE = "https://res.cloudinary.com/mokka/image/upload";
@@ -45,6 +45,16 @@ describe("lib/cloudinary-url", () => {
       expect(out).toContain("w_1440");
       const mid = `${BASE}/c_pad,e_upscale,w_1000/v1/foto.jpg`;
       expect(cloudinaryLoader({ src: mid, width: 640 })).toBe(`${BASE}/c_pad,w_640/v1/foto.jpg`);
+    });
+  });
+
+  describe("cappedCloudinaryLoader", () => {
+    it("begrenst de srcSet-breedte op het plafond, kleinere breedtes blijven", () => {
+      const src = `${BASE}/c_fill,g_auto,ar_4:5,w_900,f_auto,q_auto:eco/v1/scene.jpg`;
+      const loader = cappedCloudinaryLoader(1080);
+      expect(loader({ src, width: 1440 })).toContain("w_1080");
+      expect(loader({ src, width: 1920 })).toContain("w_1080");
+      expect(loader({ src, width: 828 })).toContain("w_828");
     });
   });
 

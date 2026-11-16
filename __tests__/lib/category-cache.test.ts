@@ -9,6 +9,11 @@ describe("cacheableCategory", () => {
     expect(cacheableCategory("/eettafels", sp("_rsc=abc"))).toBe("eettafels");
   });
 
+  it("herkent /aanbiedingen zonder query, maar niet met ?page=", () => {
+    expect(cacheableCategory("/aanbiedingen", sp())).toBe("aanbiedingen");
+    expect(cacheableCategory("/aanbiedingen", sp("page=2"))).toBeNull();
+  });
+
   it("laat gefilterde, gesorteerde en gepagineerde URL's dynamisch", () => {
     expect(cacheableCategory("/eettafels", sp("vorm=rond"))).toBeNull();
     expect(cacheableCategory("/eettafels", sp("page=2"))).toBeNull();
