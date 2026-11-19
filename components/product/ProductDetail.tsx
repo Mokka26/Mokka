@@ -276,16 +276,6 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
               <Price price={activePrice} listPrice={activeListPrice} vat size="lg" className="text-accent" />
             </div>
 
-            {dimensions && (
-              <dl className="mb-6 text-[15px] leading-relaxed">
-                <div className="flex flex-wrap gap-x-2">
-                  <dt className="text-stone">Afmetingen:</dt>
-                  <dd className="text-ink tabular-nums">{dimensions}</dd>
-                </div>
-                {dimensionNote && <dd className="text-graphite">{dimensionNote}</dd>}
-              </dl>
-            )}
-
             {/* Maat- en kleurkeuze binnen het model (elke optie = eigen product/URL). */}
             <VariantPicker currentSlug={product.slug} category={product.category} variants={colorVariants} />
 
@@ -448,9 +438,15 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 </summary>
                 <dl className="pb-5">
                   {specEntries.map(([k, v]) => (
-                    <div key={k} className="flex items-baseline justify-between gap-6 py-2.5 border-t border-line/60 first:border-t-0 text-[15px]">
-                      <dt className="text-stone shrink-0">{k}</dt>
-                      <dd className="text-ink text-right">{v}</dd>
+                    <div key={k} className="py-2.5 border-t border-line/60 first:border-t-0 text-[15px]">
+                      <div className="flex items-baseline justify-between gap-6">
+                        <dt className="text-stone shrink-0">{k}</dt>
+                        <dd className="text-ink text-right">{v}</dd>
+                      </div>
+                      {/* Praktische context bij de maat (CLAUDE.md §3), alleen bij de afmetingenregel. */}
+                      {dimensionNote && v === dimensions && (DIMENSION_KEYS as ReadonlyArray<string>).includes(k) && (
+                        <dd className="text-graphite text-right mt-1">{dimensionNote}</dd>
+                      )}
                     </div>
                   ))}
                 </dl>
