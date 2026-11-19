@@ -15,13 +15,13 @@ export type GiftOffer = {
 /** Black Friday 2026: gratis Bambi Mogy Soft slaapset bij elk Bambi-bed. */
 export const BAMBI_SLEEP_SET: GiftOffer = {
   name: "Bambi Mogy Soft slaapset",
-  contents: ["Dekbed", "2 hoofdkussens", "2 kussenslopen", "Matrasbeschermer"],
+  contents: ["dekbed", "2 hoofdkussens", "2 kussenslopen", "matrasbeschermer"],
   untilLabel: "30 november",
   image: {
-    src: "/campaign/bambi-mogy-soft-slaapset.jpg",
-    alt: "Bambi Mogy Soft slaapset: opgerold dekbed, hoofdkussen en matrasbeschermer op de verpakking",
-    width: 960,
-    height: 1440,
+    src: "/campaign/bambi-mogy-soft-slaapset-vierkant.jpg",
+    alt: "Bambi Mogy Soft slaapset: opgerold dekbed, hoofdkussen en matrasbeschermer",
+    width: 320,
+    height: 320,
   },
 };
 
