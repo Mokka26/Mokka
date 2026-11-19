@@ -8,7 +8,8 @@ import { shippingInfo } from "@/lib/shipping-info";
  * - NL-notatie via Intl.NumberFormat('nl-NL') → "€ 2.999" / "€ 1.499,50"
  * - Hele bedragen tonen geen decimalen, anders twee (nl-komma)
  * - `vat` toont het "incl. btw"-label (verplicht op kaart + PDP), 14px
- * - `listPrice` > `price` → "Adviesprijs € X" doorgestreept + besparing in %
+ * - `listPrice` > `price` → "Van ~~€ X~~" (bedrag doorgestreept) + besparing in %.
+ *   "Van", niet "Adviesprijs": bij een actie is dit de eigen vorige prijs.
  *   (`showSavings={false}` laat het percentage weg, bv. op de kaart)
  * - `from` → "vanaf" (producten met maatvarianten)
  * - `price` ≤ 0 → "Prijs op aanvraag" (nooit "€ 0" met btw-label)
@@ -111,7 +112,9 @@ export function Price({
     <span className={inline ? "inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5" : "inline-flex flex-col gap-0.5"}>
       {hasDiscount && (
         <span className={`inline-flex flex-wrap items-baseline gap-x-2 ${LIST_SIZE_CLASS[size]} text-stone`}>
-          <s className="tabular-nums">Adviesprijs {formatPrice(listPrice)}</s>
+          <span>
+            Van <s className="tabular-nums">{formatPrice(listPrice)}</s>
+          </span>
           {showSavings && (
             <span className="font-medium text-accent-dark whitespace-nowrap">
               -{pct}%<span className="sr-only"> korting</span>
