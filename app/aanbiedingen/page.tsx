@@ -20,10 +20,10 @@ interface Props {
 
 const PATH = "/aanbiedingen";
 const PAGE_SIZE = 24;
-const TITLE = "Aanbiedingen: meubels en lampen onder de adviesprijs";
-const DESCRIPTION = `Alle meubels en lampen die bij ${businessInfo.name} onder de adviesprijs van de fabrikant verkocht worden. De adviesprijs en onze prijs staan bij elk product, incl. btw.`;
+const TITLE = "Aanbiedingen: meubels, bedden en lampen met korting";
+const DESCRIPTION = `Meubels, bedden en lampen met korting bij ${businessInfo.name}. Bij elk product zie je de oude prijs doorgestreept en de nieuwe prijs, incl. btw.`;
 
-// Alleen échte kortingen: adviesprijs (listPrice) hoger dan de verkoopprijs.
+// Alleen échte kortingen: doorgestreepte prijs (listPrice) hoger dan de verkoopprijs.
 const getSaleProducts = unstable_cache(
   async () => {
     const products = await prisma.product.findMany({
@@ -156,12 +156,12 @@ export default async function AanbiedingenPage({ searchParams }: Props) {
             {page > 1 && <span className="sr-only"> – pagina {page}</span>}
           </h1>
           <p className="body-lg text-slate max-w-2xl">
-            Producten die we onder de adviesprijs verkopen. Je ziet bij elk product de adviesprijs en onze
-            prijs, incl. btw.
+            Producten die nu in de aanbieding zijn. Bij elk product zie je de oude prijs doorgestreept en de
+            nieuwe prijs, incl. btw.
           </p>
           <p className="mt-4 text-[16px] leading-[1.6] text-graphite max-w-2xl">
-            De adviesprijs is de prijs die de fabrikant of leverancier voor het product adviseert. Onze
-            prijs is wat je bij ons betaalt; het verschil is de korting. Bekijk ook{" "}
+            De doorgestreepte prijs is wat het product vóór de aanbieding bij ons kostte; het verschil is je
+            korting. Bekijk ook{" "}
             <Link
               href="/nieuw"
               className="inline-flex items-center min-h-11 text-accent-dark underline underline-offset-2 hover:text-ink focus-visible:text-ink"
