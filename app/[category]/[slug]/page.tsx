@@ -29,6 +29,7 @@ import {
 import { findRedirectTarget } from "@/lib/slug-redirect";
 import { getFooterMethods } from "@/lib/mollie";
 import { MODEL_VARIANT_SELECT, onePerModel, primaryVariantSlugs } from "@/lib/variants";
+import { giftFor, isGiftActive } from "@/lib/campaign";
 
 interface Props {
   params: Promise<{ category: string; slug: string }>;
@@ -234,6 +235,15 @@ export default async function ProductPageInCategory({ params }: Props) {
   const breadcrumbSchema = buildBreadcrumbJsonLd(breadcrumbs);
   // Zelfde gecachte lijst (6 uur) als de footer, dus geen extra Mollie-call per PDP.
   const mollieMethods = await getFooterMethods();
+  // Actiecadeau: source (interne leverancierstag) alleen hier server-side lezen,
+  // niet in PRODUCT_SELECT — naar de client gaat alleen het cadeau zelf.
+  const gift =
+    isGiftActive() && product.category === "bedden"
+      ? giftFor({
+          category: product.category,
+          source: (await prisma.product.findUnique({ where: { id: product.id }, select: { source: true } }))?.source ?? null,
+        })
+      : null;
 
   return (
     <>
@@ -255,6 +265,7 @@ export default async function ProductPageInCategory({ params }: Props) {
         colorVariants={colorVariants}
         mollieMethods={mollieMethods}
         categorySubtitle={getCategory(product.category)?.cardSubtitle ?? null}
+        gift={gift}
       />
       <RecentlyViewed currentSlug={product.slug} />
       {/* Toasts (sonner) alleen waar ze gebruikt worden: PDP, checkout, admin. */}

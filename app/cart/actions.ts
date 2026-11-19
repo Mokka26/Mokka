@@ -6,6 +6,7 @@ import { priceLine } from "@/lib/pricing";
 import { firstImageUrl } from "@/lib/imageHelpers";
 import { rateLimitIp } from "@/lib/rate-limit";
 import { captureError } from "@/lib/sentry";
+import { giftFor } from "@/lib/campaign";
 
 /**
  * Cart-synchronisatie. De winkelwagen leeft client-side (localStorage) met de
@@ -54,6 +55,8 @@ export type CartSnapshotLine = {
   stock: number;
   /** Samengesteld label voor weergave (bv. "160 × 200 · 2 nachtkasten"). */
   label: string | null;
+  /** Naam van het actiecadeau bij deze regel (lib/campaign), anders null. */
+  gift: string | null;
 };
 
 /**
@@ -81,7 +84,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
     stock: number; hidden: boolean; deletedAt: Date | null; sizeVariants: string | null;
     nachtkastMode: string | null; nachtkastPrice: number | null; nachtkastPrice2: number | null;
     voetbankMode: string | null; voetbankPrice: number | null;
-    zitbankMode: string | null; zitbankPrice: number | null;
+    zitbankMode: string | null; zitbankPrice: number | null; source: string | null;
   }>;
   try {
     products = await prisma.product.findMany({
@@ -90,7 +93,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
         id: true, slug: true, name: true, category: true, images: true, price: true, listPrice: true,
         stock: true, hidden: true, deletedAt: true, sizeVariants: true,
         nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true,
-        zitbankMode: true, zitbankPrice: true,
+        zitbankMode: true, zitbankPrice: true, source: true,
       },
     });
   } catch (e) {
@@ -112,7 +115,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
     const unavailable: CartSnapshotLine = {
       key, available: false, variantValid: false,
       productId: null, slug: null, name: null, category: null, image: null,
-      price: null, basePrice: null, listPrice: null, stock: 0, label: null,
+      price: null, basePrice: null, listPrice: null, stock: 0, label: null, gift: null,
     };
     const p = (i.productId ? byId.get(i.productId) : undefined) ?? (i.slug ? bySlug.get(i.slug) : undefined);
     // Onbekend, verborgen of verwijderd: alléén { key, available: false }.
@@ -123,6 +126,7 @@ export async function getCartSnapshot(items: CartSnapshotInput): Promise<CartSna
       available: true,
       productId: p.id, slug: p.slug, name: p.name, category: p.category, image: firstImageUrl(p.images),
       stock: p.stock, basePrice: p.price, listPrice: p.listPrice,
+      gift: giftFor(p)?.name ?? null,
     };
     const priced = priceLine(p, i);
     if (!priced.ok) return base;

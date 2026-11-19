@@ -9,6 +9,7 @@ import { productUrl } from "@/lib/category-routes";
 import { Price, formatPrice } from "@/components/ui/price";
 import { deliveryLine } from "@/components/product/deliveryTime";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import { giftLineLabel, isGiftActive } from "@/lib/campaign";
 
 interface Props {
   item: CartItemType;
@@ -21,6 +22,8 @@ export function cartLineOptions(item: CartItemType): string[] {
   if (item.nachtkast > 0) parts.push(`${item.nachtkast} nachtkast${item.nachtkast > 1 ? "en" : ""}`);
   if (item.voetbank > 0) parts.push("Voetbank");
   if (item.zitbank > 0) parts.push("1-zitsbank");
+  // Actiecadeau (server zet dit via de cart-snapshot); na de einddatum niet meer tonen.
+  if (item.product.gift && isGiftActive()) parts.push(giftLineLabel(item.product.gift));
   return parts;
 }
 

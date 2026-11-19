@@ -18,6 +18,8 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { VariantPicker } from "@/components/product/VariantPicker";
 import type { ModelVariant } from "@/lib/variants";
 import { PurchaseInfo } from "@/components/product/PurchaseInfo";
+import { GiftOfferCard } from "@/components/product/GiftOfferCard";
+import type { GiftOffer } from "@/lib/campaign";
 import type { CheckoutMethod } from "@/lib/mollie";
 import { nachtkastAddon, priceLine, voetbankAddon, zitbankAddon } from "@/lib/pricing";
 import { fromCents } from "@/lib/money";
@@ -75,6 +77,8 @@ interface Props {
   complementaryProducts?: ProductCardProduct[];
   /** Live Mollie-betaalmethoden voor het koopblok (zelfde chips als de footer). */
   mollieMethods?: CheckoutMethod[];
+  /** Actiecadeau bij dit product (server bepaalt via lib/campaign giftFor). */
+  gift?: GiftOffer | null;
   /**
    * Korte regel onder de productnaam (Category.cardSubtitle). Komt van de
    * server zodat de volledige categorieconfig niet in de client-bundel zit.
@@ -106,7 +110,7 @@ const OPTION_BTN_BODY = `${OPTION_BTN_BASE} text-base`;
 const OPTION_ACTIVE = "bg-ink text-paper border-ink";
 const OPTION_IDLE = "bg-transparent text-ink border-line hover:border-ink";
 
-export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [], mollieMethods = [], categorySubtitle = null }: Props) {
+export default function ProductDetailClient({ product, relatedProducts, colorVariants, complementaryProducts = [], mollieMethods = [], categorySubtitle = null, gift = null }: Props) {
   const router = useRouter();
   const images = parseImages(product.images);
   const orientation = orientationOf(images[0]);
@@ -216,6 +220,7 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
         category: product.category,
         deliveryTime: product.deliveryTime ?? null,
         stock,
+        gift: gift?.name ?? null,
       },
       variantLabel,
       nachtkast,
@@ -375,6 +380,8 @@ export default function ProductDetailClient({ product, relatedProducts, colorVar
                 Totaal met opties: <span className="font-medium tabular-nums">{formatPrice(lineUnitPrice)}</span>
               </p>
             )}
+
+            {gift && <GiftOfferCard gift={gift} />}
 
             <div className="mb-5">
               <StockBadge stock={stock} showLow size="md" deliveryTime={product.deliveryTime ?? null} />

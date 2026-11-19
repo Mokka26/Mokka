@@ -34,6 +34,8 @@ export interface CartProduct {
   listPrice?: number | null;
   deliveryTime?: string | null;
   stock?: number | null;
+  /** Naam van het actiecadeau bij deze regel (lib/campaign), bv. "Bambi Mogy Soft slaapset". */
+  gift?: string | null;
 }
 
 export interface CartItemType {
@@ -216,6 +218,7 @@ export function applyCartSnapshot(snapshot: ReadonlyArray<CartSnapshotLine>, req
 
   const changes: CartSyncChange[] = [];
   const next: CartItemType[] = [];
+  let dirty = false;
   for (const item of items) {
     const snap = byKey.get(item.lineKey);
     if (!snap) {
@@ -259,8 +262,11 @@ export function applyCartSnapshot(snapshot: ReadonlyArray<CartSnapshotLine>, req
       slug: snap.slug ?? item.product.slug,
       category: snap.category ?? item.product.category,
       stock: snap.stock,
+      gift: snap.gift,
     };
     let updated: CartItemType = { ...item, product };
+    // Cadeau begonnen/afgelopen: stil bijwerken (geen melding nodig).
+    if ((item.product.gift ?? null) !== snap.gift) dirty = true;
     if (!sameCents(item.product.price, snap.price)) {
       changes.push({
         type: "price",
@@ -279,7 +285,7 @@ export function applyCartSnapshot(snapshot: ReadonlyArray<CartSnapshotLine>, req
     next.push(updated);
   }
 
-  if (changes.length > 0) persist(next);
+  if (changes.length > 0 || dirty) persist(next);
   return changes;
 }
 

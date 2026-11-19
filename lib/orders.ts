@@ -4,6 +4,7 @@ import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { toCents, fromCents, vatFromGrossCents } from "@/lib/money";
 import { captureWarning } from "@/lib/sentry";
 import { priceLine } from "@/lib/pricing";
+import { giftFor, giftLineLabel } from "@/lib/campaign";
 
 export type CheckoutLineInput = {
   productId: string;
@@ -56,7 +57,7 @@ export async function computeOrder(items: CheckoutLineInput[], country = "NL"): 
   const ids = [...new Set(items.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, hidden: false, deletedAt: null },
-    select: { id: true, name: true, price: true, stock: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true, zitbankMode: true, zitbankPrice: true },
+    select: { id: true, name: true, price: true, stock: true, sizeVariants: true, nachtkastMode: true, nachtkastPrice: true, nachtkastPrice2: true, voetbankMode: true, voetbankPrice: true, zitbankMode: true, zitbankPrice: true, source: true, category: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -80,10 +81,13 @@ export async function computeOrder(items: CheckoutLineInput[], country = "NL"): 
       );
     }
     const totalCents = priced.unitCents * qty;
+    // Actiecadeau op de orderregel, zodat het in bevestiging en admin meegaat.
+    const gift = giftFor(p);
+    const giftLabel = gift ? giftLineLabel(gift.name) : null;
     lines.push({
       productId: p.id,
       productName: p.name,
-      variantLabel: priced.fullLabel,
+      variantLabel: giftLabel ? (priced.fullLabel ? `${priced.fullLabel} · ${giftLabel}` : giftLabel) : priced.fullLabel,
       quantity: qty,
       price: fromCents(priced.unitCents),
       unitCents: priced.unitCents,
