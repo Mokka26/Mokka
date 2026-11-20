@@ -33,6 +33,16 @@ export const BAMBI_GIFT_ENDS_AT = Date.parse("2026-12-01T00:00:00+01:00");
 const BAMBI_SOURCES = new Set(["bambi", "bss bambi"]);
 const GIFT_CATEGORIES = new Set(["bedden"]);
 
+/**
+ * Regel in de balk boven de header, zolang de actie loopt (zelfde einde als
+ * de slaapset). "Tot 20%": hoogste korting is 20% (hoekbanken, bankstellen,
+ * Mumza; zie scripts/black-friday-2026.ts).
+ */
+export const BLACK_FRIDAY_BANNER = {
+  long: "Black Friday: tot 20% korting en een gratis slaapset bij Bambi-bedden, t/m 30 november",
+  short: "Black Friday: tot 20% korting, t/m 30 nov.",
+} as const;
+
 export function isGiftActive(now: number = Date.now()): boolean {
   return now < BAMBI_GIFT_ENDS_AT;
 }
