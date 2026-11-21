@@ -186,7 +186,10 @@ describe("lib/google-shopping", () => {
         { label: "160 × 200", price: 699, listPrice: 899 },
       ]),
     });
+    // Buiten de Black Friday-periode: listPrice telt niet als referentieprijs.
+    const after = jest.spyOn(Date, "now").mockReturnValue(Date.parse("2026-12-15T12:00:00+01:00"));
     const items = buildItems(bed);
+    after.mockRestore();
 
     it("maakt één item per variant met item_group_id, size en een link met ?maat=", () => {
       expect(items).toHaveLength(2);
@@ -204,6 +207,37 @@ describe("lib/google-shopping", () => {
       expect(tag(items[1], "g:product_length")).toBe("200 cm");
       // Omnibus: adviesprijs niet als doorgestreepte referentie (USE_LIST_PRICE_AS_REFERENCE = false)
       expect(tag(items[1], "g:sale_price")).toBeNull();
+      expect(tag(items[1], "g:sale_price_effective_date")).toBeNull();
+    });
+  });
+
+  describe("Black Friday (listPrice = eigen prijs vóór de actie)", () => {
+    const bed = makeProduct({
+      id: "bed_2",
+      slug: "bed-bergen",
+      name: "Bed Bergen",
+      category: "bedden",
+      price: 539,
+      listPrice: 599,
+      sizeVariants: sizeVariantsJson([
+        { label: "140 × 200", price: 539, listPrice: 599 },
+        { label: "160 × 200", price: 629 },
+      ]),
+    });
+    const during = jest.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-25T12:00:00+01:00"));
+    const items = buildItems(bed);
+    during.mockRestore();
+
+    it("toont de vorige prijs als price en de actieprijs als sale_price met looptijd", () => {
+      expect(tag(items[0], "g:price")).toBe("599.00 EUR");
+      expect(tag(items[0], "g:sale_price")).toBe("539.00 EUR");
+      expect(tag(items[0], "g:sale_price_effective_date")).toBe("2026-11-19T21:30+01:00/2026-11-30T23:59+01:00");
+    });
+
+    it("laat varianten zonder lagere prijs ongemoeid", () => {
+      expect(tag(items[1], "g:price")).toBe("629.00 EUR");
+      expect(tag(items[1], "g:sale_price")).toBeNull();
+      expect(tag(items[1], "g:sale_price_effective_date")).toBeNull();
     });
   });
 

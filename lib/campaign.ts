@@ -25,8 +25,17 @@ export const BAMBI_SLEEP_SET: GiftOffer = {
   },
 };
 
-/** Einde van de actie: 1 december 2026 00:00 Nederlandse tijd. */
-export const BAMBI_GIFT_ENDS_AT = Date.parse("2026-12-01T00:00:00+01:00");
+/** Einde van de Black Friday-actie: 1 december 2026 00:00 Nederlandse tijd. */
+export const BLACK_FRIDAY_ENDS_AT = Date.parse("2026-12-01T00:00:00+01:00");
+
+/**
+ * Looptijd van de actieprijzen voor Google Shopping (`sale_price_effective_date`,
+ * ISO 8601-interval). Start = de dag dat scripts/black-friday-2026.ts de prijzen zette.
+ */
+export const BLACK_FRIDAY_SALE_PERIOD = "2026-11-19T21:30+01:00/2026-11-30T23:59+01:00";
+
+/** Einde van de slaapsetactie: valt samen met Black Friday. */
+export const BAMBI_GIFT_ENDS_AT = BLACK_FRIDAY_ENDS_AT;
 
 // Product.source (interne leverancierstag) in kleine letters. Alleen Bambi,
 // niet de overige BSS-bedden.

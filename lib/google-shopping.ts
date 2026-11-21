@@ -9,6 +9,7 @@
  * Spec: https://support.google.com/merchants/answer/7052112
  */
 import { businessInfo } from "@/lib/business-info";
+import { BLACK_FRIDAY_ENDS_AT, BLACK_FRIDAY_SALE_PERIOD } from "@/lib/campaign";
 import { shippingInfo, shippingCostFor } from "@/lib/shipping-info";
 import { getCategory, productUrl } from "@/lib/categories";
 import { parseImages } from "@/lib/imageHelpers";
@@ -296,9 +297,13 @@ function buildItem(product: FeedProduct, offer: Offer): string {
   const shippingCost = shippingCostFor(offer.price);
   const isNew = Date.now() - product.createdAt.getTime() < NEW_PRODUCT_DAYS * 86400e3;
 
-  // Prijs: verkoopprijs. Alleen met USE_LIST_PRICE_AS_REFERENCE wordt de
-  // adviesprijs als doorgestreepte `price` gebruikt en de verkoopprijs `sale_price`.
-  const showReference = USE_LIST_PRICE_AS_REFERENCE && offer.listPrice !== null && offer.listPrice > offer.price;
+  // Prijs: verkoopprijs. Een doorgestreepte `price` + `sale_price` alleen als
+  // de "van"-prijs aantoonbaar de eigen vorige prijs is: tijdens Black Friday
+  // (scripts/black-friday-2026.ts zette listPrice = prijs vóór de actie), of met
+  // USE_LIST_PRICE_AS_REFERENCE. Na de actie valt het zonder deploy weg.
+  const hasReference = offer.listPrice !== null && offer.listPrice > offer.price;
+  const onSale = hasReference && Date.now() < BLACK_FRIDAY_ENDS_AT;
+  const showReference = hasReference && (onSale || USE_LIST_PRICE_AS_REFERENCE);
 
   // Identificatie: `brand` is verplicht voor Merchant Center en gaat altijd
   // mee (specs.Merk = de fabrikant, anders de winkelnaam).
@@ -324,6 +329,7 @@ function buildItem(product: FeedProduct, offer: Offer): string {
     tag("g:availability", "in_stock"),
     tag("g:price", money(showReference && offer.listPrice !== null ? offer.listPrice : offer.price)),
     showReference ? tag("g:sale_price", money(offer.price)) : "",
+    onSale ? tag("g:sale_price_effective_date", BLACK_FRIDAY_SALE_PERIOD) : "",
     ...identifierParts,
     tag("g:condition", "new"),
     tag("g:google_product_category", GOOGLE_PRODUCT_CATEGORY[product.category] ?? FALLBACK_GOOGLE_CATEGORY),
