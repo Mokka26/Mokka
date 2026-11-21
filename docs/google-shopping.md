@@ -52,7 +52,12 @@ URL: `https://mokkahomeinteriors.nl/feed/google-shopping.xml`
 
 ### Prijs (Omnibus)
 
-- `g:price` = verkoopprijs. **Geen** `sale_price`.
+- `g:price` = verkoopprijs. **Geen** `sale_price`, behalve tijdens een actie.
+- Black Friday 2026 (tot `BLACK_FRIDAY_ENDS_AT` in `lib/campaign.ts`):
+  `scripts/black-friday-2026.ts` zette `listPrice` = de eigen prijs vóór de actie
+  (Omnibus-proof). Dan gaat `price` = `listPrice`, `sale_price` = actieprijs en
+  `sale_price_effective_date` = `BLACK_FRIDAY_SALE_PERIOD`; Google toont de
+  doorgestreepte prijs en stopt er zelf mee na 30 november.
 - `USE_LIST_PRICE_AS_REFERENCE` (constante in `lib/google-shopping.ts`) staat op
   `false`. Op `true` wordt `price` = adviesprijs (`listPrice`) en `sale_price` =
   verkoopprijs, maar alleen als `listPrice > price`. Dat staat uit omdat een
