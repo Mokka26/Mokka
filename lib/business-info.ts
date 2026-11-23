@@ -43,7 +43,7 @@ export const businessInfo = {
     countryName: "Nederland",
   },
 
-  kvk: "96896280" as string | null,
+  kvk: "71130713" as string | null,
   btw: "NL867821759B01" as string | null, // formaat: NL123456789B01
 
   contact: {
