@@ -7,10 +7,15 @@ Status: feed live sinds 2026-09-12. Campagne-opzet in Google Ads is handwerk
 
 | Wat | Naam | ID |
 |---|---|---|
-| Google Ads | Eleva Home | 607-357-0939 |
+| Google Ads | Mokka Home Den Haag B.V (sinds 26-11-2026) | 637-143-1498 |
+| Google Ads (oud, geschorst) | Eleva Home | 607-357-0939 |
 | Merchant Center | Mokka Home Interior | 5832975605 |
-| Google Ads-tag | — | `AW-18226278121` (env `NEXT_PUBLIC_GOOGLE_ADS_ID`) |
+| Google Ads-tag | — | `AW-18597717674` (env `NEXT_PUBLIC_GOOGLE_ADS_ID`) |
 | Purchase-conversielabel | — | env `NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL` |
+
+Gekoppeld aan 637-143-1498: Merchant Center, GA4 (485317436) en Search
+Console (URL-prefix-property `https://mokkahomeinteriors.nl/`; Google Ads
+accepteert geen domeinproperty).
 
 ## 1. De productfeed
 

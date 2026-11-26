@@ -10,7 +10,7 @@ Vercel staan en de stappen in Google Ads/GA4 (§5) zijn gedaan. Rapportage
 |---|---|---|
 | `NEXT_PUBLIC_GA4_ID` | Vercel (alle omgevingen waar je wilt meten) | GA4 Measurement-ID, vorm `G-XXXXXXXXXX` (GA4 → Beheer → Gegevensstreams → webstream) |
 | `GA4_API_SECRET` | Vercel, **alleen server** | Measurement Protocol API-secret (zelfde webstream → "API-geheimen voor Measurement Protocol" → Maken) |
-| `NEXT_PUBLIC_GOOGLE_ADS_ID` | Vercel | Google Ads-tag `AW-18226278121` |
+| `NEXT_PUBLIC_GOOGLE_ADS_ID` | Vercel | Google Ads-tag `AW-18597717674` (account 637-143-1498) |
 | `NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL` | Vercel | Conversielabel van de purchase-conversieactie (Ads → Doelen → Conversies → actie → "Tag instellen" → het deel na `AW-…/`) |
 
 - Zonder `NEXT_PUBLIC_GA4_ID` én zonder `NEXT_PUBLIC_GOOGLE_ADS_ID` laadt er
@@ -129,7 +129,7 @@ geven:
    extensie "Tag Assistant": default denied → update granted na "Accepteren".
 4. **Verbeterde conversies** aan (zie §4).
 5. **GA4 koppelen**: GA4 → Beheer → Productkoppelingen → Google Ads → koppel
-   607-357-0939 (gepersonaliseerde advertenties aan). In Ads → Doelen →
+   637-143-1498 (gepersonaliseerde advertenties aan). In Ads → Doelen →
    Conversies → Importeren → GA4 → `purchase` (zet op **secundair**: de
    tag-conversie uit stap 2 is primair; anders dubbel) en eventueel
    `server_purchase` (secundair, als audit).
